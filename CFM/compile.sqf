@@ -306,8 +306,6 @@ CFM_fnc_getCamPos = {
 				if (_zoomfov > 1) then {getObjectFOV _obj} else {_zoomfov};
 			} else {getObjectFOV _obj};
 
-			hint str [_fov, _zoom, _obj getVariable ["CFM_zoom", 1], _zoomDefault];
-
 			[_pos, _dir, _up, _fov]
 		};
 		default {[]};
