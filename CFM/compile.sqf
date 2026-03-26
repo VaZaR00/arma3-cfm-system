@@ -1,3 +1,7 @@
+#define GOPRO "gopro"
+#define DRONETYPE "droneTurret"
+#define DEF_FOV_GOPRO 0.85
+
 CFM_fnc_init = {
 	if !(isNil "CFM_EH_id") exitWith {};
 
@@ -45,9 +49,9 @@ CFM_fnc_setMonitor = {
 			
 		private _tempIDs = []; 
 		{  
-			private _type = _x getVariable ["CFM_cameraType", "gopro"];
+			private _type = _x getVariable ["CFM_cameraType", GOPRO];
 			private _name = switch (_type) do {
-				case "gopro": {
+				case GOPRO: {
 					format["%1: %2", groupId group _x, name _x]
 				};
 				default {format["%1: %2", groupId group _x, (getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName"))]};
@@ -98,10 +102,10 @@ CFM_fnc_setMonitor = {
 			private _newzoom = (_zoom + 1) max 1;
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
-			private _type = _target getVariable ["CFM_cameraType", "gopro"];
+			private _type = _target getVariable ["CFM_cameraType", GOPRO];
 			private _maxZoom = switch (_type) do {
-				case "droneTurret": {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
-				case "gopro": {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
+				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
+				case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
 				default {1};
 			};
 
@@ -186,17 +190,17 @@ CFM_fnc_setMonitor = {
 };
 
 CFM_fnc_cameraCondition = {
-	private _type = _this getVariable ["CFM_cameraType", "gopro"];
+	private _type = _this getVariable ["CFM_cameraType", GOPRO];
 
 	switch (_type) do {
-		case "gopro": {
+		case GOPRO: {
 			private _hasGoPro = _this getVariable ["CFM_hasGoPro", false];
 			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", []];
 			if (_goprohelms isEqualTo []) exitWith {_hasGoPro};
 			private _playerHelm = headgear _this;
 			_playerHelm in _goprohelms;
 		};
-		case "droneTurret": {
+		case DRONETYPE: {
 			_this getVariable ["CFM_canFeed", false];
 		};
 		default {false};
@@ -274,12 +278,12 @@ CFM_fnc_getUAVCameraPoints = {
 CFM_fnc_getCamPos = {
 	params["_obj", ["_zoom", 1], ["_turretPath", [0]]];
 
-	private _type = _obj getVariable ["CFM_cameraType", "gopro"];
+	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
 
 	private _zoomDefault = !(_zoom isEqualType 1);
 
 	switch (_type) do {
-		case "gopro": {
+		case GOPRO: {
 			private _eyeP = eyePos _obj; 
 			private _dir = eyeDirection _obj; 
 			private _up = _obj vectorModelToWorldVisual [0,0,1]; 
@@ -288,11 +292,11 @@ CFM_fnc_getCamPos = {
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_gopro", 2]);
 				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
-				if (_zoomfov > 0.85) then {0.85} else {_zoomfov};
-			} else {0.85};
+				if (_zoomfov > DEF_FOV_GOPRO) then {DEF_FOV_GOPRO} else {_zoomfov};
+			} else {DEF_FOV_GOPRO};
 			[_finalPos, _dir, _up, _fov]
 		};
-		case "droneTurret": {
+		case DRONETYPE: {
 			private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
 			private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
@@ -324,13 +328,13 @@ CFM_fnc_getCamPos = {
 };
 
 CFM_fnc_getZoomFov = {
-	params["_zoom", ["_type", "gopro"]];
+	params["_zoom", ["_type", GOPRO]];
 
 	private _table = missionNamespace getVariable [(switch (_type) do {
-		case "gopro": {
+		case GOPRO: {
 			"CFM_goPro_zoomTable"
 		};
-		case "droneTurret": {
+		case DRONETYPE: {
 			"CFM_drone_zoomTable"
 		};
 		default {"CFM_nullvar"};
@@ -351,10 +355,10 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
 	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
-	private _type = _operator getVariable ["CFM_cameraType", "gopro"];
+	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
 
 	switch (_type) do {
-		case "droneTurret": {
+		case DRONETYPE: {
 			_monitor setVariable ["CFM_isDroneFeed", true];
 		};
 		default { };
