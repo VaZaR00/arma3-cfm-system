@@ -186,7 +186,11 @@ CFM_fnc_cameraCondition = {
 
 	switch (_type) do {
 		case "gopro": {
-			_this getVariable ["CFM_hasGoPro", false];
+			private _hasGoPro = _this getVariable ["CFM_hasGoPro", false];
+			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", []];
+			if (_goprohelms isEqualTo []) exitWith {_hasGoPro};
+			private _playerHelm = headgear _this;
+			_playerHelm in _goprohelms;
 		};
 		case "droneTurret": {
 			_this getVariable ["CFM_canFeed", false];
