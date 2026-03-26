@@ -185,6 +185,33 @@ CFM_fnc_setMonitor = {
 		_actions append [_actionFix];
 	};
 
+	private _canSwitchTurret = true;
+	if (_canSwitchTurret) then {
+		private _actionSwitchTurret = _monitor addAction ["<t color='#ffffff'>Switch to Turret Camera</t>", { 
+			params ["_target"]; 
+			
+			_target setVariable ["CFM_currentTurret", [1]]; 
+		}, nil, 1.5, true, false, "", "
+			(_target getVariable ['CFM_operatorFeedActive', false]) && {
+				(_target getVariable ['CFM_opHasTurrets', false]) && {
+					((_target getVariable ['CFM_currentTurret', [0]]) isEqualTo [0])
+				}
+			}
+		"]; 
+		private _actionSwitchDriver = _monitor addAction ["<t color='#ffffff'>Switch to Pilot Camera</t>", { 
+			params ["_target"]; 
+			
+			_target setVariable ["CFM_currentTurret", [0]]; 
+		}, nil, 1.5, true, false, "", "
+			(_target getVariable ['CFM_operatorFeedActive', false]) && {
+				(_target getVariable ['CFM_opHasTurrets', false]) && {
+					((_target getVariable ['CFM_currentTurret', [0]]) isEqualTo [1])
+				}
+			}
+		"]; 
+		_actions append [_actionSwitchTurret, _actionSwitchDriver];
+	};
+
 	_monitor setVariable ["CFM_mainActions", _actions];
 	_monitor setVariable ["CFM_isSet", true];
 };
@@ -230,26 +257,43 @@ CFM_fnc_updateCamera = {
 	params ["_monitor"];  
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
 	if ((isNull _op) || !(alive _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 		false
 	};  
 
+	T_CAM = _cam;
+
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
-	([_op, _zoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
+	([_op, _cam, _zoom, _turret] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
-	_cam setPosASL _pos; 
+	if ((count _pos) == 3) then {
+		_cam setPosASL _pos; 
+	};
 	_cam setVectorDirAndUp [_dir, _up];  
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
 };
 
 CFM_fnc_getUAVCameraPoints = {  
-    params ["_vehicle", ["_turretPath", [0]]];  
+    params ["_vehicle", ["_turretPath", [0]]]; 
+
+    private _droneType = toLower (typeOf _vehicle);
+
+	if ("mavik" in _droneType) exitWith {
+		["pos_pilotcamera", "pos_pilotcamera_dir"]
+	};
+	if ("uav_01" in _droneType) exitWith {
+		if (_turretPath isEqualTo [0]) exitWith {
+			["pip_pilot_pos", "pip_pilot_dir"]
+		};
+		["pip0_pos", "pip0_dir"]
+	};
+
     private _camPos = "uavCameraGunnerPos";  
     private _camDir = "uavCameraGunnerDir";
-    private _droneType = typeOf _vehicle;
 
     if (_turretPath isEqualTo [-1]) then {  
         if ("mavik" in _droneType) exitWith {};
@@ -264,19 +308,22 @@ CFM_fnc_getUAVCameraPoints = {
         {  
             private _testPos = _vehicle selectionPosition _x;  
             if (!(_testPos isEqualTo [0,0,0])) exitWith {_posPoint = _x;};  
-        } forEach ["PiP0_pos", "PiP1_pos", "pip0_pos", "pip1_pos", "flir"];  
+        } forEach ["PiP0_pos", "PiP1_pos", "pip0_pos", "pip1_pos", "pip_pilot_pos"];  
     };  
     if (_dirPoint == "") then {  
         {  
             private _testDir = _vehicle selectionPosition _x;  
             if (!(_testDir isEqualTo [0,0,0])) exitWith {_dirPoint = _x;};  
-        } forEach ["PiP0_dir", "PiP1_dir", "pip0_dir", "pip1_dir", "turret"];  
+        } forEach ["PiP0_dir", "PiP1_dir", "pip0_dir", "pip1_dir", "flir", "pip_pilot_dir"];  
     };  
     [_posPoint, _dirPoint]  
 };  
 
 CFM_fnc_getCamPos = {
-	params["_obj", ["_zoom", 1], ["_turretPath", [0]]];
+	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0]]];
+
+	private _prevTurret = _obj getVariable ["CFM_prevTurret", _turretPath];
+	_obj setVariable ["CFM_prevTurret", _turretPath];
 
 	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
 
@@ -300,7 +347,7 @@ CFM_fnc_getCamPos = {
 			private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
 			private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-			if ((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) then {
+			if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _turretPath)) then {
 				private _points = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
 				_posPoint = _points#0;
 				_dirPoint = _points#1;
@@ -308,12 +355,15 @@ CFM_fnc_getCamPos = {
 				_obj setVariable ["CFM_camDirPoint", _dirPoint];
 			};
 
-			private _start = _obj selectionPosition _posPoint;  
-			private _end = _obj selectionPosition _dirPoint; 
+			private _startRelObj = _obj selectionPosition [_posPoint, "Memory"];  
+			private _endRelObj = _obj selectionPosition [_dirPoint, "Memory"]; 
+			private _startAbs = _obj modelToWorldWorld _startRelObj;
+			private _endAbs = _obj modelToWorldWorld _endRelObj;
+			private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
 
-			private _dir = _start vectorFromTo _end;  
-			private _up = _dir vectorCrossProduct [-(_dir select 1), _dir select 0, 0];
-			private _pos = _obj modelToWorldWorld _start;
+			private _dir = _dirUp#0;
+			private _up = _dirUp#1;
+			private _pos = _startAbs;
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_drone", 5]);
@@ -355,6 +405,13 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
 	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
+	private _turret = [0];
+	if ("uav_01" in (toLower (typeOf _operator))) then {
+		_turret = [1];
+		_monitor setVariable ["CFM_opHasTurrets", true];  
+	};
+	_monitor setVariable ["CFM_currentTurret", _turret];  
+
 	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
 	_monitor setVariable ["CFM_cameraType", _type];  
 
@@ -392,7 +449,10 @@ CFM_fnc_resetFeed = {
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor"];  
 	_monitor setVariable ["CFM_operatorFeedActive", false];  
+	_monitor setVariable ["CFM_connectedOperator", nil]; 
 	_monitor setVariable ["CFM_isDroneFeed", nil];
+	_monitor setVariable ["CFM_currentTurret", nil]; 
+	_monitor setVariable ["CFM_opHasTurrets", nil];  
 	_monitor setObjectTextureGlobal [0, ""];  
 }; 
 
