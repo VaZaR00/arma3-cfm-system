@@ -13,8 +13,12 @@ CFM_fnc_init = {
 	}];
 
 	CFM_EH_id = _id;
-	CFM_max_zoom_gopro = 3;
+	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
+
+	CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
+	CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
+
 	CFM_inited = true;
 };
 
@@ -283,7 +287,7 @@ CFM_fnc_getCamPos = {
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_gopro", 2]);
-				private _zoomfov = [_zoom] call CFM_fnc_getZoomFov;
+				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
 				if (_zoomfov > 0.85) then {0.85} else {_zoomfov};
 			} else {0.85};
 			[_finalPos, _dir, _up, _fov]
@@ -309,7 +313,7 @@ CFM_fnc_getCamPos = {
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_drone", 5]);
-				private _zoomfov = [_zoom] call CFM_fnc_getZoomFov;
+				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
 				if (_zoomfov > 1) then {getObjectFOV _obj} else {_zoomfov};
 			} else {getObjectFOV _obj};
 
@@ -320,15 +324,21 @@ CFM_fnc_getCamPos = {
 };
 
 CFM_fnc_getZoomFov = {
-	params["_zoom"];
+	params["_zoom", ["_type", "gopro"]];
 
-	switch (_zoom) do {
-		case 2: {0.5};
-		case 3: {0.2};
-		case 4: {0.09};
-		case 5: {0.07};
-		default {1};
-	};
+	private _table = missionNamespace getVariable [(switch (_type) do {
+		case "gopro": {
+			"CFM_goPro_zoomTable"
+		};
+		case "droneTurret": {
+			"CFM_drone_zoomTable"
+		};
+		default {"CFM_nullvar"};
+	}), createHashMap];
+
+	if !(_table isEqualType createHashMap) exitWith {1};
+
+	_table getOrDefault [_zoom, 1];
 };
 
 CFM_fnc_startOperatorFeed = {  
