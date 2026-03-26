@@ -169,7 +169,10 @@ CFM_fnc_setMonitor = {
 		private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
 			params ["_target"]; 
 			
-			[_target] call CFM_fnc_setMonitorTexture;
+			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+			{
+				[_x] call CFM_fnc_resetFeed;
+			} forEach _monitors;
 		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
 		_actions append [_actionFix];
 	};
@@ -331,14 +334,14 @@ CFM_fnc_startOperatorFeed = {
 	_cam cameraEffect ["internal", "back", _renderTarget];  
 	[_monitor] call CFM_fnc_setMonitorTexture;
 	_monitor setVariable ["CFM_operatorCam", _cam];  
-	_monitor setVariable ["CFM_connectedOperator", _operator, true];  
-	_monitor setVariable ["CFM_operatorFeedActive", true, true];  
+	_monitor setVariable ["CFM_connectedOperator", _operator];  
+	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
 	private _type = _operator getVariable ["CFM_cameraType", "gopro"];
 
 	switch (_type) do {
 		case "droneTurret": {
-			_monitor setVariable ["CFM_isDroneFeed", true, true];
+			_monitor setVariable ["CFM_isDroneFeed", true];
 		};
 		default { };
 	};
@@ -359,10 +362,18 @@ CFM_fnc_setMonitorTexture = {
 	_monitor setObjectTextureGlobal [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
 };
 
+CFM_fnc_resetFeed = {
+	params["_monitor"];
+	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+	[_monitor] call CFM_fnc_stopOperatorFeed;
+	if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
+	[_monitor, _op] call CFM_fnc_startOperatorFeed;
+};
+
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor"];  
-	_monitor setVariable ["CFM_operatorFeedActive", false, true];  
-	_monitor setVariable ["CFM_isDroneFeed", nil, true];
+	_monitor setVariable ["CFM_operatorFeedActive", false];  
+	_monitor setVariable ["CFM_isDroneFeed", nil];
 	_monitor setObjectTextureGlobal [0, ""];  
 }; 
 
