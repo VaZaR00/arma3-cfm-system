@@ -356,6 +356,7 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
 	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
+	_monitor setVariable ["CFM_cameraType", _type];  
 
 	switch (_type) do {
 		case DRONETYPE: {
