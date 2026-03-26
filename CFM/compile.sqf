@@ -32,7 +32,9 @@ CFM_fnc_setMonitor = {
 	_mons pushBackUnique _monitor;
 	missionNamespace setVariable ["CFM_currentMonitors", _mons];
 
-	private _action1 = _monitor addAction ["<t color='#00FF00'>Camera System Menu</t>", { 
+	private _actions = [];
+
+	private _actionMenu = _monitor addAction ["<t color='#00FF00'>Camera System Menu</t>", { 
 		params ["_target", "_caller"]; 
 		private _ops = call CFM_fnc_getActiveCameras; 
 		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
@@ -70,13 +72,15 @@ CFM_fnc_setMonitor = {
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
-	}, nil, 1.5, true, true, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))"]; 
+	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))"]; 
 
-	private _action2 = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
+	private _actionDisc = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 		params ["_target"]; 
 		[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP; 
 		_target setVariable ['CFM_menuActive', false];
-	}, nil, 1.5, true, true, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+
+	_actions append [_actionMenu, _actionDisc];
 
 	private _canZoom = true;
 
@@ -100,7 +104,7 @@ CFM_fnc_setMonitor = {
 			if (_newzoom >= _maxZoom) then {
 				_target setVariable ['CFM_maxZoomed', true];
 			};
-		}, nil, 1.5, true, true, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])"]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])"]; 
 
 		private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
 			params ["_target"]; 
@@ -113,19 +117,21 @@ CFM_fnc_setMonitor = {
 
 			_target setVariable ['CFM_zoom', _newzoom, true];
 			_target setVariable ['CFM_maxZoomed', false];
-		}, nil, 1.5, true, true, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 	
 		private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
 			params ["_target"]; 
 
 			_target setVariable ['CFM_zoom', "def", true];
 			_target setVariable ['CFM_maxZoomed', false, true];
-		}, nil, 1.5, true, true, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+
+		_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
 	};
 
 	private _canConnectDrone = true;
 	if (_canConnectDrone) then {
-		private _actionZoomDefault = _monitor addAction ["<t color='#1c399e'>Take drone controls</t>", { 
+		private _connectDroneAction = _monitor addAction ["<t color='#1c399e'>Take drone controls</t>", { 
 			params ["_target"]; 
 
 			private _drone = _target getVariable ["CFM_connectedOperator", objNull]; 
@@ -149,24 +155,26 @@ CFM_fnc_setMonitor = {
 
 			player remoteControl (driver _drone);
 			_drone switchCamera "internal";
-		}, nil, 1.5, true, true, "", "
+		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_isDroneFeed', false]) &&
 				{'terminal' in (toLower (player getSlotItemName 612))}
 			}
 		"]; 
+		_actions append [_connectDroneAction];
 	};
 
 	private _canFix = true;
 	if (_canFix) then {
-		private _actionZoomDefault = _monitor addAction ["<t color='#d1c32a'>Fix feed (local)</t>", { 
+		private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
 			params ["_target"]; 
 			
 			[_target] call CFM_fnc_setMonitorTexture;
-		}, nil, 1.5, true, true, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
+		_actions append [_actionFix];
 	};
 
-	_monitor setVariable ["CFM_mainActions", [_action1, _action2]];
+	_monitor setVariable ["CFM_mainActions", _actions];
 	_monitor setVariable ["CFM_isSet", true];
 };
 
