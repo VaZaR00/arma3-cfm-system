@@ -161,7 +161,16 @@ CFM_fnc_setMonitor = {
 				hint _errtext;
 			};
 
-			player remoteControl (driver _drone);
+			private _bot = driver _drone;
+			private _currTurret = _target getVariable ["CFM_currentTurret", [0]]; 
+			if (_currTurret isEqualTo [1]) then {
+				_bot = gunner _drone;
+				if (isNull _bot) then {
+					_bot = driver _drone;
+				};
+			};
+
+			player remoteControl (_bot);
 			_drone switchCamera "internal";
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
@@ -187,7 +196,7 @@ CFM_fnc_setMonitor = {
 
 	private _canSwitchTurret = true;
 	if (_canSwitchTurret) then {
-		private _actionSwitchTurret = _monitor addAction ["<t color='#ffffff'>Switch to Turret Camera</t>", { 
+		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
 			
 			_target setVariable ["CFM_currentTurret", [1]]; 
@@ -198,7 +207,7 @@ CFM_fnc_setMonitor = {
 				}
 			}
 		"]; 
-		private _actionSwitchDriver = _monitor addAction ["<t color='#ffffff'>Switch to Pilot Camera</t>", { 
+		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
 			
 			_target setVariable ["CFM_currentTurret", [0]]; 
