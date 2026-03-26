@@ -1,12 +1,14 @@
 #define GOPRO "gopro"
 #define DRONETYPE "droneTurret"
 #define DEF_FOV_GOPRO 0.85
+#define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
+#define GOPRO_MEMPOINT "head"
 
 CFM_fnc_init = {
 	if !(isNil "CFM_EH_id") exitWith {};
 
 	private _id = addMissionEventHandler ["Draw3D", {
-		if (missionNamespace getVariable ["CFM_stopSystem", false]) exitWith {};
+		if (missionNamespace getVariable ["CFM_stopUpdate", false]) exitWith {};
 
 		private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 		{
@@ -263,17 +265,19 @@ CFM_fnc_getActiveCameras = {
 }; 
 
 CFM_fnc_updateCamera = {  
-	params ["_monitor"];  
-	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
+	params ["_monitor", ["_setup", false]];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+	private _type = _op getVariable ["CFM_cameraType", GOPRO];
+
+	if (!_setup && {_type in STATIC_ATTACHED_CAMS_TYPES}) exitWith {};
+
+	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
 	if ((isNull _op) || !(alive _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 		false
 	};  
-
-	T_CAM = _cam;
 
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
@@ -344,6 +348,8 @@ CFM_fnc_getCamPos = {
 			private _dir = eyeDirection _obj; 
 			private _up = _obj vectorModelToWorldVisual [0,0,1]; 
 			private _finalPos = _eyeP vectorAdd [(_dir select 0) * 0.12, (_dir select 1) * 0.12, 0.08]; 
+
+			_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_gopro", 2]);
@@ -423,7 +429,9 @@ CFM_fnc_startOperatorFeed = {
 
 	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
 	_monitor setVariable ["CFM_cameraType", _type];  
+	
 
+	[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
 	switch (_type) do {
 		case DRONETYPE: {
 			_monitor setVariable ["CFM_isDroneFeed", true];
@@ -440,6 +448,25 @@ CFM_fnc_startOperatorFeed = {
 		camDestroy _cam;  
 	};  
 }; 
+
+CFM_fnc_attachCam = {
+	params["_monitor", "_obj", "_cam", ["_turretPath", [0]]];
+
+	[_monitor, true] call CFM_fnc_updateCamera;
+
+	private _relPos = _obj worldToModel (getPos _cam);
+	private _memPoint = _obj getVariable ["CFM_camPosPoint", ""];
+	private _orient = [_cam, _obj] call (missionNamespace getVariable "BIS_fnc_vectorDirAndUpRelative");
+
+	if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
+		private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
+		_relPos = _relPos vectorDiff _headRelPos;
+		_relPos = _relPos vectorAdd [0,0,0.1];
+	};
+
+	_cam attachTo [_obj, _relPos, _memPoint, true];
+	_cam setVectorDirAndUp _orient;
+};
 
 CFM_fnc_setMonitorTexture = {
 	params["_monitor"];
