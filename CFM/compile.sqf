@@ -157,6 +157,15 @@ CFM_fnc_setMonitor = {
 		"]; 
 	};
 
+	private _canFix = true;
+	if (_canFix) then {
+		private _actionZoomDefault = _monitor addAction ["<t color='#d1c32a'>Fix feed (local)</t>", { 
+			params ["_target"]; 
+			
+			[_target] call CFM_fnc_setMonitorTexture;
+		}, nil, 1.5, true, true, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
+	};
+
 	_monitor setVariable ["CFM_mainActions", [_action1, _action2]];
 	_monitor setVariable ["CFM_isSet", true];
 };
@@ -314,7 +323,7 @@ CFM_fnc_startOperatorFeed = {
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 	private _cam = "camera" camCreate [0,0,0];  
 	_cam cameraEffect ["internal", "back", _renderTarget];  
-	_monitor setObjectTextureGlobal [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
+	[_monitor] call CFM_fnc_setMonitorTexture;
 	_monitor setVariable ["CFM_operatorCam", _cam];  
 	_monitor setVariable ["CFM_connectedOperator", _operator, true];  
 	_monitor setVariable ["CFM_operatorFeedActive", true, true];  
@@ -337,6 +346,12 @@ CFM_fnc_startOperatorFeed = {
 		camDestroy _cam;  
 	};  
 }; 
+
+CFM_fnc_setMonitorTexture = {
+	params["_monitor"];
+	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
+	_monitor setObjectTextureGlobal [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
+};
 
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor"];  
