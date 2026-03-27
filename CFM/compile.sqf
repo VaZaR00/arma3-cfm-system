@@ -107,8 +107,6 @@ CFM_fnc_setMonitor = {
 			private _newzoom = (_zoom + 1) max 1;
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
-			[_target, false] call CFM_fnc_updateCamera;
-
 			private _type = _target getVariable ["CFM_cameraType", GOPRO];
 			private _maxZoom = switch (_type) do {
 				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
@@ -132,8 +130,6 @@ CFM_fnc_setMonitor = {
 
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
-			[_target, false] call CFM_fnc_updateCamera;
-
 			_target setVariable ['CFM_maxZoomed', false];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 	
@@ -141,8 +137,6 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 
 			_target setVariable ['CFM_zoom', "def", true];
-
-			[_target, false] call CFM_fnc_updateCamera;
 
 			_target setVariable ['CFM_maxZoomed', false, true];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
@@ -276,20 +270,20 @@ CFM_fnc_getActiveCameras = {
 }; 
 
 CFM_fnc_updateCamera = {  
-	params ["_monitor", ["_setup", false]];  
+	params ["_monitor", ["_setup", false], ["_justZoom", false]];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
 
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
-	// if ((isNull _op) || !(alive _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
-	// 	[_monitor] call CFM_fnc_stopOperatorFeed;
-	// 	false
-	// };  
+	if ((isNull _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
+		[_monitor] call CFM_fnc_stopOperatorFeed;
+		false
+	};  
 
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
-	([_op, _cam, _zoom, _turret] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
+	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
 	if (_setup) then {
 		if ((count _pos) == 3) then {
@@ -344,7 +338,7 @@ CFM_fnc_getUAVCameraPoints = {
 };  
 
 CFM_fnc_getCamPos = {
-	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0]]];
+	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0]], ["_justZoom", false]];
 
 	private _prevTurret = _obj getVariable ["CFM_prevTurret", _turretPath];
 	_obj setVariable ["CFM_prevTurret", _turretPath];
@@ -355,41 +349,51 @@ CFM_fnc_getCamPos = {
 
 	switch (_type) do {
 		case GOPRO: {
-			private _eyeP = eyePos _obj; 
-			private _dir = eyeDirection _obj; 
-			private _up = _obj vectorModelToWorldVisual [0,0,1]; 
-			private _finalPos = _eyeP vectorAdd [(_dir select 0) * 0.12, (_dir select 1) * 0.12, 0.08]; 
+			private _pos = [];
+			private _dir = [];
+			private _up = [];
+			if !(_justZoom) then {
+				private _eyeP = eyePos _obj; 
+				_dir = eyeDirection _obj; 
+				_up = _obj vectorModelToWorldVisual [0,0,1]; 
+				_pos = _eyeP vectorAdd [(_dir select 0) * 0.12, (_dir select 1) * 0.12, 0.08]; 
 
-			_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
+				_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
+			};
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_gopro", 2]);
 				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
 				if (_zoomfov > DEF_FOV_GOPRO) then {DEF_FOV_GOPRO} else {_zoomfov};
 			} else {DEF_FOV_GOPRO};
-			[_finalPos, _dir, _up, _fov]
+			[_pos, _dir, _up, _fov]
 		};
 		case DRONETYPE: {
-			private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
-			private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
+			private _pos = [];
+			private _dir = [];
+			private _up = [];
+			if !(_justZoom) then {
+				private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
+				private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-			if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _turretPath)) then {
-				private _points = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
-				_posPoint = _points#0;
-				_dirPoint = _points#1;
-				_obj setVariable ["CFM_camPosPoint", _posPoint];
-				_obj setVariable ["CFM_camDirPoint", _dirPoint];
+				if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _turretPath)) then {
+					private _points = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
+					_posPoint = _points#0;
+					_dirPoint = _points#1;
+					_obj setVariable ["CFM_camPosPoint", _posPoint];
+					_obj setVariable ["CFM_camDirPoint", _dirPoint];
+				};
+
+				private _startRelObj = _obj selectionPosition [_posPoint, "Memory"];  
+				private _endRelObj = _obj selectionPosition [_dirPoint, "Memory"]; 
+				private _startAbs = _obj modelToWorldWorld _startRelObj;
+				private _endAbs = _obj modelToWorldWorld _endRelObj;
+				private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
+
+				_dir = _dirUp#0;
+				_up = _dirUp#1;
+				_pos = _startAbs;
 			};
-
-			private _startRelObj = _obj selectionPosition [_posPoint, "Memory"];  
-			private _endRelObj = _obj selectionPosition [_dirPoint, "Memory"]; 
-			private _startAbs = _obj modelToWorldWorld _startRelObj;
-			private _endAbs = _obj modelToWorldWorld _endRelObj;
-			private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
-
-			private _dir = _dirUp#0;
-			private _up = _dirUp#1;
-			private _pos = _startAbs;
 
 			private _fov = if !(_zoomDefault) then {
 				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_drone", 5]);
@@ -454,7 +458,10 @@ CFM_fnc_startOperatorFeed = {
 		params ["_monitor"];  
 		private _cam = _monitor getVariable ["CFM_operatorCam", objNull];   
 		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
-		waitUntil {!(_monitor getVariable ["CFM_operatorFeedActive", false]) || (isNull _cam) || (isNull _monitor)};
+		waitUntil {
+			[_monitor, false, true] call CFM_fnc_updateCamera;
+			!(_monitor getVariable ["CFM_operatorFeedActive", false]) || {(isNull _cam) || {(isNull _monitor)}}
+		};
 		_cam cameraEffect ["terminate", "back", _renderTarget]; 
 		camDestroy _cam;  
 	};  
