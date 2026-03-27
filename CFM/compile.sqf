@@ -210,10 +210,8 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
 			
-			private _op = _target getVariable ["CFM_connectedOperator", objNull];
-			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
-			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
-			[[netId _target, netId _op, true, [1]], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
+			_target setVariable ["CFM_currentTurret", [1], true];  
+			[_target, "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -224,10 +222,8 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
 
-			private _op = _target getVariable ["CFM_connectedOperator", objNull];
-			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
-			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
-			[[netId _target, netId _op, true, [0]], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
+			_target setVariable ["CFM_currentTurret", [0], true];  
+			[_target, "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -552,6 +548,7 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
 	_monitor setObjectTexture [0, ""];  
 	if (_reset) exitWith {};
+	_monitor setVariable ["CFM_opHasTurrets", nil];  
 	_monitor setVariable ["CFM_currentTurret", nil]; 
 	_monitor setVariable ["CFM_zoom", nil]; 
 }; 
@@ -597,6 +594,7 @@ CFM_fnc_syncState = {
 
 	if (_start) then {
 		waitUntil {
+			hintSilent str ["wait", time, _m];
 			private _dist = _m distance player;
 			private _isClose = _dist <= START_MONITOR_FEED_DIST;
 			_start = _m getVariable ["CFM_waitingForStart", true];
@@ -607,6 +605,7 @@ CFM_fnc_syncState = {
 		};
 	};
 	if (_start) then { 
+		if (_m getVariable ["CFM_operatorFeedActive", false]) exitWith {};
 		[_m, _o, _turret] call CFM_fnc_startOperatorFeed 
 	} else {
 		[_m] call CFM_fnc_stopOperatorFeed;
