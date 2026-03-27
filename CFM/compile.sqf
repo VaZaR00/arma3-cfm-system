@@ -2,7 +2,7 @@
 #define DRONETYPE "droneTurret"
 #define DEF_FOV_GOPRO 0.85
 #define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
-#define GOPRO_MEMPOINT "head"
+#define GOPRO_MEMPOINT "neck"
 #define START_MONITOR_FEED_DIST 150
 
 
@@ -507,7 +507,7 @@ CFM_fnc_attachCam = {
 	if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
 		private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
 		_relPos = _relPos vectorDiff _headRelPos;
-		_relPos = _relPos vectorAdd [0,0,0.1];
+		_relPos = _relPos vectorAdd [0,0,0.2];
 	};
 
 	_cam attachTo [_obj, _relPos, _memPoint, true];
