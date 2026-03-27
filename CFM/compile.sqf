@@ -4,7 +4,7 @@
 #define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
 #define GOPRO_MEMPOINT "neck"
 #define START_MONITOR_FEED_DIST 150
-
+#define LOGH hintSilent str 
 
 
 CFM_fnc_init = {
@@ -211,7 +211,7 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 			
 			_target setVariable ["CFM_currentTurret", [1], true];  
-			[_target, "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
+			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -223,7 +223,7 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 
 			_target setVariable ["CFM_currentTurret", [0], true];  
-			[_target, "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
+			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -299,10 +299,10 @@ CFM_fnc_updateCamera = {
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
-	if ((isNull _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
-		false
-	};  
+	// if ((isNull _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
+	// 	[_monitor] call CFM_fnc_stopOperatorFeed;
+	// 	false
+	// };  
 
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
@@ -360,10 +360,12 @@ CFM_fnc_getUAVCameraPoints = {
 };  
 
 CFM_fnc_getCamPos = {
-	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0]], ["_justZoom", false]];
+	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0], [[]], 1], ["_justZoom", false]];
 
-	private _prevTurret = _obj getVariable ["CFM_prevTurret", _turretPath];
-	_obj setVariable ["CFM_prevTurret", _turretPath];
+	private _prevTurret = +(_obj getVariable ["CFM_prevTurret", +_turretPath]);
+	LOGH [_prevTurret, _turretPath];
+	_obj setVariable ["CFM_prevTurret", +_turretPath];
+	T_O = _obj;
 
 	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
 
@@ -457,10 +459,13 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
 	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
-	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_01" in (toLower (typeOf _operator)))}) then {
+	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))}) then {
 		// will be triggered only on monitor init
 		// sets default turret as gunner if has
 		_turret = [1];
+	};
+	LOGH [_monitor, time, _turret, _monitor getVariable ["CFM_currentTurret", []], ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))})];
+	if ((count (crew _operator) > 1) && {!((gunner _operator) isEqualTo objNull)}) then {
 		_monitor setVariable ["CFM_opHasTurrets", true];  
 	};
 	_monitor setVariable ["CFM_currentTurret", _turret];  
@@ -492,18 +497,18 @@ CFM_fnc_startOperatorFeed = {
 }; 
 
 CFM_fnc_attachCam = {
-	params["_monitor", "_obj", "_cam", ["_turretPath", [0], [], 1]];
+	params["_monitor", "_obj", "_cam", ["_turretPath", [0], [[]], 1]];
 
 	[_monitor, true] call CFM_fnc_updateCamera;
 
-	private _turPathNum = _turretPath#0;
-	private _relPos = _obj getVariable [("CFM_relPos_" + (str _turPathNum)), 0];
-	private _memPoint = _obj getVariable [("CFM_memPoint_" + (str _turPathNum)), 0];
-	private _orient = _obj getVariable [("CFM_orient_" + (str _turPathNum)), 0];
+	private _turPathNum = str (_turretPath#0);
+	private _relPos = _obj getVariable [("CFM_relPos_" + (_turPathNum)), 0];
+	private _memPoint = _obj getVariable [("CFM_memPoint_" + (_turPathNum)), 0];
+	private _orient = _obj getVariable [("CFM_orient_" + (_turPathNum)), 0];
 	if ((_relPos isEqualTo 0) || {(_memPoint isEqualTo 0) || {(_orient isEqualTo 0)}}) then {
 		_relPos = _obj worldToModel (getPos _cam);
 		_memPoint = _obj getVariable ["CFM_camPosPoint", ""];
-		_orient = [_cam, _obj] call (missionNamespace getVariable "BIS_fnc_vectorDirAndUpRelative");
+		_orient = [_cam, _obj] call (missionNamespace getVariable ["BIS_fnc_vectorDirAndUpRelative", {[[0,0,0], [0,0,0]]}]);
 
 		if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
 			private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
@@ -511,9 +516,9 @@ CFM_fnc_attachCam = {
 			_relPos = _relPos vectorAdd [0,0,0.2];
 		};
 
-		_obj setVariable [("CFM_relPos_" + (str _turPathNum)), _relPos];
-		_obj setVariable [("CFM_memPoint_" + (str _turPathNum)), _memPoint];
-		_obj setVariable [("CFM_orient_" + (str _turPathNum)), _orient];
+		_obj setVariable [("CFM_relPos_" + (_turPathNum)), _relPos];
+		_obj setVariable [("CFM_memPoint_" + (_turPathNum)), _memPoint];
+		_obj setVariable [("CFM_orient_" + (_turPathNum)), _orient];
 	};
 
 	_cam attachTo [_obj, _relPos, _memPoint, true];
@@ -544,8 +549,7 @@ CFM_fnc_stopOperatorFeed = {
 	params ["_monitor", ["_reset", false]];  
 	_monitor setVariable ["CFM_operatorFeedActive", false];  
 	_monitor setVariable ["CFM_connectedOperator", nil]; 
-	_monitor setVariable ["CFM_isDroneFeed", nil];
-	_monitor setVariable ["CFM_opHasTurrets", nil];  
+	_monitor setVariable ["CFM_isDroneFeed", nil];  
 	_monitor setObjectTexture [0, ""];  
 	if (_reset) exitWith {};
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
@@ -594,7 +598,6 @@ CFM_fnc_syncState = {
 
 	if (_start) then {
 		waitUntil {
-			hintSilent str ["wait", time, _m];
 			private _dist = _m distance player;
 			private _isClose = _dist <= START_MONITOR_FEED_DIST;
 			_start = _m getVariable ["CFM_waitingForStart", true];
