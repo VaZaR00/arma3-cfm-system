@@ -250,7 +250,7 @@ CFM_fnc_setMonitor = {
 			
 			[_target] call CFM_fnc_setMonitorTexture;
 			_target setVariable ["CFM_turnedOffLocal", false];  
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target gsetVariable ['CFM_turnedOffLocal', false])}"]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
 		_actions append [_actionTurnOffLocal];
 	};
 
@@ -539,10 +539,14 @@ CFM_fnc_stopOperatorFeed = {
 }; 
 
 CFM_fnc_remoteExec = {
-	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", false]];
+	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", 0]];
 
-	if (_targets isEqualTo 0) then {
-		_targets = true;
+	if (_targets isEqualType true) then {
+		if (_targets isEqualTo true) then {
+			_targets = 0;
+		} else {
+			_targets = 2;
+		};
 	};
 	if (_jip isEqualType objNull) then {
 		private _netid = netId _jip;
@@ -557,7 +561,7 @@ CFM_fnc_remoteExec = {
 		_jip = "CFM_jip_remote_exec_id_" + _id;
 	};
 
-	[_args, _func, _targets, _jip] call BIS_fnc_MP;
+	_args remoteExec [_func, _targets, _jip];
 };
 
 CFM_fnc_syncState = { 
