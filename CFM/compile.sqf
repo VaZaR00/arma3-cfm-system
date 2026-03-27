@@ -3,22 +3,25 @@
 #define DEF_FOV_GOPRO 0.85
 #define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
 #define GOPRO_MEMPOINT "head"
+#define START_MONITOR_FEED_DIST 300
 
 CFM_fnc_init = {
 	if !(isNil "CFM_EH_id") exitWith {};
 
-	private _id = addMissionEventHandler ["Draw3D", {
-		if (missionNamespace getVariable ["CFM_stopUpdate", false]) exitWith {};
+	if (false) then {
+		private _id = addMissionEventHandler ["Draw3D", {
+			if (missionNamespace getVariable ["CFM_stopUpdate", false]) exitWith {};
 
-		private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
-		{
-			private _isActive = _x getVariable ["CFM_operatorFeedActive", false];
-			if !(_isActive isEqualTo true) then {continue};
-			[_x] call CFM_fnc_updateCamera;
-		} forEach _monitors;
-	}];
+			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+			{
+				private _isActive = _x getVariable ["CFM_operatorFeedActive", false];
+				if !(_isActive isEqualTo true) then {continue};
+				[_x] call CFM_fnc_updateCamera;
+			} forEach _monitors;
+		}];
+		CFM_EH_id = _id;
+	};
 
-	CFM_EH_id = _id;
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
 
@@ -104,6 +107,8 @@ CFM_fnc_setMonitor = {
 			private _newzoom = (_zoom + 1) max 1;
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
+			[_target, false] call CFM_fnc_updateCamera;
+
 			private _type = _target getVariable ["CFM_cameraType", GOPRO];
 			private _maxZoom = switch (_type) do {
 				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
@@ -126,6 +131,9 @@ CFM_fnc_setMonitor = {
 			private _newzoom = (_zoom - 1) max 1;
 
 			_target setVariable ['CFM_zoom', _newzoom, true];
+
+			[_target, false] call CFM_fnc_updateCamera;
+
 			_target setVariable ['CFM_maxZoomed', false];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 	
@@ -133,6 +141,9 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 
 			_target setVariable ['CFM_zoom', "def", true];
+
+			[_target, false] call CFM_fnc_updateCamera;
+
 			_target setVariable ['CFM_maxZoomed', false, true];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 
@@ -269,23 +280,23 @@ CFM_fnc_updateCamera = {
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
 
-	if (!_setup && {_type in STATIC_ATTACHED_CAMS_TYPES}) exitWith {};
-
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
-	if ((isNull _op) || !(alive _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
-		false
-	};  
+	// if ((isNull _op) || !(alive _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
+	// 	[_monitor] call CFM_fnc_stopOperatorFeed;
+	// 	false
+	// };  
 
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
-	if ((count _pos) == 3) then {
-		_cam setPosASL _pos; 
+	if (_setup) then {
+		if ((count _pos) == 3) then {
+			_cam setPosASL _pos; 
+		};
+		_cam setVectorDirAndUp [_dir, _up];  
 	};
-	_cam setVectorDirAndUp [_dir, _up];  
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
 };
@@ -430,8 +441,8 @@ CFM_fnc_startOperatorFeed = {
 	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
 	_monitor setVariable ["CFM_cameraType", _type];  
 	
-
 	[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
+
 	switch (_type) do {
 		case DRONETYPE: {
 			_monitor setVariable ["CFM_isDroneFeed", true];
@@ -496,6 +507,21 @@ CFM_fnc_syncState = {
 	params ["_mNetId", "_oNetId", "_start"]; 
 	private _m = objectFromNetId _mNetId; 
 	private _o = objectFromNetId _oNetId; 
+	private _isWaiting = _m getVariable ["CFM_waitingForStart", false]; 
+
+	if (_isWaiting && _start) exitWith {};
+
+	_m setVariable ["CFM_waitingForStart", _start];
+
+	if (_start) then {
+		waitUntil {
+			private _dist = _m distance player;
+			private _isClose = _dist <= START_MONITOR_FEED_DIST;
+			if (_isClose) exitWith {true};
+			sleep 1;
+			_isClose
+		};
+	};
 	if (_start) then { [_m, _o] call CFM_fnc_startOperatorFeed } else { [_m] call CFM_fnc_stopOperatorFeed }; 
 }; 
 
