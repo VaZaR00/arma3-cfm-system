@@ -200,7 +200,7 @@ CFM_fnc_setMonitor = {
 			
 			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 			{
-				[_x] call CFM_fnc_resetFeed;
+				[_x] spawn CFM_fnc_resetFeed;
 			} forEach _monitors;
 		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
 		_actions append [_actionFix];
@@ -481,7 +481,7 @@ CFM_fnc_startOperatorFeed = {
 		default { };
 	};
 
-	[_monitor] spawn {  
+	private _mainHndl = [_monitor] spawn {  
 		params ["_monitor"];  
 		private _cam = _monitor getVariable ["CFM_operatorCam", objNull];   
 		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
@@ -492,6 +492,7 @@ CFM_fnc_startOperatorFeed = {
 		_cam cameraEffect ["terminate", "back", _renderTarget]; 
 		camDestroy _cam;  
 	};  
+	_monitor setVariable ["CFM_monitorMainHndl", _mainHndl];  
 }; 
 
 CFM_fnc_attachCam = {
@@ -525,17 +526,24 @@ CFM_fnc_resetFeed = {
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 	[_monitor] call CFM_fnc_stopOperatorFeed;
 	if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
+	private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
+	if !(_hndl isEqualType scriptNull) then {
+		_hndl = scriptNull;
+	};
+	waitUntil {scriptDone (_hndl)};
 	[_monitor, _op, _turret] call CFM_fnc_startOperatorFeed;
 };
 
 CFM_fnc_stopOperatorFeed = {  
-	params ["_monitor"];  
+	params ["_monitor", ["_reset", false]];  
 	_monitor setVariable ["CFM_operatorFeedActive", false];  
 	_monitor setVariable ["CFM_connectedOperator", nil]; 
 	_monitor setVariable ["CFM_isDroneFeed", nil];
-	_monitor setVariable ["CFM_currentTurret", nil]; 
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
 	_monitor setObjectTexture [0, ""];  
+	if (_reset) exitWith {};
+	_monitor setVariable ["CFM_currentTurret", nil]; 
+	_monitor setVariable ["CFM_zoom", nil]; 
 }; 
 
 CFM_fnc_remoteExec = {
