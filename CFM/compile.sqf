@@ -3,7 +3,9 @@
 #define DEF_FOV_GOPRO 0.85
 #define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
 #define GOPRO_MEMPOINT "head"
-#define START_MONITOR_FEED_DIST 300
+#define START_MONITOR_FEED_DIST 150
+
+
 
 CFM_fnc_init = {
 	if !(isNil "CFM_EH_id") exitWith {};
@@ -32,7 +34,14 @@ CFM_fnc_init = {
 };
 
 CFM_fnc_setMonitor = { 
-	params ["_monitor"]; 
+	params [
+		"_monitor", 
+		["_canZoom", true],
+		["_canConnectDrone", true],
+		["_canFix", true],
+		["_canSwitchTurret", true],
+		["_canTurnOffLocal", true]
+	]; 
 		
 	if ((_monitor getVariable ["CFM_isSet", false]) isEqualTo true) exitWith {};
 
@@ -95,8 +104,6 @@ CFM_fnc_setMonitor = {
 
 	_actions append [_actionMenu, _actionDisc];
 
-	private _canZoom = true;
-
 	if (_canZoom) then {
 		private _actionZoomIn = _monitor addAction ["<t color='#c5dafa'>Zoom In</t>", { 
 			params ["_target"]; 
@@ -144,7 +151,6 @@ CFM_fnc_setMonitor = {
 		_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
 	};
 
-	private _canConnectDrone = true;
 	if (_canConnectDrone) then {
 		private _connectDroneAction = _monitor addAction ["<t color='#1c399e'>Take drone controls</t>", { 
 			params ["_target"]; 
@@ -188,7 +194,6 @@ CFM_fnc_setMonitor = {
 		_actions append [_connectDroneAction];
 	};
 
-	private _canFix = true;
 	if (_canFix) then {
 		private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
 			params ["_target"]; 
@@ -201,7 +206,6 @@ CFM_fnc_setMonitor = {
 		_actions append [_actionFix];
 	};
 
-	private _canSwitchTurret = true;
 	if (_canSwitchTurret) then {
 		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
@@ -232,6 +236,22 @@ CFM_fnc_setMonitor = {
 			}
 		"]; 
 		_actions append [_actionSwitchTurret, _actionSwitchDriver];
+	};
+
+	if (_canTurnOffLocal) then {
+		private _actionTurnOffLocal = _monitor addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
+			params ["_target"]; 
+			
+			_target setObjectTexture [0, ""];  
+			_target setVariable ["CFM_turnedOffLocal", true]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
+		private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
+			params ["_target"]; 
+			
+			[_target] call CFM_fnc_setMonitorTexture;
+			_target setVariable ["CFM_turnedOffLocal", false];  
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target gsetVariable ['CFM_turnedOffLocal', false])}"]; 
+		_actions append [_actionTurnOffLocal];
 	};
 
 	_monitor setVariable ["CFM_mainActions", _actions];
@@ -496,7 +516,7 @@ CFM_fnc_attachCam = {
 CFM_fnc_setMonitorTexture = {
 	params["_monitor"];
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
-	_monitor setObjectTextureGlobal [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
+	_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
 };
 
 CFM_fnc_resetFeed = {
@@ -515,7 +535,7 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setVariable ["CFM_isDroneFeed", nil];
 	_monitor setVariable ["CFM_currentTurret", nil]; 
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
-	_monitor setObjectTextureGlobal [0, ""];  
+	_monitor setObjectTexture [0, ""];  
 }; 
 
 CFM_fnc_syncState = { 
