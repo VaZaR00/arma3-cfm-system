@@ -206,7 +206,10 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
 			
-			_target setVariable ["CFM_currentTurret", [1], true]; 
+			private _op = _target getVariable ["CFM_connectedOperator", objNull];
+			[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
+			[[netId _target, netId _op, true, [1]], "CFM_fnc_syncState", true] call BIS_fnc_MP;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -216,8 +219,11 @@ CFM_fnc_setMonitor = {
 		"]; 
 		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
-			
-			_target setVariable ["CFM_currentTurret", [0], true]; 
+
+			private _op = _target getVariable ["CFM_connectedOperator", objNull];
+			[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
+			[[netId _target, netId _op, true, [0]], "CFM_fnc_syncState", true] call BIS_fnc_MP;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -426,7 +432,7 @@ CFM_fnc_getZoomFov = {
 };
 
 CFM_fnc_startOperatorFeed = {  
-	params ["_monitor", "_operator"];  
+	params ["_monitor", "_operator", ["_turret", [0]]];  
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 	private _cam = "camera" camCreate [0,0,0];  
 	_cam cameraEffect ["internal", "back", _renderTarget];  
@@ -435,8 +441,9 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
 	_monitor setVariable ["CFM_operatorFeedActive", true];  
 
-	private _turret = [0];
-	if ("uav_01" in (toLower (typeOf _operator))) then {
+	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_01" in (toLower (typeOf _operator)))}) then {
+		// will be triggered only on monitor init
+		// sets default turret as gunner if has
 		_turret = [1];
 		_monitor setVariable ["CFM_opHasTurrets", true];  
 	};
@@ -495,9 +502,10 @@ CFM_fnc_setMonitorTexture = {
 CFM_fnc_resetFeed = {
 	params["_monitor"];
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 	[_monitor] call CFM_fnc_stopOperatorFeed;
 	if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
-	[_monitor, _op] call CFM_fnc_startOperatorFeed;
+	[_monitor, _op, _turret] call CFM_fnc_startOperatorFeed;
 };
 
 CFM_fnc_stopOperatorFeed = {  
@@ -511,7 +519,7 @@ CFM_fnc_stopOperatorFeed = {
 }; 
 
 CFM_fnc_syncState = { 
-	params ["_mNetId", "_oNetId", "_start"]; 
+	params ["_mNetId", "_oNetId", "_start", ["_turret", [0]]]; 
 	private _m = objectFromNetId _mNetId; 
 	private _o = objectFromNetId _oNetId; 
 	private _isWaiting = _m getVariable ["CFM_waitingForStart", false]; 
@@ -529,6 +537,6 @@ CFM_fnc_syncState = {
 			_isClose
 		};
 	};
-	if (_start) then { [_m, _o] call CFM_fnc_startOperatorFeed } else { [_m] call CFM_fnc_stopOperatorFeed }; 
+	if (_start) then { [_m, _o, _turret] call CFM_fnc_startOperatorFeed } else { [_m] call CFM_fnc_stopOperatorFeed }; 
 }; 
 
