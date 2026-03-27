@@ -115,7 +115,7 @@ CFM_fnc_setMonitor = {
 			};
 
 			if (_newzoom >= _maxZoom) then {
-				_target setVariable ['CFM_maxZoomed', true];
+				_target setVariable ['CFM_maxZoomed', true, true];
 			};
 		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])"]; 
 
@@ -130,7 +130,7 @@ CFM_fnc_setMonitor = {
 
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
-			_target setVariable ['CFM_maxZoomed', false];
+			_target setVariable ['CFM_maxZoomed', false, true];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 	
 		private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
@@ -206,7 +206,7 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
 			
-			_target setVariable ["CFM_currentTurret", [1]]; 
+			_target setVariable ["CFM_currentTurret", [1], true]; 
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -217,7 +217,7 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
 			
-			_target setVariable ["CFM_currentTurret", [0]]; 
+			_target setVariable ["CFM_currentTurret", [0], true]; 
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
