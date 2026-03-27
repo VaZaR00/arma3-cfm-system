@@ -72,7 +72,7 @@ CFM_fnc_setMonitor = {
 			};
 			private _id = _target addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
 				params ["_t", "_c", "_i", "_p"]; 
-				[[netId _t, netId (_p select 0), true], "CFM_fnc_syncState", true] call BIS_fnc_MP; 
+				[[netId _t, netId (_p select 0), true], "CFM_fnc_syncState", true, _t] call CFM_fnc_remoteExec; 
 				{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
 			}, [_x], 10]; 
 			_tempIDs pushBack _id; 
@@ -98,7 +98,7 @@ CFM_fnc_setMonitor = {
 
 	private _actionDisc = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 		params ["_target"]; 
-		[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP; 
+		[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec; 
 		_target setVariable ['CFM_menuActive', false];
 	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
 
@@ -211,9 +211,9 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 			
 			private _op = _target getVariable ["CFM_connectedOperator", objNull];
-			[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
 			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
-			[[netId _target, netId _op, true, [1]], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			[[netId _target, netId _op, true, [1]], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -225,9 +225,9 @@ CFM_fnc_setMonitor = {
 			params ["_target"]; 
 
 			private _op = _target getVariable ["CFM_connectedOperator", objNull];
-			[[netId _target, "", false], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
 			if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
-			[[netId _target, netId _op, true, [0]], "CFM_fnc_syncState", true] call BIS_fnc_MP;
+			[[netId _target, netId _op, true, [0]], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -538,8 +538,33 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setObjectTexture [0, ""];  
 }; 
 
+CFM_fnc_remoteExec = {
+	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", false]];
+
+	if (_targets isEqualTo 0) then {
+		_targets = true;
+	};
+	if (_jip isEqualType objNull) then {
+		private _netid = netId _jip;
+		private _idArr = (_netid splitString ":");
+		private _id = "0";
+		if (count _idArr > 1) then {
+			_id = _idArr#1;
+			if !(_id isEqualType "") then {
+				_id = str _id;
+			};
+		};
+		_jip = "CFM_jip_remote_exec_id_" + _id;
+	};
+
+	[_args, _func, _targets, _jip] call BIS_fnc_MP;
+};
+
 CFM_fnc_syncState = { 
 	params ["_mNetId", "_oNetId", "_start", ["_turret", [0]]]; 
+
+	if !(hasInterface) exitWith {};
+
 	private _m = objectFromNetId _mNetId; 
 	private _o = objectFromNetId _oNetId; 
 	private _isWaiting = _m getVariable ["CFM_waitingForStart", false]; 
