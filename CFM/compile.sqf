@@ -532,11 +532,17 @@ CFM_fnc_syncState = {
 		waitUntil {
 			private _dist = _m distance player;
 			private _isClose = _dist <= START_MONITOR_FEED_DIST;
+			_start = _m getVariable ["CFM_waitingForStart", true];
 			if (_isClose) exitWith {true};
+			if !(_start) exitWith {true};
 			sleep 1;
 			_isClose
 		};
 	};
-	if (_start) then { [_m, _o, _turret] call CFM_fnc_startOperatorFeed } else { [_m] call CFM_fnc_stopOperatorFeed }; 
+	if (_start) then { 
+		[_m, _o, _turret] call CFM_fnc_startOperatorFeed 
+	} else {
+		[_m] call CFM_fnc_stopOperatorFeed;
+	}; 
 }; 
 
