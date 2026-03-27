@@ -496,18 +496,28 @@ CFM_fnc_startOperatorFeed = {
 }; 
 
 CFM_fnc_attachCam = {
-	params["_monitor", "_obj", "_cam", ["_turretPath", [0]]];
+	params["_monitor", "_obj", "_cam", ["_turretPath", [0], [], 1]];
 
 	[_monitor, true] call CFM_fnc_updateCamera;
 
-	private _relPos = _obj worldToModel (getPos _cam);
-	private _memPoint = _obj getVariable ["CFM_camPosPoint", ""];
-	private _orient = [_cam, _obj] call (missionNamespace getVariable "BIS_fnc_vectorDirAndUpRelative");
+	private _turPathNum = _turretPath#0;
+	private _relPos = _obj getVariable [("CFM_relPos_" + (str _turPathNum)), 0];
+	private _memPoint = _obj getVariable [("CFM_memPoint_" + (str _turPathNum)), 0];
+	private _orient = _obj getVariable [("CFM_orient_" + (str _turPathNum)), 0];
+	if ((_relPos isEqualTo 0) || {(_memPoint isEqualTo 0) || {(_orient isEqualTo 0)}}) then {
+		_relPos = _obj worldToModel (getPos _cam);
+		_memPoint = _obj getVariable ["CFM_camPosPoint", ""];
+		_orient = [_cam, _obj] call (missionNamespace getVariable "BIS_fnc_vectorDirAndUpRelative");
 
-	if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
-		private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
-		_relPos = _relPos vectorDiff _headRelPos;
-		_relPos = _relPos vectorAdd [0,0,0.2];
+		if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
+			private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
+			_relPos = _relPos vectorDiff _headRelPos;
+			_relPos = _relPos vectorAdd [0,0,0.2];
+		};
+
+		_obj setVariable [("CFM_relPos_" + (str _turPathNum)), _relPos];
+		_obj setVariable [("CFM_memPoint_" + (str _turPathNum)), _memPoint];
+		_obj setVariable [("CFM_orient_" + (str _turPathNum)), _orient];
 	};
 
 	_cam attachTo [_obj, _relPos, _memPoint, true];
@@ -524,7 +534,7 @@ CFM_fnc_resetFeed = {
 	params["_monitor"];
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
-	[_monitor] call CFM_fnc_stopOperatorFeed;
+	[_monitor, true] call CFM_fnc_stopOperatorFeed;
 	if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
 	private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
 	if !(_hndl isEqualType scriptNull) then {
