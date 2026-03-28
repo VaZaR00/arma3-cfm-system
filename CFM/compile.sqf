@@ -5,6 +5,8 @@
 #define GOPRO_MEMPOINT "neck"
 #define START_MONITOR_FEED_DIST 150
 #define LOGH hintSilent str 
+#define DRIVER_TURRET_PATH [-1]
+#define GUNNER_TURRET_PATH [0]
 
 
 CFM_fnc_init = {
@@ -175,8 +177,8 @@ CFM_fnc_setMonitor = {
 			};
 
 			private _bot = driver _drone;
-			private _currTurret = _target getVariable ["CFM_currentTurret", [0]]; 
-			if (_currTurret isEqualTo [1]) then {
+			private _currTurret = _target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
+			if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
 				_bot = gunner _drone;
 				if (isNull _bot) then {
 					_bot = driver _drone;
@@ -210,24 +212,24 @@ CFM_fnc_setMonitor = {
 		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 			params ["_target"]; 
 			
-			_target setVariable ["CFM_currentTurret", [1], true];  
+			_target setVariable ["CFM_currentTurret", GUNNER_TURRET_PATH, true];  
 			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
-					((_target getVariable ['CFM_currentTurret', [0]]) isEqualTo [0])
+					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
 				}
 			}
 		"]; 
 		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
 
-			_target setVariable ["CFM_currentTurret", [0], true];  
+			_target setVariable ["CFM_currentTurret", DRIVER_TURRET_PATH, true];  
 			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
 		}, nil, 1.5, true, false, "", "
 			(_target getVariable ['CFM_operatorFeedActive', false]) && {
 				(_target getVariable ['CFM_opHasTurrets', false]) && {
-					((_target getVariable ['CFM_currentTurret', [0]]) isEqualTo [1])
+					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
 				}
 			}
 		"]; 
@@ -297,7 +299,7 @@ CFM_fnc_updateCamera = {
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
 
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
-	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
+	private _turret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];  
 
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
@@ -327,15 +329,15 @@ CFM_fnc_updateCamera = {
 };
 
 CFM_fnc_getUAVCameraPoints = {  
-    params ["_vehicle", ["_turretPath", [0]]]; 
+    params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH]]; 
 
     private _droneType = toLower (typeOf _vehicle);
 
 	if ("mavik" in _droneType) exitWith {
-		["pos_pilotcamera", "pos_pilotcamera_dir"]
+		[["pos_pilotcamera", [], [-1,0,-1]], "pos_pilotcamera_dir"]
 	};
 	if ("uav_01" in _droneType) exitWith {
-		if (_turretPath isEqualTo [0]) exitWith {
+		if (_turretPath isEqualTo DRIVER_TURRET_PATH) exitWith {
 			["pip_pilot_pos", "pip_pilot_dir"]
 		};
 		["pip0_pos", "pip0_dir"]
@@ -368,8 +370,38 @@ CFM_fnc_getUAVCameraPoints = {
     [_posPoint, _dirPoint]  
 };  
 
+CFM_fnc_memoryPointAlignment = {
+	params["_obj", ["_pointParams", "", [[], ""]]];
+
+	if (_pointParams isEqualType "") exitWith {
+		_obj selectionPosition [_pointParams, "Memory"]
+	};
+	if !(_pointParams isEqualType []) exitWith {
+		[0,0,0]
+	};
+
+	_pointParams params [["_point", "", [""]], ["_addArr", [0,0,0], [[]]], ["_setArr", [-1,-1,-1], [[]]]];
+
+	if ((count _addArr) != 3) then {
+		_addArr = [0,0,0];
+	};
+	if ((count _setArr) != 3) then {
+		_setArr = [-1,-1,-1];
+	};
+
+	private _selPos = _obj selectionPosition [_point, "Memory"];
+	_selPos = _selPos vectorAdd _addArr;
+
+	for "_i" from 0 to 2 do {
+		private _set = _setArr#_i;
+		if (_set isEqualTo -1) then {continue};
+		_selPos set [_i, _set];
+	};
+	_selPos
+};
+
 CFM_fnc_getCamPos = {
-	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0], [[]], 1], ["_justZoom", false]];
+	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", DRIVER_TURRET_PATH, [[]], 1], ["_justZoom", false]];
 
 	private _prevTurret = 0;
 	private _curTurret = 0;
@@ -409,19 +441,25 @@ CFM_fnc_getCamPos = {
 			private _dir = [];
 			private _up = [];
 			if !(_justZoom) then {
-				private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
-				private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
+				private _posPointParams = _obj getVariable ["CFM_camPosPointParams", []];  
+				private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
 
-				if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _curTurret)) then {
-					private _points = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
-					_posPoint = _points#0;
-					_dirPoint = _points#1;
+				if (((_posPointParams isEqualTo []) || {(_posPointParams isEqualTo "")}) || !(_prevTurret isEqualTo _curTurret)) then {
+					private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
+					_posPointParams = _pointsParams#0;
+					_dirPointParams = _pointsParams#1;
+					private _posPoint = _posPointParams;
+					private _dirPoint = _dirPointParams;
+					if (_posPoint isEqualType []) then {_posPoint = _posPoint#0};
+					if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
+					_obj setVariable ["CFM_camPosPointParams", _posPointParams];
+					_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
 					_obj setVariable ["CFM_camPosPoint", _posPoint];
 					_obj setVariable ["CFM_camDirPoint", _dirPoint];
 				};
 
-				private _startRelObj = _obj selectionPosition [_posPoint, "Memory"];  
-				private _endRelObj = _obj selectionPosition [_dirPoint, "Memory"]; 
+				private _startRelObj = [_obj, _posPointParams] call CFM_fnc_memoryPointAlignment;  
+				private _endRelObj = [_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment; 
 				private _startAbs = _obj modelToWorldWorld _startRelObj;
 				private _endAbs = _obj modelToWorldWorld _endRelObj;
 				private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
@@ -462,7 +500,7 @@ CFM_fnc_getZoomFov = {
 };
 
 CFM_fnc_startOperatorFeed = {  
-	params ["_monitor", "_operator", ["_turret", [0]]];  
+	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 	private _cam = "camera" camCreate [0,0,0];  
 	_cam cameraEffect ["internal", "back", _renderTarget];  
@@ -474,7 +512,7 @@ CFM_fnc_startOperatorFeed = {
 	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))}) then {
 		// will be triggered only on monitor init
 		// sets default turret as gunner if has
-		_turret = [1];
+		_turret = GUNNER_TURRET_PATH;
 	};
 	if ((count (crew _operator) > 1) && {!((gunner _operator) isEqualTo objNull)}) then {
 		_monitor setVariable ["CFM_opHasTurrets", true];  
@@ -516,7 +554,7 @@ CFM_fnc_startOperatorFeed = {
 }; 
 
 CFM_fnc_attachCam = {
-	params["_monitor", "_obj", "_cam", ["_turretPath", [0], [[]], 1]];
+	params["_monitor", "_obj", "_cam", ["_turretPath", DRIVER_TURRET_PATH, [[]], 1]];
 
 	[_monitor, true] call CFM_fnc_updateCamera;
 
@@ -553,7 +591,7 @@ CFM_fnc_setMonitorTexture = {
 CFM_fnc_resetFeed = {
 	params["_monitor"];
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
-	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
+	private _turret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];  
 	[_monitor, true] call CFM_fnc_stopOperatorFeed;
 	if ((_op isEqualTo objNull) || !(_op isEqualType objNull)) exitWith {};
 	private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
@@ -603,7 +641,7 @@ CFM_fnc_remoteExec = {
 };
 
 CFM_fnc_syncState = { 
-	params ["_mNetId", "_oNetId", "_start", ["_turret", [0]]]; 
+	params ["_mNetId", "_oNetId", "_start", ["_turret", DRIVER_TURRET_PATH]]; 
 
 	if !(hasInterface) exitWith {};
 
