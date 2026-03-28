@@ -292,7 +292,7 @@ CFM_fnc_getActiveCameras = {
 }; 
 
 CFM_fnc_updateCamera = {  
-	params ["_monitor", ["_setup", false], ["_justZoom", false]];  
+	params ["_monitor", ["_setup", false], ["_justZoom", false], ["_turretLocal", false]];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
 
@@ -302,11 +302,25 @@ CFM_fnc_updateCamera = {
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
+	if (_turretLocal) then {
+		if (local _op) then {
+			_op setVariable ["CFM_currentTurretDir", vectorDir _cam, true];
+			_op setVariable ["CFM_currentTurretUp", vectorUp _cam, true];
+		} else {
+			_setup = true;
+			_pos = [];
+			_dir = _op getVariable ["CFM_currentTurretDir", []];
+			_up = _op getVariable ["CFM_currentTurretUp", []];
+		};
+	};
+
 	if (_setup) then {
 		if ((count _pos) == 3) then {
 			_cam setPosASL _pos; 
 		};
-		_cam setVectorDirAndUp [_dir, _up];  
+		if ((count _dir) == 3) then {
+			_cam setVectorDirAndUp [_dir, _up];  
+		};
 	};
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
@@ -483,6 +497,14 @@ CFM_fnc_startOperatorFeed = {
 		params ["_monitor"];  
 		private _cam = _monitor getVariable ["CFM_operatorCam", objNull];   
 		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
+		private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+
+		private _checkLocality = false;
+		private _opType = typeOf _op;
+		if ((LOCAL_TURRET_CLSS findIf {_x in _opType}) != -1) then {
+			_checkLocality = true;
+		};
+
 		waitUntil {
 			[_monitor, false, true] call CFM_fnc_updateCamera;
 			!(_monitor getVariable ["CFM_operatorFeedActive", false]) || {(isNull _cam) || {(isNull _monitor)}}
