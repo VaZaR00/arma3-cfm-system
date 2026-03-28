@@ -501,7 +501,7 @@ CFM_fnc_startOperatorFeed = {
 
 		private _checkLocality = false;
 		private _opType = typeOf _op;
-		if ((LOCAL_TURRET_CLSS findIf {_x in _opType}) != -1) then {
+		if (_op isKindOf "helicopter") then {
 			_checkLocality = true;
 		};
 
