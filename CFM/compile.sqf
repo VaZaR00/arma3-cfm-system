@@ -299,11 +299,6 @@ CFM_fnc_updateCamera = {
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", [0]];  
 
-	// if ((isNull _op) || !(_op call CFM_fnc_cameraCondition) || (isNull _cam)) exitWith {
-	// 	[_monitor] call CFM_fnc_stopOperatorFeed;
-	// 	false
-	// };  
-
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
@@ -362,10 +357,13 @@ CFM_fnc_getUAVCameraPoints = {
 CFM_fnc_getCamPos = {
 	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", [0], [[]], 1], ["_justZoom", false]];
 
-	private _prevTurret = +(_obj getVariable ["CFM_prevTurret", +_turretPath]);
-	LOGH [_prevTurret, _turretPath];
-	_obj setVariable ["CFM_prevTurret", +_turretPath];
-	T_O = _obj;
+	private _prevTurret = 0;
+	private _curTurret = 0;
+	if !(_justZoom) then {
+		_prevTurret = (+(_obj getVariable ["CFM_prevTurret", +_turretPath]))#0;
+		_curTurret = _turretPath#0;
+		_obj setVariable ["CFM_prevTurret", +_turretPath];
+	};
 
 	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
 
@@ -400,7 +398,7 @@ CFM_fnc_getCamPos = {
 				private _posPoint = _obj getVariable ["CFM_camPosPoint", ""];  
 				private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-				if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _turretPath)) then {
+				if (((_posPoint isEqualTo "") || {!(_posPoint isEqualType "")}) || !(_prevTurret isEqualTo _curTurret)) then {
 					private _points = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
 					_posPoint = _points#0;
 					_dirPoint = _points#1;
@@ -464,7 +462,6 @@ CFM_fnc_startOperatorFeed = {
 		// sets default turret as gunner if has
 		_turret = [1];
 	};
-	LOGH [_monitor, time, _turret, _monitor getVariable ["CFM_currentTurret", []], ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))})];
 	if ((count (crew _operator) > 1) && {!((gunner _operator) isEqualTo objNull)}) then {
 		_monitor setVariable ["CFM_opHasTurrets", true];  
 	};
