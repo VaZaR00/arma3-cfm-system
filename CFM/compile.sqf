@@ -76,7 +76,7 @@ CFM_fnc_setMonitor = {
 			params ["_t"]; 
 			{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
 			_t setVariable ['CFM_menuActive', false];
-		}, nil, 9.9]; 
+		}, nil, 11, true,false,"","(_target getVariable ['CFM_menuActive', false])",ACTION_RADIUS]; 
 		_tempIDs pushBack _closeID; 
 
 		{  
@@ -91,7 +91,7 @@ CFM_fnc_setMonitor = {
 				params ["_t", "_c", "_i", "_p"]; 
 				[[netId _t, netId (_p select 0), true], "CFM_fnc_syncState", true, _t] call CFM_fnc_remoteExec; 
 				{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
-			}, [_x], 10, true,false,"","true",5]; 
+			}, [_x], 10, true,false,"","(_target getVariable ['CFM_menuActive', false])", ACTION_RADIUS]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
 			
@@ -104,13 +104,13 @@ CFM_fnc_setMonitor = {
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
-	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))"]; 
+	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))", ACTION_RADIUS]; 
 
 	private _actionDisc = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 		params ["_target"]; 
 		[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec; 
 		_target setVariable ['CFM_menuActive', false];
-	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
 
 	_actions append [_actionMenu, _actionDisc];
 
@@ -134,7 +134,7 @@ CFM_fnc_setMonitor = {
 			if (_newzoom >= _maxZoom) then {
 				_target setVariable ['CFM_maxZoomed', true, true];
 			};
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])"]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", ACTION_RADIUS]; 
 
 		private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
 			params ["_target"]; 
@@ -148,7 +148,7 @@ CFM_fnc_setMonitor = {
 			_target setVariable ['CFM_zoom', _newzoom, true];
 
 			_target setVariable ['CFM_maxZoomed', false, true];
-		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
 	
 		private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
 			params ["_target"]; 
@@ -156,7 +156,7 @@ CFM_fnc_setMonitor = {
 			_target setVariable ['CFM_zoom', "def", true];
 
 			_target setVariable ['CFM_maxZoomed', false, true];
-		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]"]; 
+		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
 
 		_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
 	};
@@ -200,7 +200,7 @@ CFM_fnc_setMonitor = {
 				(_target getVariable ['CFM_isDroneFeed', false]) &&
 				{'terminal' in (toLower (player getSlotItemName 612))}
 			}
-		"]; 
+		", ACTION_RADIUS]; 
 		_actions append [_connectDroneAction];
 	};
 
@@ -212,7 +212,7 @@ CFM_fnc_setMonitor = {
 			{
 				[_x] spawn CFM_fnc_resetFeed;
 			} forEach _monitors;
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])"]; 
+		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", ACTION_RADIUS]; 
 		_actions append [_actionFix];
 	};
 
@@ -228,7 +228,7 @@ CFM_fnc_setMonitor = {
 					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
 				}
 			}
-		"]; 
+		", ACTION_RADIUS]; 
 		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 			params ["_target"]; 
 
@@ -240,7 +240,7 @@ CFM_fnc_setMonitor = {
 					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
 				}
 			}
-		"]; 
+		", ACTION_RADIUS]; 
 		_actions append [_actionSwitchTurret, _actionSwitchDriver];
 	};
 
@@ -284,7 +284,7 @@ CFM_fnc_setMonitor = {
 					}
 				}
 			}
-		"]; 
+		", ACTION_RADIUS]; 
 		_actions append [_actionSwitchNvg];
 	};
 
@@ -322,7 +322,7 @@ CFM_fnc_setMonitor = {
 					}
 				}
 			}
-		"]; 
+		", ACTION_RADIUS]; 
 		_actions append [_actionSwitchTi];
 	};
 
