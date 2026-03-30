@@ -28,9 +28,10 @@ CFM_fnc_init = {
 
 	CFM_updatePosSystem = false;
 
-	if (CFM_updatePosSystem) then {
+	if (true) then {
+		if !(isNil "CFM_EH_id") exitWith {};
 		private _id = addMissionEventHandler ["Draw3D", {
-			if (missionNamespace getVariable ["CFM_stopUpdate", false]) exitWith {};
+			if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
 
 			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 			{
@@ -766,7 +767,7 @@ CFM_fnc_monitorLiveCondition = {
 
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull]; 
-	 
+
 	CHECK_EX(!IS_OBJ(_op));
 	CHECK_EX(!IS_OBJ(_cam));
 	CHECK_EX(!(alive _op));
