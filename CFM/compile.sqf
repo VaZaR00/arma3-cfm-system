@@ -11,13 +11,14 @@
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_operatorFeedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance player) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
-#define OBJ_CONDITION(o) !((o isEqualTo objNull) || !(o isEqualType objNull))
+#define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
 #define IS_STR(s) (s isEqualType "")
 #define TYPE_VEH "veh"
 #define TYPE_UAV "uav"
 #define TYPE_WEAP "weap"
 #define TYPE_HELM "helm"
-#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM]
+#define TYPE_UNIT "unit"
+#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
 
 
 
@@ -84,7 +85,7 @@ CFM_fnc_setMonitor = {
 		{
 			_ops pushBackUnique _x;
 		} forEach _opsGlobal;
-		
+
 		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
 			
 		private _tempIDs = []; 
@@ -354,17 +355,23 @@ CFM_fnc_setCamera = {
 	// should be executed globaly
 	params["_op", ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
-	if (!OBJ_CONDITION(_op) || !IS_STR(_op)) exitWith {false};
+	if (_op isEqualType []) exitWith {
+		_op apply {
+			[_x, _type, _hasTInNvg, _params] call CFM_fnc_setCamera;
+		};
+	};
+
+	if !(IS_OBJ(_op) || IS_STR(_op)) exitWith {"CFM_fnc_setCamera: Argument is not object or string"};
 	if !(IS_STR(_type)) then {
 		_type = "";
 	};
 
-	private _opIsObj = OBJ_CONDITION(_op);
+	private _opIsObj = IS_OBJ(_op);
 	private _classType = "";
 	if !(_opIsObj) then {
 		_classType = [_op] call CFM_fnc_validClassType;
 	};
-	if (!_opIsObj && !(_classType in VALID_CLASS_TYPES)) exitWith {false};
+	if (!_opIsObj && !(_classType in VALID_CLASS_TYPES)) exitWith {"CFM_fnc_setCamera: Invalid class type passed"};
 
 	_hasTInNvg params ["_ti", "_nvg"];
 	if !(_ti isEqualType true) then {
@@ -382,11 +389,14 @@ CFM_fnc_setCamera = {
 	};
 
 	_type = if (_type isEqualTo "") then {
-		if (_op isKindOf "Man") exitWith {
+		if ((_op isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
 			GOPRO
 		};
 		if (_classType isEqualTo TYPE_HELM) exitWith {
 			GOPRO
+		};
+		if (_classType isEqualTo TYPE_UAV) exitWith {
+			DRONETYPE
 		};
 		DRONETYPE
 	} else {
@@ -395,6 +405,10 @@ CFM_fnc_setCamera = {
 
 	if (_opIsObj) then {
 		_op setVariable ["CFM_cameraType", _type];
+
+		private _activeCameras = missionNamespace getVariable ["CFM_activeCameras", []];
+		_activeCameras pushBackUnique _op;
+		missionNamespace setVariable ["CFM_activeCameras", _activeCameras];
 
 		switch (_type) do {
 			case GOPRO: {
@@ -425,7 +439,35 @@ CFM_fnc_setCamera = {
 		};
 	};
 
-	true
+	[_op, _type, _classType]
+};
+
+CFM_fnc_cameraType = {
+	params["_obj"];
+
+	if !(IS_OBJ(_obj)) exitWith {""};
+
+	private _type = _obj getVariable ["CFM_cameraType", ""];
+
+	if !(IS_STR(_type)) then {
+		_type = "";
+	};
+
+	if !(_type isEqualTo "") exitWith {_type};
+
+	private _cls = typeOf _obj;
+	private _classType = [_cls] call CFM_fnc_validClassType;
+
+	if ((_obj isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
+		GOPRO
+	};
+	if (_classType isEqualTo TYPE_HELM) exitWith {
+		GOPRO
+	};
+	if (_classType isEqualTo TYPE_UAV) exitWith {
+		DRONETYPE
+	};
+	DRONETYPE
 };
 
 CFM_fnc_validClassType = {
@@ -433,6 +475,7 @@ CFM_fnc_validClassType = {
 
 	private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
 	if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
+	if (_isVeh && {_cls isKindOf "Man"}) exitWith {TYPE_UNIT};
 	if (_isVeh) exitWith {TYPE_VEH};
 	private _isWeap = isClass (configFile >> "CfgWeapons" >> _cls);
 	if (_isWeap && {
@@ -445,7 +488,7 @@ CFM_fnc_validClassType = {
 };
 
 CFM_fnc_cameraCondition = {
-	private _type = _this getVariable ["CFM_cameraType", GOPRO];
+	private _type = [_this] call CFM_fnc_cameraType;
 	private _cls = typeOf _this;
 	private _clssSetup = missionNamespace getVariable ["CFM_classesSetup", createHashMap];
 
@@ -462,7 +505,7 @@ CFM_fnc_cameraCondition = {
 			private _canFeed = _this getVariable ["CFM_canFeed", false];
 			if (_canFeed) exitWith {true};
 			if (_cls in _clssSetup) exitWith {
-				private _clsParams = _clssSetup get [_cls, createHashMap];
+				private _clsParams = _clssSetup getOrDefault [_cls, createHashMap];
 				private _setType = _clsParams getOrDefault ["CFM_cameraType", ""];
 				private _ti = _clsParams getOrDefault ["CFM_canSwitchTi", 0];
 				private _nvg = _clsParams getOrDefault ["CFM_canSwitchNvg", 0];
