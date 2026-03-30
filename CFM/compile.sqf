@@ -19,21 +19,27 @@
 #define TYPE_HELM "helm"
 #define TYPE_UNIT "unit"
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
+#define CHECK_EX(c) if (c) exitWith {false};
 
 
 
 CFM_fnc_init = {
 	if !(isNil "CFM_EH_id") exitWith {};
 
-	if (false) then {
+	CFM_updatePosSystem = false;
+
+	if (CFM_updatePosSystem) then {
 		private _id = addMissionEventHandler ["Draw3D", {
 			if (missionNamespace getVariable ["CFM_stopUpdate", false]) exitWith {};
 
 			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 			{
-				private _isActive = _x getVariable ["CFM_operatorFeedActive", false];
-				if !(_isActive isEqualTo true) then {continue};
-				[_x] call CFM_fnc_updateCamera;
+				private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
+				if (!_monitorLive) then {
+					[_x] call CFM_fnc_stopOperatorFeed;
+					continue
+				};
+				[_x, true] call CFM_fnc_updateCamera;
 			} forEach _monitors;
 		}];
 		CFM_EH_id = _id;
@@ -751,6 +757,24 @@ CFM_fnc_getZoomFov = {
 	_table getOrDefault [_zoom, 1];
 };
 
+CFM_fnc_monitorLiveCondition = {
+	params["_monitor"];
+
+	private _active = _monitor getVariable ["CFM_operatorFeedActive", false]; 
+
+	CHECK_EX(!_active);
+
+	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];
+	private _cam = _monitor getVariable ["CFM_operatorCam", objNull]; 
+	 
+	CHECK_EX(!IS_OBJ(_op));
+	CHECK_EX(!IS_OBJ(_cam));
+	CHECK_EX(!(alive _op));
+	CHECK_EX(!(alive _cam));
+
+	true
+};
+
 CFM_fnc_startOperatorFeed = {  
 	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
@@ -773,8 +797,6 @@ CFM_fnc_startOperatorFeed = {
 
 	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
 	_monitor setVariable ["CFM_cameraType", _type];  
-	
-	[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
 
 	// TI and NVG
 	([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
@@ -790,27 +812,45 @@ CFM_fnc_startOperatorFeed = {
 		default { };
 	};
 
-	private _mainHndl = [_monitor] spawn {  
-		params ["_monitor"];  
-		private _cam = _monitor getVariable ["CFM_operatorCam", objNull];   
-		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
-		private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+	private _updPosSystem = missionNamespace getVariable ["CFM_updatePosSystem", false];
 
-		private _checkLocality = false;
-		private _opType = typeOf _op;
-		if (_op isKindOf "helicopter") then {
-			_checkLocality = true;
-		};
+	private _mainHndl = if !(_updPosSystem) then {
+		[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
 
-		waitUntil {
-			[_monitor, false, true] call CFM_fnc_updateCamera;
-			!(_monitor getVariable ["CFM_operatorFeedActive", false]) || {(isNull _cam) || {(isNull _monitor)}}
+		[_monitor] spawn {  
+			params ["_monitor"];  
+			private _cam = _monitor getVariable ["CFM_operatorCam", objNull];   
+			private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
+			private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
+
+			private _checkLocality = false;
+			private _opType = typeOf _op;
+			if (_op isKindOf "helicopter") then {
+				_checkLocality = true;
+			};
+
+			waitUntil {
+				[_monitor, false, true] call CFM_fnc_updateCamera;
+				[_monitor] call CFM_fnc_monitorLiveCondition
+			};
+			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
-		_cam cameraEffect ["terminate", "back", _renderTarget]; 
-		camDestroy _cam;  
-	};  
+	} else {scriptNull};
 	_monitor setVariable ["CFM_monitorMainHndl", _mainHndl];  
 }; 
+
+CFM_fnc_destroyCamera = {
+	params["_monitor"];
+
+	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];
+
+	if !(IS_OBJ(_cam)) exitWith {};
+
+	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];
+
+	_cam cameraEffect ["terminate", "back", _renderTarget]; 
+	camDestroy _cam;  
+};
 
 CFM_fnc_setupNvgAndTI = {
 	params["_operator"];
@@ -934,6 +974,7 @@ CFM_fnc_resetFeed = {
 
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor", ["_reset", false]];  
+	[_monitor] call CFM_fnc_destroyCamera;
 	_monitor setVariable ["CFM_operatorFeedActive", false];  
 	_monitor setVariable ["CFM_connectedOperator", nil]; 
 	_monitor setVariable ["CFM_isDroneFeed", nil];  
