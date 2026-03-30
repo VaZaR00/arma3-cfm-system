@@ -35,9 +35,13 @@ CFM_fnc_init = {
 
 			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 			{
+				private _monitorCamIsUpdating = _x getVariable ["CFM_monitorCamUpdating", true];
+				if !(_monitorCamIsUpdating) then {continue};
 				private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
 				if (!_monitorLive) then {
-					[_x] call CFM_fnc_stopOperatorFeed;
+					if ((_x getVariable ["CFM_isOff", true]) isEqualTo false) then {
+						[_x] call CFM_fnc_stopOperatorFeed;
+					};
 					continue
 				};
 				[_x, true] call CFM_fnc_updateCamera;
@@ -761,19 +765,30 @@ CFM_fnc_getZoomFov = {
 CFM_fnc_monitorLiveCondition = {
 	params["_monitor"];
 
-	private _active = _monitor getVariable ["CFM_operatorFeedActive", false]; 
-
-	CHECK_EX(!_active);
-
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull]; 
 
 	CHECK_EX(!IS_OBJ(_op));
 	CHECK_EX(!IS_OBJ(_cam));
-	CHECK_EX(!(alive _op));
+
+	private _opType = _op getVariable ["CFM_cameraType", GOPRO];
+
+	CHECK_EX(!(_opType isEqualTo GOPRO) && !(alive _op));
 	CHECK_EX(!(alive _cam));
+	
+	private _active = _monitor getVariable ["CFM_operatorFeedActive", false]; 
+
+	CHECK_EX(!_active);
 
 	true
+};
+
+CFM_fnc_monitorFeedActive = {
+	params["_monitor"];
+
+	private _active = _monitor getVariable ["CFM_operatorFeedActive", false]; 
+
+	_active
 };
 
 CFM_fnc_startOperatorFeed = {  
@@ -784,7 +799,8 @@ CFM_fnc_startOperatorFeed = {
 	[_monitor] call CFM_fnc_setMonitorTexture;
 	_monitor setVariable ["CFM_operatorCam", _cam];  
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
-	_monitor setVariable ["CFM_operatorFeedActive", true];  
+	_monitor setVariable ["CFM_operatorFeedActive", true]; 
+	_monitor setVariable ["CFM_isOff", false]; 
 
 	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))}) then {
 		// will be triggered only on monitor init
@@ -815,6 +831,8 @@ CFM_fnc_startOperatorFeed = {
 
 	private _updPosSystem = missionNamespace getVariable ["CFM_updatePosSystem", false];
 
+	_monitor setVariable ["CFM_monitorCamUpdating", _updPosSystem];
+
 	private _mainHndl = if !(_updPosSystem) then {
 		[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
 
@@ -831,10 +849,13 @@ CFM_fnc_startOperatorFeed = {
 			};
 
 			waitUntil {
-				[_monitor, false, true] call CFM_fnc_updateCamera;
-				[_monitor] call CFM_fnc_monitorLiveCondition
+				[_monitor, false, true, _checkLocality] call CFM_fnc_updateCamera;
+				!([_monitor] call CFM_fnc_monitorLiveCondition)
 			};
-			[_monitor] call CFM_fnc_stopOperatorFeed;
+	
+			if ((_monitor getVariable ["CFM_isOff", true]) isEqualTo false) then {
+				[_monitor] call CFM_fnc_stopOperatorFeed;
+			};
 		};
 	} else {scriptNull};
 	_monitor setVariable ["CFM_monitorMainHndl", _mainHndl];  
@@ -983,6 +1004,9 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setVariable ["CFM_nvgTable", nil];
 	_monitor setVariable ["CFM_canSwitchTi", nil];
 	_monitor setVariable ["CFM_canSwitchNvg", nil];
+	_monitor setVariable ['CFM_menuActive', false];
+	_monitor setVariable ['CFM_isOff', true];
+	_monitor setVariable ["CFM_monitorCamUpdating", false];
 	_monitor setObjectTexture [0, ""];  
 	if (_reset) exitWith {};
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
