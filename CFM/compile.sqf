@@ -242,10 +242,7 @@ CFM_fnc_setMonitor = {
 			private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
 				params ["_target"]; 
 				
-				private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
-				{
-					[_x] spawn CFM_fnc_resetFeed;
-				} forEach _monitors;
+				[] call CFM_fnc_fixFeed;
 			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", ACTION_RADIUS]; 
 			_actions append [_actionFix];
 		};
@@ -694,9 +691,12 @@ CFM_fnc_getCamPos = {
 			private _up = [];
 			if !(_justZoom) then {
 				private _eyeP = eyePos _obj; 
-				_dir = eyeDirection _obj; 
-				_up = _obj vectorModelToWorldVisual [0,0,1]; 
-				_pos = _eyeP vectorAdd [(_dir select 0) * 0.12, (_dir select 1) * 0.12, 0.08]; 
+				private _eyeDir = eyeDirection _obj; 
+				_pos = _eyeP vectorAdd [(_eyeDir select 0) * 0.6, (_eyeDir select 1) * 0.11, 0.08];
+				private _relEyePos = _obj worldToModel (ASLToAGL _eyeP);
+				private _dirUp = [_relEyePos, (_relEyePos vectorAdd _eyeDir)] call BIS_fnc_findLookAt; 
+				_dir = _dirUp#0;
+				_up = _dirUp#1;
 
 				_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
 			};
@@ -1097,3 +1097,9 @@ CFM_fnc_syncState = {
 	}; 
 }; 
 
+CFM_fnc_fixFeed = {
+	private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+	{
+		[_x] spawn CFM_fnc_resetFeed;
+	} forEach _monitors;
+};
