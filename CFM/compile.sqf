@@ -601,7 +601,7 @@ CFM_fnc_startOperatorFeed = {
 	[_monitor, _operator, _cam, _turret] call CFM_fnc_attachCam;
 
 	// TI and NVG
-	([_monitor, _operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
+	([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
 	_monitor setVariable ["CFM_tiTable", _tiTable];
 	_monitor setVariable ["CFM_nvgTable", _nvgTable];
 	_monitor setVariable ["CFM_canSwitchTi", _canSwitchTi];
