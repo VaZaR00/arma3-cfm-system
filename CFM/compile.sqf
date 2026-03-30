@@ -11,6 +11,13 @@
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_operatorFeedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance player) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
+#define OBJ_CONDITION(o) !((o isEqualTo objNull) || !(o isEqualType objNull))
+#define IS_STR(s) (s isEqualType "")
+#define TYPE_VEH "veh"
+#define TYPE_UAV "uav"
+#define TYPE_WEAP "weap"
+#define TYPE_HELM "helm"
+#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM]
 
 
 
@@ -39,10 +46,13 @@ CFM_fnc_init = {
 
 	CFM_tiModesTable = createHashMapFromArray [[0, 2], [1, 7], [6, 12]];
 
+	CFM_classesSetup = createHashMap;
+
 	CFM_inited = true;
 };
 
 CFM_fnc_setMonitor = { 
+	// should be executed globaly
 	params [
 		"_monitor", 
 		["_canZoom", true],
@@ -70,6 +80,11 @@ CFM_fnc_setMonitor = {
 	private _actionMenu = _monitor addAction ["<t color='#00FF00'>Camera System Menu</t>", { 
 		params ["_target", "_caller"]; 
 		private _ops = call CFM_fnc_getActiveCameras; 
+		private _opsGlobal = call CFM_fnc_getActiveCamerasCheckGlobal; 
+		{
+			_ops pushBackUnique _x;
+		} forEach _opsGlobal;
+		
 		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
 			
 		private _tempIDs = []; 
@@ -116,235 +131,348 @@ CFM_fnc_setMonitor = {
 
 	_actions append [_actionMenu, _actionDisc];
 
-	if (_canZoom) then {
-		private _actionZoomIn = _monitor addAction ["<t color='#c5dafa'>Zoom In</t>", { 
-			params ["_target"]; 
-			private _zoom = _target getVariable ['CFM_zoom', 1];
-			if !(_zoom isEqualType 1) then {
-				_zoom = 1;
-			};
-			private _newzoom = (_zoom + 1) max 1;
-			_target setVariable ['CFM_zoom', _newzoom, true];
-
-			private _type = _target getVariable ["CFM_cameraType", GOPRO];
-			private _maxZoom = switch (_type) do {
-				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
-				case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
-				default {1};
-			};
-
-			if (_newzoom >= _maxZoom) then {
-				_target setVariable ['CFM_maxZoomed', true, true];
-			};
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", ACTION_RADIUS]; 
-
-		private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
-			params ["_target"]; 
-
-			private _zoom = _target getVariable ['CFM_zoom', 1];
-			if !(_zoom isEqualType 1) then {
-				_zoom = 1;
-			};
-			private _newzoom = (_zoom - 1) max 1;
-
-			_target setVariable ['CFM_zoom', _newzoom, true];
-
-			_target setVariable ['CFM_maxZoomed', false, true];
-		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
-	
-		private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
-			params ["_target"]; 
-
-			_target setVariable ['CFM_zoom', "def", true];
-
-			_target setVariable ['CFM_maxZoomed', false, true];
-		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
-
-		_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
-	};
-
-	if (_canConnectDrone) then {
-		private _connectDroneAction = _monitor addAction ["<t color='#1c399e'>Take drone controls</t>", { 
-			params ["_target"]; 
-
-			private _drone = _target getVariable ["CFM_connectedOperator", objNull]; 
-			private _errtext = "Can't connect to drone";
-
-			if ((_drone isEqualTo objNull) || !(_drone isEqualType objNull)) exitWith {
-				hint _errtext;
-			};
-
-			private _controler = remoteControlled _drone;
-
-			if (!(_controler isEqualTo objNull) || !(_controler isEqualType objNull)) exitWith {
-				hint _errtext;
-			};
-
-			private _connect = player connectTerminalToUAV _drone;
-
-			if !(_connect) exitWith {
-				hint _errtext;
-			};
-
-			private _bot = driver _drone;
-			private _currTurret = _target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
-			if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
-				_bot = gunner _drone;
-				if (isNull _bot) then {
-					_bot = driver _drone;
+	// ACTIONS
+	call {
+		if (_canZoom) then {
+			private _actionZoomIn = _monitor addAction ["<t color='#c5dafa'>Zoom In</t>", { 
+				params ["_target"]; 
+				private _zoom = _target getVariable ['CFM_zoom', 1];
+				if !(_zoom isEqualType 1) then {
+					_zoom = 1;
 				};
-			};
+				private _newzoom = (_zoom + 1) max 1;
+				_target setVariable ['CFM_zoom', _newzoom, true];
 
-			player remoteControl (_bot);
-			_drone switchCamera "internal";
-		}, nil, 1.5, true, false, "", "
-			(_target getVariable ['CFM_operatorFeedActive', false]) && {
-				(_target getVariable ['CFM_isDroneFeed', false]) &&
-				{'terminal' in (toLower (player getSlotItemName 612))}
-			}
-		", ACTION_RADIUS]; 
-		_actions append [_connectDroneAction];
-	};
+				private _type = _target getVariable ["CFM_cameraType", GOPRO];
+				private _maxZoom = switch (_type) do {
+					case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
+					case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
+					default {1};
+				};
 
-	if (_canFix) then {
-		private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
-			params ["_target"]; 
-			
-			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
-			{
-				[_x] spawn CFM_fnc_resetFeed;
-			} forEach _monitors;
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", ACTION_RADIUS]; 
-		_actions append [_actionFix];
-	};
+				if (_newzoom >= _maxZoom) then {
+					_target setVariable ['CFM_maxZoomed', true, true];
+				};
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", ACTION_RADIUS]; 
 
-	if (_canSwitchTurret) then {
-		private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
-			params ["_target"]; 
-			
-			_target setVariable ["CFM_currentTurret", GUNNER_TURRET_PATH, true];  
-			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
-		}, nil, 1.5, true, false, "", "
-			(_target getVariable ['CFM_operatorFeedActive', false]) && {
-				(_target getVariable ['CFM_opHasTurrets', false]) && {
-					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
+			private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
+				params ["_target"]; 
+
+				private _zoom = _target getVariable ['CFM_zoom', 1];
+				if !(_zoom isEqualType 1) then {
+					_zoom = 1;
+				};
+				private _newzoom = (_zoom - 1) max 1;
+
+				_target setVariable ['CFM_zoom', _newzoom, true];
+
+				_target setVariable ['CFM_maxZoomed', false, true];
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+		
+			private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
+				params ["_target"]; 
+
+				_target setVariable ['CFM_zoom', "def", true];
+
+				_target setVariable ['CFM_maxZoomed', false, true];
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+
+			_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
+		};
+
+		if (_canConnectDrone) then {
+			private _connectDroneAction = _monitor addAction ["<t color='#1c399e'>Take drone controls</t>", { 
+				params ["_target"]; 
+
+				private _drone = _target getVariable ["CFM_connectedOperator", objNull]; 
+				private _errtext = "Can't connect to drone";
+
+				if ((_drone isEqualTo objNull) || !(_drone isEqualType objNull)) exitWith {
+					hint _errtext;
+				};
+
+				private _controler = remoteControlled _drone;
+
+				if (!(_controler isEqualTo objNull) || !(_controler isEqualType objNull)) exitWith {
+					hint _errtext;
+				};
+
+				private _connect = player connectTerminalToUAV _drone;
+
+				if !(_connect) exitWith {
+					hint _errtext;
+				};
+
+				private _bot = driver _drone;
+				private _currTurret = _target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
+				if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
+					_bot = gunner _drone;
+					if (isNull _bot) then {
+						_bot = driver _drone;
+					};
+				};
+
+				player remoteControl (_bot);
+				_drone switchCamera "internal";
+			}, nil, 1.5, true, false, "", "
+				(_target getVariable ['CFM_operatorFeedActive', false]) && {
+					(_target getVariable ['CFM_isDroneFeed', false]) &&
+					{'terminal' in (toLower (player getSlotItemName 612))}
 				}
-			}
-		", ACTION_RADIUS]; 
-		private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
-			params ["_target"]; 
+			", ACTION_RADIUS]; 
+			_actions append [_connectDroneAction];
+		};
 
-			_target setVariable ["CFM_currentTurret", DRIVER_TURRET_PATH, true];  
-			[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
-		}, nil, 1.5, true, false, "", "
-			(_target getVariable ['CFM_operatorFeedActive', false]) && {
-				(_target getVariable ['CFM_opHasTurrets', false]) && {
-					((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
-				}
-			}
-		", ACTION_RADIUS]; 
-		_actions append [_actionSwitchTurret, _actionSwitchDriver];
-	};
+		if (_canFix) then {
+			private _actionFix = _monitor addAction ["<t color='#690707'>Fix feed (local)</t>", { 
+				params ["_target"]; 
+				
+				private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+				{
+					[_x] spawn CFM_fnc_resetFeed;
+				} forEach _monitors;
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", ACTION_RADIUS]; 
+			_actions append [_actionFix];
+		};
 
-	if (_canTurnOffLocal) then {
-		private _actionTurnOffLocal = _monitor addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
-			params ["_target"]; 
-			
-			_target setObjectTexture [0, ""];  
-			_target setVariable ["CFM_turnedOffLocal", true]; 
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
-		private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
-			params ["_target"]; 
-			
-			[_target] call CFM_fnc_setMonitorTexture;
-			_target setVariable ["CFM_turnedOffLocal", false];  
-		}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
-		_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
-	};
-
-	if (_canSwitchNvg) then {
-		private _actionSwitchNvg = _monitor addAction ["<t color='#006e02'>Toggle NVG</t>", { 
-			params ["_target"]; 
-			
-			private _currentPiPEffect = _target getVariable ["CFM_currentPiPEffect", 0]; 
-			private _newEffect = 0;
-			if (_currentPiPEffect != 1) then {
-				_newEffect = 1;
-			};
-			if (_currentPiPEffect == 1) then {
-				_newEffect = 0;
-			};
-			[[_target, _newEffect], "CFM_fnc_setMonitorPiPEffect", true, _target] call CFM_fnc_remoteExec;
-		}, nil, 1.5, true, false, "", "
-			(_target getVariable ['CFM_operatorFeedActive', false]) && {
-				(_target getVariable ['CFM_canSwitchNvg', false]) && {
-					!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
-						(
-							(_target getVariable ['CFM_nvgTable', createHashMap]) getOrDefault 
-							[((_target getVariable ['CFM_currentTurret', [-1]])#0), false]
-						)
+		if (_canSwitchTurret) then {
+			private _actionSwitchTurret = _monitor addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
+				params ["_target"]; 
+				
+				_target setVariable ["CFM_currentTurret", GUNNER_TURRET_PATH, true];  
+				[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
+			}, nil, 1.5, true, false, "", "
+				(_target getVariable ['CFM_operatorFeedActive', false]) && {
+					(_target getVariable ['CFM_opHasTurrets', false]) && {
+						((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
 					}
 				}
-			}
-		", ACTION_RADIUS]; 
-		_actions append [_actionSwitchNvg];
-	};
+			", ACTION_RADIUS]; 
+			private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
+				params ["_target"]; 
 
-	if (_canSwitchTi) then {
-		private _actionSwitchTi = _monitor addAction ["<t color='#525252'>Toggle TI</t>", { 
-			params ["_target"]; 
-			
-			private _currentPiPEffect = _target getVariable ["CFM_currentPiPEffect", 0]; 
-			private _tiTable = _target getVariable ["CFM_tiTable", 0]; 
-			private _turret = (_target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH])#0; 
-			private _tiModes = _tiTable getOrDefault [_turret, [0]];
-			private _newEffect = if !(_currentPiPEffect in _tiModes) then {
-				_tiModes#0;
-			} else {
-				private _i = _tiModes find _currentPiPEffect;
-				private _newI = _i + 1;
-				if (_newI >= (count _tiModes)) exitWith {
-					0;
+				_target setVariable ["CFM_currentTurret", DRIVER_TURRET_PATH, true];  
+				[[_target], "CFM_fnc_resetFeed", true, _target] call CFM_fnc_remoteExec;
+			}, nil, 1.5, true, false, "", "
+				(_target getVariable ['CFM_operatorFeedActive', false]) && {
+					(_target getVariable ['CFM_opHasTurrets', false]) && {
+						((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
+					}
+				}
+			", ACTION_RADIUS]; 
+			_actions append [_actionSwitchTurret, _actionSwitchDriver];
+		};
+
+		if (_canTurnOffLocal) then {
+			private _actionTurnOffLocal = _monitor addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
+				params ["_target"]; 
+				
+				_target setObjectTexture [0, ""];  
+				_target setVariable ["CFM_turnedOffLocal", true]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
+			private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
+				params ["_target"]; 
+				
+				[_target] call CFM_fnc_setMonitorTexture;
+				_target setVariable ["CFM_turnedOffLocal", false];  
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
+			_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
+		};
+
+		if (_canSwitchNvg) then {
+			private _actionSwitchNvg = _monitor addAction ["<t color='#006e02'>Toggle NVG</t>", { 
+				params ["_target"]; 
+				
+				private _currentPiPEffect = _target getVariable ["CFM_currentPiPEffect", 0]; 
+				private _newEffect = 0;
+				if (_currentPiPEffect != 1) then {
+					_newEffect = 1;
 				};
-				_tiModes select _newI;
-			};
-			[[_target, _newEffect], "CFM_fnc_setMonitorPiPEffect", true, _target] call CFM_fnc_remoteExec;
-		}, nil, 1.5, true, false, "", "
-			(_target getVariable ['CFM_operatorFeedActive', false]) && {
-				(_target getVariable ['CFM_canSwitchTi', false]) && {
-					!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
-						(
-							!(
-								(
-									(_target getVariable ['CFM_tiTable', createHashMap]) getOrDefault 
-									[((_target getVariable ['CFM_currentTurret', [-1]])#0), []]
-								) isEqualTo []
+				if (_currentPiPEffect == 1) then {
+					_newEffect = 0;
+				};
+				[[_target, _newEffect], "CFM_fnc_setMonitorPiPEffect", true, _target] call CFM_fnc_remoteExec;
+			}, nil, 1.5, true, false, "", "
+				(_target getVariable ['CFM_operatorFeedActive', false]) && {
+					(_target getVariable ['CFM_canSwitchNvg', false]) && {
+						!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
+							(
+								(_target getVariable ['CFM_nvgTable', createHashMap]) getOrDefault 
+								[((_target getVariable ['CFM_currentTurret', [-1]])#0), false]
 							)
-						)
+						}
 					}
 				}
-			}
-		", ACTION_RADIUS]; 
-		_actions append [_actionSwitchTi];
+			", ACTION_RADIUS]; 
+			_actions append [_actionSwitchNvg];
+		};
+
+		if (_canSwitchTi) then {
+			private _actionSwitchTi = _monitor addAction ["<t color='#525252'>Toggle TI</t>", { 
+				params ["_target"]; 
+				
+				private _currentPiPEffect = _target getVariable ["CFM_currentPiPEffect", 0]; 
+				private _tiTable = _target getVariable ["CFM_tiTable", 0]; 
+				private _turret = (_target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH])#0; 
+				private _tiModes = _tiTable getOrDefault [_turret, [0]];
+				private _newEffect = if !(_currentPiPEffect in _tiModes) then {
+					_tiModes#0;
+				} else {
+					private _i = _tiModes find _currentPiPEffect;
+					private _newI = _i + 1;
+					if (_newI >= (count _tiModes)) exitWith {
+						0;
+					};
+					_tiModes select _newI;
+				};
+				[[_target, _newEffect], "CFM_fnc_setMonitorPiPEffect", true, _target] call CFM_fnc_remoteExec;
+			}, nil, 1.5, true, false, "", "
+				(_target getVariable ['CFM_operatorFeedActive', false]) && {
+					(_target getVariable ['CFM_canSwitchTi', false]) && {
+						!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
+							(
+								!(
+									(
+										(_target getVariable ['CFM_tiTable', createHashMap]) getOrDefault 
+										[((_target getVariable ['CFM_currentTurret', [-1]])#0), []]
+									) isEqualTo []
+								)
+							)
+						}
+					}
+				}
+			", ACTION_RADIUS]; 
+			_actions append [_actionSwitchTi];
+		};
 	};
 
 	_monitor setVariable ["CFM_mainActions", _actions];
 	_monitor setVariable ["CFM_isSet", true];
 };
 
+CFM_fnc_setCamera = {
+	// should be executed globaly
+	params["_op", ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+
+	if (!OBJ_CONDITION(_op) || !IS_STR(_op)) exitWith {false};
+	if !(IS_STR(_type)) then {
+		_type = "";
+	};
+
+	private _opIsObj = OBJ_CONDITION(_op);
+	private _classType = "";
+	if !(_opIsObj) then {
+		_classType = [_op] call CFM_fnc_validClassType;
+	};
+	if (!_opIsObj && !(_classType in VALID_CLASS_TYPES)) exitWith {false};
+
+	_hasTInNvg params ["_ti", "_nvg"];
+	if !(_ti isEqualType true) then {
+		_ti = true;
+	};
+	if !(_nvg isEqualType true) then {
+		_nvg = true;
+	};
+
+	private _clssSetup = missionNamespace getVariable ["CFM_classesSetup", createHashMap];
+
+	if (_opIsObj) then {
+		_op setVariable ["CFM_canSwitchTi", _ti];
+		_op setVariable ["CFM_canSwitchNvg", _nvg];
+	};
+
+	_type = if (_type isEqualTo "") then {
+		if (_op isKindOf "Man") exitWith {
+			GOPRO
+		};
+		if (_classType isEqualTo TYPE_HELM) exitWith {
+			GOPRO
+		};
+		DRONETYPE
+	} else {
+		_type
+	};
+
+	if (_opIsObj) then {
+		_op setVariable ["CFM_cameraType", _type];
+
+		switch (_type) do {
+			case GOPRO: {
+				_op setVariable ["CFM_hasGoPro", true];
+			};
+			case DRONETYPE: {
+				_op setVariable ["CFM_canFeed", true];
+			};
+			default {};
+		};
+	} else {
+		private _clsParams = _clssSetup getOrDefault [_op, createHashMap];
+		_clsParams set ["CFM_canSwitchTi", _ti];
+		_clsParams set ["CFM_canSwitchNvg", _nvg];
+		_clsParams set ["CFM_cameraType", _type];
+		_clssSetup set [_op, _clsParams];
+		if (_classType isEqualTo TYPE_HELM) then {
+			private _goproHelms = missionNamespace getVariable ["CFM_goProHelmets", createHashMap];
+			_goproHelms set [_op, true];
+			missionNamespace setVariable ["CFM_goProHelmets", _goproHelms];
+			CFM_checkGoPros = true;
+		};
+		if (_classType isEqualTo TYPE_UAV) then {
+			CFM_checkUavsCams = true;
+		};
+		if (_classType isEqualTo TYPE_VEH) then {
+			CFM_checkVehCams = true;
+		};
+	};
+
+	true
+};
+
+CFM_fnc_validClassType = {
+	params["_cls"];
+
+	private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
+	if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
+	if (_isVeh) exitWith {TYPE_VEH};
+	private _isWeap = isClass (configFile >> "CfgWeapons" >> _cls);
+	if (_isWeap && {
+		private _parents = [configFile >> "CfgWeapons" >> _cls >> "ItemInfo", true] call BIS_fnc_returnParents;
+		"headgearItem" in _parents
+	}) exitWith {TYPE_HELM};
+	if (_isWeap) exitWith {TYPE_WEAP};
+
+	""
+};
+
 CFM_fnc_cameraCondition = {
 	private _type = _this getVariable ["CFM_cameraType", GOPRO];
+	private _cls = typeOf _this;
+	private _clssSetup = missionNamespace getVariable ["CFM_classesSetup", createHashMap];
 
 	switch (_type) do {
 		case GOPRO: {
 			private _hasGoPro = _this getVariable ["CFM_hasGoPro", false];
-			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", []];
-			if (_goprohelms isEqualTo []) exitWith {_hasGoPro};
+			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", createHashMap];
+			if (_goprohelms isEqualTo createHashMap) exitWith {_hasGoPro};
 			private _playerHelm = headgear _this;
 			_playerHelm in _goprohelms;
 		};
 		case DRONETYPE: {
-			_this getVariable ["CFM_canFeed", false];
+			if !(alive _this) exitWith {false};
+			private _canFeed = _this getVariable ["CFM_canFeed", false];
+			if (_canFeed) exitWith {true};
+			if (_cls in _clssSetup) exitWith {
+				private _clsParams = _clssSetup get [_cls, createHashMap];
+				private _setType = _clsParams getOrDefault ["CFM_cameraType", ""];
+				private _ti = _clsParams getOrDefault ["CFM_canSwitchTi", 0];
+				private _nvg = _clsParams getOrDefault ["CFM_canSwitchNvg", 0];
+				_this setVariable ["CFM_cameraType", _setType];
+				_this setVariable ["CFM_canSwitchTi", _ti];
+				_this setVariable ["CFM_canSwitchNvg", _nvg];
+				_this setVariable ["CFM_canFeed", true];
+				true
+			};
+			_canFeed
 		};
 		default {false};
 	};
@@ -352,19 +480,20 @@ CFM_fnc_cameraCondition = {
 
 CFM_fnc_getActiveCamerasCheckGlobal = {
 	private _obj = [];
-	if (missionNamespace getVariable ["CFM_hasGoPros", false]) then {
+	if (missionNamespace getVariable ["CFM_checkGoPros", false]) then {
 		_obj append allUnits;
 	}; 
-	if (missionNamespace getVariable ["CFM_hasUavsCams", false]) then {
+	if (missionNamespace getVariable ["CFM_checkUavsCams", false]) then {
 		_obj append allUnitsUAV;
 	}; 
-	if (missionNamespace getVariable ["CFM_hasVehCams", false]) then {
+	if (missionNamespace getVariable ["CFM_checkVehCams", false]) then {
 		_obj append vehicles;
 	}; 
 	private _playerSide = side player;
 	_obj select {  
-		(((side _x) isEqualTo _playerSide) || side _x == civilian) &&  
-		alive _x &&  
+		private _side = side _x;
+		private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
+		((_side isEqualTo _playerSide) || ((_playerSide in _sidesUseCiv) && {_side == civilian})) && 
 		(_x call CFM_fnc_cameraCondition)  
 	}  
 }; 
@@ -645,11 +774,11 @@ CFM_fnc_setupNvgAndTI = {
 
 	private _d = 0;
 	private _typeOp = typeOf _operator;
-	private _canSwitchTi = _operator getVariable ["CFM_canSwitchTi", false];
-	private _canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", false];
+	private _canSwitchTi = _operator getVariable ["CFM_canSwitchTi", 0];
+	private _canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", 0];
 	private _tiTable = _operator getVariable ["CFM_tiTable", []];
 	private _nvgTable = _operator getVariable ["CFM_nvgTable", []];
-	if ((_tiTable isEqualTo []) && {!(_tiTable isEqualTo createHashMap)}) then {
+	if (!(_canSwitchTi isEqualTo false) && ((_tiTable isEqualTo []) && {!(_tiTable isEqualTo createHashMap)})) then {
 		private _tiPilot = getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "thermalMode");
 		private _tiTurret = getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "thermalMode");
 		
@@ -673,7 +802,7 @@ CFM_fnc_setupNvgAndTI = {
 		_operator setVariable ["CFM_tiTable", _tiTable];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
 	};
-	if ((_nvgTable isEqualTo []) && {!(_nvgTable isEqualTo createHashMap)}) then {
+	if (!(_canSwitchNvg isEqualTo false) && (_nvgTable isEqualTo []) && {!(_nvgTable isEqualTo createHashMap)}) then {
 		private _nvgPilot = "NVG" in (getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "visionMode"));
 		private _nvgTurret = "NVG" in (getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "visionMode"));
 		
@@ -687,6 +816,13 @@ CFM_fnc_setupNvgAndTI = {
 		};
 		_operator setVariable ["CFM_nvgTable", _nvgTable];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
+	};
+
+	if !(_canSwitchTi isEqualType true) then {
+		_canSwitchTi = _canSwitchTi isEqualTo 1;
+	};
+	if !(_canSwitchNvg isEqualType true) then {
+		_canSwitchNvg = _canSwitchNvg isEqualTo 1;
 	};
 
 	[_tiTable, _nvgTable, _canSwitchTi, _canSwitchNvg, _d,
