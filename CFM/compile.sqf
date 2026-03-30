@@ -44,7 +44,8 @@ CFM_fnc_init = {
 					};
 					continue
 				};
-				[_x, true] call CFM_fnc_updateCamera;
+				private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
+				[_x, true, false, _checkLocality] call CFM_fnc_updateCamera;
 			} forEach _monitors;
 		}];
 		CFM_EH_id = _id;
@@ -498,6 +499,12 @@ CFM_fnc_validClassType = {
 	""
 };
 
+CFM_fnc_isUAV = {
+	params["_obj"];
+
+	(_obj isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _obj) >> "isUav")) isEqualTo 1}
+};
+
 CFM_fnc_cameraCondition = {
 	private _type = [_this] call CFM_fnc_cameraType;
 	private _cls = typeOf _this;
@@ -557,7 +564,7 @@ CFM_fnc_getActiveCameras = {
 };
 
 CFM_fnc_updateCamera = {  
-	params ["_monitor", ["_setup", false], ["_justZoom", false], ["_turretLocal", false]];  
+	params ["_monitor", ["_setup", false, [false]], ["_justZoom", false, [false]], ["_turretLocal", false, [false]]];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
 
@@ -791,8 +798,20 @@ CFM_fnc_monitorFeedActive = {
 	_active
 };
 
+CFM_fnc_doCheckTurretLocality = {
+	params["_op"];
+
+	if !(IS_OBJ(_op)) exitWith {false};
+
+	[_op] call CFM_fnc_isUAV;
+};
+
 CFM_fnc_startOperatorFeed = {  
-	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
+	params ["_monitor", ["_operator", objNull], ["_turret", DRIVER_TURRET_PATH]];  
+
+	if !(IS_OBJ(_monitor)) exitWith {"CFM_fnc_startOperatorFeed: Monitor is not an object"};
+	if !(IS_OBJ(_operator)) exitWith {"CFM_fnc_startOperatorFeed: Operator is not an object"};
+
 	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 	private _cam = "camera" camCreate [0,0,0];  
 	_cam cameraEffect ["internal", "back", _renderTarget];  
@@ -801,6 +820,8 @@ CFM_fnc_startOperatorFeed = {
 	_monitor setVariable ["CFM_connectedOperator", _operator];  
 	_monitor setVariable ["CFM_operatorFeedActive", true]; 
 	_monitor setVariable ["CFM_isOff", false]; 
+	_monitor setVariable ["CFM_opIsUAV", [_operator] call CFM_fnc_isUAV]; 
+	_monitor setVariable ["CFM_doCheckTurretLocality", [_operator] call CFM_fnc_doCheckTurretLocality]; 
 
 	if ((isNil {_monitor getVariable ["CFM_currentTurret", nil]}) && {("uav_0" in (toLower (typeOf _operator)))}) then {
 		// will be triggered only on monitor init
@@ -842,11 +863,8 @@ CFM_fnc_startOperatorFeed = {
 			private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 			private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 
-			private _checkLocality = false;
+			private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
 			private _opType = typeOf _op;
-			if (_op isKindOf "helicopter") then {
-				_checkLocality = true;
-			};
 
 			waitUntil {
 				[_monitor, false, true, _checkLocality] call CFM_fnc_updateCamera;
@@ -1005,6 +1023,8 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setVariable ["CFM_canSwitchTi", nil];
 	_monitor setVariable ["CFM_canSwitchNvg", nil];
 	_monitor setVariable ['CFM_menuActive', false];
+	_monitor setVariable ["CFM_opIsUAV", nil];
+	_monitor setVariable ["CFM_doCheckTurretLocality", nil];
 	_monitor setVariable ['CFM_isOff', true];
 	_monitor setVariable ["CFM_monitorCamUpdating", false];
 	_monitor setObjectTexture [0, ""];  
