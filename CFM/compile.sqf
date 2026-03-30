@@ -24,31 +24,10 @@
 
 
 CFM_fnc_init = {
-	if !(isNil "CFM_EH_id") exitWith {};
-
 	CFM_updatePosSystem = false;
 
-	if (true) then {
-		if !(isNil "CFM_EH_id") exitWith {};
-		private _id = addMissionEventHandler ["Draw3D", {
-			if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
-
-			private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
-			{
-				private _monitorCamIsUpdating = _x getVariable ["CFM_monitorCamUpdating", true];
-				if !(_monitorCamIsUpdating) then {continue};
-				private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
-				if (!_monitorLive) then {
-					if ((_x getVariable ["CFM_isOff", true]) isEqualTo false) then {
-						[_x] call CFM_fnc_stopOperatorFeed;
-					};
-					continue
-				};
-				private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
-				[_x, true, false, _checkLocality] call CFM_fnc_updateCamera;
-			} forEach _monitors;
-		}];
-		CFM_EH_id = _id;
+	if (CFM_updatePosSystem) then {
+		[] call CFM_fnc_setupDraw3dEH;
 	};
 
 	CFM_max_zoom_gopro = 2;
@@ -62,6 +41,29 @@ CFM_fnc_init = {
 	CFM_classesSetup = createHashMap;
 
 	CFM_inited = true;
+};
+
+CFM_fnc_setupDraw3dEH = {
+	if !(isNil "CFM_EH_id") exitWith {};
+	private _id = addMissionEventHandler ["Draw3D", {
+		if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
+
+		private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+		{
+			private _monitorCamIsUpdating = _x getVariable ["CFM_monitorCamUpdating", true];
+			if !(_monitorCamIsUpdating) then {continue};
+			private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
+			if (!_monitorLive) then {
+				if ((_x getVariable ["CFM_isOff", true]) isEqualTo false) then {
+					[_x] call CFM_fnc_stopOperatorFeed;
+				};
+				continue
+			};
+			private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
+			[_x, true, false, _checkLocality] call CFM_fnc_updateCamera;
+		} forEach _monitors;
+	}];
+	CFM_EH_id = _id;
 };
 
 CFM_fnc_setMonitor = { 
@@ -875,7 +877,10 @@ CFM_fnc_startOperatorFeed = {
 				[_monitor] call CFM_fnc_stopOperatorFeed;
 			};
 		};
-	} else {scriptNull};
+	} else {
+		[] call CFM_fnc_setupDraw3dEH;
+		scriptNull
+	};
 	_monitor setVariable ["CFM_monitorMainHndl", _mainHndl];  
 }; 
 
