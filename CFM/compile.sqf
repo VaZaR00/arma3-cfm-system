@@ -350,7 +350,7 @@ CFM_fnc_cameraCondition = {
 	};
 };
 
-CFM_fnc_getActiveCameras = {
+CFM_fnc_getActiveCamerasCheckGlobal = {
 	private _obj = [];
 	if (missionNamespace getVariable ["CFM_hasGoPros", false]) then {
 		_obj append allUnits;
@@ -368,6 +368,10 @@ CFM_fnc_getActiveCameras = {
 		(_x call CFM_fnc_cameraCondition)  
 	}  
 }; 
+
+CFM_fnc_getActiveCameras = {
+	(missionNamespace getVariable ["CFM_activeCameras", []]) select {_x call CFM_fnc_cameraCondition};
+};
 
 CFM_fnc_updateCamera = {  
 	params ["_monitor", ["_setup", false], ["_justZoom", false], ["_turretLocal", false]];  
