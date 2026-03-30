@@ -37,6 +37,8 @@ CFM_fnc_init = {
 	CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 	CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
 
+	CFM_tiModesTable = createHashMapFromArray [[0, 2], [1, 7], [6, 12]];
+
 	CFM_inited = true;
 };
 
@@ -647,21 +649,13 @@ CFM_fnc_setupNvgAndTI = {
 		private _tiPilot = getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "thermalMode");
 		private _tiTurret = getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "thermalMode");
 		
+		private _tiModesTable = missionNamespace getVariable ["CFM_tiModesTable", createHashMap];
+
 		_tiPilot = _tiPilot apply {
-			switch (_x) do {
-				case 0: {2};
-				case 1: {7};
-				case 6: {12};
-				default {2};
-			};
+			_tiModesTable getOrDefault [_x, 2]
 		};
 		_tiTurret = _tiTurret apply {
-			switch (_x) do {
-				case 0: {2};
-				case 1: {7};
-				case 6: {12};
-				default {2};
-			};
+			_tiModesTable getOrDefault [_x, 2]
 		};
 
 		_d = 1;
