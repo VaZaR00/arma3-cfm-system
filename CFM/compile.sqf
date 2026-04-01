@@ -1,3 +1,6 @@
+#define DO_CAM_INTERPOLATION false
+
+
 #define GOPRO "gopro"
 #define DRONETYPE "droneTurret"
 #define DEF_FOV_GOPRO 0.85
@@ -562,6 +565,43 @@ CFM_fnc_getActiveCameras = {
 	(missionNamespace getVariable ["CFM_activeCameras", []]) select {_x call CFM_fnc_cameraCondition};
 };
 
+CFM_fnc_timeInterpolate = {
+    params ["_cam", "_targetPos", "_targetDir", "_targetUp", ["_tightness", 5], ["_dt", diag_deltaTime]];
+    
+	if !(DO_CAM_INTERPOLATION) exitWith {
+		[_targetPos, [_targetDir, _targetUp]];
+	};
+
+    // Формула затухания, независимая от FPS: 
+    // Эффект = 1 - e^(-tightness * dt)
+    private _interpFactor = 1 - (exp (-_tightness * _dt));
+
+    // 1. Позиция
+    private _lastPos = _cam getVariable ["CFM_cam_lastPos", _targetPos];
+    private _newPos = +_lastPos;
+
+    // Интерполируем каждую ось (или через vectorAdd/vectorDiff)
+    for "_i" from 0 to 2 do {
+        private _diff = (_targetPos select _i) - (_lastPos select _i);
+        _newPos set [_i, (_lastPos select _i) + (_diff * _interpFactor)];
+    };
+
+    // 2. Векторы (Dir и Up)
+    private _lastDir = _cam getVariable ["CFM_cam_lastDir", _targetDir];
+    private _lastUp = _cam getVariable ["CFM_cam_lastUp", _targetUp];
+
+    // Плавный поворот векторов
+    private _newDir = _lastDir vectorAdd ((_targetDir vectorDiff _lastDir) vectorMultiply _interpFactor);
+    private _newUp = _lastUp vectorAdd ((_targetUp vectorDiff _lastUp) vectorMultiply _interpFactor);
+
+    // 3. Сохраняем состояние
+    _cam setVariable ["CFM_cam_lastPos", _newPos];
+    _cam setVariable ["CFM_cam_lastDir", _newDir];
+    _cam setVariable ["CFM_cam_lastUp", _newUp];
+
+    [_newPos, [_newDir, _newUp]];
+};
+
 CFM_fnc_updateCamera = {  
 	params ["_monitor", ["_setup", false, [false]], ["_justZoom", false, [false]], ["_turretLocal", false, [false]]];  
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
@@ -586,11 +626,14 @@ CFM_fnc_updateCamera = {
 	};
 
 	if (_setup) then {
-		if ((count _pos) == 3) then {
-			_cam setPosASL _pos; 
+		private _posAndVUP = [_cam, _pos, _dir, _up, 5] call CFM_fnc_timeInterpolate;
+		_posAndVUP params ["_newpos", ["_vDirUp", []]];
+		_vDirUp params [["_newdir", []], ["_newup", []]];
+		if ((count _newpos) == 3) then {
+			_cam setPosASL _newpos; 
 		};
-		if ((count _dir) == 3) then {
-			_cam setVectorDirAndUp [_dir, _up];  
+		if (((count _newdir) == 3) && {((count _newup) == 3)}) then {
+			_cam setVectorDirAndUp [_newdir, _newup];  
 		};
 	};
 	_cam camSetFov _fov;  
@@ -642,8 +685,10 @@ CFM_fnc_getUAVCameraPoints = {
 CFM_fnc_memoryPointAlignment = {
 	params["_obj", ["_pointParams", "", [[], ""]]];
 
+	private _lod = ((allLODs _obj) select {((_x#1) isEqualTo "Memory")})#0;
+
 	if (_pointParams isEqualType "") exitWith {
-		_obj selectionPosition [_pointParams, "Memory"]
+		selectionPosition [_obj, _pointParams, _lod, true]
 	};
 	if !(_pointParams isEqualType []) exitWith {
 		[0,0,0]
@@ -658,7 +703,7 @@ CFM_fnc_memoryPointAlignment = {
 		_setArr = [-1,-1,-1];
 	};
 
-	private _selPos = _obj selectionPosition [_point, "Memory"];
+	private _selPos = selectionPosition [_obj, _point, _lod, true];
 	_selPos = _selPos vectorAdd _addArr;
 
 	for "_i" from 0 to 2 do {
@@ -667,6 +712,31 @@ CFM_fnc_memoryPointAlignment = {
 		_selPos set [_i, _set];
 	};
 	_selPos
+};
+
+CFM_fnc_getOffsetInModelSpace = {
+    params ["_unit", ["_selectionName", "head"], ["_offset", [0,0,0]]];
+
+    // 1. Получаем позицию селекшна в Model Space
+    private _selectionPosMS = _unit selectionPosition _selectionName;
+
+    // 2. Получаем ориентацию селекшна (векторы направления и верха)
+    private _dirUp = _unit selectionVectorDirAndUp _selectionName;
+    private _dir = _dirUp#0;
+    private _up = _dirUp#1;
+
+    // 3. Строим правую сторону (вектор Right) для полной системы координат
+    private _right = _dir vectorCrossProduct _up;
+
+    // 4. Трансформируем офсет
+    // Мы умножаем компоненты офсета на соответствующие векторы ориентации
+    private _rotatedOffset = [0,0,0];
+    _rotatedOffset = _rotatedOffset vectorAdd (_right vectorMultiply (_offset select 0)); // X - влево/вправо
+    _rotatedOffset = _rotatedOffset vectorAdd (_dir   vectorMultiply (_offset select 1)); // Y - вперед/назад
+    _rotatedOffset = _rotatedOffset vectorAdd (_up    vectorMultiply (_offset select 2)); // Z - вверх/вниз
+
+    // 5. Итоговая позиция в Model Space
+    _selectionPosMS vectorAdd _rotatedOffset
 };
 
 CFM_fnc_getCamPos = {
@@ -690,13 +760,12 @@ CFM_fnc_getCamPos = {
 			private _dir = [];
 			private _up = [];
 			if !(_justZoom) then {
-				private _eyeP = eyePos _obj; 
-				private _eyeDir = eyeDirection _obj; 
-				_pos = _eyeP vectorAdd [(_eyeDir select 0) * 0.6, (_eyeDir select 1) * 0.11, 0.08];
-				private _relEyePos = _obj worldToModel (ASLToAGL _eyeP);
-				private _dirUp = [_relEyePos, (_relEyePos vectorAdd _eyeDir)] call BIS_fnc_findLookAt; 
-				_dir = _dirUp#0;
-				_up = _dirUp#1;
+				private _headPos = selectionPosition [_obj, "head", 9, true];
+				private _dirUp = _obj selectionVectorDirAndUp ["head", "memory"]; 
+				_dir = _obj vectorModelToWorldVisual _dirUp#0;
+				_up = _obj vectorModelToWorldVisual _dirUp#1;
+				_headPos = [_obj, ["head", "memory"], [-0.19, 0.1, 0.25]] call CFM_fnc_getOffsetInModelSpace;
+				_pos = _obj modelToWorldVisualWorld _headPos; 
 
 				_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
 			};
@@ -732,8 +801,8 @@ CFM_fnc_getCamPos = {
 
 				private _startRelObj = [_obj, _posPointParams] call CFM_fnc_memoryPointAlignment;  
 				private _endRelObj = [_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment; 
-				private _startAbs = _obj modelToWorldWorld _startRelObj;
-				private _endAbs = _obj modelToWorldWorld _endRelObj;
+				private _startAbs = _obj modelToWorldVisualWorld _startRelObj;
+				private _endAbs = _obj modelToWorldVisualWorld _endRelObj;
 				private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
 
 				_dir = _dirUp#0;
@@ -1020,6 +1089,7 @@ CFM_fnc_resetFeed = {
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor", ["_reset", false]];  
 	[_monitor] call CFM_fnc_destroyCamera;
+	_monitor setVariable ["CFM_operatorCam", nil];  
 	_monitor setVariable ["CFM_operatorFeedActive", false];  
 	_monitor setVariable ["CFM_connectedOperator", nil]; 
 	_monitor setVariable ["CFM_isDroneFeed", nil];  
