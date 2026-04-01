@@ -20,27 +20,75 @@ CFM_fnc_init = {
 	CFM_inited = true;
 };
 
+CFM_fnc_draw3dEH = {
+	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
+
+	private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+	{
+		private _monitorCamIsUpdating = _x getVariable ["CFM_monitorCamUpdating", true];
+		if !(_monitorCamIsUpdating) then {continue};
+		private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
+		if (!_monitorLive) then {
+			if ((_x getVariable ["CFM_isOff", true]) isEqualTo false) then {
+				[_x] call CFM_fnc_stopOperatorFeed;
+			};
+			continue
+		};
+		private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
+		[_x, true, false, _checkLocality] call CFM_fnc_updateCamera;
+	} forEach _monitors;
+
+	// UPDATE OBJECT ZOOM
+	private _isRemoteControlling = isRemoteControlling player;
+	if !(_isRemoteControlling) exitWith {};
+
+	private _controlledObj = remoteControlled player;
+	if (_controlledObj isEqualTo objNull) exitWith {};
+	if (_controlledObj isEqualTo player) exitWith {};
+	if (_controlledObj isEqualTo (vehicle player)) exitWith {};
+
+	private _currentFOV = getObjectFOV _controlledObj;
+	private _currentZoom = round (1 / _currentFOV);
+	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", _currentZoom];
+
+	if (_currentZoom isEqualTo _prevZoom) exitWith {};
+
+	_controlledObj setVariable ["CFM_prevZoom", _currentZoom, true];
+};
+
 CFM_fnc_setupDraw3dEH = {
 	if !(isNil "CFM_EH_id") exitWith {};
-	private _id = addMissionEventHandler ["Draw3D", {
-		if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
-
-		private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
-		{
-			private _monitorCamIsUpdating = _x getVariable ["CFM_monitorCamUpdating", true];
-			if !(_monitorCamIsUpdating) then {continue};
-			private _monitorLive = [_x] call CFM_fnc_monitorLiveCondition;
-			if (!_monitorLive) then {
-				if ((_x getVariable ["CFM_isOff", true]) isEqualTo false) then {
-					[_x] call CFM_fnc_stopOperatorFeed;
-				};
-				continue
-			};
-			private _checkLocality = _monitor getVariable ["CFM_doCheckTurretLocality", false];
-			[_x, true, false, _checkLocality] call CFM_fnc_updateCamera;
-		} forEach _monitors;
-	}];
+	private _id = addMissionEventHandler ["Draw3D", {call CFM_fnc_draw3dEH}];
 	CFM_EH_id = _id;
+};
+
+CFM_fnc_zoom = {
+	params ["_op", ["_zoomAdd", 0], ["_zoomSet", -1]]; 
+
+	if !(_zoomAdd isEqualType 1) exitWith {
+		_op setVariable ['CFM_zoom', _zoomAdd, true];
+	};
+	private _newZoom = if (_zoomSet isEqualTo -1) then {
+		private _zoom = _op getVariable ['CFM_zoom', 1];
+		if !(_zoom isEqualType 1) then {
+			_zoom = 1;
+		};
+		(_zoom + _zoomAdd) max 1;
+	} else {
+		_zoomSet
+	};
+
+	_op setVariable ['CFM_zoom', _newzoom, true];
+
+	private _type = _op getVariable ["CFM_cameraType", GOPRO];
+	private _maxZoom = switch (_type) do {
+		case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
+		case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
+		default {1};
+	};
+
+	private _zoomedMax = _newzoom >= _maxZoom;
+	_op setVariable ['CFM_maxZoomed', _zoomedMax, true];
 };
 
 CFM_fnc_setMonitor = { 
@@ -127,49 +175,30 @@ CFM_fnc_setMonitor = {
 	call {
 		if (_canZoom) then {
 			private _actionZoomIn = _monitor addAction ["<t color='#c5dafa'>Zoom In</t>", { 
-				params ["_target"]; 
-				private _zoom = _target getVariable ['CFM_zoom', 1];
-				if !(_zoom isEqualType 1) then {
-					_zoom = 1;
-				};
-				private _newzoom = (_zoom + 1) max 1;
-				_target setVariable ['CFM_zoom', _newzoom, true];
-
-				private _type = _target getVariable ["CFM_cameraType", GOPRO];
-				private _maxZoom = switch (_type) do {
-					case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
-					case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
-					default {1};
-				};
-
-				if (_newzoom >= _maxZoom) then {
-					_target setVariable ['CFM_maxZoomed', true, true];
-				};
+				params ["_target"];
+				
+				[_target, +1] call CFM_fnc_zoom;
 			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", ACTION_RADIUS]; 
 
 			private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
-				params ["_target"]; 
-
-				private _zoom = _target getVariable ['CFM_zoom', 1];
-				if !(_zoom isEqualType 1) then {
-					_zoom = 1;
-				};
-				private _newzoom = (_zoom - 1) max 1;
-
-				_target setVariable ['CFM_zoom', _newzoom, true];
-
-				_target setVariable ['CFM_maxZoomed', false, true];
+				params ["_target"];
+				
+				[_target, -1] call CFM_fnc_zoom;
 			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
 		
 			private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
 				params ["_target"]; 
 
-				_target setVariable ['CFM_zoom', "def", true];
-
-				_target setVariable ['CFM_maxZoomed', false, true];
+				[_target, "reset"] call CFM_fnc_zoom;
 			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
 
-			_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault];
+			private _actionZoomByDrone = _monitor addAction ["<t color='#90c73e'>Use Operator Zoom</t>", { 
+				params ["_target"]; 
+
+				[_target, "op"] call CFM_fnc_zoom;
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+
+			_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 		};
 
 		if (_canConnectDrone) then {
@@ -739,6 +768,10 @@ CFM_fnc_getCamPos = {
 
 	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
 
+	if (_zoom isEqualTo "op") then {
+		_zoom = _op getVariable ['CFM_prevZoom', _zoom];
+	};
+
 	private _zoomDefault = !(_zoom isEqualType 1);
 
 	switch (_type) do {
@@ -788,8 +821,6 @@ CFM_fnc_getCamPos = {
 				_pos = _obj modelToWorldVisualWorld _dirPointPos;
 				_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
 				_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
-
-				LOG_VARS("DRONE CAM POINTS", "_obj, _dirPointPos, _dirPointVUP, _pos, _dir, _up");
 			};
 
 			private _fov = if !(_zoomDefault) then {
@@ -819,7 +850,7 @@ CFM_fnc_getZoomFov = {
 
 	if !(_table isEqualType createHashMap) exitWith {1};
 
-	_table getOrDefault [_zoom, 1];
+	_table getOrDefault [_zoom, 1/_zoom];
 };
 
 CFM_fnc_monitorLiveCondition = {
