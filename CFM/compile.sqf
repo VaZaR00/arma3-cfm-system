@@ -20,6 +20,24 @@ CFM_fnc_init = {
 	CFM_inited = true;
 };
 
+CFM_fnc_updateOperatorZoom = {
+	private _isRemoteControlling = isRemoteControlling player;
+	if !(_isRemoteControlling) exitWith {};
+
+	private _controlledObj = remoteControlled player;
+	if (_controlledObj isEqualTo objNull) exitWith {};
+	if (_controlledObj isEqualTo player) exitWith {};
+	if (_controlledObj isEqualTo (vehicle player)) exitWith {};
+
+	private _currentFOV = getObjectFOV _controlledObj;
+	private _currentZoom = round (1 / _currentFOV);
+	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", _currentZoom];
+
+	if (_currentZoom isEqualTo _prevZoom) exitWith {};
+
+	_controlledObj setVariable ["CFM_prevZoom", _currentZoom, true];
+};
+
 CFM_fnc_draw3dEH = {
 	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
 
@@ -39,21 +57,7 @@ CFM_fnc_draw3dEH = {
 	} forEach _monitors;
 
 	// UPDATE OBJECT ZOOM
-	private _isRemoteControlling = isRemoteControlling player;
-	if !(_isRemoteControlling) exitWith {};
-
-	private _controlledObj = remoteControlled player;
-	if (_controlledObj isEqualTo objNull) exitWith {};
-	if (_controlledObj isEqualTo player) exitWith {};
-	if (_controlledObj isEqualTo (vehicle player)) exitWith {};
-
-	private _currentFOV = getObjectFOV _controlledObj;
-	private _currentZoom = round (1 / _currentFOV);
-	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", _currentZoom];
-
-	if (_currentZoom isEqualTo _prevZoom) exitWith {};
-
-	_controlledObj setVariable ["CFM_prevZoom", _currentZoom, true];
+	// [] call CFM_fnc_updateOperatorZoom;
 };
 
 CFM_fnc_setupDraw3dEH = {
@@ -287,13 +291,13 @@ CFM_fnc_setMonitor = {
 				
 				_target setObjectTexture [0, ""];  
 				_target setVariable ["CFM_turnedOffLocal", true]; 
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}", ACTION_RADIUS]; 
 			private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
 				params ["_target"]; 
 				
 				[_target] call CFM_fnc_setMonitorTexture;
 				_target setVariable ["CFM_turnedOffLocal", false];  
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}"]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}", ACTION_RADIUS]; 
 			_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
 		};
 
