@@ -17,6 +17,8 @@ CFM_fnc_init = {
 
 	CFM_classesSetup = createHashMap;
 
+	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
+
 	CFM_inited = true;
 };
 
@@ -1134,49 +1136,60 @@ CFM_fnc_createPIPwindow = {
     _player setVariable ["CFM_currentRscLayer", _renderTarget];
     _player setVariable ["CFM_currentDisplay", _display];
     
-    private _settings = missionNamespace getVariable ["CFM_PIPsettings", [0.2, 0.2, 0, 1]]; 
-    _settings params ["_w", "_h", "_offsetX", "_offsetY"];
+    private _settings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR]; 
+	_settings = call compile _settings; 
+	if ((isNil "_settings") || {!(_settings isEqualType [])}) then {
+		_settings = DEFAULT_PIP_SETTINGS;
+	};
+    _settings params [["_size", 0.2], ["_offsetX", 1], ["_offsetY", 0.8]];
 
-    private _width = _w * safeZoneW;
-    private _height = _h * safeZoneH;
-    private _posX = safeZoneX + safeZoneW - _width - _offsetX;
-    private _posY = safeZoneY + _offsetY;
+	private _w = _size;
+	private _h = _size;
+	if (_size isEqualType []) then {
+		_w = _size#0;
+		_h = _size#1;
+	};
+
+    private _totalW = _w * safeZoneW;
+    private _totalH = _h * safeZoneH;
+    
+    private _bgX = safeZoneX + (safeZoneW - _totalW) * _offsetX;
+    private _bgY = safeZoneY + (safeZoneH - _totalH) * _offsetY;
 
     private _borderSize = 0.004;
     private _headerHeight = 0.03; 
 
-    // 1. ФОН 
     private _background = _display ctrlCreate ["RscText", -1];
     _background ctrlSetBackgroundColor [0, 0, 0, 1];
-    _background ctrlSetPosition [
-        _posX - _borderSize, 
-        _posY - _headerHeight, 
-        _width + (_borderSize * 2), 
-        _height + _borderSize + _headerHeight
-    ];
+    _background ctrlSetPosition [_bgX, _bgY, _totalW, _totalH];
     _background ctrlCommit 0;
 
-    // 2. ТЕКСТ 
     private _title = _display ctrlCreate ["RscText", -1];
     _title ctrlSetText "CAMERA FEED";
     _title ctrlSetTextColor [1, 1, 1, 1]; 
     _title ctrlSetPosition [
-        _posX + 0.183, // небольшой отступ текста от края
-        _posY - _headerHeight, 
-        _width, 
+        _bgX, 
+        _bgY, 
+        _totalW, 
         _headerHeight
     ];
-    _title ctrlSetScale 0.9;
+    _title ctrlSetScale 0.85; 
     _title ctrlCommit 0;
 
-    // 3. КАРТИНКА 
     private _pictureCtrl = _display ctrlCreate ["RscPicture", -1];
-    _pictureCtrl ctrlSetPosition [_posX, _posY, _width, _height];
+    
+    private _picX = _bgX + _borderSize;
+    private _picY = _bgY + _headerHeight;
+    private _picW = _totalW - (_borderSize * 2);
+    private _picH = _totalH - _headerHeight - _borderSize;
+
+    _pictureCtrl ctrlSetPosition [_picX, _picY, _picW, _picH];
     _pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
     _pictureCtrl ctrlCommit 0;
-	_player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
+    
+    _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
 
-    [_display, _pictureCtrl, "_background", _title]
+    [_display, _pictureCtrl, _background, _title]
 };
 
 CFM_fnc_closePIPwindow = {

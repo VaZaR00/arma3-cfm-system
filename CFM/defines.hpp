@@ -1,6 +1,9 @@
 #define DO_CAM_INTERPOLATION false
 
 
+#define STR(s) #s
+#define DEFAULT_PIP_SETTINGS [0.2, 1, 0.8]
+#define DEFAULT_PIP_SETTINGS_STR STR(DEFAULT_PIP_SETTINGS)
 #define GOPRO "gopro"
 #define DRONETYPE "droneTurret"
 #define DEF_FOV_GOPRO 0.85
