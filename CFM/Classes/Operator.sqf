@@ -11,9 +11,10 @@ CLASS(Operator)
 	VARIABLE(_isCameraSet, false);
 	VARIABLE(_hasGoPro, false);
 	VARIABLE(_canFeed, false);
-	VARIABLE(_canSwitchTi, false);
 	VARIABLE(_classType, "");
 	VARIABLE(_camerasSet, createHashMap);
+	VARIABLE(_tiTable, createHashMap);
+	VARIABLE(_nvgTable, createHashMap);
 
 	METHODS
 
@@ -39,6 +40,13 @@ CLASS(Operator)
 		if !(_nvg isEqualType true) then {
 			_nvg = true;
 		};
+		([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
+		_canSwitchTi = _ti && _canSwitchTi;
+		_canSwitchNvg = _nvg && _canSwitchNvg;
+		_operator setVariable ["CFM_tiTable", _tiTable];
+		_operator setVariable ["CFM_nvgTable", _nvgTable];
+		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
+		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
 
 		private _clssSetup = missionNamespace getVariable ["CFM_classesSetup", createHashMap];
 
@@ -69,9 +77,7 @@ CLASS(Operator)
 		_operator setVariable ["CFM_cameraType", _type];
 		_operator setVariable ["CFM_isCameraSet", true];
 
-		private _activeOperators = missionNamespace getVariable ["CFM_activeOperators", []];
-		_activeOperators pushBackUnique _operator;
-		missionNamespace setVariable ["CFM_activeOperators", _activeOperators];
+		["addOperator", [_operator]] CALL_CLASS(DbHandler);
 
 		switch (_type) do {
 			case GOPRO: {
@@ -82,6 +88,19 @@ CLASS(Operator)
 			};
 			default {};
 		};
+	};
+	METHOD("initMonitor") {
+		// should be executed globaly
+		params[["_monitor", objNull]];
+
+		if !(IS_OBJ(_monitor)) exitWith {};
+
+		_monitor setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
+		_monitor setVariable ["CFM_canSwitchTi", _canSwitchTi];
+		_monitor setVariable ["CFM_opHasTurrets", _opHasTurrets];
+		_monitor setVariable ["CFM_cameraType", _cameraType];
+		_monitor setVariable ["CFM_tiTable", _tiTable];
+		_monitor setVariable ["CFM_nvgTable", _nvgTable];
 	};
 	METHOD("newCamera") {
 		params[["_monitor", objNull, [objNull]]];

@@ -10,13 +10,6 @@ CFM_fnc_init = {
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
 
-	CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
-	CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
-
-	CFM_tiModesTable = createHashMapFromArray [[0, 2], [1, 7], [6, 12]];
-
-	CFM_classesSetup = createHashMap;
-
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 
 	CFM_inited = true;
@@ -1090,12 +1083,7 @@ CFM_fnc_setupNvgAndTI = {
 		_canSwitchNvg = _canSwitchNvg isEqualTo 1;
 	};
 
-	[_tiTable, _nvgTable, _canSwitchTi, _canSwitchNvg, _d,
-	(getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "visionMode")),
-	(getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "visionMode")),
-	getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "thermalMode"),
-	getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "thermalMode")
-	];
+	[_tiTable, _nvgTable, _canSwitchTi, _canSwitchNvg];
 };
 
 CFM_fnc_attachCam = {

@@ -21,6 +21,7 @@ CLASS(Monitor)
 	VARIABLE(_canSwitchTi, false);
 	VARIABLE(_currentPiPEffect, 0);
 	VARIABLE(_tiTable, createHashMap);
+	VARIABLE(_nvgTable, createHashMap);
 
 	METHODS
 
@@ -53,9 +54,7 @@ CLASS(Monitor)
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 
 		if (_local) then {
-			private _mons = missionNamespace getVariable ["CFM_currentMonitors", []];
-			_mons pushBackUnique _monitor;
-			missionNamespace setVariable ["CFM_currentMonitors", _mons, true];
+			["addMonitor", [_monitor]] CALL_CLASS(DbHandler);
 			_monitor setVariable ["CFM_isHandMonitor", _isHandMonitor, true];
 			_monitor setVariable ["CFM_isLocal", _isLocal, true];
 		};
@@ -106,11 +105,22 @@ CLASS(Monitor)
 			_turret = _currentTurret;
 		};
 
+		["initMonitor", [_monitor]] CALL_OBJCLASS(_operator);
+
 		private _renderTarget = ["getRenderTarget", [_monitor, _turret], _operator, ""] CALL_OBJCLASS(_operator);
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
 	}; 
 	METHOD("stopFeed") {
+		["clearVariables"] CALL_OBJCLASS(_monitor);
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
+	};
+	METHOD("clearVariables") {
+		_monitor setVariable ["CFM_canSwitchNvg", nil];
+		_monitor setVariable ["CFM_canSwitchTi", nil];
+		_monitor setVariable ["CFM_opHasTurrets", nil];
+		_monitor setVariable ["CFM_cameraType", nil];
+		_monitor setVariable ["CFM_tiTable", nil];
+		_monitor setVariable ["CFM_nvgTable", nil];
 	};
 	METHOD("connect") {
 		params["_op"];
