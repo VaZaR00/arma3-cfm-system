@@ -1,6 +1,38 @@
 #include "./defines.hpp"
 
+#define NEW_OBJINSTANCE_GLOBAL(name, global) call { \
+	if (isNil "_this") exitWith {}; \
+	if !(_this isEqualType []) then {_this = [_this]}; \
+	private _self = _this#0; \
+	if !(IS_OBJ(_self)) exitWith {}; \
+	_this = ["init", _this, _self]; \
+	private _classFunc = CLASSNAME_EXISTS_STR(name); \
+	if !(_classFunc#0) exitWith {}; \
+	_self setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, global]; \
+	_self setVariable [format["OOP_%1_class", SPREFX], _CLASSNAMESTR(name), global]; \
+	_this call _classFunc \
+};
+#define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
+#define NEW_INSTANCE(name) call {["init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
+#define CLASSNAME_EXISTS(name) (name call { \
+	private _classFunc = (missionNamespace getVariable [name, {}]) \
+	if (!(_classFunc isEqualType {}) || (_classFunc isEqualTo {})) then { \
+		_classFunc = (missionNamespace getVariable [_CLASSNAME(name), {}]) \
+		[(!(_classFunc isEqualType {}) || (_classFunc isEqualTo {})), _classFunc] \
+	}; \
+	[true, _classFunc] \
+})
+#define CLASSNAME_EXISTS_STR(name) (name call { \
+	private _classFunc = (missionNamespace getVariable [name, {}]) \
+	if (!(_classFunc isEqualType {}) || (_classFunc isEqualTo {})) then { \
+		_classFunc = (missionNamespace getVariable [_CLASSNAMESTR(name), {}]) \
+		[((_classFunc isEqualType {}) && !(_classFunc isEqualTo {})), _classFunc] \
+	}; \
+	[true, _classFunc] \
+})
+
 #define _CLASSNAME(name) OOP_##PREFX##_Class_##name
+#define _CLASSNAMESTR(name) format["OOP_%1_Class_%2", PREFX, name]
 
 #define METHODS switch (_method) do {
 
@@ -8,27 +40,52 @@
 
 #define CLASS_MIDDLEWARE private _ooLastVar = 0; \
 private _ooLastVarDef = 0; \
-private _ooAllVars = createHashMap; \
 
 #define OBJCLASS(name) _CLASSNAME(name) = {\
 	params[["_method", "init"], ["_args", []], ["_self", if !(isNil '_self') then {_self} else {objNull}]];\
-	CLASS_MIDDLEWARE \
 	_this = _args; \
+	CLASS_MIDDLEWARE \
+	OBJ_VARIABLE(_ooAllVars, createHashMap);
 
 #define CLASS(name) _CLASSNAME(name) = {\
-	params[["_method", "init"], ["_args", []], ["_selfName", STR(_CLASSNAME(name))]];\
-	CLASS_MIDDLEWARE \
+	params[["_method", "init"], ["_args", []], ["_self", STR(_CLASSNAME(name))]];\
 	_this = _args; \
+	CLASS_MIDDLEWARE \
+	VARIABLE(_ooAllVars, createHashMap);
 
-#define CLASS_END default{}};};
+#define CLASS_END \
+if (_method isEqualTo "oopCopySelf") exitWith { \
+	_args params [["_copyObj", objNull], ["_doInit", false], ["_global", false]]; \
+	if !(IS_OBJ(_copyObj)) exitWith {false}; \
+	if !(IS_OBJ(_self)) exitWith {false}; \
+	_ooAllVars apply { \
+		private _name = _x; \
+		private _def = _y; \
+		private _val = _self getVariable [_name, _def]; \
+		_copyObj setVariable [_name, _val, _global]; \
+	}; \
+	private _classname = _CLASSNAMESTR(name); \
+	if (_doInit) then { \
+		[_copyObj] NEW_OBJINSTANCE(name) \
+	} else { \
+		private _classFunc = (missionNamespace getVariable [_classname, {}]) \
+		if !(_classFunc isEqualType {}) exitWith {}; \
+		if (_classFunc isEqualTo {}) exitWith {}; \
+		_copyObj setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, _global]; \
+		_copyObj setVariable [format["OOP_%1_class", SPREFX], _classname, _global]; \
+	}; \
+	true \
+}; \
+default{}};};
 
 
 #define OO_VAR_NAME(name) format["%1%2", SPREFX, STR(name)]
 
-#define VARIABLE(name, def) private name = _self getVariable [OO_VAR_NAME(name), def]; \
+#define OBJ_VARIABLE(name, def) private name = _self getVariable [OO_VAR_NAME(name), def]; \
+_ooAllVars set [OO_VAR_NAME(name), def]\
 CHECK_TYPE(name, def, def);
 
-#define TYPE_VARIABLE(name, def, type) VARIABLE(name, def) CHECK_TYPE(name, def, type)
+#define TYPE_OBJ_VARIABLE(name, def, type) OBJ_VARIABLE(name, def) CHECK_TYPE(name, def, type)
 
 #define CHECK_TYPE(name, def, type) private _types = type; \
 if !(_types isEqualType []) then {_types = [_types]}; \

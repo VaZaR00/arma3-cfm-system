@@ -2,25 +2,25 @@ CLASS(Operator)
 
 	SET_SELF_VAR(_operator);
 
-	VARIABLE(_canSwitchTi, false);
-	VARIABLE(_canSwitchNvg, false);
-	VARIABLE(_opHasTurrets, false);
-	VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
-	VARIABLE(_doCheckTurretLocality, false);
-	VARIABLE(_cameraType, "");
-	VARIABLE(_isCameraSet, false);
-	VARIABLE(_hasGoPro, false);
-	VARIABLE(_canFeed, false);
-	VARIABLE(_classType, "");
-	VARIABLE(_camerasSet, createHashMap);
-	VARIABLE(_tiTable, createHashMap);
-	VARIABLE(_nvgTable, createHashMap);
+	OBJ_VARIABLE(_canSwitchTi, false);
+	OBJ_VARIABLE(_canSwitchNvg, false);
+	OBJ_VARIABLE(_opHasTurrets, false);
+	OBJ_VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
+	OBJ_VARIABLE(_doCheckTurretLocality, false);
+	OBJ_VARIABLE(_cameraType, "");
+	OBJ_VARIABLE(_hasGoPro, false);
+	OBJ_VARIABLE(_canFeed, false);
+	OBJ_VARIABLE(_classType, "");
+	OBJ_VARIABLE(_camerasSet, createHashMap);
+	OBJ_VARIABLE(_tiTable, createHashMap);
+	OBJ_VARIABLE(_nvgTable, createHashMap);
+	OBJ_VARIABLE(_operatorSet, false);
 
 	METHODS
 
 	METHOD("init") {
 		// should be executed globaly
-		params[["_hasTInNvg", [0, 0]], ["_turrets", [DRIVER_TURRET_PATH]], ["_params", []]];
+		params[["_operator", "_self"], ["_class", ""], ["_hasTInNvg", [0, 0]], ["_turrets", [DRIVER_TURRET_PATH]], ["_params", []]];
 
 		if !(IS_OBJ(_operator)) exitWith {};
 
@@ -47,6 +47,8 @@ CLASS(Operator)
 		_operator setVariable ["CFM_nvgTable", _nvgTable];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
+		
+		_operator setVariable ["CFM_operatorSet", true];
 
 		private _clssSetup = missionNamespace getVariable ["CFM_classesSetup", createHashMap];
 
@@ -60,16 +62,7 @@ CLASS(Operator)
 		_operator setVariable ["CFM_doCheckTurretLocality", [_operator] call CFM_fnc_doCheckTurretLocality]; 
 
 		_type = if (_type isEqualTo "") then {
-			if ((_operator isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
-				GOPRO
-			};
-			if (_classType isEqualTo TYPE_HELM) exitWith {
-				GOPRO
-			};
-			if (_classType isEqualTo TYPE_UAV) exitWith {
-				DRONETYPE
-			};
-			DRONETYPE
+			[_operator] call CFM_fnc_cameraType;
 		} else {
 			_type
 		};
@@ -103,11 +96,11 @@ CLASS(Operator)
 		_monitor setVariable ["CFM_nvgTable", _nvgTable];
 	};
 	METHOD("newCamera") {
-		params[["_monitor", objNull, [objNull]]];
+		params[["_monitor", objNull, [objNull]], ["_turret", DRIVER_TURRET_PATH]];
 		
 		private _camera = [] call CFM_fnc_createCamera;
 
-		["init", [_self]] CALL_OBJCLASS(_camera);
+		[_camera, _self, _monitor, _turret] NEW_OBJINSTANCE("Camera");
 
 		_camera
 	};
@@ -137,7 +130,7 @@ CLASS(Operator)
 
 		if (_cameras isEqualTo []) exitWith {
 			if !(_createNew) exitWith {objNull};
-			private _cam = ["newCamera", [_monitor], _self, objNull] CALL_OBJCLASS(_self);
+			private _cam = ["newCamera", [_monitor, _turret], _self, objNull] CALL_OBJCLASS(_self);
 			if !(IS_OBJ(_cam)) exitWith {objNull};
 			["addCamera", [_cam, _monitor, _turretIndex], _self, []] CALL_OBJCLASS(_self);
 			_cam

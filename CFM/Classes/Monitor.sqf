@@ -2,33 +2,34 @@ CLASS(Monitor)
 
 	SET_SELF_VAR(_monitor);
 
-	VARIABLE(_radius, ACTION_RADIUS);
-	VARIABLE(_menuActive, false);
-	VARIABLE(_isHandMonitor, false);
-	VARIABLE(_isLocal, false);
-	VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
-	VARIABLE(_connectedOperator, objNull);
-	VARIABLE(_isOff, false);
-	VARIABLE(_feedActive, false);
-	VARIABLE(_renderTarget, "");
-	VARIABLE(_cameraType, "");
-	VARIABLE(_currentFeedCam, objNull);
-	VARIABLE(_currentR2T, "");
-	VARIABLE(_opHasTurrets, false);
-	VARIABLE(_turnedOffLocal, false);
-	VARIABLE(_originalTexture, "");
-	VARIABLE(_canSwitchNvg, false);
-	VARIABLE(_canSwitchTi, false);
-	VARIABLE(_currentPiPEffect, 0);
-	VARIABLE(_tiTable, createHashMap);
-	VARIABLE(_nvgTable, createHashMap);
+	OBJ_VARIABLE(_radius, ACTION_RADIUS);
+	OBJ_VARIABLE(_turnedOffLocal, false);
+	OBJ_VARIABLE(_originalTexture, "");
+	OBJ_VARIABLE(_menuActive, false);
+	OBJ_VARIABLE(_isHandMonitor, false);
+	OBJ_VARIABLE(_isLocal, false);
+	OBJ_VARIABLE(_isOff, false);
+
+	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
+	OBJ_VARIABLE(_connectedOperator, objNull);
+	OBJ_VARIABLE(_feedActive, false);
+	OBJ_VARIABLE(_renderTarget, "");
+	OBJ_VARIABLE(_cameraType, "");
+	OBJ_VARIABLE(_currentFeedCam, objNull);
+	OBJ_VARIABLE(_currentR2T, "");
+	OBJ_VARIABLE(_opHasTurrets, false);
+	OBJ_VARIABLE(_canSwitchNvg, false);
+	OBJ_VARIABLE(_canSwitchTi, false);
+	OBJ_VARIABLE(_currentPiPEffect, 0);
+	OBJ_VARIABLE(_tiTable, createHashMap);
+	OBJ_VARIABLE(_nvgTable, createHashMap);
 
 	METHODS
 
 	METHOD("init") { 
 		// should be executed globaly
 		params [
-			["_monitor", objNull], 
+			["_monitor", _self], 
 			["_canZoom", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
@@ -111,7 +112,10 @@ CLASS(Monitor)
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
 	}; 
 	METHOD("stopFeed") {
-		["clearVariables"] CALL_OBJCLASS(_monitor);
+		params[["_reset", false]];
+		if !(_reset) then {
+			["clearVariables"] CALL_OBJCLASS(_monitor);
+		};
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
 	};
 	METHOD("clearVariables") {
@@ -121,6 +125,14 @@ CLASS(Monitor)
 		_monitor setVariable ["CFM_cameraType", nil];
 		_monitor setVariable ["CFM_tiTable", nil];
 		_monitor setVariable ["CFM_nvgTable", nil];
+		_monitor setVariable ["CFM_currentTurret", nil];
+		_monitor setVariable ["CFM_currentPiPEffect", nil];
+		_monitor setVariable ["CFM_opHasTurrets", nil];
+		_monitor setVariable ["CFM_currentR2T", nil];
+		_monitor setVariable ["CFM_currentFeedCam", nil];
+		_monitor setVariable ["CFM_connectedOperator", nil];
+		_monitor setVariable ["CFM_feedActive", nil];
+		_monitor setVariable ["CFM_renderTarget", nil];
 	};
 	METHOD("connect") {
 		params["_op"];
@@ -134,8 +146,8 @@ CLASS(Monitor)
 	};
 	METHOD("loadMenu") { 
 		params [["_caller", objNull]]; 
-		private _ops = call CFM_fnc_getActiveCameras; 
-		private _opsGlobal = call CFM_fnc_getActiveCamerasCheckGlobal; 
+		private _ops = call CFM_fnc_getActiveOperators; 
+		private _opsGlobal = call CFM_fnc_getActiveOperatorsCheckGlobal; 
 		{
 			_ops pushBackUnique _x;
 		} forEach _opsGlobal;
@@ -259,7 +271,7 @@ CLASS(Monitor)
 			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec; 
 			_target setVariable ['CFM_menuActive', false];
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_feedActive', false]", _radius]; 
-		["addActionsToActionsList", [_actionMenu, _actionDisc]] call CALL_CLASS(_self);
+		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS(_self);
 	};
 	METHOD("addOptionalActions") {
 		params [
@@ -439,6 +451,6 @@ CLASS(Monitor)
 				_actions append [_actionSwitchTi];
 			};
 		};
-		["addActionsToActionsList", _actions] call CALL_CLASS(_self);
+		["addActionsToActionsList", _actions] CALL_OBJCLASS(_self);
 	};
 CLASS_END
