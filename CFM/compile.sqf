@@ -817,7 +817,6 @@ CFM_fnc_getCamPos = {
 			private _up = [];
 			if !(_justZoom) then {
 				if ((_turretPath isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
-					LOGH [time, "by Driver camera", _obj];
 					_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
 					private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
 					private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
@@ -825,7 +824,6 @@ CFM_fnc_getCamPos = {
 					_dir = _fromToVUP#0;
 					_up = _fromToVUP#1;
 				} else {
-					LOGH [time,"by mem point", _turretPath, _obj];
 					private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
 					private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
