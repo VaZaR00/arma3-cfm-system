@@ -113,7 +113,10 @@ CFM_fnc_setMonitor = {
 	if (isNil "CFM_Cam_Idx") then { CFM_Cam_Idx = 0 }; 
 	private _rTarget = format["cfmrtarget%1", CFM_Cam_Idx]; 
 	CFM_Cam_Idx = CFM_Cam_Idx + 1; 
-	_monitor setVariable ["CFM_operatorRenderTarget", _rTarget, true]; 
+	_monitor setVariable ["CFM_operatorRenderTarget", _rTarget]; 
+
+	private _originalTexture = (getObjectTextures _monitor) select 0;
+	_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 
 	private _mons = missionNamespace getVariable ["CFM_currentMonitors", []];
 	_mons pushBackUnique _monitor;
@@ -289,7 +292,7 @@ CFM_fnc_setMonitor = {
 			private _actionTurnOffLocal = _monitor addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
 				params ["_target"]; 
 				
-				_target setObjectTexture [0, ""];  
+				[_target, false] call CFM_fnc_setMonitorTexture;
 				_target setVariable ["CFM_turnedOffLocal", true]; 
 			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}", ACTION_RADIUS]; 
 			private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
@@ -1096,9 +1099,15 @@ CFM_fnc_attachCam = {
 };
 
 CFM_fnc_setMonitorTexture = {
-	params["_monitor"];
-	private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
-	_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
+	params["_monitor", ["_render", true]];
+	if (_render) then {
+		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
+		_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
+	} else {
+		private _originalTexture = _monitor getVariable ["CFM_originalTexture", ""];
+		if !(_originalTexture isEqualType "") then {_originalTexture = ""};
+		_monitor setObjectTexture [0, _originalTexture];
+	};
 };
 
 CFM_fnc_setMonitorPiPEffect = {
@@ -1138,7 +1147,7 @@ CFM_fnc_stopOperatorFeed = {
 	_monitor setVariable ["CFM_doCheckTurretLocality", nil];
 	_monitor setVariable ['CFM_isOff', true];
 	_monitor setVariable ["CFM_monitorCamUpdating", false];
-	_monitor setObjectTexture [0, ""];  
+	[_monitor, false] call CFM_fnc_setMonitorTexture;
 	if (_reset) exitWith {};
 	_monitor setVariable ["CFM_opHasTurrets", nil];  
 	_monitor setVariable ["CFM_currentTurret", nil]; 
