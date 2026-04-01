@@ -623,7 +623,7 @@ CFM_fnc_updateCamera = {
 	([_op, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
 	if (_turretLocal) then {
-		if (local _op) then {
+		if ((local _op) && {!([_op] call CFM_fnc_isPilotControlled)}) then {
 			private _prevDir = _op getVariable ["CFM_currentTurretDir", []];
 			private _prevUp = _op getVariable ["CFM_currentTurretUp", []];
 			private _currDir = vectorDir _cam;
@@ -759,6 +759,16 @@ CFM_fnc_getOffsetInModelSpace = {
     _selectionPosMS vectorAdd _rotatedOffset
 };
 
+CFM_fnc_isPilotControlled = {
+	params ["_veh"];
+	private _crew = crew _veh;
+	if (_crew isEqualTo []) exitWith {false};
+	private _driver = _crew#0;
+	if (_driver isEqualTo objNull) exitWith {false};
+	private _remoteControlledDriver = remoteControlled _driver;
+	!(_remoteControlledDriver isEqualTo objNull)
+};
+
 CFM_fnc_getCamPos = {
 	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", DRIVER_TURRET_PATH, [[]], 1], ["_justZoom", false]];
 
@@ -806,25 +816,36 @@ CFM_fnc_getCamPos = {
 			private _dir = [];
 			private _up = [];
 			if !(_justZoom) then {
-				private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
-				private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
+				if ((_turretPath isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
+					LOGH [time, "by Driver camera", _obj];
+					_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
+					private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
+					private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
+					private _fromToVUP = [_pos, _camDirPos] call BIS_fnc_findLookAt;
+					_dir = _fromToVUP#0;
+					_up = _fromToVUP#1;
+				} else {
+					LOGH [time,"by mem point", _turretPath, _obj];
+					private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
+					private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-				if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurret)) then {
-					private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
-					_dirPointParams = _pointsParams#1; 
-					_dirPoint = _dirPointParams;
-					if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
-					_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
-					_obj setVariable ["CFM_camDirPoint", _dirPoint];
+					if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurret)) then {
+						private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
+						_dirPointParams = _pointsParams#1; 
+						_dirPoint = _dirPointParams;
+						if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
+						_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
+						_obj setVariable ["CFM_camDirPoint", _dirPoint];
+					};
+
+					private _lod = OBJ_LOD(_obj);
+					private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
+					private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
+
+					_pos = _obj modelToWorldVisualWorld _dirPointPos;
+					_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
+					_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
 				};
-
-				private _lod = OBJ_LOD(_obj);
-				private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
-				private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
-
-				_pos = _obj modelToWorldVisualWorld _dirPointPos;
-				_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
-				_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
 			};
 
 			private _fov = if !(_zoomDefault) then {

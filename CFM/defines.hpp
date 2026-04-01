@@ -32,5 +32,5 @@
 #define VARS_STR call {params["_txt", ["_varstr", ""]]; if (_varstr isEqualTo "") then {_varstr = _txt}; private _ar = _varstr splitString ",;. "; private _arvs = _ar apply {private _val = call compile format["if !(isNil '%1') then {%1}", _x]; if (isNil "_val") then {""} else {format["%1: %2", _x, _val]}}; _txt + "  :  " + (_arvs joinString "; ")}
 #define LOG_VARS ;
 #define RLOG_VARS VARS_STR RLOG
-#define LOG hintSilent str
-#define LOG_VARS(txt, vars) LOG ([txt, vars] VARS_STR);
+#define LOGH hintSilent str
+#define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);
