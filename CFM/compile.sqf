@@ -540,9 +540,9 @@ CFM_fnc_getActiveCameras = {
 };
 
 CFM_fnc_timeInterpolate = {
-    params ["_cam", "_targetPos", "_targetDir", "_targetUp", ["_tightness", 5], ["_dt", diag_deltaTime]];
+    params ["_cam", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
     
-	if !(DO_CAM_INTERPOLATION) exitWith {
+	if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
 		[_targetPos, [_targetDir, _targetUp]];
 	};
 
@@ -577,9 +577,11 @@ CFM_fnc_timeInterpolate = {
 };
 
 CFM_fnc_updateCamera = {  
-	params ["_monitor", ["_setup", false, [false]], ["_justZoom", false, [false]], ["_turretLocal", false, [false]]];  
+	params ["_monitor", ["_setup", false, [false]], ["_justZoom", false, [false]], ["_turretLocal", false, [false]]]; 
+
 	private _op = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	private _type = _op getVariable ["CFM_cameraType", GOPRO];
+	private _doInterpolation = false;
 
 	private _cam = _monitor getVariable ["CFM_operatorCam", objNull];  
 	private _turret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];  
@@ -589,9 +591,18 @@ CFM_fnc_updateCamera = {
 		
 	if (_turretLocal) then {
 		if (local _op) then {
-			_op setVariable ["CFM_currentTurretDir", vectorDir _cam, true];
-			_op setVariable ["CFM_currentTurretUp", vectorUp _cam, true];
+			private _prevDir = _op getVariable ["CFM_currentTurretDir", []];
+			private _prevUp = _op getVariable ["CFM_currentTurretUp", []];
+			private _currDir = vectorDir _cam;
+			private _currUp = vectorUp _cam;
+			if !(_currDir isEqualTo _prevDir) then {
+				_op setVariable ["CFM_currentTurretDir", vectorDir _cam, true];
+			};
+			if !(_currUp isEqualTo _prevUp) then {
+				_op setVariable ["CFM_currentTurretUp", vectorUp _cam, true];
+			};
 		} else {
+			_doInterpolation = true;
 			_setup = true;
 			_pos = [];
 			_dir = _op getVariable ["CFM_currentTurretDir", []];
@@ -600,7 +611,7 @@ CFM_fnc_updateCamera = {
 	};
 
 	if (_setup) then {
-		private _posAndVUP = [_cam, _pos, _dir, _up, 5] call CFM_fnc_timeInterpolate;
+		private _posAndVUP = [_cam, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
 		_posAndVUP params ["_newpos", ["_vDirUp", []]];
 		_vDirUp params [["_newdir", []], ["_newup", []]];
 		if ((count _newpos) == 3) then {
