@@ -1,7 +1,7 @@
 #include "defines.hpp"
 
 CFM_fnc_init = {
-	CFM_updatePosSystem = false;
+	CFM_updatePosSystem = true;
 
 	if (CFM_updatePosSystem) then {
 		[] call CFM_fnc_setupDraw3dEH;
