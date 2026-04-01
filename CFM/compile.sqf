@@ -122,6 +122,11 @@ CFM_fnc_setMonitor = {
 	_mons pushBackUnique _monitor;
 	missionNamespace setVariable ["CFM_currentMonitors", _mons];
 
+	private _additionalCondition = if (_monitor isKindOf "Man") then {
+		_monitor setVariable ["CFM_isHandMonitor", true];
+		"&& {[_target] call CFM_fnc_hasUAVterminal}"
+	} else {""};
+
 	private _actions = [];
 
 	private _actionMenu = _monitor addAction ["<t color='#00FF00'>Camera System Menu</t>", { 
@@ -168,7 +173,7 @@ CFM_fnc_setMonitor = {
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
-	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))", ACTION_RADIUS]; 
+	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))" + _additionalCondition, ACTION_RADIUS]; 
 
 	private _actionDisc = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 		params ["_target"]; 
@@ -245,7 +250,7 @@ CFM_fnc_setMonitor = {
 			}, nil, 1.5, true, false, "", "
 				(_target getVariable ['CFM_operatorFeedActive', false]) && {
 					(_target getVariable ['CFM_isDroneFeed', false]) &&
-					{'terminal' in (toLower (player getSlotItemName 612))}
+					{[player] call CFM_fnc_hasUAVterminal}
 				}
 			", ACTION_RADIUS]; 
 			_actions append [_connectDroneAction];
@@ -509,6 +514,12 @@ CFM_fnc_validClassType = {
 	if (_isWeap) exitWith {TYPE_WEAP};
 
 	""
+};
+
+CFM_fnc_hasUAVterminal = {
+	params["_player"];
+
+	{'terminal' in (toLower (_player getSlotItemName 612))}
 };
 
 CFM_fnc_isUAV = {
@@ -897,6 +908,9 @@ CFM_fnc_monitorLiveCondition = {
 
 	CHECK_EX(!_active);
 
+	private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
+	if (_isHandMonitor && {!([_monitor] call CFM_fnc_hasUAVterminal)}) exitWith {false};
+
 	true
 };
 
@@ -1098,8 +1112,15 @@ CFM_fnc_attachCam = {
 	_cam setVectorDirAndUp _orient;
 };
 
+CFM_fnc_setHandDisplayTexture = {};
+
 CFM_fnc_setMonitorTexture = {
 	params["_monitor", ["_render", true]];
+
+	if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
+		_this call CFM_fnc_setHandDisplayTexture;
+	};
+
 	if (_render) then {
 		private _renderTarget = _monitor getVariable ["CFM_operatorRenderTarget", "rendertarget0"];  
 		_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _renderTarget + ",1.0)"];  
