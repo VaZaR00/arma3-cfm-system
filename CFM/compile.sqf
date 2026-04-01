@@ -1,30 +1,4 @@
-#define DO_CAM_INTERPOLATION false
-
-
-#define GOPRO "gopro"
-#define DRONETYPE "droneTurret"
-#define DEF_FOV_GOPRO 0.85
-#define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
-#define GOPRO_MEMPOINT "neck"
-#define START_MONITOR_FEED_DIST 150
-#define LOGH hintSilent str 
-#define DRIVER_TURRET_PATH [-1]
-#define GUNNER_TURRET_PATH [0]
-#define ACTION_RADIUS 5
-#define FEED_ACTION_CONDITION "((_target getVariable ['CFM_operatorFeedActive', false])"
-#define DIST_ACTION_CONDITION "((_target distance player) < 5)"
-#define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
-#define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
-#define IS_STR(s) (s isEqualType "")
-#define TYPE_VEH "veh"
-#define TYPE_UAV "uav"
-#define TYPE_WEAP "weap"
-#define TYPE_HELM "helm"
-#define TYPE_UNIT "unit"
-#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
-#define CHECK_EX(c) if (c) exitWith {false};
-
-
+#include "defines.hpp"
 
 CFM_fnc_init = {
 	CFM_updatePosSystem = false;
@@ -685,10 +659,12 @@ CFM_fnc_getUAVCameraPoints = {
 CFM_fnc_memoryPointAlignment = {
 	params["_obj", ["_pointParams", "", [[], ""]]];
 
-	private _lod = ((allLODs _obj) select {((_x#1) isEqualTo "Memory")})#0;
+	private _lod = OBJ_LOD(_obj);
 
 	if (_pointParams isEqualType "") exitWith {
-		selectionPosition [_obj, _pointParams, _lod, true]
+		_s = selectionPosition [_obj, _pointParams, _lod, false];
+		hintSilent str [_obj, "", _s, _lod, _pointParams];
+		_s
 	};
 	if !(_pointParams isEqualType []) exitWith {
 		[0,0,0]
@@ -782,32 +758,27 @@ CFM_fnc_getCamPos = {
 			private _dir = [];
 			private _up = [];
 			if !(_justZoom) then {
-				private _posPointParams = _obj getVariable ["CFM_camPosPointParams", []];  
 				private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
+				private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-				if (((_posPointParams isEqualTo []) || {(_posPointParams isEqualTo "")}) || !(_prevTurret isEqualTo _curTurret)) then {
+				if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurret)) then {
 					private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
-					_posPointParams = _pointsParams#0;
-					_dirPointParams = _pointsParams#1;
-					private _posPoint = _posPointParams;
-					private _dirPoint = _dirPointParams;
-					if (_posPoint isEqualType []) then {_posPoint = _posPoint#0};
+					_dirPointParams = _pointsParams#1; 
+					_dirPoint = _dirPointParams;
 					if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
-					_obj setVariable ["CFM_camPosPointParams", _posPointParams];
 					_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
-					_obj setVariable ["CFM_camPosPoint", _posPoint];
 					_obj setVariable ["CFM_camDirPoint", _dirPoint];
 				};
 
-				private _startRelObj = [_obj, _posPointParams] call CFM_fnc_memoryPointAlignment;  
-				private _endRelObj = [_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment; 
-				private _startAbs = _obj modelToWorldVisualWorld _startRelObj;
-				private _endAbs = _obj modelToWorldVisualWorld _endRelObj;
-				private _dirUp = [_startAbs, _endAbs] call BIS_fnc_findLookAt;  
+				private _lod = OBJ_LOD(_obj);
+				private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
+				private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
 
-				_dir = _dirUp#0;
-				_up = _dirUp#1;
-				_pos = _startAbs;
+				_pos = _obj modelToWorldVisualWorld _dirPointPos;
+				_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
+				_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
+
+				LOG_VARS("DRONE CAM POINTS", "_obj, _dirPointPos, _dirPointVUP, _pos, _dir, _up");
 			};
 
 			private _fov = if !(_zoomDefault) then {
