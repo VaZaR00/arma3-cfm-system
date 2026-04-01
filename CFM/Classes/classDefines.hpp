@@ -38,6 +38,14 @@ if ((_types findIf {name isEqualType _x}) == -1) then {name = def};
 #define METHOD(name) case name: 
 
 
-#define CALL_OBJCLASS(obj) call {private _self = obj; _this call (obj getVariable [format["OOP_%1_thisInstance", SPREFX], {_this params [["_m", -1], ["_a", []], ["_self", objNull], ["_def", nil]]; _def}])}
-
-#define CALL_CLASS(name) call {_this call (missionNamespace getVariable [format["%1_Instance", _CLASSNAME(name)], {_this params [["_m", -1], ["_a", []], ["_self", ""], ["_def", nil]]; _def}])}
+#define CALL_PARAMS_OBJCLASS _this params [["_m", -1], ["_a", []], ["_self", objNull], ["_def", nil]];
+#define CALL_PARAMS_CLASS _this params [["_m", -1], ["_a", []], ["_self", ""], ["_def", nil]];
+#define CALL_CLASS_FUNC(obj, paramsClass) call { \
+	private _self = obj;  \
+	private _res = _this call (obj getVariable [format["OOP_%1_thisInstance", SPREFX], { \
+		paramsClass; _def \
+	}]); \
+	if (isNil "_res") then {paramsClass; _def} else {_res};
+}
+#define CALL_OBJCLASS(obj) CALL_CLASS_FUNC(obj, CALL_PARAMS_OBJCLASS)
+#define CALL_CLASS(obj) CALL_CLASS_FUNC(obj, CALL_PARAMS_CLASS)

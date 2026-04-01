@@ -168,6 +168,37 @@ CLASS(Monitor)
 			_target setVariable ['CFM_menuActive', false];
 		}; 
 	};
+	METHOD("zoom") {
+		params [["_zoomAdd", 0], ["_zoomSet", -1]]; 
+
+		private _newzoom = if (_zoomAdd isEqualType 1) then {
+			private _newzoom = if (_zoomSet isEqualTo -1) then {
+				private _zoom = _monitor getVariable ['CFM_zoom', 1];
+				if !(_zoom isEqualType 1) then {
+					_zoom = 1;
+				};
+				(_zoom + _zoomAdd) max 1;
+			} else {
+				_zoomSet
+			};
+
+			private _type = _monitor getVariable ["CFM_cameraType", GOPRO];
+			private _maxZoom = switch (_type) do {
+				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
+				case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
+				default {1};
+			};
+
+			private _zoomedMax = _newzoom >= _maxZoom;
+			_monitor setVariable ['CFM_maxZoomed', _zoomedMax, true];
+
+			_newzoom
+		} else {_zoomAdd};
+
+		["setZoom", [_self, _currentTurret, _newzoom]] CALL_OBJCLASS(_connectedOperator);
+
+		_newzoom
+	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
 		_self setVariable ["CFM_currentTurret", _turret, true]; 

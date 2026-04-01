@@ -78,32 +78,9 @@ CFM_fnc_setupDraw3dEH = {
 };
 
 CFM_fnc_zoom = {
-	params ["_operator", ["_zoomAdd", 0], ["_zoomSet", -1]]; 
+	params [["_monitor", 0], ["_zoomAdd", 0], ["_zoomSet", -1]]; 
 
-	if !(_zoomAdd isEqualType 1) exitWith {
-		_operator setVariable ['CFM_zoom', _zoomAdd, true];
-	};
-	private _newZoom = if (_zoomSet isEqualTo -1) then {
-		private _zoom = _operator getVariable ['CFM_zoom', 1];
-		if !(_zoom isEqualType 1) then {
-			_zoom = 1;
-		};
-		(_zoom + _zoomAdd) max 1;
-	} else {
-		_zoomSet
-	};
-
-	_operator setVariable ['CFM_zoom', _newzoom, true];
-
-	private _type = _operator getVariable ["CFM_cameraType", GOPRO];
-	private _maxZoom = switch (_type) do {
-		case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
-		case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
-		default {1};
-	};
-
-	private _zoomedMax = _newzoom >= _maxZoom;
-	_operator setVariable ['CFM_maxZoomed', _zoomedMax, true];
+	["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS(_monitor);
 };
 
 CFM_fnc_setMonitor = { 
@@ -961,18 +938,8 @@ CFM_fnc_doCheckTurretLocality = {
 	[_operator] call CFM_fnc_isUAV;
 };
 
-CFM_fnc_createOperatorCamera = {
-	params["_operator", ["_turret", DRIVER_TURRET_PATH]];
-	private _cams = _operator getVariable ["CFM_operatorCams", createHashMap];
-	private _prevCam = _cams getOrDefault [(_turret#0), objNull];
-	private _renderTarget = _operator getVariable ["CFM_renderTarget", "rendertarget0"];  
-	private _cam = if (_prevCam isEqualTo objNull) then {
-		"camera" camCreate [0,0,0];  
-	} else {
-		_prevCam
-	};
-	_cam cameraEffect ["internal", "back", _renderTarget];  
-	_cam camCommit 0;
+CFM_fnc_createCamera = {
+	"camera" camCreate [0,0,0];
 	_cam
 };
 
@@ -1380,4 +1347,8 @@ CFM_fnc_fixFeed = {
 	{
 		[_x] spawn CFM_fnc_resetFeed;
 	} forEach _monitors;
+};
+
+CFM_fnc_objClassInstance = {
+	{private _self = obj; _this call (obj getVariable [format["OOP_%1_thisInstance", SPREFX], {_this params [["_m", -1], ["_a", []], ["_self", objNull], ["_def", nil]]; _def}])}
 };
