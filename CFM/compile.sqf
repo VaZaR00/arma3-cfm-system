@@ -57,7 +57,7 @@ CFM_fnc_draw3dEH = {
 	} forEach _monitors;
 
 	// UPDATE OBJECT ZOOM
-	// [] call CFM_fnc_updateOperatorZoom;
+	[] call CFM_fnc_updateOperatorZoom;
 };
 
 CFM_fnc_setupDraw3dEH = {
@@ -122,20 +122,27 @@ CFM_fnc_setMonitor = {
 	_mons pushBackUnique _monitor;
 	missionNamespace setVariable ["CFM_currentMonitors", _mons];
 
+	private _radius = ACTION_RADIUS;
+	private _menuText = "Camera System Menu";
 	private _additionalCondition = if (_monitor isKindOf "Man") then {
 		_monitor setVariable ["CFM_isHandMonitor", true];
+		_radius = -1;
+		_menuText = "Camera System Tablet";
 		"&& {[_target] call CFM_fnc_hasUAVterminal}"
 	} else {""};
+	_monitor setVariable ["CFM_actionsRadius", _radius];
 
 	private _actions = [];
 
-	private _actionMenu = _monitor addAction ["<t color='#00FF00'>Camera System Menu</t>", { 
+	private _actionMenu = _monitor addAction [format["<t color='#00FF00'>%1</t>", _menuText], { 
 		params ["_target", "_caller"]; 
 		private _ops = call CFM_fnc_getActiveCameras; 
 		private _opsGlobal = call CFM_fnc_getActiveCamerasCheckGlobal; 
 		{
 			_ops pushBackUnique _x;
 		} forEach _opsGlobal;
+
+		private _radius = MONITOR_ACTION_RADIUS(_target);
 
 		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
 			
@@ -145,7 +152,7 @@ CFM_fnc_setMonitor = {
 			params ["_t"]; 
 			{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
 			_t setVariable ['CFM_menuActive', false];
-		}, nil, 11, true,false,"","(_target getVariable ['CFM_menuActive', false])",ACTION_RADIUS]; 
+		}, nil, 11, true,false,"","(_target getVariable ['CFM_menuActive', false])",_radius]; 
 		_tempIDs pushBack _closeID; 
 
 		{  
@@ -160,7 +167,7 @@ CFM_fnc_setMonitor = {
 				params ["_t", "_c", "_i", "_p"]; 
 				[[netId _t, netId (_p select 0), true], "CFM_fnc_syncState", true, _t] call CFM_fnc_remoteExec; 
 				{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
-			}, [_x], 10, true,false,"","(_target getVariable ['CFM_menuActive', false])", ACTION_RADIUS]; 
+			}, [_x], 10, true,false,"","(_target getVariable ['CFM_menuActive', false])", _radius]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
 			
@@ -173,13 +180,13 @@ CFM_fnc_setMonitor = {
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
-	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))" + _additionalCondition, ACTION_RADIUS]; 
+	}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_operatorFeedActive', false]) || (_target getVariable ['CFM_menuActive', false]))" + _additionalCondition, _radius]; 
 
 	private _actionDisc = _monitor addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 		params ["_target"]; 
 		[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec; 
 		_target setVariable ['CFM_menuActive', false];
-	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+	}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", _radius]; 
 
 	_actions append [_actionMenu, _actionDisc];
 
@@ -190,25 +197,25 @@ CFM_fnc_setMonitor = {
 				params ["_target"];
 				
 				[_target, +1] call CFM_fnc_zoom;
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])", _radius]; 
 
 			private _actionZoomOut = _monitor addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
 				params ["_target"];
 				
 				[_target, -1] call CFM_fnc_zoom;
-			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", _radius]; 
 		
 			private _actionZoomDefault = _monitor addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
 				params ["_target"]; 
 
 				[_target, "reset"] call CFM_fnc_zoom;
-			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", _radius]; 
 
 			private _actionZoomByDrone = _monitor addAction ["<t color='#90c73e'>Use Operator Zoom</t>", { 
 				params ["_target"]; 
 
 				[_target, "op"] call CFM_fnc_zoom;
-			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "_target getVariable ['CFM_operatorFeedActive', false]", _radius]; 
 
 			_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 		};
@@ -252,7 +259,7 @@ CFM_fnc_setMonitor = {
 					(_target getVariable ['CFM_isDroneFeed', false]) &&
 					{[player] call CFM_fnc_hasUAVterminal}
 				}
-			", ACTION_RADIUS]; 
+			", _radius]; 
 			_actions append [_connectDroneAction];
 		};
 
@@ -261,7 +268,7 @@ CFM_fnc_setMonitor = {
 				params ["_target"]; 
 				
 				[] call CFM_fnc_fixFeed;
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false])", _radius]; 
 			_actions append [_actionFix];
 		};
 
@@ -277,7 +284,7 @@ CFM_fnc_setMonitor = {
 						((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
 					}
 				}
-			", ACTION_RADIUS]; 
+			", _radius]; 
 			private _actionSwitchDriver = _monitor addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 				params ["_target"]; 
 
@@ -289,7 +296,7 @@ CFM_fnc_setMonitor = {
 						((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
 					}
 				}
-			", ACTION_RADIUS]; 
+			", _radius]; 
 			_actions append [_actionSwitchTurret, _actionSwitchDriver];
 		};
 
@@ -299,13 +306,13 @@ CFM_fnc_setMonitor = {
 				
 				[_target, false] call CFM_fnc_setMonitorTexture;
 				_target setVariable ["CFM_turnedOffLocal", true]; 
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}", _radius]; 
 			private _actionTurnOnLocal = _monitor addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
 				params ["_target"]; 
 				
 				[_target] call CFM_fnc_setMonitorTexture;
 				_target setVariable ["CFM_turnedOffLocal", false];  
-			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}", ACTION_RADIUS]; 
+			}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_operatorFeedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}", _radius]; 
 			_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
 		};
 
@@ -333,7 +340,7 @@ CFM_fnc_setMonitor = {
 						}
 					}
 				}
-			", ACTION_RADIUS]; 
+			", _radius]; 
 			_actions append [_actionSwitchNvg];
 		};
 
@@ -371,7 +378,7 @@ CFM_fnc_setMonitor = {
 						}
 					}
 				}
-			", ACTION_RADIUS]; 
+			", _radius]; 
 			_actions append [_actionSwitchTi];
 		};
 	};
@@ -519,7 +526,7 @@ CFM_fnc_validClassType = {
 CFM_fnc_hasUAVterminal = {
 	params["_player"];
 
-	{'terminal' in (toLower (_player getSlotItemName 612))}
+	'terminal' in (toLower (_player getSlotItemName 612))
 };
 
 CFM_fnc_isUAV = {
@@ -1112,13 +1119,91 @@ CFM_fnc_attachCam = {
 	_cam setVectorDirAndUp _orient;
 };
 
-CFM_fnc_setHandDisplayTexture = {};
+CFM_fnc_createPIPwindow = {
+    params [["_player", objNull], ["_renderTarget", "rendertarget0"]];
+    
+    disableSerialization;
+    
+    [_player] call CFM_fnc_closePIPwindow;
+    sleep 0.01;
+
+    _renderTarget cutRsc ["RscTitleDisplayEmpty", "PLAIN"];
+    waitUntil {!(isNil {uiNamespace getVariable "RscTitleDisplayEmpty"})};
+    private _display = uiNamespace getVariable "RscTitleDisplayEmpty";
+    
+    _player setVariable ["CFM_currentRscLayer", _renderTarget];
+    _player setVariable ["CFM_currentDisplay", _display];
+    
+    private _settings = missionNamespace getVariable ["CFM_PIPsettings", [0.2, 0.2, 0, 1]]; 
+    _settings params ["_w", "_h", "_offsetX", "_offsetY"];
+
+    private _width = _w * safeZoneW;
+    private _height = _h * safeZoneH;
+    private _posX = safeZoneX + safeZoneW - _width - _offsetX;
+    private _posY = safeZoneY + _offsetY;
+
+    private _borderSize = 0.004;
+    private _headerHeight = 0.03; 
+
+    // 1. ФОН 
+    private _background = _display ctrlCreate ["RscText", -1];
+    _background ctrlSetBackgroundColor [0, 0, 0, 1];
+    _background ctrlSetPosition [
+        _posX - _borderSize, 
+        _posY - _headerHeight, 
+        _width + (_borderSize * 2), 
+        _height + _borderSize + _headerHeight
+    ];
+    _background ctrlCommit 0;
+
+    // 2. ТЕКСТ 
+    private _title = _display ctrlCreate ["RscText", -1];
+    _title ctrlSetText "CAMERA FEED";
+    _title ctrlSetTextColor [1, 1, 1, 1]; 
+    _title ctrlSetPosition [
+        _posX + 0.183, // небольшой отступ текста от края
+        _posY - _headerHeight, 
+        _width, 
+        _headerHeight
+    ];
+    _title ctrlSetScale 0.9;
+    _title ctrlCommit 0;
+
+    // 3. КАРТИНКА 
+    private _pictureCtrl = _display ctrlCreate ["RscPicture", -1];
+    _pictureCtrl ctrlSetPosition [_posX, _posY, _width, _height];
+    _pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
+    _pictureCtrl ctrlCommit 0;
+	_player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
+
+    [_display, _pictureCtrl, "_background", _title]
+};
+
+CFM_fnc_closePIPwindow = {
+	params[["_player", player]];
+	private _renderTarget = _player getVariable ["CFM_currentRscLayer", ""];
+	_renderTarget cutFadeOut 0;
+    private _prevDisplay = _player getVariable ["CFM_currentDisplay", displayNull];
+    if (!isNull _prevDisplay) then { _prevDisplay closeDisplay 1; };
+};
+
+CFM_fnc_setHandDisplay = {
+	params[["_player", player], ["_render", true]];
+
+	private _renderTarget = _player getVariable ["CFM_operatorRenderTarget", ""];
+
+	if (_render) then {
+		[_player, _renderTarget] spawn CFM_fnc_createPIPwindow;
+	} else {
+		[_player] call CFM_fnc_closePIPwindow;
+	};
+};
 
 CFM_fnc_setMonitorTexture = {
 	params["_monitor", ["_render", true]];
 
 	if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
-		_this call CFM_fnc_setHandDisplayTexture;
+		[_monitor, _render] call CFM_fnc_setHandDisplay;
 	};
 
 	if (_render) then {

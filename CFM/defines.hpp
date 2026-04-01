@@ -13,6 +13,7 @@
 #define DRIVER_TURRET_PATH [-1]
 #define GUNNER_TURRET_PATH [0]
 #define ACTION_RADIUS 5
+#define MONITOR_ACTION_RADIUS(mon) (mon getVariable ["CFM_actionsRadius", ACTION_RADIUS]) 
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_operatorFeedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance player) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
