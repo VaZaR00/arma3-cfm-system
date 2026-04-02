@@ -10,10 +10,10 @@ CLASS(CameraManager)
 		CFM_allCamerasData = createHashMap;
 	};
 	METHOD("CreateCamera") {
-		params[["_initOperator", objNull], ["_initMonitor", objNull], ["_turret", DRIVER_TURRET_PATH]];
+		params[["_operator", objNull], ["_monitor", objNull], ["_turret", DRIVER_TURRET_PATH]];
 
-		if !(IS_OBJ(_initOperator)) exitWith {objNull};
-		if !(IS_OBJ(_initMonitor)) exitWith {objNull};
+		if !(IS_OBJ(_operator)) exitWith {objNull};
+		if !(IS_OBJ(_monitor)) exitWith {objNull};
 
 		private _cam = [] call CFM_fnc_createCamera;
 
@@ -30,6 +30,8 @@ CLASS(CameraManager)
 			["CFM_renderTarget", _renderTarget]
 		];
 		["setCameraParam", _params] CALL_CLASS(_self);
+
+		["addCameraToOperator", [_operator, _cam, _monitor, _turret#0], _self, []] CALL_CLASS(_self);
 
 		["addCameraToPool", [_self]] CALL_OBJCLASS(_self);
 	};
@@ -157,12 +159,18 @@ CLASS(CameraManager)
 		} forEach _camerasSet;
 	};
 	METHOD("addCameraToOperator") {
-		params[["_operator", objNull], ["_cam", objNull, [objNull]], ["_monitor", objNull, [objNull]], ["_turretIndex", -1, [1]]];
+		params[
+			["_operator", objNull], 
+			["_cam", objNull, [objNull]], 
+			["_monitor", objNull, [objNull]], 
+			["_turretIndex", -1, [1]]
+		];
 		
-		private _camparams = 
+		private _turrLocal = _operator getVariable ["CFM_doCheckTurretLocality", false];
+		private _camParams = [_operator, [_turretIndex], 1, _turrLocal];
 		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
 		private _turrCameras = _camerasSet getOrDefault [_turretIndex, []];
-		_turrCameras pushBackUnique [_monitor, _cam, []];
+		_turrCameras pushBackUnique [_monitor, _cam, _camParams];
 		_camerasSet set [_turretIndex, _turrCameras];
 		_operator setVariable ["CFM_camerasSet", _camerasSet];
 
@@ -189,7 +197,6 @@ CLASS(CameraManager)
 			if !(_createNew) exitWith {objNull};
 			private _cam = ["CreateCamera", [_operator, _monitor, _turret], _self, objNull] CALL_CLASS(_self);
 			if !(IS_OBJ(_cam)) exitWith {objNull};
-			["addCameraToOperator", [_operator, _cam, _monitor, _turretIndex], _self, []] CALL_CLASS(_self);
 			_cam
 		};
 
