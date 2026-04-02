@@ -1,5 +1,9 @@
 CLASS(CameraManager)
 
+	/*
+		Operator's camerasSet: [monitor, camera, params:[operator, turret, zoom, turretLocal]]
+	*/
+
 	METHODS
 
 	METHOD("Init") {
@@ -76,6 +80,11 @@ CLASS(CameraManager)
 		true
 	};
 	METHOD("getCameraParam") {
+		if ((_this#0) isEqualType []) exitWith {
+			_this apply {
+				["getCameraParam", _x] CALL_CLASS(_self);
+			};
+		};
 		params[["_camera", objNull], ["_param", ""], ["_def", 0]];
 		
 		private _cameraData = ["getCameraData", [_camera], _self, createHashMap] CALL_CLASS(_self);
@@ -89,9 +98,67 @@ CLASS(CameraManager)
 		params[["_camera", objNull]];
 		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
 	};
+	METHOD("getCameraOperatorData") {
+		params[["_operator", objNull], ["_cam", objNull, [objNull]]];
+		
+		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
+		private _data = [];
+		{
+			{
+				if ((_x#1) isEqualTo _cam) exitWith {
+					_data = _x;
+				};
+			} forEach _y;
+		} forEach _camerasSet;
+		_data
+	};
+	METHOD("getCameraOperatorParams") {
+		params[["_operator", objNull], ["_cam", objNull, [objNull]]];
+		
+	};
+	METHOD("setCameraParamsToOperator") {
+		params[["_operator", objNull], ["_cam", objNull, [objNull]], ["_params", []]];
+		
+		private _camData = ["getCameraOperatorData", [_operator, _cam], _self, []] CALL_CLASS(_self);
+		_camData params [["_monitor", objNull], ["_cam", _cam], ["_prevParams", []]];
+
+		if (count _prevParams != 4) then {
+			_prevParams resize 4;
+		};
+
+		_params params [
+			["_operator", _prevParams#0],
+			["_turret", _prevParams#1],
+			["_zoom", _prevParams#2],
+			["_turretLocal", _prevParams#3]
+		];
+		["removeCameraFromOperator", [_operator, _cam]] CALL_CLASS(_self);
+		
+		private _newParams = [_operator, _turret, _zoom, _turretLocal];
+		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
+		private _turrCameras = _camerasSet getOrDefault [_turret#0, []];
+		_turrCameras pushBackUnique [_monitor, _cam, _newParams];
+		_camerasSet set [_turretIndex, _turrCameras];
+		_operator setVariable ["CFM_camerasSet", _camerasSet];
+
+		_camerasSet
+	};
+	METHOD("removeCameraFromOperator") {
+		params[["_operator", objNull], ["_cam", objNull, [objNull]]];
+		
+		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
+		{
+			{
+				if ((_x#1) isEqualTo _cam) exitWith {
+					_y deleteAt _forEachIndex;
+				};
+			} forEach _y;
+		} forEach _camerasSet;
+	};
 	METHOD("addCameraToOperator") {
 		params[["_operator", objNull], ["_cam", objNull, [objNull]], ["_monitor", objNull, [objNull]], ["_turretIndex", -1, [1]]];
 		
+		private _camparams = 
 		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
 		private _turrCameras = _camerasSet getOrDefault [_turretIndex, []];
 		_turrCameras pushBackUnique [_monitor, _cam, []];
@@ -125,6 +192,6 @@ CLASS(CameraManager)
 			_cam
 		};
 
-		_cameras#0
+		_cameras#0#1
 	};
 CLASS_END
