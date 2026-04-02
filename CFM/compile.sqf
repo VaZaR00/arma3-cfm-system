@@ -83,63 +83,6 @@ CFM_fnc_setMonitor = {
 	[_monitor, _params] NEW_OBJINSTANCE("Monitor");
 };
 
-CFM_fnc_cameraType = {
-	params["_obj"];
-
-	if !(IS_OBJ(_obj)) exitWith {""};
-
-	private _type = _obj getVariable ["CFM_cameraType", ""];
-
-	if !(IS_STR(_type)) then {
-		_type = "";
-	};
-
-	if !(_type isEqualTo "") exitWith {_type};
-
-	private _cls = typeOf _obj;
-	private _classType = [_cls] call CFM_fnc_validClassType;
-
-	if ((_obj isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
-		GOPRO
-	};
-	if (_classType isEqualTo TYPE_HELM) exitWith {
-		GOPRO
-	};
-	if (_classType isEqualTo TYPE_UAV) exitWith {
-		DRONETYPE
-	};
-	DRONETYPE
-};
-
-CFM_fnc_validClassType = {
-	params["_cls"];
-
-	private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
-	if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
-	if (_isVeh && {_cls isKindOf "Man"}) exitWith {TYPE_UNIT};
-	if (_isVeh) exitWith {TYPE_VEH};
-	private _isWeap = isClass (configFile >> "CfgWeapons" >> _cls);
-	if (_isWeap && {
-		private _parents = [configFile >> "CfgWeapons" >> _cls >> "ItemInfo", true] call BIS_fnc_returnParents;
-		"headgearItem" in _parents
-	}) exitWith {TYPE_HELM};
-	if (_isWeap) exitWith {TYPE_WEAP};
-
-	""
-};
-
-CFM_fnc_hasUAVterminal = {
-	params["_player"];
-
-	'terminal' in (toLower (_player getSlotItemName 612))
-};
-
-CFM_fnc_isUAV = {
-	params["_obj"];
-
-	(_obj isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _obj) >> "isUav")) isEqualTo 1}
-};
-
 CFM_fnc_setOperator = {
 	params["_operator", ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
 	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {};
@@ -799,6 +742,42 @@ CFM_fnc_stopOperatorFeed = {
 	["stopFeed", [_reset], _monitor] CALL_OBJCLASS(_monitor);
 }; 
 
+CFM_fnc_syncState = { 
+	params ["_mNetId", "_oNetId", ["_start", true], ["_turret", DRIVER_TURRET_PATH]]; 
+
+	private _monitor = objectFromNetId _mNetId; 
+	private _operator = objectFromNetId _oNetId; 
+
+	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull];
+
+	if (IS_OBJ(_cam)) exitWith {};
+
+	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
+
+	if (_isWaiting && _start) exitWith {};
+
+	_monitor setVariable ["CFM_waitingForStart", _start];
+
+	if (_start) then {
+		waitUntil {
+			private _dist = _monitor distance player;
+			private _isClose = _dist <= START_MONITOR_FEED_DIST;
+			_start = _monitor getVariable ["CFM_waitingForStart", true];
+			if (_isClose) exitWith {true};
+			if !(_start) exitWith {true};
+			sleep 1;
+			_isClose
+		};
+	};
+	if (_start) then { 
+		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {};
+		[_monitor, _operator] call CFM_fnc_startOperatorFeed;
+	} else {
+		[_monitor] call CFM_fnc_stopOperatorFeed;
+	}; 
+	_monitor setVariable ["CFM_waitingForStart", false]; 
+}; 
+
 CFM_fnc_remoteExec = {
 	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", 0], ["_call", false, [false]]];
 
@@ -840,42 +819,6 @@ CFM_fnc_remoteExec = {
 	_args remoteExec [_func, _targets, _jip];
 };
 
-CFM_fnc_syncState = { 
-	params ["_mNetId", "_oNetId", ["_start", true], ["_turret", DRIVER_TURRET_PATH]]; 
-
-	private _monitor = objectFromNetId _mNetId; 
-	private _operator = objectFromNetId _oNetId; 
-
-	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull];
-
-	if (IS_OBJ(_cam)) exitWith {};
-
-	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
-
-	if (_isWaiting && _start) exitWith {};
-
-	_monitor setVariable ["CFM_waitingForStart", _start];
-
-	if (_start) then {
-		waitUntil {
-			private _dist = _monitor distance player;
-			private _isClose = _dist <= START_MONITOR_FEED_DIST;
-			_start = _monitor getVariable ["CFM_waitingForStart", true];
-			if (_isClose) exitWith {true};
-			if !(_start) exitWith {true};
-			sleep 1;
-			_isClose
-		};
-	};
-	if (_start) then { 
-		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {};
-		[_monitor, _operator] call CFM_fnc_startOperatorFeed;
-	} else {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
-	}; 
-	_monitor setVariable ["CFM_waitingForStart", false]; 
-}; 
-
 CFM_fnc_fixFeed = {
 	private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
 	{
@@ -889,4 +832,61 @@ CFM_fnc_objClassInstance = {
 	private _instance = GET_CLASS_INST(_obj);
 	if !(IS_FUNC(_instance)) exitWith {{}};
 	_instance
+};
+
+CFM_fnc_cameraType = {
+	params["_obj"];
+
+	if !(IS_OBJ(_obj)) exitWith {""};
+
+	private _type = _obj getVariable ["CFM_cameraType", ""];
+
+	if !(IS_STR(_type)) then {
+		_type = "";
+	};
+
+	if !(_type isEqualTo "") exitWith {_type};
+
+	private _cls = typeOf _obj;
+	private _classType = [_cls] call CFM_fnc_validClassType;
+
+	if ((_obj isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
+		GOPRO
+	};
+	if (_classType isEqualTo TYPE_HELM) exitWith {
+		GOPRO
+	};
+	if (_classType isEqualTo TYPE_UAV) exitWith {
+		DRONETYPE
+	};
+	DRONETYPE
+};
+
+CFM_fnc_validClassType = {
+	params["_cls"];
+
+	private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
+	if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
+	if (_isVeh && {_cls isKindOf "Man"}) exitWith {TYPE_UNIT};
+	if (_isVeh) exitWith {TYPE_VEH};
+	private _isWeap = isClass (configFile >> "CfgWeapons" >> _cls);
+	if (_isWeap && {
+		private _parents = [configFile >> "CfgWeapons" >> _cls >> "ItemInfo", true] call BIS_fnc_returnParents;
+		"headgearItem" in _parents
+	}) exitWith {TYPE_HELM};
+	if (_isWeap) exitWith {TYPE_WEAP};
+
+	""
+};
+
+CFM_fnc_hasUAVterminal = {
+	params["_player"];
+
+	'terminal' in (toLower (_player getSlotItemName 612))
+};
+
+CFM_fnc_isUAV = {
+	params["_obj"];
+
+	(_obj isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _obj) >> "isUav")) isEqualTo 1}
 };
