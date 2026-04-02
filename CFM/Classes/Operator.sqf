@@ -143,7 +143,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_camera)) exitWith {};
 
-		["setCameraZoom", [_camera, _newzoom]] CALL_CLASS("CameraManager");
+		["setCameraZoom", [_self, _camera, _newzoom]] CALL_CLASS("CameraManager");
 
 		_newzoom
 	};

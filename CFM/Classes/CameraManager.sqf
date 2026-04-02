@@ -95,8 +95,8 @@ CLASS(CameraManager)
 		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
 	};
 	METHOD("setCameraZoom") {
-		params[["_camera", objNull]];
-		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
+		params[["_operator", objNull], ["_camera", objNull], ["_newzoom", 1]];
+		["setCameraParamsToOperator", [_operator, _camera, [nil,nil,_newzoom,nil]], _self, ""] CALL_CLASS(_self);
 	};
 	METHOD("getCameraOperatorData") {
 		params[["_operator", objNull], ["_cam", objNull, [objNull]]];

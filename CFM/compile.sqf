@@ -151,24 +151,27 @@ CFM_fnc_cameraCondition = {
 };
 
 CFM_fnc_operatorCondition = {
-	private _type = [_this] call CFM_fnc_cameraType;
+	private _op = _this;
+	private _type = [_op] call CFM_fnc_cameraType;
+
+	if (_op getVariable ["CFM_isFeeding", false]) exitWith {false};
 
 	switch (_type) do {
 		case GOPRO: {
-			private _hasGoPro = _this getVariable ["CFM_hasGoPro", false];
+			private _hasGoPro = _op getVariable ["CFM_hasGoPro", false];
 			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", createHashMap];
 			if (_goprohelms isEqualTo createHashMap) exitWith {_hasGoPro};
-			private _playerHelm = headgear _this;
+			private _playerHelm = headgear _op;
 			_playerHelm in _goprohelms;
 		};
 		case DRONETYPE: {
-			private _cls = typeOf _this;
-			if !(alive _this) exitWith {false};
-			private _canFeed = _this getVariable ["CFM_canFeed", false];
+			private _cls = typeOf _op;
+			if !(alive _op) exitWith {false};
+			private _canFeed = _op getVariable ["CFM_canFeed", false];
 			if (_canFeed) exitWith {true};
 			private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", []];
 			if (_cls in _clssSetup) exitWith {
-				[_this, false] call CFM_fnc_setOperator;
+				[_op, false] call CFM_fnc_setOperator;
 				true
 			};
 			_canFeed
