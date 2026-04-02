@@ -94,7 +94,8 @@ CFM_fnc_cameraCondition = {
 };
 
 CFM_fnc_operatorCondition = {
-	private _op = _this;
+	params["_op"];
+	
 	private _type = [_op] call CFM_fnc_cameraType;
 
 	if (_op getVariable ["CFM_isFeeding", false]) exitWith {false};

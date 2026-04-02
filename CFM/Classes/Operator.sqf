@@ -60,8 +60,8 @@ OBJCLASS(Operator)
 		if ((count (crew _operator) > 1) && {!((gunner _operator) isEqualTo objNull)}) then {
 			_operator setVariable ["CFM_opHasTurrets", true]; 
 			_turrets = [DRIVER_TURRET_PATH, GUNNER_TURRET_PATH];
-			_operator setVariable ["CFM_turrets", _turrets]; 
 		};
+		_operator setVariable ["CFM_turrets", _turrets]; 
 		_operator setVariable ["CFM_doCheckTurretLocality", [_operator] call CFM_fnc_doCheckTurretLocality]; 
 
 		_type = if (_type isEqualTo "") then {
