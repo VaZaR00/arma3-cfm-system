@@ -123,12 +123,15 @@ OBJCLASS(Monitor)
 
 		_monitor setVariable ["CFM_feedActive", true];
 
+		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
+
 		true
 	}; 
 	METHOD("stopFeed") {
 		params[["_reset", false]];
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS(_monitor);
+			["removeCamera", [_self, _currentTurret]] CALL_OBJCLASS(_connectedOperator);
 		};
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
 	};

@@ -44,15 +44,15 @@ CFM_fnc_updateOperatorZoom = {
 CFM_fnc_draw3dEH = {
 	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
 
-	private _cameras = missionNamespace getVariable ["CFM_CameraPool", []];
+	private _operators = missionNamespace getVariable ["CFM_ActiveOperators", []];
 	{
-		private _camFeeds = [_x] call CFM_fnc_cameraCondition;
-		if !(_camFeeds) then {
-			[_x] call CFM_fnc_destroyCamera;
-			continue;
+		private _condition = [_x] call CFM_fnc_operatorCondition;
+		if (_condition) then {
+			[_x] call CFM_fnc_updateOperator;
+		} else {	
+			["removeActiveOperator", [_x]] CALL_CLASS("DbHandler");
 		};
-		[_x] call CFM_fnc_updateCamera;
-	} forEach _cameras;
+	} forEach _operators;
 
 	// UPDATE OBJECT ZOOM
 	[] call CFM_fnc_updateOperatorZoom;
@@ -239,13 +239,14 @@ CFM_fnc_timeInterpolate = {
 };
 
 CFM_fnc_updateCamera = {  
-	params ["_cam", ["_setup", false, [false]], ["_justZoom", false, [false]], ["_turretLocal", false, [false]]]; 
- 
-	private _doInterpolation = false;
-	private _operator = _cam getVariable ["CFM_operator", objNull];
-	private _turret = _cam getVariable ["CFM_turret", DRIVER_TURRET_PATH];
+	params ["_cam", ["_cameraParams", []], ["_setup", false, [false]], ["_justZoom", false, [false]]]; 
+	_cameraParams params [
+		["_operator", objNull],
+		["_turret", [-1]],
+		["_zoom", 1], 
+		["_turretLocal", false, [false]]
+	];
 	private _turretIndex = _turret#0;
-	private _zoom = _cam getVariable ["CFM_zoom", 1];
 
 	([_operator, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
@@ -285,6 +286,21 @@ CFM_fnc_updateCamera = {
 	};
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
+};
+
+CFM_fnc_updateOperator = {
+	params["_operator"];
+
+	private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
+	{
+		private _turret = [_x];
+		private _cameras = _y;
+		{
+			private _camera = _x#1;
+			private _camParams = _x#2;
+			[_camera, _camParams, true, false] call CFM_fnc_updateCamera;
+		} forEach _cameras;
+	} forEach _camerasSet;
 };
 
 CFM_fnc_getUAVCameraPoints = {  

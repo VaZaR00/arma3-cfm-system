@@ -10,6 +10,7 @@ CLASS(DbHandler)
 		CFM_CameraPool = [];
 		CFM_Monitors = [];
 		CFM_Operators = [];
+		CFM_ActiveOperators = [];
 		CFM_R2T_index = 0;
 		CFM_OperatorClasses = [];
 	};
@@ -103,6 +104,16 @@ CLASS(DbHandler)
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
+	};
+	METHOD("addActiveOperator") {
+		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {-1};
+		["addToList", [_operator, "CFM_ActiveOperators"]] CALL_CLASS(_self);
+	};
+	METHOD("removeActiveOperator") {
+		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {false};
+		["removeFromList", [_operator, "CFM_ActiveOperators"]] CALL_CLASS(_self);
 	};
 	METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_doInit", false], ["_global", false]];

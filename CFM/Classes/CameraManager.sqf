@@ -85,12 +85,16 @@ CLASS(CameraManager)
 		params[["_camera", objNull]];
 		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
 	};
+	METHOD("setCameraZoom") {
+		params[["_camera", objNull]];
+		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
+	};
 	METHOD("addCameraToOperator") {
 		params[["_operator", objNull], ["_cam", objNull, [objNull]], ["_monitor", objNull, [objNull]], ["_turretIndex", -1, [1]]];
 		
 		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
 		private _turrCameras = _camerasSet getOrDefault [_turretIndex, []];
-		_turrCameras pushBackUnique [_monitor, _cam];
+		_turrCameras pushBackUnique [_monitor, _cam, []];
 		_camerasSet set [_turretIndex, _turrCameras];
 		_operator setVariable ["CFM_camerasSet", _camerasSet];
 

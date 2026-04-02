@@ -99,6 +99,17 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_tiTable", _tiTable];
 		_monitor setVariable ["CFM_nvgTable", _nvgTable];
 	};
+	METHOD("removeCamera") {
+		params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
+		
+		private _camera = ["getCamera", [_monitor, _turret, false], _self, objNull] CALL_OBJCLASS(_self);
+
+		if !(IS_OBJ(_camera)) exitWith {};
+
+		_camera setVariable ["CFM_zoom", _newzoom, true];
+
+		_newzoom
+	};
 	METHOD("getCamera") {
 		params[["_monitor", objNull], ["_turret", ""], ["_createNew", true]];
 
@@ -132,7 +143,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_camera)) exitWith {};
 
-		_camera setVariable ["CFM_zoom", _newzoom, true];
+		["setCameraZoom", [_camera, _newzoom]] CALL_CLASS("CameraManager");
 
 		_newzoom
 	};
