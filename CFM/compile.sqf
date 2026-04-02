@@ -7,12 +7,17 @@ CFM_fnc_init = {
 		[] call CFM_fnc_setupDraw3dEH;
 	};
 
-	NEW_INSTANCE("DbHandler");
-
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
+
+	#include "Classes\DbHandler.sqf"
+	#include "Classes\Monitor.sqf"
+	#include "Classes\Operator.sqf"
+	#include "Classes\Camera.sqf"
+
+	NEW_INSTANCE("DbHandler");
 
 	CFM_inited = true;
 };
@@ -40,7 +45,7 @@ CFM_fnc_draw3dEH = {
 
 	private _cameras = missionNamespace getVariable ["CFM_CameraPool", []];
 	{
-		private _camFeeds = [] call CFM_fnc_cameraCondition;
+		private _camFeeds = [_x] call CFM_fnc_cameraCondition;
 		if !(_camFeeds) then {
 			[_x] call CFM_fnc_destroyCamera;
 			continue;
@@ -64,7 +69,18 @@ CFM_fnc_zoom = {
 	["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS(_monitor);
 };
 
-CFM_fnc_setMonitor = {};
+CFM_fnc_setMonitor = {
+	params[["_monitor", objNull], ["_params", []]];
+
+	if (_monitor isEqualType []) exitWith {
+		{
+			[_x, _params] call CFM_fnc_setMonitor;
+		} forEach _monitor;
+	};
+	if !(IS_OBJ(_monitor)) exitWith {};
+
+	[_monitor, _params] NEW_OBJINSTANCE("Monitor");
+};
 
 CFM_fnc_cameraType = {
 	params["_obj"];
@@ -125,8 +141,12 @@ CFM_fnc_isUAV = {
 
 CFM_fnc_setOperator = {
 	params["_operator", ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
-	if (!_reset && ((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)) exitWith {};
-	["setOperator", _this] CALL_CLASS(DbHandler);
+	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {};
+	["setOperator", [_operator, _type, _hasTInNvg, _params]] CALL_CLASS("DbHandler");
+};
+
+CFM_fnc_cameraCondition = {
+	true
 };
 
 CFM_fnc_operatorCondition = {
@@ -142,10 +162,10 @@ CFM_fnc_operatorCondition = {
 		};
 		case DRONETYPE: {
 			private _cls = typeOf _this;
-			private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", []];
 			if !(alive _this) exitWith {false};
 			private _canFeed = _this getVariable ["CFM_canFeed", false];
 			if (_canFeed) exitWith {true};
+			private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", []];
 			if (_cls in _clssSetup) exitWith {
 				[_this, false] call CFM_fnc_setOperator;
 				true
@@ -157,18 +177,18 @@ CFM_fnc_operatorCondition = {
 };
 
 CFM_fnc_getActiveOperatorsCheckGlobal = {
-	private _obj = [];
+	private _objs = [];
 	if (missionNamespace getVariable ["CFM_checkGoPros", false]) then {
-		_obj append allUnits;
+		_objs append allUnits;
 	}; 
 	if (missionNamespace getVariable ["CFM_checkUavsCams", false]) then {
-		_obj append allUnitsUAV;
+		_objs append allUnitsUAV;
 	}; 
 	if (missionNamespace getVariable ["CFM_checkVehCams", false]) then {
-		_obj append vehicles;
+		_objs append vehicles;
 	}; 
 	private _playerSide = side player;
-	_obj select {  
+	_objs select {  
 		private _side = side _x;
 		private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 		((_side isEqualTo _playerSide) || ((_playerSide in _sidesUseCiv) && {_side == civilian})) && 
@@ -177,7 +197,7 @@ CFM_fnc_getActiveOperatorsCheckGlobal = {
 }; 
 
 CFM_fnc_getActiveOperators = {
-	(missionNamespace getVariable ["CFM_activeCameras", []]) select {_x call CFM_fnc_operatorCondition};
+	(missionNamespace getVariable ["CFM_Operators", []]) select {_x call CFM_fnc_operatorCondition};
 };
 
 CFM_fnc_timeInterpolate = {
@@ -526,12 +546,11 @@ CFM_fnc_doCheckTurretLocality = {
 
 CFM_fnc_createCamera = {
 	"camera" camCreate [0,0,0];
-	_cam
 };
 
 CFM_fnc_destroyCamera = {
 	params["_cam"];
-	["destroyCamera", [_cam]] CALL_OBJCLASS(_cam);
+	["destroyCamera", [_cam]] CALL_CLASS("CameraManager");
 };
 
 CFM_fnc_setupNvgAndTI = {
@@ -719,6 +738,11 @@ CFM_fnc_setMonitorTexture = {
 	["setRenderPicture", [_render, _r2t]] CALL_OBJCLASS(_monitor);
 };
 
+CFM_fnc_getNextRenderTarget = {
+	private _index = ["nextR2Tindex"] CALL_CLASS("DbHandler");
+	RENDER_TARGET_STR + str _index;
+};
+
 CFM_fnc_setMonitorPiPEffect = {
 	params["_monitor", ["_pipEffect", 0]];
 	private _renderTarget = _monitor getVariable ["CFM_renderTarget", "rendertarget0"];  
@@ -738,6 +762,11 @@ CFM_fnc_resetFeed = {
 	};
 	waitUntil {scriptDone (_hndl)};
 	[_monitor] call CFM_fnc_startOperatorFeed;
+};
+
+CFM_fnc_connectOperatorToMonitor = {  
+	params ["_monitor", "_operator"];  
+	["connect", [_operator], _monitor] CALL_OBJCLASS(_monitor);
 };
 
 CFM_fnc_startOperatorFeed = {  
@@ -780,6 +809,7 @@ CFM_fnc_remoteExec = {
 		if (_func isEqualTo "spawn") exitWith {
 			(_args#0) spawn (_args#1)
 		};
+		private _func = missionNamespace getVariable [_func, {LOGH "CFM_fnc_remoteExec ERROR: func not found!"}];
 		if (_call) then {
 			_args call _func
 		} else {
@@ -791,13 +821,14 @@ CFM_fnc_remoteExec = {
 };
 
 CFM_fnc_syncState = { 
-	params ["_mNetId", "_oNetId", "_start", ["_turret", DRIVER_TURRET_PATH]]; 
+	params ["_mNetId", "_oNetId", ["_start", true], ["_turret", DRIVER_TURRET_PATH]]; 
 
 	private _monitor = objectFromNetId _mNetId; 
 	private _operator = objectFromNetId _oNetId; 
 
-	private _alreadyHasCam = !((_monitor getVariable ["CFM_currentFeedCam", _cam]) isEqualTo objNull);  
-	if (_alreadyHasCam) exitWith {};
+	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull];
+
+	if (IS_OBJ(_cam)) exitWith {};
 
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
@@ -822,6 +853,7 @@ CFM_fnc_syncState = {
 	} else {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 	}; 
+	_monitor setVariable ["CFM_waitingForStart", false]; 
 }; 
 
 CFM_fnc_fixFeed = {
@@ -832,5 +864,9 @@ CFM_fnc_fixFeed = {
 };
 
 CFM_fnc_objClassInstance = {
-	{private _self = obj; _this call (obj getVariable [format["OOP_%1_thisInstance", SPREFX], {_this params [["_m", -1], ["_a", []], ["_self", objNull], ["_def", nil]]; _def}])}
+	params["_obj"];
+	['objClassInstance', _obj, _this] RLOG
+	private _instance = GET_CLASS_INST(_obj);
+	if !(IS_FUNC(_instance)) exitWith {{}};
+	_instance
 };

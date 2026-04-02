@@ -10,7 +10,8 @@ CLASS(DbHandler)
 		CFM_CameraPool = [];
 		CFM_Monitors = [];
 		CFM_Operators = [];
-		// CFM_OperatorClasses = [];
+		CFM_R2T_index = 0;
+		CFM_OperatorClasses = [];
 	};
 	METHOD("setOperator") {
 		// should be executed globaly
@@ -18,7 +19,7 @@ CLASS(DbHandler)
 
 		if (_operator isEqualType []) exitWith {
 			_operator apply {
-				[_x, _type, _hasTInNvg, _params] call CFM_fnc_setOperator;
+				[_x, true, _type, _hasTInNvg, _params] call CFM_fnc_setOperator;
 			};
 		};
 
@@ -28,6 +29,8 @@ CLASS(DbHandler)
 		};
 
 		if !(IS_STR(_operator)) exitWith {false};
+
+		private _classType = [_operator] call CFM_fnc_validClassType;;
 
 		if (_classType isEqualTo TYPE_HELM) then {
 			["addToList", [_operator, "CFM_goProHelmets"]] CALL_CLASS(_self);
@@ -40,7 +43,7 @@ CLASS(DbHandler)
 			CFM_checkVehCams = true;
 		};
 
-		// ["addToHashMap", [[_operator, []], "CFM_OperatorClasses"]] CALL_CLASS(_self);
+		["addToList", [_operator, "CFM_OperatorClasses"]] CALL_CLASS(_self);
 
 		true
 	};
@@ -51,10 +54,16 @@ CLASS(DbHandler)
 		if (_listName isEqualTo "") exitWith {-1};
 
 		private _list = missionNamespace getVariable [_listName, []];
-		private _i = if (_unique) then {
-			_list pushBackUnique _obj;
+		private _i = -1;
+		if !(_list isEqualType []) then {
+			_list = [_obj];
+			_i = 0;
 		} else {
-			_list pushBack _obj;
+			_i = if (_unique) then {
+				_list pushBackUnique _obj;
+			} else {
+				_list pushBack _obj;
+			};
 		};
 		missionNamespace setVariable [_listName, _list, _global];
 		_i
@@ -73,9 +82,12 @@ CLASS(DbHandler)
 			_i
 		} else {false};
 	};
-	METHOD("addToHashMap") {-1};
+	METHOD("addToHashMap") {
+		-1
+	};
 	METHOD("addCameraToPool") {
-		params["_cam"];
+		params[["_cam", objNull]];
+		if !(IS_OBJ(_cam)) exitWith {-1};
 		["addToList", [_cam, "CFM_CameraPool"]] CALL_CLASS(_self);
 	};
 	METHOD("removeCameraFromPool") {
@@ -84,10 +96,12 @@ CLASS(DbHandler)
 	};
 	METHOD("addMonitor") {
 		params["_monitor", ["_global", true]];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_Monitors", _global]] CALL_CLASS(_self);
 	};
 	METHOD("addOperator") {
 		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
 	};
 	METHOD("deepCopy") {
@@ -106,12 +120,18 @@ CLASS(DbHandler)
 		if (_doInit) then {
 			[_copyTo] NEW_OBJINSTANCE(_classname)
 		} else {
-			private _classFunc = (missionNamespace getVariable [_classname, {}])
+			private _classFunc = (missionNamespace getVariable [_classname, {}]);
 			if !(_classFunc isEqualType {}) exitWith {};
 			if (_classFunc isEqualTo {}) exitWith {};
 			_copyTo setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, _global];
 			_copyTo setVariable [format["OOP_%1_class", SPREFX], _classname, _global];
 		};
 		true
+	};
+	METHOD("nextR2Tindex") {
+		private _current = missionNamespace getVariable ["CFM_R2T_index", 0];
+		private _next = _current + 1;
+		missionNamespace setVariable ["CFM_R2T_index", _next];
+		_next
 	};
 CLASS_END

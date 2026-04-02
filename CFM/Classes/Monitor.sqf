@@ -1,4 +1,4 @@
-CLASS(Monitor)
+OBJCLASS(Monitor)
 
 	SET_SELF_VAR(_monitor);
 
@@ -29,7 +29,9 @@ CLASS(Monitor)
 	METHOD("init") { 
 		// should be executed globaly
 		params [
-			["_monitor", _self], 
+			["_args", []]
+		]; 
+		_args params [
 			["_canZoom", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
@@ -55,7 +57,7 @@ CLASS(Monitor)
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 
 		if (_local) then {
-			["addMonitor", [_monitor]] CALL_CLASS(DbHandler);
+			["addMonitor", [_monitor]] CALL_CLASS("DbHandler");
 			_monitor setVariable ["CFM_isHandMonitor", _isHandMonitor, true];
 			_monitor setVariable ["CFM_isLocal", _isLocal, true];
 		};
@@ -69,6 +71,7 @@ CLASS(Monitor)
 		} else {""};
 		
 		_monitor setVariable ["CFM_actionsRadius", _radius];
+
 
 		["addMenuActions", [_radius, _menuText, _additionalCondition]] CALL_OBJCLASS(_self);
 		["addOptionalActions", [_radius]] CALL_OBJCLASS(_self);
@@ -99,17 +102,28 @@ CLASS(Monitor)
 
 		private _monitor = _self;
 
-		if !(IS_OBJ(_monitor)) exitWith {"CFM_fnc_startOperatorFeed: Monitor is not an object"};
-		if !(IS_OBJ(_operator)) exitWith {"CFM_fnc_startOperatorFeed: Operator is not an object"};
+		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
+		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
 
 		if (_turret isEqualTo []) then {
 			_turret = _currentTurret;
 		};
 
-		["initMonitor", [_monitor]] CALL_OBJCLASS(_operator);
+		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS(_operator);
 
-		private _renderTarget = ["getRenderTarget", [_monitor, _turret], _operator, ""] CALL_OBJCLASS(_operator);
+		private _renderTarget = ["getRenderTarget", [_monitor, _turret], _operator, "NONE"] CALL_OBJCLASS(_operator);
+
+		if (IS_STR(_renderTarget) && {(_renderTarget isEqualTo "") || {!(RENDER_TARGET_STR in _renderTarget)}}) exitWith {
+			_monitor setVariable ["CFM_feedActive", false];
+			_monitor setVariable ["CFM_menuActive", false];
+			false
+		};
+
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
+
+		_monitor setVariable ["CFM_feedActive", true];
+
+		true
 	}; 
 	METHOD("stopFeed") {
 		params[["_reset", false]];
@@ -136,9 +150,10 @@ CLASS(Monitor)
 	};
 	METHOD("connect") {
 		params["_op"];
+		["connect", _self, _op, netId _self, netId _op] RLOG
 		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
-		_self setVariable ['CFM_menuActive', false];
 		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
+		true
 	};
 	METHOD("disconnect") {
 		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
@@ -152,13 +167,13 @@ CLASS(Monitor)
 			_ops pushBackUnique _x;
 		} forEach _opsGlobal;
 
-		private _radius = MONITOR_ACTION_RADIUS(_target);
+		private _radius = MONITOR_ACTION_RADIUS(_self);
 
 		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
 			
 		private _tempIDs = []; 
 
-		private _closeID = _target addAction ["<t color='#ff6600'>   [Close Menu]</t>", { 
+		private _closeID = _self addAction ["<t color='#ff6600'>   [Close Menu]</t>", { 
 			params ["_t"]; 
 			{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
 			_t setVariable ['CFM_menuActive', false];
@@ -173,22 +188,29 @@ CLASS(Monitor)
 				};
 				default {format["%1: %2", groupId group _x, (getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName"))]};
 			};
-			private _id = _target addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
+			private _id = _self addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
 				params ["_t", "_c", "_i", "_p"]; 
-				["connect", [_p select 0]] CALL_OBJCLASS(_t);
+				[_t, _p select 0] call CFM_fnc_connectOperatorToMonitor;
 			}, [_x], 10, true,false,"","(_target getVariable ['CFM_menuActive', false])", _radius]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
+		
+		_self setVariable ["CFM_tempActions", _tempIDs]; 
+		_self setVariable ['CFM_menuActive', true];
+
+		private _prevMenuHndl = _self getVariable ['CFM_menuHndl', scriptNull];
+		if ((_prevMenuHndl isEqualType scriptNull) && {!(scriptDone _prevMenuHndl)}) then {
+			terminate _prevMenuHndl;
+		};
 			
-		_target setVariable ["CFM_tempActions", _tempIDs]; 
-		_target setVariable ['CFM_menuActive', true];
-			
-		[_target, _tempIDs] spawn { 
+		private _menuHndl = [_self, _tempIDs] spawn { 
 			params["_target", "_tempIDs"];
-			waitUntil {sleep 1; (_target distance player) > 5;};
+			waitUntil {sleep 1; !(_target getVariable ['CFM_menuActive', false]) || {(_target distance player) > 5}};
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
+		_self setVariable ['CFM_menuHndl', _menuHndl];
+		_menuHndl
 	};
 	METHOD("zoom") {
 		params [["_zoomAdd", 0], ["_zoomSet", -1]]; 
@@ -251,9 +273,8 @@ CLASS(Monitor)
 		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", !_isLocal, _self] call CFM_fnc_remoteExec;
 	};
 	METHOD("addActionsToActionsList") {
-		params["_actions"];
 		private _savedActions = _self getVariable ["CFM_mainActions", []];
-		_savedActions append _actions;
+		_savedActions append _this;
 		_self setVariable ["CFM_mainActions", _savedActions];
 		_savedActions
 	};
