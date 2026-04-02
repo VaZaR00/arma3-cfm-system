@@ -8,11 +8,11 @@
 	private _classFunc = _classFuncExists select 1; \
 	_self setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, global]; \
 	_self setVariable [format["OOP_%1_class", SPREFX], _CLASSNAMESTR(name), global]; \
-	private _ooInitResult = ["init", _args, _self, _self] call _classFunc; \
+	private _ooInitResult = ["Init", _args, _self, _self] call _classFunc; \
 	if (isNil "_ooInitResult") then {NILDEF(_def, _self)} else {_ooInitResult}; \
 };
 #define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
-#define NEW_INSTANCE(name) call {["init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
+#define NEW_INSTANCE(name) call {["Init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
 #define CLASSNAME_EXISTS(name) (call { \
 	private _classFunc = (missionNamespace getVariable [STR(name), {}]) \
 	if !(IS_FUNC(_classFunc)) then { \
@@ -42,13 +42,13 @@ private _ooLastVarDef = 0; \
 private _ooAllVars = createHashMap; \
 
 #define OBJCLASS(name) _CLASSNAME(name) = {\
-	params[["_method", "init"], ["_args", []], ["_self", if !(isNil '_self') then {_self} else {objNull}]];\
+	params[["_method", "Init"], ["_args", []], ["_self", if !(isNil '_self') then {_self} else {objNull}]];\
 	private _this = _args; \
 	private _ooClassname = STR(_CLASSNAME(name)); \
 	CLASS_MIDDLEWARE \
 
 #define CLASS(name) _CLASSNAME(name) = {\
-	params[["_method", "init"], ["_args", []], ["_self", STR(_CLASSNAME(name))]];\
+	params[["_method", "Init"], ["_args", []], ["_self", STR(_CLASSNAME(name))]];\
 	private _this = _args; \
 	private _ooClassname = STR(_CLASSNAME(name)); \
 	CLASS_MIDDLEWARE \

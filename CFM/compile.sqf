@@ -15,9 +15,10 @@ CFM_fnc_init = {
 	#include "Classes\DbHandler.sqf"
 	#include "Classes\Monitor.sqf"
 	#include "Classes\Operator.sqf"
-	#include "Classes\Camera.sqf"
+	#include "Classes\CameraManager.sqf"
 
 	NEW_INSTANCE("DbHandler");
+	NEW_INSTANCE("CameraManager");
 
 	CFM_inited = true;
 };

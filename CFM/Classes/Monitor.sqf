@@ -26,7 +26,7 @@ OBJCLASS(Monitor)
 
 	METHODS
 
-	METHOD("init") { 
+	METHOD("Init") { 
 		// should be executed globaly
 		params [
 			["_args", []]

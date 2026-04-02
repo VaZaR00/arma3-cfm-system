@@ -18,7 +18,7 @@ OBJCLASS(Operator)
 
 	METHODS
 
-	METHOD("init") {
+	METHOD("Init") {
 		// should be executed globaly
 		params[["_type", ""], ["_hasTInNvg", [0, 0]], ["_turrets", [DRIVER_TURRET_PATH]], ["_params", []]];
 

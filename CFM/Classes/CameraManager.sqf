@@ -2,26 +2,30 @@ CLASS(CameraManager)
 
 	METHODS
 
+	METHOD("Init") {
+		CFM_allCamerasData = createHashMap;
+	};
 	METHOD("CreateCamera") {
 		params[["_initOperator", objNull], ["_initMonitor", objNull], ["_turret", DRIVER_TURRET_PATH]];
 
 		if !(IS_OBJ(_initOperator)) exitWith {objNull};
 		if !(IS_OBJ(_initMonitor)) exitWith {objNull};
 
-		_operator = _initOperator;
-		_currentMonitor = _initMonitor;
+		private _cam = [] call CFM_fnc_createCamera;
 
-		_renderTarget = [] call CFM_fnc_getNextRenderTarget;
+		if !(IS_OBJ(_cam)) exitWith {objNull};
 
-
-		_self cameraEffect ["internal", "back", _renderTarget];
-
-		_self setVariable ["CFM_operator", _operator];
-		_self setVariable ["CFM_currentMonitor", _currentMonitor];
-		_self setVariable ["CFM_turret", _turret];
-		_self setVariable ["CFM_zoom", 1];
-		_self setVariable ["CFM_renderTarget", _renderTarget]; 
-		_a = [_self getVariable ["CFM_operator", "NIL"], _self getVariable ["CFM_renderTarget", "NIL"], _self getVariable ["CFM_currentMonitor", "NIL"]];
+		private _renderTarget = [] call CFM_fnc_getNextRenderTarget;
+		_cam cameraEffect ["internal", "back", _renderTarget];
+		
+		private _params = [
+			["CFM_operator", _operator],
+			["CFM_currentMonitor", _currentMonitor],
+			["CFM_turret", _turret],
+			["CFM_zoom", 1],
+			["CFM_renderTarget", _renderTarget]
+		];
+		["setCameraParam", _params] CALL_CLASS(_self);
 
 		["addCameraToPool", [_self]] CALL_OBJCLASS(_self);
 	};
@@ -37,19 +41,49 @@ CLASS(CameraManager)
 		params[["_cam", objNull]];
 		if !(IS_OBJ(_cam)) exitWith {false};
 		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
+		["removeCameraData", [_cam]] CALL_CLASS(_self);
 		camDestroy _cam;
 		true
 	};
-	METHOD("getRenderTarget") {
-		params[["_monitor", objNull]];
-		private _renderTarget = _self getVariable ["CFM_renderTarget", _renderTarget];
-		["Camera getRenderTarget", _self, _renderTarget, _monitor] RLOG;
-		if (RENDER_TARGET_STR in _renderTarget) then {
-			_monitor setVariable ["CFM_currentFeedCam", _self];
-			_renderTarget
-		} else {
-			""
+	METHOD("removeCameraData") {
+		params[["_camera", objNull]];
+		
+		if !(IS_OBJ(_camera)) exitWith {false};
+
+		private _allCamerasData = missionNamespace getVariable ["CFM_allCamerasData", createHashMap];
+		private _key = hashValue _camera;
+		_allCamerasData set [_key, nil];
+	};
+	METHOD("getCameraData") {
+		params[["_camera", objNull]];
+		
+		if !(IS_OBJ(_camera)) exitWith {createHashMap};
+
+		private _allCamerasData = missionNamespace getVariable ["CFM_allCamerasData", createHashMap];
+		private _key = hashValue _camera;
+		_allCamerasData getOrDefault [_key, createHashMap];
+	};
+	METHOD("setCameraParam") {
+		if ((_this#0) isEqualType []) exitWith {
+			_this apply {
+				["setCameraParam", _x, _self, false] CALL_CLASS(_self);
+			};
 		};
+		params[["_camera", objNull], ["_param", ""], ["_val", nil]];
+		
+		private _cameraData = ["getCameraData", [_camera], _self, createHashMap] CALL_CLASS(_self);
+		_cameraData set [_param, _NIL(_val)];
+		true
+	};
+	METHOD("getCameraParam") {
+		params[["_camera", objNull], ["_param", ""], ["_def", 0]];
+		
+		private _cameraData = ["getCameraData", [_camera], _self, createHashMap] CALL_CLASS(_self);
+		_cameraData getOrDefault [_param, _def];
+	};
+	METHOD("getRenderTarget") {
+		params[["_camera", objNull]];
+		["getCameraParam", [_camera, "CFM_renderTarget"], _self, ""] CALL_CLASS(_self);
 	};
 	METHOD("addCameraToOperator") {
 		params[["_operator", objNull], ["_cam", objNull, [objNull]], ["_monitor", objNull, [objNull]], ["_turretIndex", -1, [1]]];
