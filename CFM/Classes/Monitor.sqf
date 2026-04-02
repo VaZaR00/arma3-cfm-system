@@ -153,7 +153,6 @@ OBJCLASS(Monitor)
 	};
 	METHOD("connect") {
 		params["_op"];
-		["connect", _self, _op, netId _self, netId _op] RLOG
 		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
 		true

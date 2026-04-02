@@ -23,8 +23,6 @@ OBJCLASS(Operator)
 		// should be executed globaly
 		params[["_type", ""], ["_hasTInNvg", [0, 0]], ["_turrets", [DRIVER_TURRET_PATH]], ["_params", []]];
 
-		["OPERATOR init", _operator] RLOG;
-
 		if !(IS_OBJ(_operator)) exitWith {};
 
 		if !(IS_STR(_type)) then {

@@ -191,29 +191,23 @@ CLASS(CameraManager)
 	METHOD("getOperatorCamera") {
 		params[["_operator", objNull], ["_monitor", objNull], ["_turret", ""], ["_createNew", true]];
 
-		["getOperatorCamera", _this] RLOG
-
 		if !(IS_OBJ(_operator)) exitWith {objNull};
 		if !(IS_OBJ(_monitor)) exitWith {objNull};
 		if !(_turret isEqualType []) then {
 			_turret = [_turret];
 		};
 		private _turrets = _operator getVariable ["CFM_turrets", []];
-		["getOperatorCamera 1", _turrets] RLOG
 		if !(_turret in _turrets) exitWith {objNull};
 		private _turretIndex = _turret#0;
-		["getOperatorCamera 2", _turretIndex] RLOG
 		if !(_turretIndex isEqualType 1) exitWith {objNull};
 
 		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
 		private _turrCameras = _camerasSet getOrDefault [_turretIndex, []];
 		private _cameras = (_turrCameras select {if ((_x isEqualType []) && {(count _x > 0)}) then {((_x#0) isEqualTo _monitor)} else {false}});
 
-		["getOperatorCamera 3", _cameras] RLOG
 		if (_cameras isEqualTo []) exitWith {
 			if !(_createNew) exitWith {objNull};
 			private _cam = ["CreateCamera", [_operator, _monitor, _turret], _self, objNull] CALL_CLASS(_self);
-			["getOperatorCamera 4", _cam] RLOG
 			if !(IS_OBJ(_cam)) exitWith {objNull};
 			_cam
 		};

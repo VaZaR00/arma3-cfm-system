@@ -106,7 +106,6 @@ if ((_types findIf {name isEqualType _x}) == -1) then {name = def};
 #define CALL_OBJCLASS(obj) call { \
 	private _self = obj;  \
 	private _ooCallResult = _this call GET_CLASS_INST(obj); \
-	["CALL_OBJCLASS", _self, NILDEF(_ooCallResult, 'NIL'), _this] RLOG; \
 	if (isNil "_ooCallResult") then {CALL_PARAMS_OBJCLASS; _NIL(_def)} else {_ooCallResult}; \
 }
 #define CALL_CLASS(name) call { \

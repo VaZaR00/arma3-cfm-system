@@ -197,6 +197,8 @@ CFM_fnc_updateCamera = {
 
 	([_operator, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
 		
+	LOGH ["UPD", _cam, _cameraParams, _pos, _dir, _Up, _fov];
+
 	if (_turretLocal) then {
 		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUp" + str _turretIndex;
@@ -829,7 +831,6 @@ CFM_fnc_fixFeed = {
 
 CFM_fnc_objClassInstance = {
 	params["_obj"];
-	['objClassInstance', _obj, _this] RLOG
 	private _instance = GET_CLASS_INST(_obj);
 	if !(IS_FUNC(_instance)) exitWith {{}};
 	_instance
