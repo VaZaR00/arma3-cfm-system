@@ -15,6 +15,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_tiTable, createHashMap);
 	OBJ_VARIABLE(_nvgTable, createHashMap);
 	OBJ_VARIABLE(_operatorSet, false);
+	OBJ_VARIABLE(_isFeeding, false);
 
 	METHODS
 
@@ -34,8 +35,6 @@ OBJCLASS(Operator)
 			_classType =  [typeOf _operator] call CFM_fnc_validClassType;
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed"};
-
-		["OPERATOR VALID", _operator, _classType] RLOG;
 
 		_hasTInNvg params ["_ti", "_nvg"];
 		if !(_ti isEqualType true) then {
@@ -92,6 +91,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_monitor)) exitWith {};
 
+		_self setVariable ["CFM_isFeeding", true];
 		_monitor setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
 		_monitor setVariable ["CFM_canSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_opHasTurrets", _opHasTurrets];
@@ -99,16 +99,31 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_tiTable", _tiTable];
 		_monitor setVariable ["CFM_nvgTable", _nvgTable];
 	};
-	METHOD("removeCamera") {
+	METHOD("checkIfFeeding") {
+		params[["_operator", _self]];
+
+		_isFeeding = false;
+		{
+			if ((!isNil "_y") && {(_y isEqualType []) && {!(_y isEqualTo [])}}) exitWith {
+				_isFeeding = true;
+			};
+		} forEach _camerasSet;
+		_operator setVariable ["CFM_isFeeding", _isFeeding];
+		_isFeeding
+	};
+	METHOD("monitorStoppedFeed") {
 		params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
 		
-		private _camera = ["getCamera", [_monitor, _turret, false], _self, objNull] CALL_OBJCLASS(_self);
+		private _cam = ["getCamera", [_monitor, _turret, false], _self, objNull] CALL_OBJCLASS(_self);
 
-		if !(IS_OBJ(_camera)) exitWith {};
+		["removeCamera", [_cam]] CALL_OBJCLASS(_self);
 
-		_camera setVariable ["CFM_zoom", _newzoom, true];
+		["checkIfFeeding", [_self]] CALL_OBJCLASS(_self);
+	};
+	METHOD("removeCamera") {
+		params["_cam"];
 
-		_newzoom
+		["destroyCamera", [_self, _cam]] CALL_CLASS("CameraManager");
 	};
 	METHOD("getCamera") {
 		params[["_monitor", objNull], ["_turret", ""], ["_createNew", true]];

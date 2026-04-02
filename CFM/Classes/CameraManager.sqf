@@ -42,10 +42,11 @@ CLASS(CameraManager)
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
 	METHOD("destroyCamera") {
-		params[["_cam", objNull]];
-		if !(IS_OBJ(_cam)) exitWith {false};
+		params[["_cam", objNull], ["_operator", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
 		["removeCameraData", [_cam]] CALL_CLASS(_self);
+		["removeCameraFromOperator", [_operator, _cam]] CALL_CLASS(_self);
+		if !(IS_OBJ(_cam)) exitWith {false};
 		camDestroy _cam;
 		true
 	};

@@ -131,7 +131,7 @@ OBJCLASS(Monitor)
 		params[["_reset", false]];
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS(_monitor);
-			["removeCamera", [_self, _currentTurret]] CALL_OBJCLASS(_connectedOperator);
+			["monitorStoppedFeed", [_self, _currentTurret]] CALL_OBJCLASS(_connectedOperator);
 		};
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
 	};
