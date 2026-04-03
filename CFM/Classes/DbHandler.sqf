@@ -11,6 +11,7 @@ CLASS(DbHandler)
 		CFM_Monitors = [];
 		CFM_Operators = [];
 		CFM_ActiveOperators = [];
+		CFM_ActiveMonitors = [];
 		CFM_R2T_index = 0;
 		CFM_OperatorClasses = [];
 	};
@@ -114,6 +115,16 @@ CLASS(DbHandler)
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {false};
 		["removeFromList", [_operator, "CFM_ActiveOperators"]] CALL_CLASS(_self);
+	};
+	METHOD("addActiveMonitor") {
+		params["_monitor"];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
+	};
+	METHOD("removeActiveMonitor") {
+		params["_monitor"];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
 	METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_doInit", false], ["_global", false]];

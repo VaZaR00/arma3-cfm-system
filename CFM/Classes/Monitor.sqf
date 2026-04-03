@@ -24,8 +24,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_tiTable, createHashMap);
 	OBJ_VARIABLE(_nvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
-	OBJ_VARIABLE(_turretLocal, 1);
-	OBJ_VARIABLE(_zoom, 1);
+	OBJ_VARIABLE(_turretLocal, false);
 
 	METHODS
 
@@ -116,7 +115,9 @@ OBJCLASS(Monitor)
 
 		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS(_operator);
 
-		private _renderTarget = ["getRenderTarget", [_monitor, _turret], _operator, "NONE"] CALL_OBJCLASS(_operator);
+		private _renderTargetAndCamera = ["getRenderTargetAndCamera", [_monitor], _operator, "NONE"] CALL_CLASS("CameraManager");
+		private _renderTarget = _renderTargetAndCamera#0;
+		private _camera = _renderTargetAndCamera#1;
 		if (IS_STR(_renderTarget) && {(_renderTarget isEqualTo "") || {!(RENDER_TARGET_STR in _renderTarget)}}) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
@@ -125,10 +126,11 @@ OBJCLASS(Monitor)
 
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
 
+		_monitor setVariable ["CFM_currentFeedCam", _camera];
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
+		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
 		true
 	}; 
@@ -137,6 +139,7 @@ OBJCLASS(Monitor)
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS(_monitor);
 			["monitorStoppedFeed", [_self, _currentTurret]] CALL_OBJCLASS(_connectedOperator);
+			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		};
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
 	};
@@ -155,6 +158,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_connectedOperator", nil];
 		_monitor setVariable ["CFM_feedActive", nil];
 		_monitor setVariable ["CFM_renderTarget", nil];
+		_monitor setVariable ["CFM_zoom", nil];
+		_monitor setVariable ["CFM_turretLocal", nil];
 	};
 	METHOD("connect") {
 		params["_op"];
