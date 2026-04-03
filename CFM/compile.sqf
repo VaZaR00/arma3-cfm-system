@@ -47,7 +47,7 @@ CFM_fnc_draw3dEH = {
 	private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 	{
 		private _monitor = _x;
-		private _condition = [_monitor, true] call CFM_fnc_monitorLiveCondition;
+		private _condition = [_monitor, true] call CFM_fnc_monitorFeedActive;
 		if (_condition) then {
 			[_monitor] call CFM_fnc_updateMonitor;
 		} else {	
@@ -88,10 +88,6 @@ CFM_fnc_setOperator = {
 	params["_operator", ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
 	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 	["setOperator", [_operator, _type, _hasTInNvg, _params]] CALL_CLASS("DbHandler");
-	true
-};
-
-CFM_fnc_cameraCondition = {
 	true
 };
 
@@ -237,23 +233,6 @@ CFM_fnc_updateCamera = {
 	};
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
-};
-
-CFM_fnc_updateOperator = {
-	params["_operator"];
-
-	private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
-	{
-		private _cameras = _y;
-		{
-			private _monitor = _x#0;
-			private _camera = _x#1;
-			private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
-			private _zoom = _monitor getVariable ["CFM_zoom", 1];
-			private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
-			[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
-		} forEach _cameras;
-	} forEach _camerasSet;
 };
 
 CFM_fnc_updateMonitor = {
@@ -485,7 +464,7 @@ CFM_fnc_getZoomFov = {
 	_table getOrDefault [_zoom, 1/_zoom];
 };
 
-CFM_fnc_monitorLiveCondition = {
+CFM_fnc_monitorFeedActive = {
 	params["_monitor"];
 
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
@@ -506,14 +485,6 @@ CFM_fnc_monitorLiveCondition = {
 	if (_isHandMonitor && {!([_monitor] call CFM_fnc_hasUAVterminal)}) exitWith {false};
 
 	true
-};
-
-CFM_fnc_monitorFeedActive = {
-	params["_monitor"];
-
-	private _active = _monitor getVariable ["CFM_feedActive", false]; 
-
-	_active
 };
 
 CFM_fnc_doCheckTurretLocality = {
@@ -590,35 +561,6 @@ CFM_fnc_setupNvgAndTI = {
 	};
 
 	[_tiTable, _nvgTable, _canSwitchTi, _canSwitchNvg];
-};
-
-CFM_fnc_attachCam = {
-	params["_monitor", "_obj", "_cam", ["_turretPath", DRIVER_TURRET_PATH, [[]], 1]];
-
-	[_monitor, true] call CFM_fnc_updateCamera;
-
-	private _turPathNum = str (_turretPath#0);
-	private _relPos = _obj getVariable [("CFM_relPos_" + (_turPathNum)), 0];
-	private _memPoint = _obj getVariable [("CFM_memPoint_" + (_turPathNum)), 0];
-	private _orient = _obj getVariable [("CFM_orient_" + (_turPathNum)), 0];
-	if ((_relPos isEqualTo 0) || {(_memPoint isEqualTo 0) || {(_orient isEqualTo 0)}}) then {
-		_relPos = _obj worldToModel (getPos _cam);
-		_memPoint = _obj getVariable ["CFM_camPosPoint", ""];
-		_orient = [_cam, _obj] call (missionNamespace getVariable ["BIS_fnc_vectorDirAndUpRelative", {[[0,0,0], [0,0,0]]}]);
-
-		if (_memPoint isEqualTo GOPRO_MEMPOINT) then {
-			private _headRelPos = _obj selectionPosition [GOPRO_MEMPOINT, "Memory"];
-			_relPos = _relPos vectorDiff _headRelPos;
-			_relPos = _relPos vectorAdd [0,0,0.2];
-		};
-
-		_obj setVariable [("CFM_relPos_" + (_turPathNum)), _relPos];
-		_obj setVariable [("CFM_memPoint_" + (_turPathNum)), _memPoint];
-		_obj setVariable [("CFM_orient_" + (_turPathNum)), _orient];
-	};
-
-	_cam attachTo [_obj, _relPos, _memPoint, true];
-	_cam setVectorDirAndUp _orient;
 };
 
 CFM_fnc_createPIPwindow = {
