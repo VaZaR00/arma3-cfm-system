@@ -149,9 +149,10 @@ CLASS(CameraManager)
 		];
 		["removeCameraFromOperator", [_operator, _cam]] CALL_CLASS(_self);
 		
+		private _turretIndex = _turret#0;
 		private _newParams = [_operator, _turret, _zoom, _turretLocal];
 		private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
-		private _turrCameras = _camerasSet getOrDefault [_turret#0, []];
+		private _turrCameras = _camerasSet getOrDefault [_turretIndex, []];
 		_turrCameras pushBackUnique [_monitor, _cam, _newParams];
 		_camerasSet set [_turretIndex, _turrCameras];
 		_operator setVariable ["CFM_camerasSet", _camerasSet];

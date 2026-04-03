@@ -122,6 +122,7 @@ OBJCLASS(Monitor)
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
 
 		_monitor setVariable ["CFM_feedActive", true];
+		_monitor setVariable ["CFM_connectedOperator", _operator];
 
 		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 

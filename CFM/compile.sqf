@@ -196,8 +196,7 @@ CFM_fnc_updateCamera = {
 	private _turretIndex = _turret#0;
 
 	([_operator, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
-		
-	LOGH ["UPD", _cam, _cameraParams, _pos, _dir, _Up, _fov];
+	
 
 	if (_turretLocal) then {
 		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
@@ -811,7 +810,7 @@ CFM_fnc_remoteExec = {
 		if (_func isEqualTo "spawn") exitWith {
 			(_args#0) spawn (_args#1)
 		};
-		private _func = missionNamespace getVariable [_func, {LOGH "CFM_fnc_remoteExec ERROR: func not found!"}];
+		private _func = missionNamespace getVariable [_func, {LOGH format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
 		if (_call) then {
 			_args call _func
 		} else {
