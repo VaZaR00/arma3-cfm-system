@@ -79,13 +79,15 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_isMonitorSet", true];
 	};
 	METHOD("setRenderPicture") {
-		params[["_render", true], ["_r2t", ""]];
+		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
 		if (_render && {_r2t isEqualTo ""}) then {
 			_r2t = _currentR2T;
 		};
 		_render = _render && !(_r2t isEqualTo "");
-		_monitor setVariable ["CFM_currentR2T", _r2t];
+		if !(_turnOff) then {
+			_monitor setVariable ["CFM_currentR2T", _r2t];
+		};
 
 		if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
 			[_monitor, _render] call CFM_fnc_setHandDisplay;
@@ -421,7 +423,7 @@ OBJCLASS(Monitor)
 				private _actionTurnOffLocal = _self addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
 					params ["_target"]; 
 					
-					[_target, false] call CFM_fnc_setMonitorTexture;
+					[_target, false, "", true] call CFM_fnc_setMonitorTexture;
 					_target setVariable ["CFM_turnedOffLocal", true]; 
 				}, nil, 1.5, true, false, "", "(_target getVariable ['CFM_feedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}", _radius]; 
 				private _actionTurnOnLocal = _self addAction ["<t color='#036900'>Turn on feed (local)</t>", { 

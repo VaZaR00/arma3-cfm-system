@@ -698,9 +698,9 @@ CFM_fnc_setHandDisplay = {
 };
 
 CFM_fnc_setMonitorTexture = {
-	params["_monitor", ["_render", true], ["_r2t", ""]];
+	params["_monitor", ["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
-	["setRenderPicture", [_render, _r2t]] CALL_OBJCLASS(_monitor);
+	["setRenderPicture", [_render, _r2t, _turnOff]] CALL_OBJCLASS(_monitor);
 };
 
 CFM_fnc_getNextRenderTarget = {
