@@ -8,11 +8,11 @@ CLASS(CameraManager)
 
 	METHOD("Init") {
 		CFM_allCamerasData = createHashMap;
+		CFM_camerasSet = createHashMap;
 	};
 	METHOD("CreateCamera") {
-		params[["_operator", objNull], ["_monitor", objNull], ["_turret", DRIVER_TURRET_PATH]];
+		params[["_monitor", objNull]];
 
-		if !(IS_OBJ(_operator)) exitWith {objNull};
 		if !(IS_OBJ(_monitor)) exitWith {objNull};
 
 		private _cam = [] call CFM_fnc_createCamera;
@@ -22,20 +22,10 @@ CLASS(CameraManager)
 		private _renderTarget = [] call CFM_fnc_getNextRenderTarget;
 		_cam cameraEffect ["internal", "back", _renderTarget];
 		
-		private _params = [
-			["CFM_operator", _operator],
-			["CFM_currentMonitor", _monitor],
-			["CFM_turret", _turret],
-			["CFM_zoom", 1],
-			["CFM_renderTarget", _renderTarget]
-		];
-		["setCameraParam", _params apply {[_cam, _x#0, _x#1]}] CALL_CLASS(_self);
-
-		["addCameraToOperator", [_operator, _cam, _monitor, _turret#0], _self, []] CALL_CLASS(_self);
-
+		["setMonitorCamera", [_self]] CALL_CLASS(_self);
 		["addCameraToPool", [_self]] CALL_CLASS(_self);
 
-		_cam
+		[_cam, _renderTarget]
 	};
 	METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
@@ -46,10 +36,8 @@ CLASS(CameraManager)
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
 	METHOD("destroyCamera") {
-		params[["_cam", objNull], ["_operator", objNull]];
+		params[["_cam", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
-		["removeCameraData", [_cam]] CALL_CLASS(_self);
-		["removeCameraFromOperator", [_operator, _cam]] CALL_CLASS(_self);
 		if !(IS_OBJ(_cam)) exitWith {false};
 		camDestroy _cam;
 		true
@@ -108,6 +96,17 @@ CLASS(CameraManager)
 	METHOD("getRenderTarget") {
 		params[["_camera", objNull]];
 		["getCameraParam", [_camera, "CFM_renderTarget", ""], _self, ""] CALL_CLASS(_self);
+	};
+	METHOD("spawnCamera") {
+		params[["_monitor", objNull]];
+
+		private _camData = ["CreateCamera", [_monitor], _self, objNull] CALL_CLASS(_self);
+		private _cam = _camData#0;
+		private _r2t = _camData#1;
+
+		if !(IS_OBJ(_cam)) exitWith {["", objNull]};
+		if !(IS_VALID_R2T(_r2t)) exitWith {["", _cam]};
+		[_r2t, _cam]
 	};
 	METHOD("setCameraZoom") {
 		params[["_operator", objNull], ["_camera", objNull], ["_newzoom", 1]];
@@ -214,5 +213,26 @@ CLASS(CameraManager)
 		};
 
 		_cameras#0#1
+	};
+	METHOD("setMonitorCamera") {
+		params[["_monitor", objNull], ["_camera", objNull]];
+
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		if !(IS_OBJ(_camera)) exitWith {false};
+		
+		private _camerasSet = missionNamespace getVariable ["CFM_camerasSet", createHashMap];
+		private _hashVal = hashValue _monitor;
+		_camerasSet set [_hashVal, objNull];
+		missionNamespace setVariable ["CFM_camerasSet", _camerasSet];
+		true
+	};
+	METHOD("getMonitorCamera") {
+		params[["_monitor", objNull]];
+
+		if !(IS_OBJ(_monitor)) exitWith {objNull};
+		
+		private _camerasSet = missionNamespace getVariable ["CFM_camerasSet", createHashMap];
+		private _hashVal = hashValue _monitor;
+		_camerasSet getOrDefault [_hashVal, objNull];
 	};
 CLASS_END

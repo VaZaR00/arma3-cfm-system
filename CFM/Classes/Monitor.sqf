@@ -115,10 +115,10 @@ OBJCLASS(Monitor)
 
 		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS(_operator);
 
-		private _renderTargetAndCamera = ["getRenderTargetAndCamera", [_monitor], _operator, "NONE"] CALL_CLASS("CameraManager");
+		private _renderTargetAndCamera = ["spawnCamera", [_monitor], "", "NONE"] CALL_CLASS("CameraManager");
 		private _renderTarget = _renderTargetAndCamera#0;
 		private _camera = _renderTargetAndCamera#1;
-		if (IS_STR(_renderTarget) && {(_renderTarget isEqualTo "") || {!(RENDER_TARGET_STR in _renderTarget)}}) exitWith {
+		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
 			false
@@ -138,7 +138,7 @@ OBJCLASS(Monitor)
 		params[["_reset", false]];
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS(_monitor);
-			["monitorStoppedFeed", [_self, _currentTurret]] CALL_OBJCLASS(_connectedOperator);
+			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		};
 		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);

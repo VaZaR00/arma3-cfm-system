@@ -32,6 +32,7 @@
 #define TYPE_UNIT "unit"
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
 #define CHECK_EX(c) if (c) exitWith {false};
+#define IS_VALID_R2T(s) (!(IS_STR(_renderTarget) && {(_renderTarget isEqualTo "") || {!(RENDER_TARGET_STR in _renderTarget)}}))
 
 
 

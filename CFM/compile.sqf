@@ -49,7 +49,7 @@ CFM_fnc_draw3dEH = {
 		private _monitor = _x;
 		private _condition = [_monitor, true] call CFM_fnc_monitorLiveCondition;
 		if (_condition) then {
-			[_monitor] call CFM_fnc_updateOperator;
+			[_monitor] call CFM_fnc_updateMonitor;
 		} else {	
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
@@ -254,6 +254,17 @@ CFM_fnc_updateOperator = {
 			[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
 		} forEach _cameras;
 	} forEach _camerasSet;
+};
+
+CFM_fnc_updateMonitor = {
+	params["_monitor"];
+
+	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
+	private _zoom = _monitor getVariable ["CFM_zoom", 1];
+	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
+	[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
 };
 
 CFM_fnc_getUAVCameraPoints = {  
