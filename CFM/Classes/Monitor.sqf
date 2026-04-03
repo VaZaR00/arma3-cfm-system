@@ -89,12 +89,10 @@ OBJCLASS(Monitor)
 		if !(_turnOff) then {
 			_monitor setVariable ["CFM_currentR2T", _r2t];
 		};
-		[1, _self, _render, _r2t, _turnOff, (_monitor getVariable ["CFM_isHandMonitor", false])] RLOG
 		if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
 			[_monitor, _render] call CFM_fnc_setHandDisplay;
 		};
 
-		[2, _self, _render, _r2t, _turnOff, (_monitor getVariable ["CFM_isHandMonitor", false])] RLOG
 		if (_render) then {
 			_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _r2t + ",1.0)"];  
 		} else {
@@ -105,8 +103,6 @@ OBJCLASS(Monitor)
 		params [["_operator", objNull], ["_turret", []]];
 
 		private _monitor = _self;
-
-		["START 1", _monitor] RLOG
 
 		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
 		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
@@ -121,7 +117,6 @@ OBJCLASS(Monitor)
 		private _renderTarget = _renderTargetAndCamera#0;
 		private _camera = _renderTargetAndCamera#1;
 
-		["START 1", _monitor, _renderTargetAndCamera] RLOG
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];

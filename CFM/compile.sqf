@@ -708,15 +708,12 @@ CFM_fnc_syncState = {
 
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
-	["SYNC 1", _monitor, _operator, _isWaiting, _start] RLOG
 	if (_isWaiting && _start) exitWith {};
 
 	_monitor setVariable ["CFM_waitingForStart", _start];
 
-	["SYNC 2", _monitor, _operator, _isWaiting, _start] RLOG
 	if (_start) then {
 		waitUntil {
-			LOGH ["WAIT SYNC", _monitor, _operator];
 			private _dist = _monitor distance player;
 			private _isClose = _dist <= START_MONITOR_FEED_DIST;
 			_start = _monitor getVariable ["CFM_waitingForStart", true];
@@ -726,7 +723,6 @@ CFM_fnc_syncState = {
 			_isClose
 		};
 	};
-	["SYNC 3", _monitor, _operator, _isWaiting, _start, (_monitor getVariable ["CFM_feedActive", false])] RLOG
 	if (_start) then { 
 		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {}; 
 		[_monitor, _operator] call CFM_fnc_startOperatorFeed; 
@@ -760,9 +756,7 @@ CFM_fnc_remoteExec = {
 		_jip = "CFM_jip_remote_exec_id_" + _id;
 	};
 
-	["CFM_fnc_remoteExec", _this, _jip, _targets] RLOG
 	if ((_targets isEqualTo player) || {(_targets isEqualTo false) || {(_targets isEqualTo (clientOwner))}}) exitWith {
-	["CFM_fnc_remoteExec 1", _this, _jip, _targets] RLOG
 		if (_func isEqualTo "call") exitWith {
 			(_args#0) call (_args#1)
 		};
@@ -776,7 +770,6 @@ CFM_fnc_remoteExec = {
 			_args spawn _func
 		};
 	};
-	["CFM_fnc_remoteExec 2",_args, _func, _targets, _jip] RLOG
 
 	_args remoteExec [_func, _targets, _jip];
 };
