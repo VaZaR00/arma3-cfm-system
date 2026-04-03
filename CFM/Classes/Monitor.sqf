@@ -131,6 +131,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+		["addActiveViewer", [player]] CALL_CLASS("DbHandler");
 
 		true
 	}; 
@@ -163,12 +164,12 @@ OBJCLASS(Monitor)
 	};
 	METHOD("connect") {
 		params["_op"];
-		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
+		[[netId _self, netId _op, true], "CFM_fnc_syncState", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec; 
 		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
 		true
 	};
 	METHOD("disconnect") {
-		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
+		[[netId _self, "", false], "CFM_fnc_syncState", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec; 
 		_self setVariable ['CFM_menuActive', false, true];
 	};
 	METHOD("loadMenu") { 
@@ -251,13 +252,13 @@ OBJCLASS(Monitor)
 			_newzoom
 		} else {_zoomAdd};
 
-		["setZoom", [_self, _currentTurret, _newzoom]] CALL_OBJCLASS(_connectedOperator);
+		_self setVariable ["CFM_zoom", _newzoom];
 
 		_newzoom
 	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
-		[[_self, _turret], "CFM_fnc_resetFeed", !_isLocal, _self] call CFM_fnc_remoteExec;
+		_self setVariable ["CFM_currentTurret", _turret];
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;
@@ -267,7 +268,7 @@ OBJCLASS(Monitor)
 		if (_currentPiPEffect == 1) then {
 			_newEffect = 0;
 		};
-		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", !_isLocal, _self] call CFM_fnc_remoteExec;
+		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec;
 	};
 	METHOD("switchTi") { 
 		private _tiModes = _tiTable getOrDefault [_currentTurret#0, [0]];
@@ -281,7 +282,7 @@ OBJCLASS(Monitor)
 			};
 			_tiModes select _newI;
 		};
-		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", !_isLocal, _self] call CFM_fnc_remoteExec;
+		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec;
 	};
 	METHOD("addActionsToActionsList") {
 		private _savedActions = _self getVariable ["CFM_mainActions", []];

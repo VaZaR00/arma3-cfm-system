@@ -106,20 +106,17 @@ CLASS(DbHandler)
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
 	};
-	METHOD("addActiveOperator") {
-		params["_operator"];
-		if !(IS_OBJ(_operator)) exitWith {-1};
-		["addToList", [_operator, "CFM_ActiveOperators"]] CALL_CLASS(_self);
-	};
-	METHOD("removeActiveOperator") {
-		params["_operator"];
-		if !(IS_OBJ(_operator)) exitWith {false};
-		["removeFromList", [_operator, "CFM_ActiveOperators"]] CALL_CLASS(_self);
-	};
 	METHOD("addActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
+	};
+	METHOD("addActiveViewer") {
+		params["_player"];
+		if !(IS_OBJ(_player)) exitWith {-1};
+		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
+		["addToList", [_player, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
+		_player setVariable ["CFM_isActiveViewer", true, true];
 	};
 	METHOD("removeActiveMonitor") {
 		params["_monitor"];
