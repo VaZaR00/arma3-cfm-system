@@ -10,10 +10,12 @@ CLASS(DbHandler)
 		CFM_CameraPool = [];
 		CFM_Monitors = [];
 		CFM_Operators = [];
-		CFM_ActiveOperators = [];
-		CFM_ActiveMonitors = [];
 		CFM_R2T_index = 0;
 		CFM_OperatorClasses = [];
+		if (isServer) then {
+			CFM_ActiveMonitors = [];
+			missionNamespace setVariable ["CFM_ActiveMonitors", [], true];
+		};
 	};
 	METHOD("setOperator") {
 		// should be executed globaly

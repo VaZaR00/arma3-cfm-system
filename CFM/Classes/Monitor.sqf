@@ -115,7 +115,7 @@ OBJCLASS(Monitor)
 
 		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
 
-		private _renderTargetAndCamera = ["spawnCamera", [_monitor], "", "NONE"] CALL_CLASS("CameraManager");
+		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, "NONE"] CALL_CLASS("CameraManager");
 		private _renderTarget = _renderTargetAndCamera#0;
 		private _camera = _renderTargetAndCamera#1;
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
@@ -132,6 +132,8 @@ OBJCLASS(Monitor)
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["addActiveViewer", [player]] CALL_CLASS("DbHandler");
+
+		["START", _monitor, _camera, ] RLOG
 
 		true
 	}; 
@@ -164,12 +166,12 @@ OBJCLASS(Monitor)
 	};
 	METHOD("connect") {
 		params["_op"];
-		[[netId _self, netId _op, true], "CFM_fnc_syncState", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec; 
+		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
 		true
 	};
 	METHOD("disconnect") {
-		[[netId _self, "", false], "CFM_fnc_syncState", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec; 
+		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		_self setVariable ['CFM_menuActive', false, true];
 	};
 	METHOD("loadMenu") { 

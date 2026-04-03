@@ -7,16 +7,15 @@ CLASS(CameraManager)
 	METHODS
 
 	METHOD("Init") {
-		CFM_allCamerasData = createHashMap;
 	};
 	METHOD("CreateCamera") {
 		params[["_monitor", objNull]];
-
-		if !(IS_OBJ(_monitor)) exitWith {objNull};
+		
+		if !(IS_OBJ(_monitor)) exitWith {[objNull, ""]};
 
 		private _cam = [] call CFM_fnc_createCamera;
-
-		if !(IS_OBJ(_cam)) exitWith {objNull};
+		
+		if !(IS_OBJ(_cam)) exitWith {[objNull, ""]};
 
 		private _renderTarget = [] call CFM_fnc_getNextRenderTarget;
 		_cam cameraEffect ["internal", "back", _renderTarget];
@@ -44,7 +43,7 @@ CLASS(CameraManager)
 	METHOD("spawnCamera") {
 		params[["_monitor", objNull]];
 
-		private _camData = ["CreateCamera", [_monitor], _self, objNull] CALL_CLASS(_self);
+		private _camData = ["CreateCamera", [_monitor], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);
 		private _cam = _camData#0;
 		private _r2t = _camData#1;
 
