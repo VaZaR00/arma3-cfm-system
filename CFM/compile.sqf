@@ -718,9 +718,8 @@ CFM_fnc_setMonitorPiPEffect = {
 CFM_fnc_resetFeed = {
 	params["_monitor"];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];  
-	private _turret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];  
-	[_monitor, true] call CFM_fnc_stopOperatorFeed;
-	if (IS_OBJ(_operator)) exitWith {};
+	[_monitor] call CFM_fnc_stopOperatorFeed;
+	if !(IS_OBJ(_operator)) exitWith {};
 	private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
 	if !(_hndl isEqualType scriptNull) then {
 		_hndl = scriptNull;
