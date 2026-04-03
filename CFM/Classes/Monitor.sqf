@@ -13,18 +13,18 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
 	OBJ_VARIABLE(_connectedOperator, objNull);
 	OBJ_VARIABLE(_feedActive, false);
-	OBJ_VARIABLE(_renderTarget, "");
-	OBJ_VARIABLE(_cameraType, "");
+	OBJ_VARIABLE(_currentCameraType, "");
 	OBJ_VARIABLE(_currentFeedCam, objNull);
 	OBJ_VARIABLE(_currentR2T, "");
-	OBJ_VARIABLE(_opHasTurrets, false);
-	OBJ_VARIABLE(_canSwitchNvg, false);
-	OBJ_VARIABLE(_canSwitchTi, false);
+	OBJ_VARIABLE(_currentOpHasTurrets, false);
+	OBJ_VARIABLE(_monitorCanSwitchNvg, false);
+	OBJ_VARIABLE(_monitorCanSwitchTi, false);
 	OBJ_VARIABLE(_currentPiPEffect, 0);
-	OBJ_VARIABLE(_tiTable, createHashMap);
-	OBJ_VARIABLE(_nvgTable, createHashMap);
+	OBJ_VARIABLE(_currentTiTable, createHashMap);
+	OBJ_VARIABLE(_currentNvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
 	OBJ_VARIABLE(_turretLocal, false);
+	OBJ_VARIABLE(_maxZoomed, false);
 
 	METHODS
 
@@ -51,7 +51,7 @@ OBJCLASS(Monitor)
 		private _setlocal = !_isPlayer;
 		private _local = local _monitor;
 
-		if (!_setlocal && !_local) exitWith {};
+		if (_setlocal && !_local) exitWith {};
 
 		_isHandMonitor = _isPlayer;
 		_isLocal = _isHandMonitor;
@@ -66,7 +66,6 @@ OBJCLASS(Monitor)
 		private _radius = ACTION_RADIUS;
 		private _menuText = "Camera System Menu";
 		private _additionalCondition = if (_isHandMonitor) then {
-			_monitor setVariable ["CFM_isHandMonitor", true, true];
 			_radius = -1;
 			_menuText = "Camera System Tablet";
 			"&& {[_target] call CFM_fnc_hasUAVterminal}"
@@ -107,6 +106,8 @@ OBJCLASS(Monitor)
 
 		private _monitor = _self;
 
+		["START 1", _monitor] RLOG
+
 		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
 		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
 
@@ -120,6 +121,7 @@ OBJCLASS(Monitor)
 		private _renderTarget = _renderTargetAndCamera#0;
 		private _camera = _renderTargetAndCamera#1;
 
+		["START 1", _monitor, _renderTargetAndCamera] RLOG
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
@@ -148,22 +150,21 @@ OBJCLASS(Monitor)
 		["setRenderPicture", [false]] CALL_OBJCLASS("Monitor", _monitor);
 	};
 	METHOD("clearVariables") {
-		_monitor setVariable ["CFM_canSwitchNvg", nil];
-		_monitor setVariable ["CFM_canSwitchTi", nil];
-		_monitor setVariable ["CFM_opHasTurrets", nil];
+		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
+		_monitor setVariable ["CFM_monitorCanSwitchTi", nil];
+		_monitor setVariable ["CFM_currentOpHasTurrets", nil];
 		_monitor setVariable ["CFM_cameraType", nil];
-		_monitor setVariable ["CFM_tiTable", nil];
-		_monitor setVariable ["CFM_nvgTable", nil];
+		_monitor setVariable ["CFM_currentTiTable", nil];
+		_monitor setVariable ["CFM_currentNvgTable", nil];
 		_monitor setVariable ["CFM_currentTurret", nil];
 		_monitor setVariable ["CFM_currentPiPEffect", nil];
-		_monitor setVariable ["CFM_opHasTurrets", nil];
 		_monitor setVariable ["CFM_currentR2T", nil];
 		_monitor setVariable ["CFM_currentFeedCam", nil];
 		_monitor setVariable ["CFM_connectedOperator", nil];
 		_monitor setVariable ["CFM_feedActive", nil];
-		_monitor setVariable ["CFM_renderTarget", nil];
 		_monitor setVariable ["CFM_zoom", nil];
 		_monitor setVariable ["CFM_turretLocal", nil];
+		_monitor setVariable ['CFM_maxZoomed', nil];
 	};
 	METHOD("connect") {
 		params["_op"];
@@ -197,7 +198,7 @@ OBJCLASS(Monitor)
 		_tempIDs pushBack _closeID; 
 
 		{  
-			private _type = _x getVariable ["CFM_cameraType", GOPRO];
+			private _type = _x getVariable ["CFM_currentCameraType", GOPRO];
 			private _name = switch (_type) do {
 				case GOPRO: {
 					format["%1: %2", groupId group _x, name _x]
@@ -274,7 +275,7 @@ OBJCLASS(Monitor)
 		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec;
 	};
 	METHOD("switchTi") { 
-		private _tiModes = _tiTable getOrDefault [_currentTurret#0, [0]];
+		private _tiModes = _currentTiTable getOrDefault [_currentTurret#0, [0]];
 		private _newEffect = if !(_currentPiPEffect in _tiModes) then {
 			_tiModes#0;
 		} else {
@@ -409,7 +410,7 @@ OBJCLASS(Monitor)
 					["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
-						(_target getVariable ['CFM_opHasTurrets', false]) && {
+						(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 							((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
 						}
 					}
@@ -420,7 +421,7 @@ OBJCLASS(Monitor)
 					["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
-						(_target getVariable ['CFM_opHasTurrets', false]) && {
+						(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 							((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
 						}
 					}
@@ -450,10 +451,10 @@ OBJCLASS(Monitor)
 					["switchNvg"] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
-						(_target getVariable ['CFM_canSwitchNvg', false]) && {
+						(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
 							!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
 								(
-									(_target getVariable ['CFM_nvgTable', createHashMap]) getOrDefault 
+									(_target getVariable ['CFM_currentNvgTable', createHashMap]) getOrDefault 
 									[((_target getVariable ['CFM_currentTurret', [-1]])#0), false]
 								)
 							}
@@ -469,12 +470,12 @@ OBJCLASS(Monitor)
 					["switchTi"] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
-						(_target getVariable ['CFM_canSwitchTi', false]) && {
+						(_target getVariable ['CFM_monitorCanSwitchTi', false]) && {
 							!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
 								(
 									!(
 										(
-											(_target getVariable ['CFM_tiTable', createHashMap]) getOrDefault 
+											(_target getVariable ['CFM_currentTiTable', createHashMap]) getOrDefault 
 											[((_target getVariable ['CFM_currentTurret', [-1]])#0), []]
 										) isEqualTo []
 									)

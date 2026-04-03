@@ -645,9 +645,9 @@ CFM_fnc_closePIPwindow = {
 CFM_fnc_setHandDisplay = {
 	params[["_player", player], ["_render", true]];
 
-	private _renderTarget = _player getVariable ["CFM_renderTarget", ""];
+	private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
 
-	if (_render) then {
+	if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		[_player, _renderTarget] spawn CFM_fnc_createPIPwindow;
 	} else {
 		[_player] call CFM_fnc_closePIPwindow;
@@ -667,7 +667,7 @@ CFM_fnc_getNextRenderTarget = {
 
 CFM_fnc_setMonitorPiPEffect = {
 	params["_monitor", ["_pipEffect", 0]];
-	private _renderTarget = _monitor getVariable ["CFM_renderTarget", "rendertarget0"];  
+	private _renderTarget = _monitor getVariable ["CFM_currentR2T", "rendertarget0"];  
 	_renderTarget setPiPEffect [_pipEffect];
 	_monitor setVariable ["CFM_currentPiPEffect", _pipEffect]; 
 };
@@ -687,7 +687,7 @@ CFM_fnc_resetFeed = {
 
 CFM_fnc_connectOperatorToMonitor = {  
 	params ["_monitor", "_operator"];  
-	["connect", [_operator], _monitor] CALL_OBJCLASS("Monitor", _monitor);
+	["connect", [_operator], _monitor, 0] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_startOperatorFeed = {  
@@ -708,12 +708,15 @@ CFM_fnc_syncState = {
 
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
+	["SYNC 1", _monitor, _operator, _isWaiting, _start] RLOG
 	if (_isWaiting && _start) exitWith {};
 
 	_monitor setVariable ["CFM_waitingForStart", _start];
 
+	["SYNC 2", _monitor, _operator, _isWaiting, _start] RLOG
 	if (_start) then {
 		waitUntil {
+			LOGH ["WAIT SYNC", _monitor, _operator];
 			private _dist = _monitor distance player;
 			private _isClose = _dist <= START_MONITOR_FEED_DIST;
 			_start = _monitor getVariable ["CFM_waitingForStart", true];
@@ -723,6 +726,7 @@ CFM_fnc_syncState = {
 			_isClose
 		};
 	};
+	["SYNC 3", _monitor, _operator, _isWaiting, _start, (_monitor getVariable ["CFM_feedActive", false])] RLOG
 	if (_start) then { 
 		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {}; 
 		[_monitor, _operator] call CFM_fnc_startOperatorFeed; 
@@ -735,11 +739,12 @@ CFM_fnc_syncState = {
 CFM_fnc_remoteExec = {
 	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", 0], ["_call", false, [false]]];
 
+
 	if (_targets isEqualType true) then {
 		if (_targets isEqualTo true) then {
 			_targets = 0;
 		} else {
-			_targets = 2;
+			_targets = false;
 		};
 	};
 	if (_jip isEqualType objNull) then {
@@ -755,7 +760,9 @@ CFM_fnc_remoteExec = {
 		_jip = "CFM_jip_remote_exec_id_" + _id;
 	};
 
+	["CFM_fnc_remoteExec", _this, _jip, _targets] RLOG
 	if ((_targets isEqualTo player) || {(_targets isEqualTo false) || {(_targets isEqualTo (clientOwner))}}) exitWith {
+	["CFM_fnc_remoteExec 1", _this, _jip, _targets] RLOG
 		if (_func isEqualTo "call") exitWith {
 			(_args#0) call (_args#1)
 		};
@@ -769,6 +776,7 @@ CFM_fnc_remoteExec = {
 			_args spawn _func
 		};
 	};
+	["CFM_fnc_remoteExec 2",_args, _func, _targets, _jip] RLOG
 
 	_args remoteExec [_func, _targets, _jip];
 };

@@ -91,11 +91,11 @@ OBJCLASS(Operator)
 
 		_self setVariable ["CFM_isFeeding", true];
 		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
-		_monitor setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
-		_monitor setVariable ["CFM_canSwitchTi", _canSwitchTi];
-		_monitor setVariable ["CFM_opHasTurrets", _opHasTurrets];
-		_monitor setVariable ["CFM_cameraType", _cameraType];
-		_monitor setVariable ["CFM_tiTable", _tiTable];
-		_monitor setVariable ["CFM_nvgTable", _nvgTable];
+		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
+		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
+		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
+		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
+		_monitor setVariable ["CFM_currentTiTable", _tiTable];
+		_monitor setVariable ["CFM_currentNvgTable", _nvgTable];
 	};
 CLASS_END
