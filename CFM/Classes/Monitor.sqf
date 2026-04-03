@@ -162,7 +162,7 @@ OBJCLASS(Monitor)
 	};
 	METHOD("disconnect") {
 		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
-		_self setVariable ['CFM_menuActive', false];
+		_self setVariable ['CFM_menuActive', false, true];
 	};
 	METHOD("loadMenu") { 
 		params [["_caller", objNull]]; 
@@ -294,8 +294,7 @@ OBJCLASS(Monitor)
 
 		private _actionDisc = _self addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 			params ["_target"]; 
-			[[netId _target, "", false], "CFM_fnc_syncState", true, _target] call CFM_fnc_remoteExec; 
-			_target setVariable ['CFM_menuActive', false];
+			["disconnect", []] CALL_OBJCLASS(_target);
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_feedActive', false]", _radius]; 
 		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS(_self);
 	};

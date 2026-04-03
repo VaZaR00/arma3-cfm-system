@@ -726,7 +726,7 @@ CFM_fnc_resetFeed = {
 		_hndl = scriptNull;
 	};
 	waitUntil {scriptDone (_hndl)};
-	[_monitor] call CFM_fnc_startOperatorFeed;
+	[_monitor, _operator] call CFM_fnc_startOperatorFeed;
 };
 
 CFM_fnc_connectOperatorToMonitor = {  
@@ -750,10 +750,6 @@ CFM_fnc_syncState = {
 	private _monitor = objectFromNetId _mNetId; 
 	private _operator = objectFromNetId _oNetId; 
 
-	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull];
-
-	if (IS_OBJ(_cam)) exitWith {};
-
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
 	if (_isWaiting && _start) exitWith {};
@@ -772,8 +768,8 @@ CFM_fnc_syncState = {
 		};
 	};
 	if (_start) then { 
-		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {};
-		[_monitor, _operator] call CFM_fnc_startOperatorFeed;
+		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {}; 
+		[_monitor, _operator] call CFM_fnc_startOperatorFeed; 
 	} else {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 	}; 
@@ -822,7 +818,7 @@ CFM_fnc_remoteExec = {
 };
 
 CFM_fnc_fixFeed = {
-	private _monitors = missionNamespace getVariable ["CFM_currentMonitors", []];
+	private _monitors = missionNamespace getVariable ["CFM_Monitors", []];
 	{
 		[_x] spawn CFM_fnc_resetFeed;
 	} forEach _monitors;
