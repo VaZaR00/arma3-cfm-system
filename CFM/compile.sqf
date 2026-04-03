@@ -85,8 +85,9 @@ CFM_fnc_setMonitor = {
 
 CFM_fnc_setOperator = {
 	params["_operator", ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
-	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {};
+	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 	["setOperator", [_operator, _type, _hasTInNvg, _params]] CALL_CLASS("DbHandler");
+	true
 };
 
 CFM_fnc_cameraCondition = {
@@ -140,12 +141,12 @@ CFM_fnc_getActiveOperatorsCheckGlobal = {
 		private _side = side _x;
 		private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 		((_side isEqualTo _playerSide) || ((_playerSide in _sidesUseCiv) && {_side == civilian})) && 
-		(_x call CFM_fnc_operatorCondition)  
+		([_x] call CFM_fnc_operatorCondition)  
 	}  
 }; 
 
 CFM_fnc_getActiveOperators = {
-	(missionNamespace getVariable ["CFM_Operators", []]) select {_x call CFM_fnc_operatorCondition};
+	(missionNamespace getVariable ["CFM_Operators", []]) select {[_x] call CFM_fnc_operatorCondition};
 };
 
 CFM_fnc_timeInterpolate = {

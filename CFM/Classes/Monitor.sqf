@@ -114,7 +114,6 @@ OBJCLASS(Monitor)
 		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS(_operator);
 
 		private _renderTarget = ["getRenderTarget", [_monitor, _turret], _operator, "NONE"] CALL_OBJCLASS(_operator);
-
 		if (IS_STR(_renderTarget) && {(_renderTarget isEqualTo "") || {!(RENDER_TARGET_STR in _renderTarget)}}) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
