@@ -44,15 +44,16 @@ CFM_fnc_updateOperatorZoom = {
 CFM_fnc_draw3dEH = {
 	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
 
-	private _operators = missionNamespace getVariable ["CFM_ActiveOperators", []];
+	private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 	{
-		private _condition = [_x, true] call CFM_fnc_operatorCondition;
+		private _monitor = _x;
+		private _condition = [_monitor, true] call CFM_fnc_monitorLiveCondition;
 		if (_condition) then {
-			[_x] call CFM_fnc_updateOperator;
+			[_monitor] call CFM_fnc_updateOperator;
 		} else {	
-			["removeActiveOperator", [_x]] CALL_CLASS("DbHandler");
+			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
-	} forEach _operators;
+	} forEach _monitors;
 
 	// UPDATE OBJECT ZOOM
 	[] call CFM_fnc_updateOperatorZoom;
@@ -152,7 +153,8 @@ CFM_fnc_getActiveOperators = {
 CFM_fnc_timeInterpolate = {
     params ["_cam", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
     
-	if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
+	// if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
+	if (!DO_CAM_INTERPOLATION) exitWith {
 		[_targetPos, [_targetDir, _targetUp]];
 	};
 
@@ -242,12 +244,14 @@ CFM_fnc_updateOperator = {
 
 	private _camerasSet = _operator getVariable ["CFM_camerasSet", createHashMap];
 	{
-		private _turret = [_x];
 		private _cameras = _y;
 		{
+			private _monitor = _x#0;
 			private _camera = _x#1;
-			private _camParams = _x#2;
-			[_camera, _camParams, true, false] call CFM_fnc_updateCamera;
+			private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
+			private _zoom = _monitor getVariable ["CFM_zoom", 1];
+			private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
+			[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
 		} forEach _cameras;
 	} forEach _camerasSet;
 };
@@ -481,8 +485,7 @@ CFM_fnc_monitorLiveCondition = {
 
 	private _opType = _operator getVariable ["CFM_cameraType", GOPRO];
 
-	CHECK_EX(!(_opType isEqualTo GOPRO) && !(alive _operator));
-	CHECK_EX(!(alive _cam));
+	CHECK_EX(!(_opType isEqualTo GOPRO) && {!(alive _operator)});
 	
 	private _active = _monitor getVariable ["CFM_feedActive", false]; 
 
@@ -717,7 +720,7 @@ CFM_fnc_setMonitorPiPEffect = {
 };
 
 CFM_fnc_resetFeed = {
-	params["_monitor"];
+	params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];  
 	[_monitor] call CFM_fnc_stopOperatorFeed;
 	if !(IS_OBJ(_operator)) exitWith {};
@@ -726,7 +729,7 @@ CFM_fnc_resetFeed = {
 		_hndl = scriptNull;
 	};
 	waitUntil {scriptDone (_hndl)};
-	[_monitor, _operator] call CFM_fnc_startOperatorFeed;
+	[_monitor, _operator, _turret] call CFM_fnc_startOperatorFeed;
 };
 
 CFM_fnc_connectOperatorToMonitor = {  
@@ -735,8 +738,8 @@ CFM_fnc_connectOperatorToMonitor = {
 };
 
 CFM_fnc_startOperatorFeed = {  
-	params ["_monitor", "_operator"];  
-	["startFeed", [_operator], _monitor] CALL_OBJCLASS(_monitor);
+	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
+	["startFeed", [_operator, _turret], _monitor] CALL_OBJCLASS(_monitor);
 }; 
 
 CFM_fnc_stopOperatorFeed = {  

@@ -90,6 +90,7 @@ OBJCLASS(Operator)
 		if !(IS_OBJ(_monitor)) exitWith {};
 
 		_self setVariable ["CFM_isFeeding", true];
+		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
 		_monitor setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
 		_monitor setVariable ["CFM_canSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_opHasTurrets", _opHasTurrets];

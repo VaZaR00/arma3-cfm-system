@@ -23,6 +23,9 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentPiPEffect, 0);
 	OBJ_VARIABLE(_tiTable, createHashMap);
 	OBJ_VARIABLE(_nvgTable, createHashMap);
+	OBJ_VARIABLE(_zoom, 1);
+	OBJ_VARIABLE(_turretLocal, 1);
+	OBJ_VARIABLE(_zoom, 1);
 
 	METHODS
 
@@ -249,8 +252,7 @@ OBJCLASS(Monitor)
 	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
-		_self setVariable ["CFM_currentTurret", _turret, true]; 
-		[[_self], "CFM_fnc_resetFeed", !_isLocal, _self] call CFM_fnc_remoteExec;
+		[[_self, _turret], "CFM_fnc_resetFeed", !_isLocal, _self] call CFM_fnc_remoteExec;
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;
