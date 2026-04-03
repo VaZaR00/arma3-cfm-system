@@ -124,12 +124,13 @@ CLASS(DbHandler)
 		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
 	METHOD("deepCopy") {
-		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_doInit", false], ["_global", false]];
+		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];
 		if !(IS_OBJ(_copyFrom)) exitWith {false};
 		if !(IS_OBJ(_copyTo)) exitWith {false};
+		if !(IS_STR(_classname)) exitWith {false};
+		if (_classname isEqualTo "") exitWith {false};
 
 		private _ooAllVars = _copyFrom getVariable ["CFM_ooAllVars", createHashMap];
-		private _classname = _copyFrom getVariable [format["OOP_%1_class", SPREFX], ""];
 		_ooAllVars apply {
 			private _name = _x;
 			private _def = _y;
@@ -142,8 +143,7 @@ CLASS(DbHandler)
 			private _classFunc = (missionNamespace getVariable [_classname, {}]);
 			if !(_classFunc isEqualType {}) exitWith {};
 			if (_classFunc isEqualTo {}) exitWith {};
-			_copyTo setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, _global];
-			_copyTo setVariable [format["OOP_%1_class", SPREFX], _classname, _global];
+			SET_THIS_OBJINSTANCE(_classname, _copyTo, _classFunc) \
 		};
 		true
 	};

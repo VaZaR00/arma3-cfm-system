@@ -68,7 +68,7 @@ CFM_fnc_setupDraw3dEH = {
 CFM_fnc_zoom = {
 	params [["_monitor", 0], ["_zoomAdd", 0], ["_zoomSet", -1]]; 
 
-	["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS(_monitor);
+	["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_setMonitor = {
@@ -657,7 +657,7 @@ CFM_fnc_setHandDisplay = {
 CFM_fnc_setMonitorTexture = {
 	params["_monitor", ["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
-	["setRenderPicture", [_render, _r2t, _turnOff]] CALL_OBJCLASS(_monitor);
+	["setRenderPicture", [_render, _r2t, _turnOff]] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_getNextRenderTarget = {
@@ -687,17 +687,17 @@ CFM_fnc_resetFeed = {
 
 CFM_fnc_connectOperatorToMonitor = {  
 	params ["_monitor", "_operator"];  
-	["connect", [_operator], _monitor] CALL_OBJCLASS(_monitor);
+	["connect", [_operator], _monitor] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_startOperatorFeed = {  
 	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
-	["startFeed", [_operator, _turret], _monitor] CALL_OBJCLASS(_monitor);
+	["startFeed", [_operator, _turret], _monitor] CALL_OBJCLASS("Monitor", _monitor);
 }; 
 
 CFM_fnc_stopOperatorFeed = {  
 	params ["_monitor", ["_reset", false]];  
-	["stopFeed", [_reset], _monitor] CALL_OBJCLASS(_monitor);
+	["stopFeed", [_reset], _monitor] CALL_OBJCLASS("Monitor", _monitor);
 }; 
 
 CFM_fnc_syncState = { 
@@ -778,13 +778,6 @@ CFM_fnc_fixFeed = {
 	{
 		[_x] spawn CFM_fnc_resetFeed;
 	} forEach _monitors;
-};
-
-CFM_fnc_objClassInstance = {
-	params["_obj"];
-	private _instance = GET_CLASS_INST(_obj);
-	if !(IS_FUNC(_instance)) exitWith {{}};
-	_instance
 };
 
 CFM_fnc_cameraType = {

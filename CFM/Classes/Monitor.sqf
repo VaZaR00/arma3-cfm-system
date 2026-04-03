@@ -75,8 +75,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_actionsRadius", _radius];
 
 
-		["addMenuActions", [_radius, _menuText, _additionalCondition]] CALL_OBJCLASS(_self);
-		["addOptionalActions", [_radius]] CALL_OBJCLASS(_self);
+		["addMenuActions", [_radius, _menuText, _additionalCondition]] CALL_OBJCLASS("Monitor", _self);
+		["addOptionalActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 
 		_monitor setVariable ["CFM_isMonitorSet", true];
 	};
@@ -113,7 +113,7 @@ OBJCLASS(Monitor)
 			_turret = _currentTurret;
 		};
 
-		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS(_operator);
+		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		private _renderTargetAndCamera = ["spawnCamera", [_monitor], "", "NONE"] CALL_CLASS("CameraManager");
 		private _renderTarget = _renderTargetAndCamera#0;
@@ -124,7 +124,7 @@ OBJCLASS(Monitor)
 			false
 		};
 
-		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS(_monitor);
+		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
 
 		_monitor setVariable ["CFM_currentFeedCam", _camera];
 		_monitor setVariable ["CFM_feedActive", true];
@@ -138,11 +138,11 @@ OBJCLASS(Monitor)
 	METHOD("stopFeed") {
 		params[["_reset", false]];
 		if !(_reset) then {
-			["clearVariables"] CALL_OBJCLASS(_monitor);
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		};
-		["setRenderPicture", [false]] CALL_OBJCLASS(_monitor);
+		["setRenderPicture", [false]] CALL_OBJCLASS("Monitor", _monitor);
 	};
 	METHOD("clearVariables") {
 		_monitor setVariable ["CFM_canSwitchNvg", nil];
@@ -296,14 +296,14 @@ OBJCLASS(Monitor)
 		private _actionMenu = _self addAction [format["<t color='#00FF00'>%1</t>", _menuText], { 
 			params ["_target", "_caller"]; 
 
-			["loadMenu", [_caller]] CALL_OBJCLASS(_target);
+			["loadMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
 		}, nil, 1.5, true, false, "", "!((_target getVariable ['CFM_feedActive', false]) || (_target getVariable ['CFM_menuActive', false]))" + _additionalCondition, _radius]; 
 
 		private _actionDisc = _self addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 			params ["_target"]; 
-			["disconnect", []] CALL_OBJCLASS(_target);
+			["disconnect", []] CALL_OBJCLASS("Monitor", _target);
 		}, nil, 1.5, true, false, "", "_target getVariable ['CFM_feedActive', false]", _radius]; 
-		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS(_self);
+		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("addOptionalActions") {
 		params [
@@ -403,7 +403,7 @@ OBJCLASS(Monitor)
 				private _actionSwitchTurret = _self addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
 					params ["_target"]; 
 					
-					["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS(_target);
+					["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
 						(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -414,7 +414,7 @@ OBJCLASS(Monitor)
 				private _actionSwitchDriver = _self addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 					params ["_target"]; 
 
-					["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS(_target);
+					["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
 						(_target getVariable ['CFM_opHasTurrets', false]) && {
@@ -444,7 +444,7 @@ OBJCLASS(Monitor)
 			if (_canSwitchNvg) then {
 				private _actionSwitchNvg = _self addAction ["<t color='#006e02'>Toggle NVG</t>", { 
 					params ["_target"]; 
-					["switchNvg"] CALL_OBJCLASS(_target);
+					["switchNvg"] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
 						(_target getVariable ['CFM_canSwitchNvg', false]) && {
@@ -463,7 +463,7 @@ OBJCLASS(Monitor)
 			if (_canSwitchTi) then {
 				private _actionSwitchTi = _self addAction ["<t color='#525252'>Toggle TI</t>", { 
 					params ["_target"]; 
-					["switchTi"] CALL_OBJCLASS(_target);
+					["switchTi"] CALL_OBJCLASS("Monitor", _target);
 				}, nil, 1.5, true, false, "", "
 					(_target getVariable ['CFM_feedActive', false]) && {
 						(_target getVariable ['CFM_canSwitchTi', false]) && {
@@ -483,6 +483,6 @@ OBJCLASS(Monitor)
 				_actions append [_actionSwitchTi];
 			};
 		};
-		["addActionsToActionsList", _actions] CALL_OBJCLASS(_self);
+		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
 	};
 CLASS_END

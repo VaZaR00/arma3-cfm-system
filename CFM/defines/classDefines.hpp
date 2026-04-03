@@ -6,8 +6,11 @@
 	private _classFuncExists = CLASSNAME_EXISTS_STR(name); \
 	if !(_classFuncExists select 0) exitWith {objNull}; \
 	private _classFunc = _classFuncExists select 1; \
-	_self setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, global]; \
-	_self setVariable [format["OOP_%1_class", SPREFX], _CLASSNAMESTR(name), global]; \
+	private _ooClassname = _CLASSNAMESTR(name); \
+	SET_THIS_OBJINSTANCE(name, _self, _classFunc) \
+	private _objClasses = _self getVariable ["OOP_this_classes", []];\
+	_objClasses pushBackUnique _ooClassname; \
+	_self setVariable ["OOP_this_classes", _objClasses, global]; \
 	private _ooInitResult = ["Init", _args, _self, _self] call _classFunc; \
 	if (isNil "_ooInitResult") then {NILDEF(_def, _self)} else {_ooInitResult}; \
 };
@@ -70,13 +73,16 @@ if (_method isEqualTo "oopCopySelf") exitWith { \
 		private _classFunc = (missionNamespace getVariable [_ooClassname, {}]); \
 		if !(_classFunc isEqualType {}) exitWith {}; \
 		if (_classFunc isEqualTo {}) exitWith {}; \
-		_copyObj setVariable [format["OOP_%1_thisInstance", SPREFX], _classFunc, _global]; \
-		_copyObj setVariable [format["OOP_%1_class", SPREFX], _ooClassname, _global]; \
+		SET_THIS_OBJINSTANCE(_ooClassname, _copyObj, _classFunc) \
 	}; \
 	true \
 }; \
 default{}};};
 
+#define THIS_INSTANCE(name, obj) (obj getVariable [THIS_INSTANCE_VARNAME(name), {CALL_PARAMS_OBJCLASS; _NIL(_def)}])
+#define THIS_INSTANCE_VARNAME(name) (if ("_thisInstance" in name) then {name} else {format["OOP_%1_%2_thisInstance", SPREFX, name]})
+#define SET_THIS_OBJINSTANCE_GLOBAL(name, obj, func, global) obj setVariable [THIS_INSTANCE_VARNAME(name), func, global];
+#define SET_THIS_OBJINSTANCE(name, obj, func) SET_THIS_OBJINSTANCE_GLOBAL(name, obj, func, false)
 
 #define OO_VAR_NAME(name) format["%1%2", SPREFX, STR(name)]
 
@@ -102,10 +108,9 @@ if ((_types findIf {name isEqualType _x}) == -1) then {name = def};
 #define CALL_PARAMS_OBJCLASS _this params [["_m", -1], ["_a", []], ["_self", objNull], ["_def", nil]];
 #define CALL_PARAMS_CLASS _this params [["_m", -1], ["_a", []], ["_self", ""], ["_def", nil]];
 
-#define GET_CLASS_INST(obj) (obj getVariable [format["OOP_%1_thisInstance", SPREFX], {CALL_PARAMS_OBJCLASS; _NIL(_def)}])
-#define CALL_OBJCLASS(obj) call { \
+#define CALL_OBJCLASS(name, obj) call { \
 	private _self = obj;  \
-	private _ooCallResult = _this call GET_CLASS_INST(obj); \
+	private _ooCallResult = _this call THIS_INSTANCE(name, obj); \
 	if (isNil "_ooCallResult") then {CALL_PARAMS_OBJCLASS; _NIL(_def)} else {_ooCallResult}; \
 }
 #define CALL_CLASS(name) call { \
