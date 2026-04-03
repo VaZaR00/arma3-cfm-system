@@ -155,4 +155,13 @@ CLASS(DbHandler)
 		missionNamespace setVariable ["CFM_R2T_index", _next];
 		_next
 	};
+	METHOD("updateActionPriority") {
+		private _currentPriority = player getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
+		private _next = _currentPriority - 0.1;
+		if (_next < 10) then {
+			_next = ACTIONS_PRIORITY + ACTIONS_PRIORITY;
+		};
+		player setVariable ["CFM_currentActionsPriority", _next];
+		_next
+	};
 CLASS_END
