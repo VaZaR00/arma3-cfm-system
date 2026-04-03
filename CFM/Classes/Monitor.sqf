@@ -160,6 +160,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_zoom", nil];
 		_monitor setVariable ["CFM_turretLocal", nil];
 		_monitor setVariable ['CFM_maxZoomed', nil];
+		_monitor setVariable ["CFM_currentCameraType", nil];
 	};
 	METHOD("connect") {
 		params["_op"];
@@ -193,7 +194,7 @@ OBJCLASS(Monitor)
 		_tempIDs pushBack _closeID; 
 
 		{  
-			private _type = _x getVariable ["CFM_currentCameraType", GOPRO];
+			private _type = _x getVariable ["CFM_currentCameraType", [_x] call CFM_fnc_cameraType];
 			private _name = switch (_type) do {
 				case GOPRO: {
 					format["%1: %2", groupId group _x, name _x]
