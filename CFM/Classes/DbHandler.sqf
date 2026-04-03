@@ -54,10 +54,10 @@ CLASS(DbHandler)
 		if (isNil "_obj") exitWith {-1};
 		if (_listName isEqualTo "") exitWith {-1};
 
-		private _list = missionNamespace getVariable [_listName, []];
+		private _list = +(missionNamespace getVariable [_listName, []]);
 		private _i = -1;
 		if !(_list isEqualType []) then {
-			_list = [_obj];
+			_list = +[_obj];
 			_i = 0;
 		} else {
 			_i = if (_unique) then {

@@ -46,7 +46,7 @@ CFM_fnc_draw3dEH = {
 
 	private _operators = missionNamespace getVariable ["CFM_ActiveOperators", []];
 	{
-		private _condition = [_x] call CFM_fnc_operatorCondition;
+		private _condition = [_x, true] call CFM_fnc_operatorCondition;
 		if (_condition) then {
 			[_x] call CFM_fnc_updateOperator;
 		} else {	
@@ -94,11 +94,11 @@ CFM_fnc_cameraCondition = {
 };
 
 CFM_fnc_operatorCondition = {
-	params["_op"];
+	params["_op", ["_checkFeeding", false]];
 	
 	private _type = [_op] call CFM_fnc_cameraType;
 
-	if (_op getVariable ["CFM_isFeeding", false]) exitWith {false};
+	if (_checkFeeding && {!(_op getVariable ["CFM_isFeeding", false])}) exitWith {false};
 
 	switch (_type) do {
 		case GOPRO: {
