@@ -90,11 +90,12 @@ OBJCLASS(Monitor)
 		if !(_turnOff) then {
 			_monitor setVariable ["CFM_currentR2T", _r2t];
 		};
-
+		[1, _self, _render, _r2t, _turnOff, (_monitor getVariable ["CFM_isHandMonitor", false])] RLOG
 		if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
 			[_monitor, _render] call CFM_fnc_setHandDisplay;
 		};
 
+		[2, _self, _render, _r2t, _turnOff, (_monitor getVariable ["CFM_isHandMonitor", false])] RLOG
 		if (_render) then {
 			_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _r2t + ",1.0)"];  
 		} else {
@@ -115,12 +116,14 @@ OBJCLASS(Monitor)
 
 		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
 
-		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, "NONE"] CALL_CLASS("CameraManager");
+		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
 		private _renderTarget = _renderTargetAndCamera#0;
 		private _camera = _renderTargetAndCamera#1;
+
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
+			LOGH "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
 			false
 		};
 
@@ -132,8 +135,6 @@ OBJCLASS(Monitor)
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["addActiveViewer", [player]] CALL_CLASS("DbHandler");
-
-		["START", _monitor, _camera, ] RLOG
 
 		true
 	}; 

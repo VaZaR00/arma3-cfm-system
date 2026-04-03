@@ -83,7 +83,7 @@ CLASS(DbHandler)
 		if (_index != -1) then {
 			_list deleteAt _index;
 			missionNamespace setVariable [_listName, _list, _global];
-			_i
+			true
 		} else {false};
 	};
 	METHOD("addToHashMap") {

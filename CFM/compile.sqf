@@ -468,7 +468,7 @@ CFM_fnc_monitorFeedActive = {
 	params["_monitor"];
 
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-	private _cam = _monitor getVariable ["CFM_operatorCam", objNull]; 
+	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull]; 
 
 	CHECK_EX(!IS_OBJ(_operator));
 	CHECK_EX(!IS_OBJ(_cam));
