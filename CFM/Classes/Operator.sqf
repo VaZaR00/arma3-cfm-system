@@ -16,6 +16,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_nvgTable, createHashMap);
 	OBJ_VARIABLE(_operatorSet, false);
 	OBJ_VARIABLE(_isFeeding, false);
+	OBJ_VARIABLE(_isDroneFeed, false);
 
 	METHODS
 
@@ -79,6 +80,7 @@ OBJCLASS(Operator)
 			};
 			case DRONETYPE: {
 				_operator setVariable ["CFM_canFeed", true];
+				_operator setVariable ["CFM_isDroneFeed", true];
 			};
 			default {};
 		};
@@ -97,5 +99,6 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
 		_monitor setVariable ["CFM_currentTiTable", _tiTable];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable];
+		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 	};
 CLASS_END

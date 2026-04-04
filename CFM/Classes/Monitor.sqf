@@ -25,6 +25,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_zoom, 1);
 	OBJ_VARIABLE(_turretLocal, false);
 	OBJ_VARIABLE(_maxZoomed, false);
+	OBJ_VARIABLE(_isDroneFeed, false);
 
 	METHODS
 
@@ -157,6 +158,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_turretLocal", nil];
 		_monitor setVariable ['CFM_maxZoomed', nil];
 		_monitor setVariable ["CFM_currentCameraType", nil];
+		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
 	};
 	METHOD("connect") {
 		params["_op"];

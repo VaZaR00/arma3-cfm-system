@@ -117,7 +117,12 @@ CLASS(DbHandler)
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {-1};
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
-		["addToList", [_player, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
+		private _ownerId = if (_player isEqualTo player) then {clientOwner} else {owner _player};
+		if (_ownerId isEqualTo 0) exitWith {
+			LOGH "ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE!";
+			-1
+		};
+		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
 	};
 	METHOD("removeActiveMonitor") {

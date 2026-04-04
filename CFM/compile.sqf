@@ -197,26 +197,24 @@ CFM_fnc_updateCamera = {
 	private _turretIndex = _turret#0;
 
 	([_operator, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
-	
 
 	if (_turretLocal) then {
 		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUp" + str _turretIndex;
-		if ((local _operator) && {!([_operator] call CFM_fnc_isPilotControlled)}) then {
+		if ((local _operator) && {([_operator, player] call CFM_fnc_isPilotControlled)}) then {
 			private _prevDir = _operator getVariable [_dirVarName, []];
 			private _prevUp = _operator getVariable [_upVarName, []];
 			private _currDir = vectorDir _cam;
 			private _currUp = vectorUp _cam;
 			if !(_currDir isEqualTo _prevDir) then {
-				_operator setVariable [_dirVarName, vectorDir _cam, true];
+				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS(false)];
 			};
 			if !(_currUp isEqualTo _prevUp) then {
-				_operator setVariable [_upVarName, vectorUp _cam, true];
+				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS(false)];
 			};
 		} else {
 			_doInterpolation = true;
 			_setup = true;
-			_pos = [];
 			_dir = _operator getVariable [_dirVarName, []];
 			_up = _operator getVariable [_upVarName, []];
 		};
@@ -245,6 +243,7 @@ CFM_fnc_updateMonitor = {
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
+	LOGH ["CFM_fnc_updateMonitor", [_camera, _operator, _turret, _zoom, _turLocal]];
 	[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
 };
 
@@ -350,12 +349,13 @@ CFM_fnc_getOffsetInModelSpace = {
 };
 
 CFM_fnc_isPilotControlled = {
-	params ["_veh"];
+	params ["_veh", ["_by", objNull]];
 	private _crew = crew _veh;
 	if (_crew isEqualTo []) exitWith {false};
 	private _driver = _crew#0;
 	if (_driver isEqualTo objNull) exitWith {false};
 	private _remoteControlledDriver = remoteControlled _driver;
+	if (IS_OBJ(_by)) exitWith {(_remoteControlledDriver isEqualTo _by)};
 	!(_remoteControlledDriver isEqualTo objNull)
 };
 
@@ -889,7 +889,7 @@ CFM_fnc_initActionConditions = {
 		params["_target"];
 		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
-			(_target getVariable ['CFM_isDroneFeed', false]) &&
+			(_target getVariable ['CFM_currentOperatorIsDrone', false]) &&
 			{[player] call CFM_fnc_hasUAVterminal}
 		}
 	};
