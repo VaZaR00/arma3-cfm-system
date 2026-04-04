@@ -497,6 +497,7 @@ OBJCLASS(Monitor)
 		};
 		_unit switchCamera _mode;
 		hint FULLSCREEN_HINT;
+		cutText [format["<t size='2' color='#ff0000'>%1</t>", FULLSCREEN_HINT], "PLAIN DOWN", 5, true, true];
 		0 spawn {
 			private _initPos = getPosASL player;
 			private _initDir = getDir player;
@@ -504,6 +505,10 @@ OBJCLASS(Monitor)
 				!(_initPos isEqualTo (getPosASL player)) ||
 				!(_initDir isEqualTo (getDir player))
 			};
+			[] call CFM_fnc_exitFullScreen;
+			hint "";
+			cutText ["", "PLAIN"];
+			sleep 1;
 			[] call CFM_fnc_exitFullScreen;
 		};
 		true
