@@ -74,14 +74,19 @@ CFM_fnc_zoom = {
 };
 
 CFM_fnc_setMonitor = {
-	params[["_monitor", objNull], ["_params", []]];
+	params[["_monitor", objNull], ["_params", []], ["_reset", false]];
 
 	if (_monitor isEqualType []) exitWith {
 		{
-			[_x, _params] call CFM_fnc_setMonitor;
+			[_x, _params, _reset] call CFM_fnc_setMonitor;
 		} forEach _monitor;
 	};
 	if !(IS_OBJ(_monitor)) exitWith {};
+
+	if (count _params == 0) then {
+		_params = [[]];
+	};
+	_params pushBack _reset;
 
 	[_monitor, _params] NEW_OBJINSTANCE("Monitor");
 };
@@ -679,6 +684,15 @@ CFM_fnc_setMonitorPiPEffect = {
 	_monitor setVariable ["CFM_currentPiPEffect", _pipEffect]; 
 };
 
+CFM_fnc_enterFullScreen = {
+	params["_monitor"];
+	["monitorEnterFullScreen", []] CALL_OBJCLASS("Monitor", _monitor);
+};
+
+CFM_fnc_exitFullScreen = {
+	player switchCamera "INTERNAL";
+};
+
 CFM_fnc_resetFeed = {
 	params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];  
@@ -962,5 +976,16 @@ CFM_fnc_initActionConditions = {
 				}
 			}
 		}
+	};
+	CFM_fnc_enterFullScreenActionCondition = {
+		params["_target"];
+		HAND_MON_CONDITION
+		if !(_target getVariable ['CFM_feedActive', false]) exitWith {false};
+		if !(_target getVariable ['CFM_canFullScreen', false]) exitWith {false};
+		focusOn == player
+	};
+	CFM_fnc_exitFullScreenActionCondition = {
+		params["_target"];
+		focusOn != player
 	};
 };

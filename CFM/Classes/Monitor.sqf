@@ -26,15 +26,18 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_turretLocal, false);
 	OBJ_VARIABLE(_maxZoomed, false);
 	OBJ_VARIABLE(_isDroneFeed, false);
+	OBJ_VARIABLE(_canFullScreen, false);
 
 	METHODS
 
 	METHOD("Init") { 
 		// should be executed globaly
 		params [
-			["_args", []]
+			["_args", []],
+			["_reset", false]
 		]; 
 		_args params [
+			["_canFullScreen", true],
 			["_canZoom", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
@@ -46,7 +49,7 @@ OBJCLASS(Monitor)
 
 		if (_monitor isEqualTo objNull) exitWith {};
 			
-		if ((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true) exitWith {};
+		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {};
 
 		private _isPlayer = (_monitor isEqualTo player) || {(_monitor isKindOf "Man")};
 		private _setlocal = !_isPlayer;
@@ -59,6 +62,8 @@ OBJCLASS(Monitor)
 		private _originalTexture = (getObjectTextures _monitor) select 0;
 		_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
+		
+		[_monitor] call CFM_fnc_stopOperatorFeed;
 
 		if (_local) then {
 			["addMonitor", [_monitor]] CALL_CLASS("DbHandler");
@@ -69,9 +74,10 @@ OBJCLASS(Monitor)
 		private _menuText = "Camera System Menu";
 		
 		_monitor setVariable ["CFM_actionsRadius", _radius];
+		_monitor setVariable ["CFM_canFullScreen", _canFullScreen];
 
 		["addMenuActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
-		["addOptionalActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
+		["addOptionalActions", [_radius] + _args] CALL_OBJCLASS("Monitor", _self);
 		["updateActionPriority"] CALL_CLASS("DbHandler");
 
 		_monitor setVariable ["CFM_isMonitorSet", true];
@@ -452,7 +458,54 @@ OBJCLASS(Monitor)
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_toggleTiActionCondition", _radius]; 
 				_actions append [_actionSwitchTi];
 			};
+
+			if (_canFullScreen) then {
+				private _actionEnterFullScreen = _self addAction ["<t color='#67bce0'>Enter Fullscreen</t>", { 
+					params ["_target"]; 
+					[_target] call CFM_fnc_enterFullScreen;
+				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_enterFullScreenActionCondition", _radius]; 
+				_actions append [_actionFullScreen];
+				private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
+					params ["_target"]; 
+					[_target] call CFM_fnc_exitFullScreen;
+				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_exitFullScreenActionCondition", _radius]; 
+				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
+			};
 		};
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
+	};
+	METHOD("monitorEnterFullScreen") {
+		private _unit = objNull;
+		private _mode = switch (_currentTurret) do {
+			case DRIVER_TURRET_PATH: {
+				_unit = driver _connectedOperator;
+				"INTERNAL"
+			};
+			case GUNNER_TURRET_PATH: {
+				_unit = gunner _connectedOperator;
+				"GUNNER"
+			};
+			default {""};
+		};
+		if (_mode isEqualTo "") exitWith {
+			LOGH format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
+			false
+		};
+		if !(IS_OBJ(_unit)) exitWith {
+			LOGH format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
+			false
+		};
+		_unit switchCamera _mode;
+		hint FULLSCREEN_HINT;
+		0 spawn {
+			private _initPos = getPosASL player;
+			private _initDir = getDir player;
+			waitUntil {
+				!(_initPos isEqualTo (getPosASL player)) ||
+				!(_initDir isEqualTo (getDir player))
+			};
+			[] call CFM_fnc_exitFullScreen;
+		};
+		true
 	};
 CLASS_END

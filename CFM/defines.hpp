@@ -3,3 +3,4 @@
 
 #define RENDER_TARGET_STR "cfmrendertarget"
 #define ACTIONS_PRIORITY 956
+#define FULLSCREEN_HINT "АБИ ВИЙТИ З ПОВНОЕКРАННОГО РЕЖИМУ ПОВОРУХНІТСЯ (МИШКОЮ АБО КЛАВІШАМИ)"
