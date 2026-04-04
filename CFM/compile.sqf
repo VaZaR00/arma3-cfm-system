@@ -7,6 +7,8 @@ CFM_fnc_init = {
 		[] call CFM_fnc_setupDraw3dEH;
 	};
 
+	[] call CFM_fnc_initActionConditions;
+
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
 
@@ -836,4 +838,99 @@ CFM_fnc_isUAV = {
 	params["_obj"];
 
 	(_obj isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _obj) >> "isUav")) isEqualTo 1}
+};
+
+CFM_fnc_initActionConditions = {
+	CFM_fnc_menuActionCondition = {
+		params["_target"];
+		if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
+		if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
+		private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
+		_target call _additionalCondition
+	};
+	CFM_fnc_menuCloseActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_menuActive', false])
+	};
+	CFM_fnc_disconnectActionCondition = {
+		params["_target"];
+		_target getVariable ['CFM_feedActive', false]
+	};
+	CFM_fnc_connectActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_menuActive', false])
+	};
+	CFM_fnc_zoomInActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])
+	};
+	CFM_fnc_zoomActionsCondition = {
+		params["_target"];
+		_target getVariable ['CFM_feedActive', false]
+	};
+	CFM_fnc_connectDroneActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_isDroneFeed', false]) &&
+			{[player] call CFM_fnc_hasUAVterminal}
+		}
+	};
+	CFM_fnc_fixFeedActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false])
+	};
+	CFM_fnc_switchCameraToGunnerActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
+				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
+			}
+		}
+	};
+	CFM_fnc_switchCameraToPilotActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
+				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
+			}
+		}
+	};
+	CFM_fnc_turnOffActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}
+	};
+	CFM_fnc_turnOnActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}
+	};
+	CFM_fnc_toggleNvgActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
+				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
+					(
+						(_target getVariable ['CFM_currentNvgTable', createHashMap]) getOrDefault 
+						[((_target getVariable ['CFM_currentTurret', [-1]])#0), false]
+					)
+				}
+			}
+		}
+	};
+	CFM_fnc_toggleTiActionCondition = {
+		params["_target"];
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_monitorCanSwitchTi', false]) && {
+				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
+					(
+						!(
+							(
+								(_target getVariable ['CFM_currentTiTable', createHashMap]) getOrDefault 
+								[((_target getVariable ['CFM_currentTurret', [-1]])#0), []]
+							) isEqualTo []
+						)
+					)
+				}
+			}
+		}
+	};
 };
