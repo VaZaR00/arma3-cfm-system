@@ -16,7 +16,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_nvgTable, createHashMap);
 	OBJ_VARIABLE(_operatorSet, false);
 	OBJ_VARIABLE(_isFeeding, false);
-	OBJ_VARIABLE(_isDroneFeed, false);
+	OBJ_VARIABLE(_isDroneFeed, false);	
 
 	METHODS
 
