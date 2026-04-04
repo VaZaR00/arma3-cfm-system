@@ -215,8 +215,14 @@ CFM_fnc_updateCamera = {
 		} else {
 			_doInterpolation = true;
 			_setup = true;
-			_dir = _operator getVariable [_dirVarName, []];
-			_up = _operator getVariable [_upVarName, []];
+			private _localDir = _operator getVariable [_dirVarName, []];
+			private _localUp = _operator getVariable [_upVarName, []];
+			if (count _localDir == 3) then {
+				_dir = _localDir;
+			};
+			if (count _localUp == 3) then {
+				_up = _localUp;
+			};
 		};
 	};
 
@@ -243,7 +249,6 @@ CFM_fnc_updateMonitor = {
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
-	LOGH ["CFM_fnc_updateMonitor", [_camera, _operator, _turret, _zoom, _turLocal]];
 	[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
 };
 
