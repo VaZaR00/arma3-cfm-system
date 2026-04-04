@@ -322,12 +322,29 @@ CFM_fnc_camPosGoPro = {
 	[_pos, _dir, _up]
 };
 
+CFM_fnc_defineCamPosFunc = {
+	params["_operator", ["_type", ""]];
+
+	private _cls = typeOf _operator;
+	switch (_type) do {
+		case GOPRO: {
+			CFM_fnc_camPosGoPro
+		};
+		case DRONETYPE: {
+			if (("fpv" in _droneType) || {("crocus" in _droneType)}) exitWith {CFM_fnc_camPosDroneStatic};
+			CFM_fnc_camPosDroneDynamic
+		};
+		default {{}};
+	};
+};
+
 CFM_fnc_updateMonitor = {
 	params["_monitor"];
 
 	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
+	private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
@@ -357,10 +374,6 @@ CFM_fnc_getUAVCameraPoints = {
 			[["pip_pilot_pos", [], [-1,0,-1]], "pip_pilot_dir"]
 		};
 		[["pip0_pos", [], [-1,0,-1]], "pip0_dir"]
-	};
-	if (("fpv" in _droneType) || {("crocus" in _droneType)}) exitWith {
-		LOGH "FPV";
-		[["pip_pilot_pos", [], [-1,-1,-1]], "pip_pilot_dir"]
 	};
 
     private _camPos = "uavCameraGunnerPos";  

@@ -23,10 +23,12 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentTiTable, createHashMap);
 	OBJ_VARIABLE(_currentNvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
+	OBJ_VARIABLE(_zoomMax, 1);
 	OBJ_VARIABLE(_turretLocal, false);
 	OBJ_VARIABLE(_maxZoomed, false);
 	OBJ_VARIABLE(_isDroneFeed, false);
 	OBJ_VARIABLE(_canFullScreen, false);
+	OBJ_VARIABLE(_cameraPosFunc, {});
 
 	METHODS
 

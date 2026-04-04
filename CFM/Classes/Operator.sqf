@@ -100,5 +100,9 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentTiTable", _tiTable];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
+
+		private _cameraPosFunc = [_self, _cameraType] call CFM_fnc_defineCamPosFunc;
+
+		_monitor setVariable ["CFM_cameraPosFunc", _cameraPosFunc];
 	};
 CLASS_END
