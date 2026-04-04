@@ -192,16 +192,29 @@ CFM_fnc_timeInterpolate = {
 };
 
 CFM_fnc_updateCamera = {  
-	params ["_cam", ["_cameraParams", []], ["_setup", false, [false]], ["_justZoom", false, [false]]]; 
+	params ["_cam", ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosDroneDynamic]]; 
 	_cameraParams params [
 		["_operator", objNull],
 		["_turret", [-1]],
+		["_turretLocal", false],
 		["_zoom", 1], 
-		["_turretLocal", false, [false]]
+		["_zoomTable", createHashMap]
 	];
+	private _doInterpolation = false;
 	private _turretIndex = _turret#0;
 
-	([_operator, _cam, _zoom, _turret, _justZoom] call CFM_fnc_getCamPos) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]], ["_fov", 1]];
+	// POS AN VECTOR DIR AND UP
+	([_operator, _turretIndex] call _camPosFunc) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]]];
+
+	// ZOOM
+	if (_zoom isEqualTo "op") then {
+		_zoom = _operator getVariable ['CFM_prevZoom', _zoom];
+	};
+	private _zoomDefault = !(_zoom isEqualType 1);
+	private _fov = if !(_zoomDefault) then {
+		private _zoomfov = _zoomTable getOrDefault [_zoom, 1/_zoom];
+		if (_zoomfov > 1) then {getObjectFOV _operator} else {_zoomfov};
+	} else {getObjectFOV _operator};
 
 	if (_turretLocal) then {
 		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
@@ -219,7 +232,6 @@ CFM_fnc_updateCamera = {
 			};
 		} else {
 			_doInterpolation = true;
-			_setup = true;
 			private _localDir = _operator getVariable [_dirVarName, []];
 			private _localUp = _operator getVariable [_upVarName, []];
 			if (count _localDir == 3) then {
@@ -231,108 +243,83 @@ CFM_fnc_updateCamera = {
 		};
 	};
 
-	if (_setup) then {
-		private _posAndVUP = [_cam, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
-		_posAndVUP params ["_newpos", ["_vDirUp", []]];
-		_vDirUp params [["_newdir", []], ["_newup", []]];
-		if ((count _newpos) == 3) then {
-			_cam setPosASL _newpos; 
-		};
-		if (((count _newdir) == 3) && {((count _newup) == 3)}) then {
-			_cam setVectorDirAndUp [_newdir, _newup];  
-		};
+	private _posAndVUP = [_cam, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
+	_posAndVUP params ["_newpos", ["_vDirUp", []]];
+	_vDirUp params [["_newdir", []], ["_newup", []]];
+	if ((count _newpos) == 3) then {
+		_cam setPosASL _newpos; 
+	};
+	if (((count _newdir) == 3) && {((count _newup) == 3)}) then {
+		_cam setVectorDirAndUp [_newdir, _newup];  
 	};
 	_cam camSetFov _fov;  
 	_cam camCommit 0;  
 };
 
-CFM_fnc_getCamPos = {
-	params["_obj", "_cam", ["_zoom", 1], ["_turretPath", DRIVER_TURRET_PATH, [[]], 1], ["_justZoom", false]];
+CFM_fnc_camPosDroneDynamic = {
+	params["_obj", "_curTurretIndex"];
 
-	private _prevTurret = 0;
-	private _curTurret = 0;
-	if !(_justZoom) then {
-		_prevTurret = (+(_obj getVariable ["CFM_prevTurret", +_turretPath]))#0;
-		_curTurret = _turretPath#0;
-		_obj setVariable ["CFM_prevTurret", +_turretPath];
-	};
+	private _prevTurret = (+(_obj getVariable ["CFM_prevTurret", [_curTurretIndex]]))#0;
+	private _pos = [];
+	private _dir = [];
+	private _up = [];
+	if ((_turretPath isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
+		_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
+		private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
+		private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
+		private _fromToVUP = [_pos, _camDirPos] call BIS_fnc_findLookAt;
+		_dir = _fromToVUP#0;
+		_up = _fromToVUP#1;
+	} else {
+		private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
+		private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-	private _type = _obj getVariable ["CFM_cameraType", GOPRO];
-
-	if (_zoom isEqualTo "op") then {
-		_zoom = _operator getVariable ['CFM_prevZoom', _zoom];
-	};
-
-	private _zoomDefault = !(_zoom isEqualType 1);
-
-	switch (_type) do {
-		case GOPRO: {
-			private _pos = [];
-			private _dir = [];
-			private _up = [];
-			if !(_justZoom) then {
-				private _headPos = selectionPosition [_obj, "head", 9, true];
-				private _dirUp = _obj selectionVectorDirAndUp ["head", "memory"]; 
-				_dir = _obj vectorModelToWorldVisual _dirUp#0;
-				_up = _obj vectorModelToWorldVisual _dirUp#1;
-				_headPos = [_obj, ["head", "memory"], [-0.19, 0.1, 0.25]] call CFM_fnc_getOffsetInModelSpace;
-				_pos = _obj modelToWorldVisualWorld _headPos; 
-
-				_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
-			};
-
-			private _fov = if !(_zoomDefault) then {
-				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_gopro", 2]);
-				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
-				if (_zoomfov > DEF_FOV_GOPRO) then {DEF_FOV_GOPRO} else {_zoomfov};
-			} else {DEF_FOV_GOPRO};
-			[_pos, _dir, _up, _fov]
+		if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurretIndex)) then {
+			private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
+			_dirPointParams = _pointsParams#1; 
+			_dirPoint = _dirPointParams;
+			if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
+			_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
+			_obj setVariable ["CFM_camDirPoint", _dirPoint];
 		};
-		case DRONETYPE: {
-			private _pos = [];
-			private _dir = [];
-			private _up = [];
-			if !(_justZoom) then {
-				if ((_turretPath isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
-					_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
-					private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
-					private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
-					private _fromToVUP = [_pos, _camDirPos] call BIS_fnc_findLookAt;
-					_dir = _fromToVUP#0;
-					_up = _fromToVUP#1;
-				} else {
-					private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
-					private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
-					if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurret)) then {
-						private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
-						_dirPointParams = _pointsParams#1; 
-						_dirPoint = _dirPointParams;
-						if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
-						_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
-						_obj setVariable ["CFM_camDirPoint", _dirPoint];
-					};
+		private _lod = OBJ_LOD(_obj);
+		private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
+		private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
 
-					private _lod = OBJ_LOD(_obj);
-					private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
-					private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
-
-					_pos = _obj modelToWorldVisualWorld _dirPointPos;
-					_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
-					_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
-				};
-			};
-
-			private _fov = if !(_zoomDefault) then {
-				_zoom = _zoom min (missionNamespace getVariable ["CFM_max_zoom_drone", 5]);
-				private _zoomfov = [_zoom, _type] call CFM_fnc_getZoomFov;
-				if (_zoomfov > 1) then {getObjectFOV _obj} else {_zoomfov};
-			} else {getObjectFOV _obj};
-
-			[_pos, _dir, _up, _fov]
-		};
-		default {[]};
+		_pos = _obj modelToWorldVisualWorld _dirPointPos;
+		_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
+		_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
 	};
+
+	[_pos, _dir, _up]
+};
+
+CFM_fnc_camPosDroneStatic = {
+	params["_obj", "_curTurretIndex"];
+
+	private _pos = getPosASL _obj;
+	private _dir = vectorDir _obj;
+	private _up = vectorUp _obj;
+	private _offset = _obj getVariable ["CFM_staticCamOffset", [0,0,0]];
+
+	_pos = _pos vectorAdd _offset;
+
+	[_pos, _dir, _up]
+};
+
+CFM_fnc_camPosGoPro = {
+	params["_obj"];
+	private _headPos = selectionPosition [_obj, "head", 9, true];
+	private _dirUp = _obj selectionVectorDirAndUp ["head", "memory"]; 
+	private _dir = _obj vectorModelToWorldVisual _dirUp#0;
+	private _up = _obj vectorModelToWorldVisual _dirUp#1;
+	private _headPos = [_obj, ["head", "memory"], [-0.19, 0.1, 0.25]] call CFM_fnc_getOffsetInModelSpace;
+	private _pos = _obj modelToWorldVisualWorld _headPos; 
+
+	_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
+		
+	[_pos, _dir, _up]
 };
 
 CFM_fnc_updateMonitor = {
@@ -343,7 +330,8 @@ CFM_fnc_updateMonitor = {
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
-	[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
+	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
+	[_camera, [_operator, _turret, _turLocal, _zoom min _zoomMax], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 
@@ -470,24 +458,6 @@ CFM_fnc_isPilotControlled = {
 	private _remoteControlledDriver = remoteControlled _driver;
 	if (IS_OBJ(_by)) exitWith {(_remoteControlledDriver isEqualTo _by)};
 	!(_remoteControlledDriver isEqualTo objNull)
-};
-
-CFM_fnc_getZoomFov = {
-	params["_zoom", ["_type", GOPRO]];
-
-	private _table = missionNamespace getVariable [(switch (_type) do {
-		case GOPRO: {
-			"CFM_goPro_zoomTable"
-		};
-		case DRONETYPE: {
-			"CFM_drone_zoomTable"
-		};
-		default {"CFM_nullvar"};
-	}), createHashMap];
-
-	if !(_table isEqualType createHashMap) exitWith {1};
-
-	_table getOrDefault [_zoom, 1/_zoom];
 };
 
 CFM_fnc_monitorFeedActive = {
