@@ -269,7 +269,7 @@ OBJCLASS(Monitor)
 	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
-		_self setVariable ["CFM_currentTurret", _turret];
+		_self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};
@@ -285,6 +285,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};
 	METHOD("switchTi") { 
+		private _currentTurret = _self getVariable ["CFM_currentTurret", [-1]];
 		private _tiModes = _currentTiTable getOrDefault [_currentTurret#0, [0]];
 		private _newEffect = if !(_currentPiPEffect in _tiModes) then {
 			_tiModes#0;
@@ -296,6 +297,8 @@ OBJCLASS(Monitor)
 			};
 			_tiModes select _newI;
 		};
+		if (isNil "_newEffect") exitWith {};
+		if !(_newEffect isEqualType 1) exitWith {};
 		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};

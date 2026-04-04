@@ -259,7 +259,9 @@ CFM_fnc_updateMonitor = {
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 
 	if (_updatePip) then {
-		private _currPip = _monitor getVariable ["CFM_currentPiPEffect", false];
+		private _feedActive = _monitor getVariable ["CFM_feedActive", false];
+		if !(_feedActive) exitWith {};
+		private _currPip = _monitor getVariable ["CFM_currentPiPEffect", 0];
 		[_monitor, _currPip] call CFM_fnc_setMonitorPiPEffect;
 		_monitor setVariable ["CFM_doUpdatePip", false];
 	};
@@ -692,6 +694,11 @@ CFM_fnc_setMonitorPiPEffect = {
 	_renderTarget setPiPEffect [_pipEffect];
 	_monitor setVariable ["CFM_currentPiPEffect", _pipEffect]; 
 	true
+};
+
+CFM_fnc_monitorSwitchTi = {
+	params["_monitor"];
+	["switchTi"] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_enterFullScreen = {
