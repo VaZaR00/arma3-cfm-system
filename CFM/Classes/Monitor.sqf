@@ -24,6 +24,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentNvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
 	OBJ_VARIABLE(_zoomMax, 1);
+	OBJ_VARIABLE(_zoomTable, createHashMap);
 	OBJ_VARIABLE(_turretLocal, false);
 	OBJ_VARIABLE(_maxZoomed, false);
 	OBJ_VARIABLE(_isDroneFeed, false);
@@ -252,14 +253,9 @@ OBJCLASS(Monitor)
 				_zoomSet
 			};
 
-			private _type = _monitor getVariable ["CFM_cameraType", GOPRO];
-			private _maxZoom = switch (_type) do {
-				case GOPRO: {missionNamespace getVariable ["CFM_max_zoom_gopro", 2]};
-				case DRONETYPE: {missionNamespace getVariable ["CFM_max_zoom_drone", 5]};
-				default {1};
-			};
+			private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
 
-			private _zoomedMax = _newzoom >= _maxZoom;
+			private _zoomedMax = _newzoom >= _zoomMax;
 			_monitor setVariable ['CFM_maxZoomed', _zoomedMax, true];
 
 			_newzoom

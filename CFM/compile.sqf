@@ -63,7 +63,7 @@ CFM_fnc_draw3dEH = {
 
 CFM_fnc_setupDraw3dEH = {
 	if !(isNil "CFM_EH_id") exitWith {};
-	private _id = addMissionEventHandler ["Draw3D", {call CFM_fnc_draw3dEH}];
+	private _id = addMissionEventHandler ["EachFrame", {call CFM_fnc_draw3dEH}];
 	CFM_EH_id = _id;
 };
 
@@ -216,10 +216,12 @@ CFM_fnc_updateCamera = {
 		if (_zoomfov > 1) then {getObjectFOV _operator} else {_zoomfov};
 	} else {getObjectFOV _operator};
 
-	if (_turretLocal) then {
+	private _operatorLocal = local _operator;
+
+	if (_turretLocal && !_operatorLocal) then {
 		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUp" + str _turretIndex;
-		if ((local _operator) && {([_operator, player] call CFM_fnc_isPilotControlled)}) then {
+		if (_operatorLocal && {([_operator, player] call CFM_fnc_isPilotControlled)}) then {
 			private _prevDir = _operator getVariable [_dirVarName, []];
 			private _prevUp = _operator getVariable [_upVarName, []];
 			private _currDir = vectorDir _cam;
@@ -263,7 +265,7 @@ CFM_fnc_camPosDroneDynamic = {
 	private _pos = [];
 	private _dir = [];
 	private _up = [];
-	if ((_turretPath isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
+	if (([_curTurretIndex] isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
 		_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
 		private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
 		private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
@@ -275,7 +277,7 @@ CFM_fnc_camPosDroneDynamic = {
 		private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
 		if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurretIndex)) then {
-			private _pointsParams = [_obj, _turretPath] call CFM_fnc_getUAVCameraPoints;
+			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getUAVCameraPoints;
 			_dirPointParams = _pointsParams#1; 
 			_dirPoint = _dirPointParams;
 			if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
@@ -298,12 +300,10 @@ CFM_fnc_camPosDroneDynamic = {
 CFM_fnc_camPosDroneStatic = {
 	params["_obj", "_curTurretIndex"];
 
-	private _pos = getPosASL _obj;
 	private _dir = vectorDir _obj;
 	private _up = vectorUp _obj;
-	private _offset = _obj getVariable ["CFM_staticCamOffset", [0,0,0]];
-
-	_pos = _pos vectorAdd _offset;
+	private _offsetMS = _obj getVariable ["CFM_staticCamOffset", [0,0,0]];
+	private _pos = _obj modelToWorldVisualWorld _offsetMS;
 
 	[_pos, _dir, _up]
 };
@@ -322,19 +322,26 @@ CFM_fnc_camPosGoPro = {
 	[_pos, _dir, _up]
 };
 
-CFM_fnc_defineCamPosFunc = {
+CFM_fnc_defineCamTypeParams = {
 	params["_operator", ["_type", ""]];
 
-	private _cls = typeOf _operator;
+	private _cls = toLower (typeOf _operator);
 	switch (_type) do {
 		case GOPRO: {
-			CFM_fnc_camPosGoPro
+			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable]
 		};
 		case DRONETYPE: {
-			if (("fpv" in _droneType) || {("crocus" in _droneType)}) exitWith {CFM_fnc_camPosDroneStatic};
-			CFM_fnc_camPosDroneDynamic
+			private _maxzoom = CFM_max_zoom_drone;
+			private _table = CFM_drone_zoomTable;
+			private _func = CFM_fnc_camPosDroneDynamic;
+			private _offset = NULL_VECTOR;
+			if (("fpv" in _cls) || {("crocus" in _cls)}) then {
+				_func = CFM_fnc_camPosDroneStatic;
+				_offset = [0,0.1,0.15];
+			} else {};
+			[_func, _maxzoom, _table, _offset]
 		};
-		default {{}};
+		default {[]};
 	};
 };
 
@@ -346,9 +353,11 @@ CFM_fnc_updateMonitor = {
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
+	private _zoomTable = _monitor getVariable ["CFM_zoomTable", createHashMap];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
-	[_camera, [_operator, _turret, _turLocal, _zoom min _zoomMax], _camPosFunc] call CFM_fnc_updateCamera;
+	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
+	[_camera, [_operator, _turret, _turLocal, _zoom, _zoomTable], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 

@@ -17,6 +17,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_operatorSet, false);
 	OBJ_VARIABLE(_isFeeding, false);
 	OBJ_VARIABLE(_isDroneFeed, false);	
+	OBJ_VARIABLE(_staticCamOffset, NULL_VECTOR);	
 
 	METHODS
 
@@ -101,8 +102,17 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
-		private _cameraPosFunc = [_self, _cameraType] call CFM_fnc_defineCamPosFunc;
+		private _camParams = [_self, _cameraType] call CFM_fnc_defineCamTypeParams;
+		_camParams params [
+			["_cameraPosFunc", {}], 
+			["_zoomMax", 1], 
+			["_zoomTable", createHashMap],
+			["_staticCamOffset", NULL_VECTOR]
+		];
 
+		_self setVariable ["CFM_staticCamOffset", _staticCamOffset];
+		_monitor setVariable ["CFM_zoomMax", _zoomMax];
 		_monitor setVariable ["CFM_cameraPosFunc", _cameraPosFunc];
+		_monitor setVariable ["CFM_zoomTable", _zoomTable];
 	};
 CLASS_END
