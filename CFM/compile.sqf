@@ -841,8 +841,20 @@ CFM_fnc_isUAV = {
 };
 
 CFM_fnc_initActionConditions = {
+	#define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
+	CFM_fnc_handMonitorMenuActionCondition = {
+		params["_target"];
+
+		private _isHandMonitor = _target getVariable ["CFM_isHandMonitor", false];
+		if !(_isHandMonitor) exitWith {false};
+
+		private _isWatchingAtMonitor = isNil {cursorObject getVariable "CFM_originalTexture"};
+		
+		!_isWatchingAtMonitor
+	};
 	CFM_fnc_menuActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
 		if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
 		private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
@@ -850,26 +862,32 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_menuCloseActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_menuActive', false])
 	};
 	CFM_fnc_disconnectActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		_target getVariable ['CFM_feedActive', false]
 	};
 	CFM_fnc_connectActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_menuActive', false])
 	};
 	CFM_fnc_zoomInActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])
 	};
 	CFM_fnc_zoomActionsCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		_target getVariable ['CFM_feedActive', false]
 	};
 	CFM_fnc_connectDroneActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_isDroneFeed', false]) &&
 			{[player] call CFM_fnc_hasUAVterminal}
@@ -877,10 +895,12 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_fixFeedActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false])
 	};
 	CFM_fnc_switchCameraToGunnerActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
@@ -889,6 +909,7 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_switchCameraToPilotActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
@@ -897,14 +918,17 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_turnOffActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {!(_target getVariable ['CFM_turnedOffLocal', false])}
 	};
 	CFM_fnc_turnOnActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {(_target getVariable ['CFM_turnedOffLocal', false])}
 	};
 	CFM_fnc_toggleNvgActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
 				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
@@ -918,6 +942,7 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_toggleTiActionCondition = {
 		params["_target"];
+		HAND_MON_CONDITION
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_monitorCanSwitchTi', false]) && {
 				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {

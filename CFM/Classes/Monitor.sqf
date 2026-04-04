@@ -56,6 +56,7 @@ OBJCLASS(Monitor)
 		_isHandMonitor = _isPlayer;
 		_isLocal = _isHandMonitor;
 		private _originalTexture = (getObjectTextures _monitor) select 0;
+		_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 
 		if (_local) then {
