@@ -108,6 +108,10 @@ CLASS(DbHandler)
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
 	};
+	METHOD("removeOperator") {
+		params["_operator"];
+		["removeFromList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
+	};
 	METHOD("addActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};

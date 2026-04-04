@@ -99,8 +99,17 @@ CFM_fnc_setOperator = {
 };
 
 CFM_fnc_operatorCondition = {
-	params["_op", ["_checkFeeding", false]];
+	params["_op", ["_player", player], ["_checkFeeding", false]];
 	
+	private _playerSide = side _player;
+	private _side = side _op;
+	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
+	if !(IS_OBJ(_op)) then {
+		["removeOperator", [_monitor]] CALL_CLASS("DbHandler");
+		continue
+	};
+	if (!(_side isEqualTo _playerSide) && {!((_playerSide in _sidesUseCiv) && {_side == civilian})}) exitWith {false};
+
 	private _type = [_op] call CFM_fnc_cameraType;
 
 	if (_checkFeeding && {!(_op getVariable ["CFM_isFeeding", false])}) exitWith {false};
@@ -140,11 +149,7 @@ CFM_fnc_getActiveOperatorsCheckGlobal = {
 	if (missionNamespace getVariable ["CFM_checkVehCams", false]) then {
 		_objs append vehicles;
 	}; 
-	private _playerSide = side player;
-	_objs select {  
-		private _side = side _x;
-		private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
-		((_side isEqualTo _playerSide) || ((_playerSide in _sidesUseCiv) && {_side == civilian})) && 
+	_objs select {
 		([_x] call CFM_fnc_operatorCondition)  
 	}  
 }; 
@@ -203,9 +208,6 @@ CFM_fnc_updateCamera = {
 	private _doInterpolation = false;
 	private _turretIndex = _turret#0;
 
-	// POS AN VECTOR DIR AND UP
-	([_operator, _turretIndex] call _camPosFunc) params [["_pos", [0,0,0]], ["_dir", [0,0,0]], ["_up", [0,0,0]]];
-
 	// ZOOM
 	if (_zoom isEqualTo "op") then {
 		_zoom = _operator getVariable ['CFM_prevZoom', _zoom];
@@ -216,16 +218,25 @@ CFM_fnc_updateCamera = {
 		if (_zoomfov > 1) then {getObjectFOV _operator} else {_zoomfov};
 	} else {getObjectFOV _operator};
 
+	// POS AN VECTOR DIR AND UP
 	private _operatorLocal = local _operator;
 
-	if (_turretLocal && !_operatorLocal) then {
-		private _dirVarName = "CFM_currentTurretDir" + str _turretIndex;
-		private _upVarName = "CFM_currentTurretUp" + str _turretIndex;
-		if (_operatorLocal && {([_operator, player] call CFM_fnc_isPilotControlled)}) then {
+	private ["_pos", "_dir", "_up"];
+	if (_operatorLocal || !_turretLocal) then {
+		private _posData = [_operator, _turretIndex] call _camPosFunc;
+		_pos = _posData#0;
+		_dir = _posData#1;
+		_up = _posData#2;
+	};
+
+	if (_turretLocal && {true}) then {
+		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
+		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+		if (_operatorLocal) then {
 			private _prevDir = _operator getVariable [_dirVarName, []];
 			private _prevUp = _operator getVariable [_upVarName, []];
-			private _currDir = vectorDir _cam;
-			private _currUp = vectorUp _cam;
+			private _currDir = _operator vectorWorldToModelVisual _dir;
+			private _currUp = _operator vectorWorldToModelVisual _up;
 			if !(_currDir isEqualTo _prevDir) then {
 				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS(false)];
 			};
@@ -234,13 +245,13 @@ CFM_fnc_updateCamera = {
 			};
 		} else {
 			_doInterpolation = true;
-			private _localDir = _operator getVariable [_dirVarName, []];
-			private _localUp = _operator getVariable [_upVarName, []];
-			if (count _localDir == 3) then {
-				_dir = _localDir;
+			private _localDirMS = _operator getVariable [_dirVarName, []];
+			private _localUpMS = _operator getVariable [_upVarName, []];
+			if (count _localDirMS == 3) then {
+				_dir = _operator vectorModelToWorldVisual _localDirMS;
 			};
-			if (count _localUp == 3) then {
-				_up = _localUp;
+			if (count _localUpMS == 3) then {
+				_up = _operator vectorModelToWorldVisual _localUpMS;
 			};
 		};
 	};
@@ -328,18 +339,20 @@ CFM_fnc_defineCamTypeParams = {
 	private _cls = toLower (typeOf _operator);
 	switch (_type) do {
 		case GOPRO: {
-			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable]
+			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable, [], false]
 		};
 		case DRONETYPE: {
 			private _maxzoom = CFM_max_zoom_drone;
 			private _table = CFM_drone_zoomTable;
 			private _func = CFM_fnc_camPosDroneDynamic;
 			private _offset = NULL_VECTOR;
+			private _doCheckTurretLocality = true;
 			if (("fpv" in _cls) || {("crocus" in _cls)}) then {
 				_func = CFM_fnc_camPosDroneStatic;
 				_offset = [0,0.1,0.15];
+				_doCheckTurretLocality = false;
 			} else {};
-			[_func, _maxzoom, _table, _offset]
+			[_func, _maxzoom, _table, _offset, _doCheckTurretLocality]
 		};
 		default {[]};
 	};

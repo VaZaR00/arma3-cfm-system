@@ -175,6 +175,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ['CFM_maxZoomed', nil];
 		_monitor setVariable ["CFM_currentCameraType", nil];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
+		_monitor setVariable ['CFM_menuActive', false];
 	};
 	METHOD("connect") {
 		params["_op"];

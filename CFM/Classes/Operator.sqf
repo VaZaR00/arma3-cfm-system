@@ -93,7 +93,6 @@ OBJCLASS(Operator)
 		if !(IS_OBJ(_monitor)) exitWith {};
 
 		_self setVariable ["CFM_isFeeding", true];
-		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
 		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
@@ -107,12 +106,18 @@ OBJCLASS(Operator)
 			["_cameraPosFunc", {}], 
 			["_zoomMax", 1], 
 			["_zoomTable", createHashMap],
-			["_staticCamOffset", NULL_VECTOR]
+			["_staticCamOffset", NULL_VECTOR],
+			["_doCheckTurretLocality", _doCheckTurretLocality]
 		];
+
+		if (count _staticCamOffset != 3) then {
+			_staticCamOffset = NULL_VECTOR;
+		};
 
 		_self setVariable ["CFM_staticCamOffset", _staticCamOffset];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax];
 		_monitor setVariable ["CFM_cameraPosFunc", _cameraPosFunc];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable];
+		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
 	};
 CLASS_END
