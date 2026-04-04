@@ -255,6 +255,14 @@ CFM_fnc_updateMonitor = {
 	private _zoom = _monitor getVariable ["CFM_zoom", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	[_camera, [_operator, _turret, _zoom, _turLocal], true, false] call CFM_fnc_updateCamera;
+
+	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
+
+	if (_updatePip) then {
+		private _currPip = _monitor getVariable ["CFM_currentPiPEffect", false];
+		[_monitor, _currPip] call CFM_fnc_setMonitorPiPEffect;
+		_monitor setVariable ["CFM_doUpdatePip", false];
+	};
 };
 
 CFM_fnc_getUAVCameraPoints = {  
@@ -679,9 +687,11 @@ CFM_fnc_getNextRenderTarget = {
 
 CFM_fnc_setMonitorPiPEffect = {
 	params["_monitor", ["_pipEffect", 0]];
+	if !(_pipEffect isEqualType 0) exitWith {false};
 	private _renderTarget = _monitor getVariable ["CFM_currentR2T", "rendertarget0"];  
 	_renderTarget setPiPEffect [_pipEffect];
 	_monitor setVariable ["CFM_currentPiPEffect", _pipEffect]; 
+	true
 };
 
 CFM_fnc_enterFullScreen = {

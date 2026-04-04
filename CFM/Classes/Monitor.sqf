@@ -263,13 +263,15 @@ OBJCLASS(Monitor)
 			_newzoom
 		} else {_zoomAdd};
 
-		_self setVariable ["CFM_zoom", _newzoom];
+		_self setVariable ["CFM_zoom", _newzoom, true];
 
 		_newzoom
 	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
 		_self setVariable ["CFM_currentTurret", _turret];
+		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
+		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;
@@ -279,7 +281,8 @@ OBJCLASS(Monitor)
 		if (_currentPiPEffect == 1) then {
 			_newEffect = 0;
 		};
-		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec;
+		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
+		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};
 	METHOD("switchTi") { 
 		private _tiModes = _currentTiTable getOrDefault [_currentTurret#0, [0]];
@@ -293,7 +296,8 @@ OBJCLASS(Monitor)
 			};
 			_tiModes select _newI;
 		};
-		[[_self, _newEffect], "CFM_fnc_setMonitorPiPEffect", MONITOR_VIEWERS(_isLocal), _self] call CFM_fnc_remoteExec;
+		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
+		_monitor setVariable ["CFM_doUpdatePip", true, true];
 	};
 	METHOD("addActionsToActionsList") {
 		private _savedActions = _self getVariable ["CFM_mainActions", []];
