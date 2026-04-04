@@ -103,14 +103,17 @@ OBJCLASS(Monitor)
 		};
 	};
 	METHOD("startFeed") {  
-		params [["_operator", objNull], ["_turret", []]];
+		params [["_operator", objNull], ["_turret", []], ["_reset", false]];
 
 		private _monitor = _self;
 
 		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
 		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
 
-		if (_turret isEqualTo []) then {
+		if (!(_turret isEqualTo []) && {(_turret isEqualType []) && {(count _turret) == 1}}) then {
+			_monitor setVariable ["CFM_currentTurret", _turret];
+			_currentTurret = _turret;
+		} else {
 			_turret = _currentTurret;
 		};
 
@@ -135,6 +138,10 @@ OBJCLASS(Monitor)
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["addActiveViewer", [player]] CALL_CLASS("DbHandler");
+
+		if (_reset) then {
+			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
+		};
 
 		true
 	}; 
@@ -476,13 +483,13 @@ OBJCLASS(Monitor)
 	};
 	METHOD("monitorEnterFullScreen") {
 		private _unit = objNull;
-		private _mode = switch (_currentTurret) do {
-			case DRIVER_TURRET_PATH: {
-				_unit = driver _connectedOperator;
+		private _mode = switch ((_currentTurret#0)) do {
+			case (DRIVER_TURRET_PATH#0): {
+				_unit = driver (vehicle _connectedOperator);
 				"INTERNAL"
 			};
-			case GUNNER_TURRET_PATH: {
-				_unit = gunner _connectedOperator;
+			case (GUNNER_TURRET_PATH#0): {
+				_unit = gunner (vehicle _connectedOperator);
 				"GUNNER"
 			};
 			default {""};

@@ -696,14 +696,15 @@ CFM_fnc_exitFullScreen = {
 CFM_fnc_resetFeed = {
 	params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];  
-	[_monitor] call CFM_fnc_stopOperatorFeed;
+	private _currTurret = _monitor getVariable ["CFM_currentTurret", _turret];  
+	[_monitor, true] call CFM_fnc_stopOperatorFeed;
 	if !(IS_OBJ(_operator)) exitWith {};
 	private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
 	if !(_hndl isEqualType scriptNull) then {
 		_hndl = scriptNull;
 	};
 	waitUntil {scriptDone (_hndl)};
-	[_monitor, _operator, _turret] call CFM_fnc_startOperatorFeed;
+	[_monitor, _operator, _currTurret, true] call CFM_fnc_startOperatorFeed;
 };
 
 CFM_fnc_connectOperatorToMonitor = {  
@@ -712,8 +713,8 @@ CFM_fnc_connectOperatorToMonitor = {
 };
 
 CFM_fnc_startOperatorFeed = {  
-	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH]];  
-	["startFeed", [_operator, _turret], _monitor] CALL_OBJCLASS("Monitor", _monitor);
+	params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH], ["_reset", false]];  
+	["startFeed", [_operator, _turret, _reset], _monitor] CALL_OBJCLASS("Monitor", _monitor);
 }; 
 
 CFM_fnc_stopOperatorFeed = {  
