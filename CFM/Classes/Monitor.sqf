@@ -200,7 +200,15 @@ OBJCLASS(Monitor)
 		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		_self setVariable ['CFM_menuActive', false, true];
 	};
-	METHOD("loadMenu") { 
+	METHOD("loadMenu") {
+		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
+			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
+		} else {
+			LOGH "ERROR loadMenu: UI menu WIP!";
+			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
+		};
+	};
+	METHOD("loadMenuScrollMenu") { 
 		params [["_caller", objNull]]; 
 		private _ops = call CFM_fnc_getActiveOperators; 
 		private _opsGlobal = call CFM_fnc_getActiveOperatorsCheckGlobal; 
