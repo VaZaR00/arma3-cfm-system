@@ -9,6 +9,7 @@ CLASS(DbHandler)
 		CFM_R2T_index = 0;
 		if (isServer) then {
 			missionNamespace setVariable ["CFM_ActiveMonitors", [], true];
+			missionNamespace setVariable ["CFM_ActiveMonitorViewers", [2], true];
 		};
 	};
 	METHOD("setOperator") {
@@ -122,6 +123,7 @@ CLASS(DbHandler)
 		};
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
+		missionNamespace setVariable ["CFM_makeCamDataSync", true, 2];
 	};
 	METHOD("removeActiveMonitor") {
 		params["_monitor"];

@@ -42,7 +42,7 @@ CFM_fnc_updateOperator = {
 	private _currentZoom = round (1 / _currentFOV);
 	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", _currentZoom];
 	if (_currentZoom isEqualTo _prevZoom) then {
-		_controlledObj setVariable ["CFM_prevZoom", _currentZoom, true];
+		_controlledObj setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
 	};
 
 	// LOCAL TURRET ORIENTATION
@@ -72,17 +72,17 @@ CFM_fnc_updateOperator = {
 			private _currDirMS = _operator vectorWorldToModelVisual _dir;
 			private _currUpMS = _operator vectorWorldToModelVisual _up;
 			if !(_currDirMS isEqualTo _prevDir) then {
-				_operator setVariable [_dirVarName, _currDirMS, true];
+				_operator setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS(false)];
 			};
 			if !(_currUpMS isEqualTo _prevUp) then {
-				_operator setVariable [_upVarName, _currUpMS, true];
+				_operator setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS(false)];
 			};
 			missionNamespace setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
 		};
 	};
 };
 
-CFM_fnc_draw3dEH = {
+CFM_fnc_onEachFrameClient = {
 	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
 
 	private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
@@ -99,10 +99,41 @@ CFM_fnc_draw3dEH = {
 	[] call CFM_fnc_updateOperator;
 };
 
+CFM_fnc_onEachFrameServer = {
+	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
+
+	if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
+		{
+			private _operator = _x;
+			// CAM DATA
+			private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
+			{
+				private _turretIndex = _x#0;
+				private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
+				private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+				private _currDir = _operator getVariable [_dirVarName, []];
+				private _currUp = _operator getVariable [_upVarName, []];
+				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS(false)];
+				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS(false)];
+			} forEach _turrets;
+			// ZOOM
+			private _currentZoom = _operator getVariable ["CFM_prevZoom", 1];
+			_operator setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
+		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
+		
+		missionNamespace setVariable ["CFM_makeCamDataSync", false];
+	};
+};
+
 CFM_fnc_setupDraw3dEH = {
-	if !(isNil "CFM_EH_id") exitWith {};
-	private _id = addMissionEventHandler ["EachFrame", {call CFM_fnc_draw3dEH}];
-	CFM_EH_id = _id;
+	if (isNil "CFM_UPD_CLIENT_EH_id") then {
+		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameClient}];
+	};
+	if (isNil "CFM_UPD_SERVER_EH_id") then {
+		if (isServer) then {
+			CFM_UPD_SERVER_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameServer}];
+		};
+	};
 };
 
 CFM_fnc_zoom = {
