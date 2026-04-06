@@ -1,9 +1,9 @@
 #include "defines.hpp"
 
 CFM_fnc_init = {
-	CFM_updatePosSystem = true;
+	CFM_updateEachFrame = true;
 
-	if (CFM_updatePosSystem) then {
+	if (CFM_updateEachFrame) then {
 		[] call CFM_fnc_setupDraw3dEH;
 	};
 
@@ -26,8 +26,6 @@ CFM_fnc_init = {
 };
 
 CFM_fnc_updateOperator = {
-	if !(isMultiplayer) exitWith {};
-
 	private _isRemoteControlling = isRemoteControlling player;
 	if !(_isRemoteControlling) exitWith {};
 
@@ -83,7 +81,7 @@ CFM_fnc_updateOperator = {
 };
 
 CFM_fnc_onEachFrameClient = {
-	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
+	if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
 	private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 	{
@@ -96,11 +94,13 @@ CFM_fnc_onEachFrameClient = {
 		};
 	} forEach _monitors;
 
+	if !(isMultiplayer) exitWith {};
+
 	[] call CFM_fnc_updateOperator;
 };
 
 CFM_fnc_onEachFrameServer = {
-	if !(missionNamespace getVariable ["CFM_updatePosSystem", false]) exitWith {};
+	if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
 	if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
 		{
@@ -120,7 +120,7 @@ CFM_fnc_onEachFrameServer = {
 			private _currentZoom = _operator getVariable ["CFM_prevZoom", 1];
 			_operator setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
 		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
-		
+
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
 	};
 };
@@ -130,7 +130,7 @@ CFM_fnc_setupDraw3dEH = {
 		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameClient}];
 	};
 	if (isNil "CFM_UPD_SERVER_EH_id") then {
-		if (isServer) then {
+		if (isServer && isMultiplayer) then {
 			CFM_UPD_SERVER_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameServer}];
 		};
 	};
