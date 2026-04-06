@@ -311,9 +311,9 @@ CFM_fnc_updateCamera = {
 	private _up = [];
 	if (_operatorLocal || !_turretLocal) then {
 		private _posData = [_operator, _turretIndex] call _camPosFunc;
-		_pos = _posData#0;
-		_dir = _posData#1;
-		_up = _posData#2;
+		_pos = _posData param [0, _pos];
+		_dir = _posData param [1, _dir];
+		_up = _posData param [2, _up];
 	};
 
 	if (_turretLocal && {isMultiplayer && {!_operatorLocal}}) then {

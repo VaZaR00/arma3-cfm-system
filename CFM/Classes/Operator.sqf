@@ -111,7 +111,7 @@ OBJCLASS(Operator)
 
 		private _camParams = [_self, _cameraType] call CFM_fnc_defineCamTypeParams;
 		_camParams params [
-			["_cameraPosFunc", {}], 
+			["_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}], 
 			["_zoomMax", 1], 
 			["_zoomTable", createHashMap],
 			["_staticCamOffset", NULL_VECTOR],
