@@ -547,7 +547,9 @@ OBJCLASS(Monitor)
 				[_this] call CFM_fnc_exitMonitorFullScreen;
 			};
 		};
-		// [_self] call CFM_fnc_turnOffMonitorLocal;
+		if (_isHandMonitor) then {
+			[_self] call CFM_fnc_turnOffMonitorLocal;
+		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _self];
 		hint _hintText;
@@ -567,7 +569,9 @@ OBJCLASS(Monitor)
 		} else {
 			player switchCamera "INTERNAL";
 		};
-		// [_self] call CFM_fnc_turnOnMonitorLocal;
+		if (_isHandMonitor) then {
+			[_self] call CFM_fnc_turnOnMonitorLocal;
+		};
 		false setCamUseTI 0;
 		camUseNVG false;
 		hint "";
