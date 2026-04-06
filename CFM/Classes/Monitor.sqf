@@ -430,7 +430,7 @@ OBJCLASS(Monitor)
 			};
 
 			if (_canFix) then {
-				private _actionFix = _self addAction ["<t color='#690707'>Fix feed (local)</t>", { 
+				private _actionFix = _self addAction ["<t color='#690707'>Reset/Fix feed (local)</t>", { 
 					params ["_target"]; 
 					
 					[] call CFM_fnc_fixFeed;
@@ -555,7 +555,7 @@ OBJCLASS(Monitor)
 				[_this] call CFM_fnc_exitMonitorFullScreen;
 			};
 		};
-		[_self] call CFM_fnc_turnOffMonitorLocal;
+		// [_self] call CFM_fnc_turnOffMonitorLocal;
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _self];
 		hint _hintText;
@@ -575,7 +575,7 @@ OBJCLASS(Monitor)
 		} else {
 			player switchCamera "INTERNAL";
 		};
-		[_self] call CFM_fnc_turnOnMonitorLocal;
+		// [_self] call CFM_fnc_turnOnMonitorLocal;
 		false setCamUseTI 0;
 		camUseNVG false;
 		hint "";

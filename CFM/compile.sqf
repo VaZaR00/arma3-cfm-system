@@ -31,7 +31,7 @@ CFM_fnc_updateOperator = {
 	private _isRemoteControlling = isRemoteControlling player;
 	if !(_isRemoteControlling) exitWith {};
 
-	private _controlledObj = remoteControlled player;
+	private _controlledObj = vehicle (remoteControlled player);
 	if !(local _controlledObj) exitWith {};
 	if (_controlledObj isEqualTo objNull) exitWith {};
 	if (_controlledObj isEqualTo player) exitWith {};
@@ -40,10 +40,12 @@ CFM_fnc_updateOperator = {
 	// ZOOM
 	private _currentFOV = getObjectFOV _controlledObj;
 	private _currentZoom = round (1 / _currentFOV);
-	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", _currentZoom];
-	if (_currentZoom isEqualTo _prevZoom) then {
+	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", -1];
+	if !(_currentZoom isEqualTo _prevZoom) then {
 		_controlledObj setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
 	};
+
+	if !(isMultiplayer) exitWith {};
 
 	// LOCAL TURRET ORIENTATION
 	if (_controlledObj getVariable ["CFM_doCheckTurretLocality", false]) then {
@@ -95,8 +97,6 @@ CFM_fnc_onEachFrameClient = {
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
 	} forEach _monitors;
-
-	if !(isMultiplayer) exitWith {};
 
 	[] call CFM_fnc_updateOperator;
 };
