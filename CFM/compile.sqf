@@ -183,13 +183,14 @@ CFM_fnc_setOperator = {
 CFM_fnc_operatorCondition = {
 	params["_op", ["_player", player], ["_checkFeeding", false]];
 	
-	private _playerSide = side _player;
-	private _side = side _op;
-	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 	if !(IS_OBJ(_op)) then {
-		["removeOperator", [_monitor]] CALL_CLASS("DbHandler");
+		["removeOperator", [_op]] CALL_CLASS("DbHandler");
 		continue
 	};
+	private _cls = typeOf _op;
+	private _playerSide = side _player;
+	private _side = [(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType;
+	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 	if (!(_side isEqualTo _playerSide) && {!((_playerSide in _sidesUseCiv) && {_side == civilian})}) exitWith {false};
 
 	private _type = [_op] call CFM_fnc_cameraType;
@@ -204,7 +205,7 @@ CFM_fnc_operatorCondition = {
 			private _playerHelm = headgear _op;
 			_playerHelm in _goprohelms;
 		};
-		case DRONETYPE: {
+		default {
 			private _cls = typeOf _op;
 			if !(alive _op) exitWith {false};
 			private _canFeed = _op getVariable ["CFM_canFeed", false];
@@ -216,7 +217,6 @@ CFM_fnc_operatorCondition = {
 			};
 			_canFeed
 		};
-		default {false};
 	};
 };
 
@@ -1053,7 +1053,10 @@ CFM_fnc_cameraType = {
 	if (_classType isEqualTo TYPE_UAV) exitWith {
 		DRONETYPE
 	};
-	DRONETYPE
+	if (_classType isEqualTo TYPE_VEH) exitWith {
+		TYPE_VEH
+	};
+	_classType
 };
 
 CFM_fnc_validClassType = {

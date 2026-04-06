@@ -83,6 +83,10 @@ OBJCLASS(Operator)
 				_operator setVariable ["CFM_canFeed", true];
 				_operator setVariable ["CFM_isDroneFeed", true];
 			};
+			case TYPE_VEH: {
+				_operator setVariable ["CFM_canFeed", true];
+				_operator setVariable ["CFM_isVehFeed", true];
+			};
 			default {};
 		};
 	};

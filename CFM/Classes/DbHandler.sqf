@@ -25,17 +25,19 @@ CLASS(DbHandler)
 			};
 		};
 
-		if (IS_OBJ(_operator)) exitWith {
-			private _class = typeOf _operator;
+		private _opClass = _operator;
+		private _opIsObj = IS_OBJ(_operator);
+		if (_opIsObj) then {
+			_opClass = typeOf _operator;
 			[_operator] NEW_OBJINSTANCE("Operator");
 		};
 
-		if !(IS_STR(_operator)) exitWith {false};
+		private _classType = [_opClass] call CFM_fnc_validClassType;
 
-		private _classType = [_operator] call CFM_fnc_validClassType;;
+		[_operator, _opIsObj, _opClass, _classType] RLOG
 
 		if (_classType isEqualTo TYPE_HELM) then {
-			["addToList", [_operator, "CFM_goProHelmets"]] CALL_CLASS(_self);
+			["addToList", [_opClass, "CFM_goProHelmets"]] CALL_CLASS(_self);
 			CFM_checkGoPros = true;
 		};
 		if (_classType isEqualTo TYPE_UAV) then {
@@ -45,7 +47,9 @@ CLASS(DbHandler)
 			CFM_checkVehCams = true;
 		};
 
-		["addToList", [_operator, "CFM_OperatorClasses"]] CALL_CLASS(_self);
+		if !(IS_STR(_operator)) exitWith {_opIsObj};
+
+		["addToList", [_opClass, "CFM_OperatorClasses"]] CALL_CLASS(_self);
 
 		true
 	};
