@@ -34,8 +34,6 @@ CLASS(DbHandler)
 
 		private _classType = [_opClass] call CFM_fnc_validClassType;
 
-		[_operator, _opIsObj, _opClass, _classType] RLOG
-
 		if (_classType isEqualTo TYPE_HELM) then {
 			["addToList", [_opClass, "CFM_goProHelmets"]] CALL_CLASS(_self);
 			CFM_checkGoPros = true;

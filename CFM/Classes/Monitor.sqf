@@ -10,6 +10,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_isLocal, false);
 	OBJ_VARIABLE(_isOff, false);
 	OBJ_VARIABLE(_actionCaller, objNull);
+	OBJ_VARIABLE(_targetInActionsConditions, "_target");
 
 	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
 	OBJ_VARIABLE(_connectedOperator, objNull);
@@ -68,6 +69,11 @@ OBJCLASS(Monitor)
 		_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 		
+		if (_isPlayer) then {
+			_targetInActionsConditions = "player";
+			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
+		};
+
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 
 		if (_local) then {
@@ -209,7 +215,9 @@ OBJCLASS(Monitor)
 		};
 	};
 	METHOD("loadMenuScrollMenu") { 
-		params [["_caller", objNull]]; 
+		params [["_caller", objNull], ["_target", _targetInActionsConditions]]; 
+
+		private _target = _targetInActionsConditions;
 		private _ops = call CFM_fnc_getActiveOperators; 
 		private _opsGlobal = call CFM_fnc_getActiveOperatorsCheckGlobal; 
 		{
@@ -226,7 +234,7 @@ OBJCLASS(Monitor)
 			params ["_t"]; 
 			{ _t removeAction _x } forEach (_t getVariable ["CFM_tempActions", []]); 
 			_t setVariable ['CFM_menuActive', false];
-		}, nil, 11, true,false,"","[_target] call CFM_fnc_menuCloseActionCondition",_radius]; 
+		}, nil, 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _target], _radius]; 
 		_tempIDs pushBack _closeID; 
 
 		{  
@@ -240,7 +248,7 @@ OBJCLASS(Monitor)
 			private _id = _self addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
 				params ["_t", "_c", "_i", "_p"]; 
 				[_t, _p select 0, _c] call CFM_fnc_connectMonitorToOperator;
-			}, [_x], 10, true,false,"","[_target] call CFM_fnc_connectActionCondition", _radius]; 
+			}, [_x], 10, true,false,"",format["[%1] call CFM_fnc_connectActionCondition", _target], _radius]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
 		
@@ -331,8 +339,9 @@ OBJCLASS(Monitor)
 		_savedActions
 	};
 	METHOD("addMenuActions") {
-		params[["_radius", ACTION_RADIUS]];
+		params[["_radius", ACTION_RADIUS], ["_target", _targetInActionsConditions]];
 		
+		private _target = _targetInActionsConditions;
 		private _menuText = "Camera System Menu";
 		private _additionalCondition = if (_isHandMonitor) then {
 			_radius = -1;
@@ -351,12 +360,12 @@ OBJCLASS(Monitor)
 			params ["_target", "_caller"]; 
 
 			["loadMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
-		}, nil, _priority, true, false, "", "[_target] call CFM_fnc_menuActionCondition", _radius]; 
+		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_menuActionCondition", _target], _radius]; 
 
 		private _actionDisc = _self addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
 			params ["_target", "_caller"]; 
 			[_target, _caller] call CFM_fnc_disconnectMonitorFromOperator;
-		}, nil, _priority, true, false, "", "[_target] call CFM_fnc_disconnectActionCondition", _radius]; 
+		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
 		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("addOptionalActions") {
@@ -370,6 +379,7 @@ OBJCLASS(Monitor)
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true]
 		]; 
+		private _target = _targetInActionsConditions;
 		private _priority = player getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _actions = [];
 		private _radius = _self getVariable ["CFM_actionsRadius", _radius];
@@ -379,25 +389,25 @@ OBJCLASS(Monitor)
 					params ["_target"];
 					
 					[_target, +1] call CFM_fnc_zoom;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_zoomInActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_zoomInActionCondition", _target], _radius]; 
 
 				private _actionZoomOut = _self addAction ["<t color='#c5dafa'>Zoom Out</t>", { 
 					params ["_target"];
 					
 					[_target, -1] call CFM_fnc_zoom;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_zoomActionsCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
 			
 				private _actionZoomDefault = _self addAction ["<t color='#45d9b9'>Reset Zoom</t>", { 
 					params ["_target"]; 
 
 					[_target, "reset"] call CFM_fnc_zoom;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_zoomActionsCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
 
 				private _actionZoomByDrone = _self addAction ["<t color='#90c73e'>Use Operator Zoom</t>", { 
 					params ["_target"]; 
 
 					[_target, "op"] call CFM_fnc_zoom;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_zoomActionsCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
 
 				_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 			};
@@ -407,7 +417,7 @@ OBJCLASS(Monitor)
 					params ["_target"]; 
 
 					[_target] call CFM_fnc_takeUAVcontorls;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_connectDroneActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_connectDroneActionCondition", _target], _radius]; 
 				_actions append [_connectDroneAction];
 			};
 
@@ -416,7 +426,7 @@ OBJCLASS(Monitor)
 					params ["_target"]; 
 					
 					[] call CFM_fnc_fixFeed;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_fixFeedActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_fixFeedActionCondition", _target], _radius]; 
 				_actions append [_actionFix];
 			};
 
@@ -425,12 +435,12 @@ OBJCLASS(Monitor)
 					params ["_target"]; 
 					
 					["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_switchCameraToGunnerActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
 				private _actionSwitchDriver = _self addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
 					params ["_target"]; 
 
 					["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_switchCameraToPilotActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchTurret, _actionSwitchDriver];
 			};
 
@@ -439,12 +449,12 @@ OBJCLASS(Monitor)
 					params ["_target"]; 
 					
 					[_target] call CFM_fnc_turnOffMonitorLocal;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_turnOffActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_turnOffActionCondition", _target], _radius]; 
 				private _actionTurnOnLocal = _self addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
 					params ["_target"]; 
 					
 					[_target] call CFM_fnc_turnOnMonitorLocal;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_turnOnActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_turnOnActionCondition", _target], _radius]; 
 				_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
 			};
 
@@ -452,7 +462,7 @@ OBJCLASS(Monitor)
 				private _actionSwitchNvg = _self addAction ["<t color='#006e02'>Toggle NVG</t>", { 
 					params ["_target"]; 
 					[_target] call CFM_fnc_monitorToggleNVG;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_toggleNvgActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_toggleNvgActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchNvg];
 			};
 
@@ -460,7 +470,7 @@ OBJCLASS(Monitor)
 				private _actionSwitchTi = _self addAction ["<t color='#525252'>Toggle TI</t>", { 
 					params ["_target"]; 
 					[_target] call CFM_fnc_monitorSwitchTi;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_toggleTiActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_toggleTiActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchTi];
 			};
 
@@ -468,12 +478,12 @@ OBJCLASS(Monitor)
 				private _actionEnterFullScreen = _self addAction ["<t color='#67bce0'>Enter Fullscreen</t>", { 
 					params ["_target"]; 
 					[_target] call CFM_fnc_enterMonitorFullScreen;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_enterFullScreenActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
 				_actions append [_actionFullScreen];
 				private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
 					params ["_target"]; 
 					[_target] call CFM_fnc_exitMonitorFullScreen;
-				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_exitFullScreenActionCondition", _radius]; 
+				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
 				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
 			};
 		};

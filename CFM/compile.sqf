@@ -39,6 +39,11 @@ CFM_fnc_init = {
 };
 
 CFM_fnc_updateOperator = {
+	private _currVeh = vehicle player;
+	if !(_currVeh isEqualTo player) then {
+		[_currVeh] call CFM_fnc_updateOperatorZoom;
+	};
+
 	private _isRemoteControlling = isRemoteControlling player;
 	if !(_isRemoteControlling) exitWith {};
 
@@ -46,15 +51,10 @@ CFM_fnc_updateOperator = {
 	if !(local _controlledObj) exitWith {};
 	if (_controlledObj isEqualTo objNull) exitWith {};
 	if (_controlledObj isEqualTo player) exitWith {};
-	if (_controlledObj isEqualTo (vehicle player)) exitWith {};
+	if (_controlledObj isEqualTo _currVeh) exitWith {};
 
 	// ZOOM
-	private _currentFOV = getObjectFOV _controlledObj;
-	private _currentZoom = round (1 / _currentFOV);
-	private _prevZoom = _controlledObj getVariable ["CFM_prevZoom", -1];
-	if !(_currentZoom isEqualTo _prevZoom) then {
-		_controlledObj setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
-	};
+	[_controlledObj] call CFM_fnc_updateOperatorZoom;
 
 	if !(isMultiplayer) exitWith {};
 
@@ -93,6 +93,17 @@ CFM_fnc_updateOperator = {
 			missionNamespace setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
 		};
 	};
+};
+
+CFM_fnc_updateOperatorZoom = {
+	params["_obj"];
+	private _currentFOV = getObjectFOV _obj;
+	private _currentZoom = round (1 / _currentFOV);
+	private _prevZoom = _obj getVariable ["CFM_prevZoom", -1];
+	if !(_currentZoom isEqualTo _prevZoom) then {
+		_obj setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
+	};
+	_currentZoom
 };
 
 CFM_fnc_onEachFrameClient = {
@@ -293,14 +304,18 @@ CFM_fnc_updateCamera = {
 
 	// ZOOM
 	private _fov = if (_camExists) then {
+		private _objFOV = getObjectFOV _operator;
 		if (_zoom isEqualTo "op") then {
+			if (player in _operator) exitWith {
+				_zoom = round (1/_objFOV);
+			};
 			_zoom = _operator getVariable ['CFM_prevZoom', _zoom];
 		};
 		private _zoomDefault = !(_zoom isEqualType 1);
 		if !(_zoomDefault) then {
 			private _zoomfov = _zoomTable getOrDefault [_zoom, 1/_zoom];
-			if (_zoomfov > 1) then {getObjectFOV _operator} else {_zoomfov};
-		} else {getObjectFOV _operator};
+			if (_zoomfov > 1) then {_objFOV} else {_zoomfov};
+		} else {1};
 	} else {1};
 
 	// POS AN VECTOR DIR AND UP
@@ -1111,12 +1126,13 @@ CFM_fnc_initActionConditions = {
 		private _isHandMonitor = _target getVariable ["CFM_isHandMonitor", false];
 		if !(_isHandMonitor) exitWith {false};
 
-		private _isWatchingAtMonitor = isNil {cursorObject getVariable "CFM_originalTexture"};
+		private _isWatchingAtMonitor = !(isNil {cursorObject getVariable "CFM_originalTexture"});
 		
-		!_isWatchingAtMonitor
+		_isWatchingAtMonitor
 	};
 	CFM_fnc_menuActionCondition = {
 		params["_target"];
+		LOGH [player, _target, vehicle _target];
 		HAND_MON_CONDITION
 		if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
 		if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
