@@ -278,7 +278,7 @@ CFM_fnc_timeInterpolate = {
 };
 
 CFM_fnc_updateCamera = {  
-	params [["_cam", objNull], ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosDroneDynamic]]; 
+	params [["_cam", objNull], ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosVehDynamic]]; 
 	_cameraParams params [
 		["_operator", objNull],
 		["_turret", [-1]],
@@ -351,7 +351,7 @@ CFM_fnc_updateCamera = {
 	_posAndVUP
 };
 
-CFM_fnc_camPosDroneDynamic = {
+CFM_fnc_camPosVehDynamic = {
 	params["_obj", "_curTurretIndex"];
 
 	private _prevTurret = (+(_obj getVariable ["CFM_prevTurret", [_curTurretIndex]]))#0;
@@ -370,7 +370,7 @@ CFM_fnc_camPosDroneDynamic = {
 		private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
 
 		if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurretIndex)) then {
-			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getUAVCameraPoints;
+			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getCameraPoints;
 			_dirPointParams = _pointsParams#1; 
 			_dirPoint = _dirPointParams;
 			if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
@@ -390,7 +390,7 @@ CFM_fnc_camPosDroneDynamic = {
 	[_pos, _dir, _up]
 };
 
-CFM_fnc_camPosDroneStatic = {
+CFM_fnc_camPosVehStatic = {
 	params["_obj", "_curTurretIndex"];
 
 	private _dir = vectorDir _obj;
@@ -423,14 +423,20 @@ CFM_fnc_defineCamTypeParams = {
 		case GOPRO: {
 			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable, [], false]
 		};
+		case TYPE_WEAP: {
+			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable, [], false]
+		};
+		case TYPE_VEH: {
+			[CFM_fnc_camPosVehDynamic, CFM_max_zoom_drone, CFM_drone_zoomTable, [], false]
+		};
 		case DRONETYPE: {
 			private _maxzoom = CFM_max_zoom_drone;
 			private _table = CFM_drone_zoomTable;
-			private _func = CFM_fnc_camPosDroneDynamic;
+			private _func = CFM_fnc_camPosVehDynamic;
 			private _offset = NULL_VECTOR;
 			private _doCheckTurretLocality = true;
 			if (("fpv" in _cls) || {("crocus" in _cls)}) then {
-				_func = CFM_fnc_camPosDroneStatic;
+				_func = CFM_fnc_camPosVehStatic;
 				_offset = [0,0.1,0.15];
 				_doCheckTurretLocality = false;
 			} else {};
@@ -467,7 +473,7 @@ CFM_fnc_updateMonitor = {
 	_camSet
 };
 
-CFM_fnc_getUAVCameraPoints = {  
+CFM_fnc_getCameraPoints = {  
     params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH]]; 
 
     private _droneType = toLower (typeOf _vehicle);
@@ -481,6 +487,15 @@ CFM_fnc_getUAVCameraPoints = {
 		};
 		[["pip0_pos", [], [-1,0,-1]], "pip0_dir"]
 	};
+
+	private _camType = _vehicle getVariable ["CFM_cameraType", ""];
+	private _camTypeRes = switch (_camType) do {
+		case TYPE_VEH: {
+			[["gunnerview", [-1, 0,0]], "gunnerview"]
+		};
+		default { };
+	};
+	if !(isNil "_camTypeRes") exitWith {_camTypeRes};
 
     private _camPos = "uavCameraGunnerPos";  
     private _camDir = "uavCameraGunnerDir";
