@@ -11,7 +11,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
 	OBJ_VARIABLE(_classType, "");
-	OBJ_VARIABLE(_camerasSet, createHashMap);
+	OBJ_VARIABLE(_monitorsSet, createHashMap);
 	OBJ_VARIABLE(_tiTable, createHashMap);
 	OBJ_VARIABLE(_nvgTable, createHashMap);
 	OBJ_VARIABLE(_operatorSet, false);
@@ -86,11 +86,15 @@ OBJCLASS(Operator)
 			default {};
 		};
 	};
-	METHOD("initMonitor") {
+	METHOD("monitorConnected") {
 		// should be executed globaly
-		params[["_monitor", objNull]];
+		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
 
 		if !(IS_OBJ(_monitor)) exitWith {};
+
+		if (player isEqualTo _caller) then {
+			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+		};
 
 		_self setVariable ["CFM_isFeeding", true];
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
@@ -119,5 +123,37 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_cameraPosFunc", _cameraPosFunc];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable];
 		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
+	};
+	METHOD("monitorDisconnected") {
+		// should be executed globaly
+		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
+
+		if (player isEqualTo _caller) then {
+			["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+		};
+	};
+	METHOD("addMonitor") {
+		// should be executed globaly
+		params[["_monitor", objNull], ["_turret", [-1]]];
+
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+
+		private _turretIndex = _turret#0;
+		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
+		private _i = _monitorsOnTurret pushBackUnique _monitor;
+		_monitorsSet set [_turretIndex, _monitorsOnTurret];
+		_self setVariable ["CFM_monitorsSet", _monitorsSet, true];
+		_i
+	};
+	METHOD("removeMonitor") {
+		// should be executed globaly
+		params[["_monitor", objNull], ["_turret", [-1]]];
+
+		private _turretIndex = _turret#0;
+		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
+		_monitorsOnTurret = _monitorsOnTurret - [_monitor];
+		_monitorsSet set [_turretIndex, _monitorsOnTurret];
+		_self setVariable ["CFM_monitorsSet", _monitorsSet, true];
+		true
 	};
 CLASS_END

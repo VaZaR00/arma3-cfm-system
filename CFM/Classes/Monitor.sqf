@@ -9,6 +9,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_isHandMonitor, false);
 	OBJ_VARIABLE(_isLocal, false);
 	OBJ_VARIABLE(_isOff, false);
+	OBJ_VARIABLE(_actionCaller, objNull);
 
 	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
 	OBJ_VARIABLE(_connectedOperator, objNull);
@@ -120,7 +121,8 @@ OBJCLASS(Monitor)
 			_turret = _currentTurret;
 		};
 
-		["initMonitor", [_monitor], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
+		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
+		_self setVariable ['CFM_actionCaller', nil];
 
 		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
 		private _renderTarget = _renderTargetAndCamera#0;
@@ -151,6 +153,8 @@ OBJCLASS(Monitor)
 	METHOD("stopFeed") {
 		params[["_reset", false]];
 		if !(_reset) then {
+			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+			_self setVariable ['CFM_actionCaller', nil];
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
@@ -176,14 +180,18 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentCameraType", nil];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
 		_monitor setVariable ['CFM_menuActive', false];
+		_monitor setVariable ['CFM_actionCaller', nil];
 	};
 	METHOD("connect") {
-		params["_op"];
+		params["_op", ["_caller", objNull]];
+		_self setVariable ['CFM_actionCaller', _caller];
 		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
 		true
 	};
 	METHOD("disconnect") {
+		params[["_caller", objNull]];
+		_self setVariable ['CFM_actionCaller', _caller];
 		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
 		_self setVariable ['CFM_menuActive', false, true];
 	};
@@ -218,7 +226,7 @@ OBJCLASS(Monitor)
 			};
 			private _id = _self addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
 				params ["_t", "_c", "_i", "_p"]; 
-				[_t, _p select 0] call CFM_fnc_connectOperatorToMonitor;
+				[_t, _p select 0, _c] call CFM_fnc_connectMonitorToOperator;
 			}, [_x], 10, true,false,"","[_target] call CFM_fnc_connectActionCondition", _radius]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
@@ -331,8 +339,8 @@ OBJCLASS(Monitor)
 		}, nil, _priority, true, false, "", "[_target] call CFM_fnc_menuActionCondition", _radius]; 
 
 		private _actionDisc = _self addAction ["<t color='#FF0000'>Disconnect Camera</t>", { 
-			params ["_target"]; 
-			["disconnect", []] CALL_OBJCLASS("Monitor", _target);
+			params ["_target", "_caller"]; 
+			[_target, _caller] call CFM_fnc_disconnectMonitorFromOperator;
 		}, nil, _priority, true, false, "", "[_target] call CFM_fnc_disconnectActionCondition", _radius]; 
 		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS("Monitor", _self);
 	};

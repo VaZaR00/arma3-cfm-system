@@ -6,14 +6,8 @@ CLASS(DbHandler)
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
 		CFM_tiModesTable = createHashMapFromArray [[0, 2], [1, 7], [6, 12]];
-		CFM_classesSetup = createHashMap;
-		CFM_CameraPool = [];
-		CFM_Monitors = [];
-		CFM_Operators = [];
 		CFM_R2T_index = 0;
-		CFM_OperatorClasses = [];
 		if (isServer) then {
-			CFM_ActiveMonitors = [];
 			missionNamespace setVariable ["CFM_ActiveMonitors", [], true];
 		};
 	};
