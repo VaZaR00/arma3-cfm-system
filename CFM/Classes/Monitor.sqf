@@ -159,6 +159,8 @@ OBJCLASS(Monitor)
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+		} else {
+			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		};
 		["setRenderPicture", [false]] CALL_OBJCLASS("Monitor", _monitor);
 	};
@@ -183,6 +185,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ['CFM_menuActive', false];
 		_monitor setVariable ['CFM_actionCaller', nil];
 		_monitor setVariable ['CFM_isInNvg', nil];
+		_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
@@ -392,39 +395,10 @@ OBJCLASS(Monitor)
 			};
 
 			if (_canConnectDrone) then {
-				private _connectDroneAction = _self addAction ["<t color='#1c399e'>Take drone controls</t>", { 
+				private _connectDroneAction = _self addAction ["<t color='#1c399e'>Take UAV controls</t>", { 
 					params ["_target"]; 
 
-					private _drone = _target getVariable ["CFM_connectedOperator", objNull]; 
-					private _errtext = "Can't connect to drone";
-
-					if ((_drone isEqualTo objNull) || !(_drone isEqualType objNull)) exitWith {
-						hint _errtext;
-					};
-
-					private _controler = remoteControlled _drone;
-
-					if (!(_controler isEqualTo objNull) || !(_controler isEqualType objNull)) exitWith {
-						hint _errtext;
-					};
-
-					private _connect = player connectTerminalToUAV _drone;
-
-					if !(_connect) exitWith {
-						hint _errtext;
-					};
-
-					private _bot = driver _drone;
-					private _currTurret = _target getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
-					if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
-						_bot = gunner _drone;
-						if (isNull _bot) then {
-							_bot = driver _drone;
-						};
-					};
-
-					player remoteControl (_bot);
-					_drone switchCamera "internal";
+					[_target] call CFM_fnc_takeUAVcontorls;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_connectDroneActionCondition", _radius]; 
 				_actions append [_connectDroneAction];
 			};
@@ -469,7 +443,7 @@ OBJCLASS(Monitor)
 			if (_canSwitchNvg) then {
 				private _actionSwitchNvg = _self addAction ["<t color='#006e02'>Toggle NVG</t>", { 
 					params ["_target"]; 
-					["switchNvg"] CALL_OBJCLASS("Monitor", _target);
+					[_target] call CFM_fnc_monitorToggleNVG;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_toggleNvgActionCondition", _radius]; 
 				_actions append [_actionSwitchNvg];
 			};
@@ -477,7 +451,7 @@ OBJCLASS(Monitor)
 			if (_canSwitchTi) then {
 				private _actionSwitchTi = _self addAction ["<t color='#525252'>Toggle TI</t>", { 
 					params ["_target"]; 
-					["switchTi"] CALL_OBJCLASS("Monitor", _target);
+					[_target] call CFM_fnc_monitorSwitchTi;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_toggleTiActionCondition", _radius]; 
 				_actions append [_actionSwitchTi];
 			};

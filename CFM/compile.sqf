@@ -14,7 +14,17 @@ CFM_fnc_init = {
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 
-	["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [true, false, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[cursorObject, +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_zoomOutKey", ["Zoom Out", "Zoom Out"], {[cursorObject, -1] call CFM_fnc_zoom}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_resetZoomKey", ["Reset zoom", "Reset Zoom"], {[cursorObject, "reset"] call CFM_fnc_zoom}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_operatorZoomKey", ["Use operator zoom", "Use operator zoom"], {[cursorObject, "op"] call CFM_fnc_zoom}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_takeUavControlKey", ["Take UAV control", "Take UAV control"], {[cursorObject] call CFM_fnc_takeUAVcontorls}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {[cursorObject] call CFM_fnc_monitorSwitchTi}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {[cursorObject] call CFM_fnc_monitorToggleNVG}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {[cursorObject, player] call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
+	["CFM", "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {[cursorObject] call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
 
 	#include "Classes\DbHandler.sqf"
 	#include "Classes\Monitor.sqf"
@@ -790,9 +800,69 @@ CFM_fnc_turnOnMonitorLocal = {
 	_monitor setVariable ["CFM_turnedOffLocal", false]; 
 };
 
+CFM_fnc_takeUAVcontorls = { 
+	params ["_monitor"]; 
+
+	private _drone = _monitor getVariable ["CFM_connectedOperator", objNull]; 
+	private _errtext = "Can't connect to drone";
+
+	if ((_drone isEqualTo objNull) || !(_drone isEqualType objNull)) exitWith {
+		
+	};
+
+	private _controler = remoteControlled _drone;
+
+	if (!(_controler isEqualTo objNull) || !(_controler isEqualType objNull)) exitWith {
+		hint _errtext;
+	};
+
+	private _connect = player connectTerminalToUAV _drone;
+
+	if !(_connect) exitWith {
+		hint _errtext;
+	};
+
+	private _bot = driver _drone;
+	private _currTurret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
+	if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
+		_bot = gunner _drone;
+		if (isNull _bot) then {
+			_bot = driver _drone;
+		};
+	};
+
+	[] call CFM_fnc_exitFullScreen;
+	player remoteControl (_bot);
+	_drone switchCamera "internal";
+};
+
 CFM_fnc_monitorSwitchTi = {
 	params["_monitor"];
 	["switchTi"] CALL_OBJCLASS("Monitor", _monitor);
+};
+
+CFM_fnc_monitorToggleNVG = {
+	params["_monitor"];
+	["switchNvg"] CALL_OBJCLASS("Monitor", _monitor);
+};
+
+CFM_fnc_disconnectMonitorFromOperatorKeybind = {
+	[] call CFM_fnc_exitFullScreen;
+	_this call CFM_fnc_disconnectMonitorFromOperator;
+};
+
+CFM_fnc_fixFeedKeybind = {
+	[] call CFM_fnc_exitFullScreen;
+	[] call CFM_fnc_fixFeed;
+};
+
+CFM_fnc_turnOnOffMonitorLocalKeybind = {
+	[] call CFM_fnc_exitFullScreen;
+	if (_this call CFM_fnc_turnOffActionCondition) then {
+		_this call CFM_fnc_turnOffMonitorLocal;
+	} else {
+		_this call CFM_fnc_turnOnMonitorLocal;
+	};
 };
 
 CFM_fnc_enterMonitorFullScreen = {
