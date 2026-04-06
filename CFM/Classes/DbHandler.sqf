@@ -5,7 +5,10 @@ CLASS(DbHandler)
 	METHOD("Init") {
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
-		CFM_tiModesTable = createHashMapFromArray [[0, 2], [1, 7], [6, 12]];
+		CFM_tiModesTableArray = [[0, 2], [1, 7], [6, 12]];
+		CFM_tiModesTableArrayReverse = CFM_tiModesTableArray apply {[_x#1, _x#0]};
+		CFM_tiModesTable = createHashMapFromArray CFM_tiModesTableArray;
+		CFM_tiModesTableReverse = createHashMapFromArray CFM_tiModesTableArrayReverse;
 		CFM_R2T_index = 0;
 		if (isServer) then {
 			missionNamespace setVariable ["CFM_ActiveMonitors", [], true];

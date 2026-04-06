@@ -778,6 +778,18 @@ CFM_fnc_setMonitorPiPEffect = {
 	true
 };
 
+CFM_fnc_turnOffMonitorLocal = {
+	params["_monitor"];
+	[_monitor, false, "", true] call CFM_fnc_setMonitorTexture;
+	_monitor setVariable ["CFM_turnedOffLocal", true]; 
+};
+
+CFM_fnc_turnOnMonitorLocal = {
+	params["_monitor"];
+	[_monitor] call CFM_fnc_setMonitorTexture;
+	_monitor setVariable ["CFM_turnedOffLocal", false]; 
+};
+
 CFM_fnc_monitorSwitchTi = {
 	params["_monitor"];
 	["switchTi"] CALL_OBJCLASS("Monitor", _monitor);
@@ -794,10 +806,19 @@ CFM_fnc_exitMonitorFullScreen = {
 };
 
 CFM_fnc_exitFullScreen = {
-	LOGH [time];
 	if !(missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {};
+
+	private _monitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull];
+	private _exited = if (IS_OBJ(_monitor)) then {
+		["monitorExitFullScreen", [_monitor], _monitor, false] CALL_OBJCLASS("Monitor", _monitor);
+	} else {false};
+
+	if (!(isNil "_exited") && {(_exited isEqualTo true)}) exitWith {};
+
 	hint "";
 	cutText ["", "PLAIN"];
+	false setCamUseTI 0;
+	camUseNVG false;
 	private _currCam = missionNamespace getVariable ["CFM_currentFullScreenCam", objNull];
 	if !(IS_OBJ(_currCam)) exitWith {
 		private _currCamData = (allCameras select {(_x#3) isEqualTo "Internal"})#0;
@@ -809,6 +830,7 @@ CFM_fnc_exitFullScreen = {
 		player switchCamera "INTERNAL";
 	};
 	private _r2t = missionNamespace getVariable ["CFM_r2tOfFullScreenCam", ""];
+	missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
 	missionNamespace setVariable ["CFM_currentFullScreenCam", nil];
 	missionNamespace setVariable ["CFM_r2tOfFullScreenCam", nil];
 	missionNamespace setVariable ["CFM_isInFullScreen", false];

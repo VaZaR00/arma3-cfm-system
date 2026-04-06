@@ -21,6 +21,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_monitorCanSwitchNvg, false);
 	OBJ_VARIABLE(_monitorCanSwitchTi, false);
 	OBJ_VARIABLE(_currentPiPEffect, 0);
+	OBJ_VARIABLE(_isInNvg, false);
 	OBJ_VARIABLE(_currentTiTable, createHashMap);
 	OBJ_VARIABLE(_currentNvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
@@ -181,6 +182,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
 		_monitor setVariable ['CFM_menuActive', false];
 		_monitor setVariable ['CFM_actionCaller', nil];
+		_monitor setVariable ['CFM_isInNvg', nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
@@ -290,6 +292,7 @@ OBJCLASS(Monitor)
 		};
 		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
+		_monitor setVariable ["CFM_isInNvg", _newEffect isEqualTo 1, true];
 	};
 	METHOD("switchTi") { 
 		private _currentTurret = _self getVariable ["CFM_currentTurret", [-1]];
@@ -308,6 +311,7 @@ OBJCLASS(Monitor)
 		if !(_newEffect isEqualType 1) exitWith {};
 		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
+		_monitor setVariable ["CFM_isInNvg", false, true];
 	};
 	METHOD("addActionsToActionsList") {
 		private _savedActions = _self getVariable ["CFM_mainActions", []];
@@ -452,14 +456,12 @@ OBJCLASS(Monitor)
 				private _actionTurnOffLocal = _self addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
 					params ["_target"]; 
 					
-					[_target, false, "", true] call CFM_fnc_setMonitorTexture;
-					_target setVariable ["CFM_turnedOffLocal", true]; 
+					[_target] call CFM_fnc_turnOffMonitorLocal;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_turnOffActionCondition", _radius]; 
 				private _actionTurnOnLocal = _self addAction ["<t color='#036900'>Turn on feed (local)</t>", { 
 					params ["_target"]; 
 					
-					[_target] call CFM_fnc_setMonitorTexture;
-					_target setVariable ["CFM_turnedOffLocal", false];  
+					[_target] call CFM_fnc_turnOnMonitorLocal;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_turnOnActionCondition", _radius]; 
 				_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
 			};
@@ -526,6 +528,14 @@ OBJCLASS(Monitor)
 			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
 			_unitCam cameraEffect ["internal", "BACK"];
+			if (_isInNvg) then {
+				camUseNVG true;
+			} else {
+				private _tiMode = (missionNamespace getVariable ["CFM_tiModesTableReverse", createHashMap]) getOrDefault [_currentPiPEffect, -1];
+				if ((_tiMode isEqualType 1) && {!(_tiMode isEqualTo -1)}) then {
+					true setCamUseTI _tiMode; 
+				};
+			};
 			_self spawn {
 				uiSleep AUTOEXIT_FULLSCREEN_TIMER;
 				[_this] call CFM_fnc_exitMonitorFullScreen;
@@ -545,7 +555,9 @@ OBJCLASS(Monitor)
 				[_this] call CFM_fnc_exitMonitorFullScreen;
 			};
 		};
+		[_self] call CFM_fnc_turnOffMonitorLocal;
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _self];
 		hint _hintText;
 		cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
@@ -559,11 +571,19 @@ OBJCLASS(Monitor)
 				_currentFeedCam cameraEffect ["Terminate", "back"];
 				player switchCamera "INTERNAL";
 			};
+			[_self, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		} else {
 			player switchCamera "INTERNAL";
 		};
+		[_self] call CFM_fnc_turnOnMonitorLocal;
+		false setCamUseTI 0;
+		camUseNVG false;
 		hint "";
 		cutText ["", "PLAIN"];
 		missionNamespace setVariable ["CFM_isInFullScreen", false];
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
+		missionNamespace setVariable ["CFM_currentFullScreenCam", nil];
+		missionNamespace setVariable ["CFM_r2tOfFullScreenCam", nil];
+		true
 	};
 CLASS_END
