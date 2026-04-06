@@ -17,10 +17,13 @@ CLASS(DbHandler)
 	};
 	METHOD("setOperator") {
 		// should be executed globaly
-		params["_operator", ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_operator", objNull], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+
+		if (isNil "_operator") exitWith {};
 
 		if (_operator isEqualType []) exitWith {
 			_operator apply {
+				if (isNil "_x") then {continue};
 				[_x, true, _type, _hasTInNvg, _params] call CFM_fnc_setOperator;
 			};
 		};

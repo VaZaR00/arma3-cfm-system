@@ -169,6 +169,8 @@ CFM_fnc_zoom = {
 CFM_fnc_setMonitor = {
 	params[["_monitor", objNull], ["_params", []], ["_reset", false]];
 
+	if (isNil "_monitor") exitWith {};
+
 	if (_monitor isEqualType []) exitWith {
 		{
 			[_x, _params, _reset] call CFM_fnc_setMonitor;
@@ -185,7 +187,8 @@ CFM_fnc_setMonitor = {
 };
 
 CFM_fnc_setOperator = {
-	params["_operator", ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+	params[["_operator", objNull], ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+	if (isNil "_operator") exitWith {};
 	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 	["setOperator", [_operator, _type, _hasTInNvg, _params]] CALL_CLASS("DbHandler");
 	true
@@ -200,9 +203,9 @@ CFM_fnc_operatorCondition = {
 	};
 	private _cls = typeOf _op;
 	private _playerSide = side _player;
-	private _side = [(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType;
+	private _sides = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
 	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
-	if (!(_side isEqualTo _playerSide) && {!((_playerSide in _sidesUseCiv) && {_side == civilian})}) exitWith {false};
+	if (!(_playerSide in _sides) && {!((_playerSide in _sidesUseCiv) && {civilian in _sides})}) exitWith {false};
 
 	private _type = [_op] call CFM_fnc_cameraType;
 
