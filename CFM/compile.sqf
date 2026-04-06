@@ -14,6 +14,8 @@ CFM_fnc_init = {
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 
+	["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [true, false, false]]] call CBA_fnc_addKeybind;
+
 	#include "Classes\DbHandler.sqf"
 	#include "Classes\Monitor.sqf"
 	#include "Classes\Operator.sqf"
@@ -781,12 +783,40 @@ CFM_fnc_monitorSwitchTi = {
 	["switchTi"] CALL_OBJCLASS("Monitor", _monitor);
 };
 
-CFM_fnc_enterFullScreen = {
+CFM_fnc_enterMonitorFullScreen = {
 	params["_monitor"];
-	["monitorEnterFullScreen", []] CALL_OBJCLASS("Monitor", _monitor);
+	["monitorEnterFullScreen", [_monitor]] CALL_OBJCLASS("Monitor", _monitor);
+};
+
+CFM_fnc_exitMonitorFullScreen = {
+	params["_monitor"];
+	["monitorExitFullScreen", [_monitor]] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_exitFullScreen = {
+	LOGH [time];
+	if !(missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {};
+	hint "";
+	cutText ["", "PLAIN"];
+	private _currCam = missionNamespace getVariable ["CFM_currentFullScreenCam", objNull];
+	if !(IS_OBJ(_currCam)) exitWith {
+		private _currCamData = (allCameras select {(_x#3) isEqualTo "Internal"})#0;
+		if (isNil "_currCamData") exitWith {
+			LOGH "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
+		};
+		_currCam = _currCamData#0;
+		_currCam cameraEffect ["Terminate", "back"];
+		player switchCamera "INTERNAL";
+	};
+	private _r2t = missionNamespace getVariable ["CFM_r2tOfFullScreenCam", ""];
+	missionNamespace setVariable ["CFM_currentFullScreenCam", nil];
+	missionNamespace setVariable ["CFM_r2tOfFullScreenCam", nil];
+	missionNamespace setVariable ["CFM_isInFullScreen", false];
+	if !(IS_VALID_R2T(_r2t)) exitWith {
+		_currCam cameraEffect ["Terminate", "back"];
+		player switchCamera "INTERNAL";
+	};
+	_currCam cameraEffect ["Internal", "back", _r2t];
 	player switchCamera "INTERNAL";
 };
 

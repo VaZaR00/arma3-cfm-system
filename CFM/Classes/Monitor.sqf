@@ -483,12 +483,12 @@ OBJCLASS(Monitor)
 			if (_canFullScreen) then {
 				private _actionEnterFullScreen = _self addAction ["<t color='#67bce0'>Enter Fullscreen</t>", { 
 					params ["_target"]; 
-					[_target] call CFM_fnc_enterFullScreen;
+					[_target] call CFM_fnc_enterMonitorFullScreen;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_enterFullScreenActionCondition", _radius]; 
 				_actions append [_actionFullScreen];
 				private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
 					params ["_target"]; 
-					[_target] call CFM_fnc_exitFullScreen;
+					[_target] call CFM_fnc_exitMonitorFullScreen;
 				}, nil, _priority, true, false, "", "[_target] call CFM_fnc_exitFullScreenActionCondition", _radius]; 
 				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
 			};
@@ -496,42 +496,74 @@ OBJCLASS(Monitor)
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("monitorEnterFullScreen") {
-		private _unit = objNull;
-		private _mode = switch ((_currentTurret#0)) do {
-			case (DRIVER_TURRET_PATH#0): {
-				_unit = driver (vehicle _connectedOperator);
-				"INTERNAL"
+		private _unitCam = _currentFeedCam;
+		private _mode = "INTERNAL";
+		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
+		if !(_onTempCam) then {
+			_mode = switch ((_currentTurret#0)) do {
+				case (DRIVER_TURRET_PATH#0): {
+					_unitCam = driver (vehicle _connectedOperator);
+					"INTERNAL"
+				};
+				case (GUNNER_TURRET_PATH#0): {
+					_unitCam = gunner (vehicle _connectedOperator);
+					"GUNNER"
+				};
+				default {""};
 			};
-			case (GUNNER_TURRET_PATH#0): {
-				_unit = gunner (vehicle _connectedOperator);
-				"GUNNER"
-			};
-			default {""};
 		};
 		if (_mode isEqualTo "") exitWith {
 			LOGH format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
-		if !(IS_OBJ(_unit)) exitWith {
+		if !(IS_OBJ(_unitCam)) exitWith {
 			LOGH format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
-		_unit switchCamera _mode;
-		hint FULLSCREEN_HINT;
-		cutText [format["<t size='2' color='#ff0000'>%1</t>", FULLSCREEN_HINT], "PLAIN DOWN", 5, true, true];
-		0 spawn {
-			private _initPos = getPosASL player;
-			private _initDir = getDir player;
-			waitUntil {
-				!(_initPos isEqualTo (getPosASL player)) ||
-				!(_initDir isEqualTo (getDir player))
+		private _hintText = FULLSCREEN_HINT;
+		if (_onTempCam) then {
+			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
+			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
+			_hintText = FULLSCREEN_TEMPCAM_HINT;
+			_unitCam cameraEffect ["internal", "BACK"];
+			_self spawn {
+				uiSleep AUTOEXIT_FULLSCREEN_TIMER;
+				[_this] call CFM_fnc_exitMonitorFullScreen;
 			};
-			[] call CFM_fnc_exitFullScreen;
-			hint "";
-			cutText ["", "PLAIN"];
-			sleep 1;
-			[] call CFM_fnc_exitFullScreen;
+		} else {
+			_unitCam switchCamera _mode;
+			_self spawn {
+				private _initPos = getPosASL player;
+				private _initDir = getDir player;
+				waitUntil {
+					!(_initPos isEqualTo (getPosASL player)) 
+					// ||
+					// !(_initDir isEqualTo (getDir player))
+				};
+				[_this] call CFM_fnc_exitMonitorFullScreen;
+				sleep 1;
+				[_this] call CFM_fnc_exitMonitorFullScreen;
+			};
 		};
+		missionNamespace setVariable ["CFM_isInFullScreen", true];
+		hint _hintText;
+		cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
+	};
+	METHOD("monitorExitFullScreen") {
+		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
+		if (_onTempCam) then {
+			if (IS_VALID_R2T(_currentR2T)) then {
+				_currentFeedCam cameraEffect ["internal", "back", _currentR2T];
+			} else {
+				_currentFeedCam cameraEffect ["Terminate", "back"];
+				player switchCamera "INTERNAL";
+			};
+		} else {
+			player switchCamera "INTERNAL";
+		};
+		hint "";
+		cutText ["", "PLAIN"];
+		missionNamespace setVariable ["CFM_isInFullScreen", false];
 	};
 CLASS_END
