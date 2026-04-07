@@ -8,6 +8,7 @@ CFM_fnc_init = {
 	};
 
 	[] call CFM_fnc_initActionConditions;
+	[] call CFM_fnc_initDefaultPointsAlignment;
 
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
@@ -389,13 +390,16 @@ CFM_fnc_camPosVehDynamic = {
 
 		if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurretIndex)) then {
 			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getCameraPoints;
-			_dirPointParams = _pointsParams#1; 
-			_dirPoint = _dirPointParams;
+			private _newDirPointParams = _pointsParams#1; 
+			_dirPoint = _newDirPointParams;
 			if (_dirPoint isEqualType []) then {
 				_obj setVariable ["CFM_doPointAlignment", true];
 				_dirPoint = _dirPoint#0
 			};
-			_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
+			if (_dirPointParams isEqualTo []) then {
+				_obj setVariable ["CFM_camDirPointParams", _newDirPointParams];
+				_dirPointParams = _newDirPointParams;
+			};
 			_obj setVariable ["CFM_camDirPoint", _dirPoint];
 		};
 
@@ -517,7 +521,7 @@ CFM_fnc_getCameraPoints = {
 	private _camType = _vehicle getVariable ["CFM_cameraType", ""];
 	private _camTypeRes = switch (_camType) do {
 		case TYPE_VEH: {
-			[["gunnerview", [-1, 0,0]], "gunnerview"]
+			["gunnerview", "gunnerview"]
 		};
 		default { };
 	};
@@ -585,19 +589,93 @@ CFM_fnc_memoryPointAlignment = {
 };
 
 CFM_fnc_setPointAlignment = {
-	params["_obj", ["_offset", NULL_VECTOR], ["_memPoint", ""], ["_setPos", [-1,-1,-1]]];
+	params["_obj", ["_offset", []], ["_memPoint", ""], ["_setPos", []]];
 	private _prevParams = _obj getVariable ["CFM_camDirPointParams", ["", NULL_VECTOR]];
 	if !(_prevParams isEqualType []) then {
 		_prevParams = [_prevParams];
 	};
 	private _newParams = +_prevParams;
-	_newParams set [1, _offset];
-	_newParams set [2, _setPos];
-	if ((IS_STR(_memPoint)) && {!(_memPoint isEqualTo "")}) then {
-		_newParams set [0, _memPoint];
+	if (count _offset == 3) then {
+		_newParams set [1, _offset];
 	};
+	if (count _setPos == 3) then {
+		_newParams set [2, _setPos];
+	};
+	if (!(IS_STR(_memPoint)) || {(_memPoint isEqualTo "")}) then {
+		_memPoint = ([_obj] call CFM_fnc_getCameraPoints)#1;
+		if (_memPoint isEqualType []) then {
+			_memPoint = _memPoint#0;
+		};
+	};
+	if ((IS_STR(_memPoint)) && {!(_memPoint isEqualTo "")}) then {
+		if (_memPoint isEqualTo "_def_") then {
+			_memPoint = "";
+		};
+		_newParams set [0, _memPoint];
+		_obj setVariable ["CFM_camDirPoint", _memPoint]; 
+	};
+	[_obj, _prevParams, _newParams, [_offset, _memPoint, _setPos]] RLOG
 	_obj setVariable ["CFM_doPointAlignment", true];
 	_obj setVariable ["CFM_camDirPointParams", _newParams]; 
+};
+
+CFM_fnc_initDefaultPointsAlignment = {
+	private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+	
+	private _defaults = [
+		["rhs_t72bc_tv", [[0,0.2,0]]]
+	];
+	{
+		private _cls = toLower (_x#0);
+		private _params = _x#1;
+		_pointSet set [_cls, _params];
+	} forEach _defaults;
+
+	missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSet];
+	_pointSet
+};
+
+CFM_fnc_setDefaultPointAlignment = {
+	params["_obj"];
+
+	private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+	private _cls = toLower (typeof _obj);
+
+	private _default = _pointSet get _cls;
+
+	if (isNil "_default") exitWith {false};
+	if !(_default isEqualType []) exitWith {false};
+
+	private _args = [_obj] + _default;
+	_args RLOG
+	_args call CFM_fnc_setPointAlignment;
+
+	_default
+};
+
+CFM_fnc_defineOperatorTurrets = {
+	params["_operator", ["_type", ""], ["_setVars", true]];
+	private _hasTurrs = false;
+	private _turrets = [DRIVER_TURRET_PATH];
+
+	private _fullCrew = fullCrew [_operator, "", true];
+	private _crewCount = count _fullCrew;
+	private _hasGunner = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
+	if ((_crewCount > 1) && _hasGunner && {_type isEqualTo DRONETYPE}) then {
+		_hasTurrs = true;
+		_turrets = [DRIVER_TURRET_PATH, GUNNER_TURRET_PATH];
+	};
+	private _localTurret = [_operator] call CFM_fnc_doCheckTurretLocality;
+
+	private _res = [_hasTurrs, _turrets, _localTurret];
+
+	if !(_setVars) exitWith {_res};
+
+	_operator setVariable ["CFM_opHasTurrets", _hasTurrs]; 
+	_operator setVariable ["CFM_turrets", _turrets]; 
+	_operator setVariable ["CFM_doCheckTurretLocality", _localTurret]; 
+
+	_res
 };
 
 CFM_fnc_getOffsetInModelSpace = {
@@ -1159,7 +1237,6 @@ CFM_fnc_initActionConditions = {
 	};
 	CFM_fnc_menuActionCondition = {
 		params["_target"];
-		LOGH [player, _target, vehicle _target];
 		HAND_MON_CONDITION
 		if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
 		if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
