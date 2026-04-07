@@ -408,7 +408,7 @@ CFM_fnc_camPosVehDynamic = {
 		private _dirPointPos = if (_doAlign) then {
 			[_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment;
 		} else {
-			selectionPosition [_obj, _dirPoint, _lod, true]
+			_obj selectionPosition [_dirPoint, "Memory"]
 		};
 		private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
 
@@ -560,8 +560,7 @@ CFM_fnc_memoryPointAlignment = {
 	private _lod = OBJ_LOD(_obj);
 
 	if (_pointParams isEqualType "") exitWith {
-		_s = selectionPosition [_obj, _pointParams, _lod, false];
-		hintSilent str [_obj, "", _s, _lod, _pointParams];
+		private _s = _obj selectionPosition [_pointParams, "Memory"];
 		_s
 	};
 	if !(_pointParams isEqualType []) exitWith {
@@ -572,14 +571,15 @@ CFM_fnc_memoryPointAlignment = {
 
 	if ((count _addArr) != 3) then {
 		_addArr = [0,0,0];
+	} else {
 	};
 	if ((count _setArr) != 3) then {
 		_setArr = [-1,-1,-1];
 	};
+	if (!(IS_STR(_point)) && {(_point isEqualTo "")}) exitWith {NULL_VECTOR};
 
-	private _selPos = selectionPosition [_obj, _point, _lod, true];
-	_selPos = _selPos vectorAdd _addArr;
-
+	private _selPos = [_obj, [_point, "Memory"], _addArr] call CFM_fnc_getOffsetInModelSpace;
+ 
 	for "_i" from 0 to 2 do {
 		private _set = _setArr#_i;
 		if (_set isEqualTo -1) then {continue};
@@ -614,7 +614,6 @@ CFM_fnc_setPointAlignment = {
 		_newParams set [0, _memPoint];
 		_obj setVariable ["CFM_camDirPoint", _memPoint]; 
 	};
-	[_obj, _prevParams, _newParams, [_offset, _memPoint, _setPos]] RLOG
 	_obj setVariable ["CFM_doPointAlignment", true];
 	_obj setVariable ["CFM_camDirPointParams", _newParams]; 
 };
@@ -647,7 +646,6 @@ CFM_fnc_setDefaultPointAlignment = {
 	if !(_default isEqualType []) exitWith {false};
 
 	private _args = [_obj] + _default;
-	_args RLOG
 	_args call CFM_fnc_setPointAlignment;
 
 	_default
@@ -679,13 +677,15 @@ CFM_fnc_defineOperatorTurrets = {
 };
 
 CFM_fnc_getOffsetInModelSpace = {
-    params ["_unit", ["_selectionName", "head"], ["_offset", [0,0,0]]];
+    params ["_obj", ["_selectionData", ["head", "Memory"]], ["_offset", [0,0,0]]];
+
+	_selectionData params [["_selectionName", ""], ["_lod", "Memory"]];
 
     // 1. Получаем позицию селекшна в Model Space
-    private _selectionPosMS = _unit selectionPosition _selectionName;
+    private _selectionPosMS = _obj selectionPosition [_selectionName, _lod];
 
     // 2. Получаем ориентацию селекшна (векторы направления и верха)
-    private _dirUp = _unit selectionVectorDirAndUp _selectionName;
+    private _dirUp = _obj selectionVectorDirAndUp _selectionData;
     private _dir = _dirUp#0;
     private _up = _dirUp#1;
 
