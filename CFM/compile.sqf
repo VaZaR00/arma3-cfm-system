@@ -391,13 +391,21 @@ CFM_fnc_camPosVehDynamic = {
 			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getCameraPoints;
 			_dirPointParams = _pointsParams#1; 
 			_dirPoint = _dirPointParams;
-			if (_dirPoint isEqualType []) then {_dirPoint = _dirPoint#0};
+			if (_dirPoint isEqualType []) then {
+				_obj setVariable ["CFM_doPointAlignment", true];
+				_dirPoint = _dirPoint#0
+			};
 			_obj setVariable ["CFM_camDirPointParams", _dirPointParams];
 			_obj setVariable ["CFM_camDirPoint", _dirPoint];
 		};
 
 		private _lod = OBJ_LOD(_obj);
-		private _dirPointPos = selectionPosition [_obj, _dirPoint, _lod, true];
+		private _doAlign = _obj getVariable ["CFM_doPointAlignment", false];
+		private _dirPointPos = if (_doAlign) then {
+			[_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment;
+		} else {
+			selectionPosition [_obj, _dirPoint, _lod, true]
+		};
 		private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
 
 		_pos = _obj modelToWorldVisualWorld _dirPointPos;
@@ -574,6 +582,22 @@ CFM_fnc_memoryPointAlignment = {
 		_selPos set [_i, _set];
 	};
 	_selPos
+};
+
+CFM_fnc_setPointAlignment = {
+	params["_obj", ["_offset", NULL_VECTOR], ["_memPoint", ""], ["_setPos", [-1,-1,-1]]];
+	private _prevParams = _obj getVariable ["CFM_camDirPointParams", ["", NULL_VECTOR]];
+	if !(_prevParams isEqualType []) then {
+		_prevParams = [_prevParams];
+	};
+	private _newParams = +_prevParams;
+	_newParams set [1, _offset];
+	_newParams set [2, _setPos];
+	if ((IS_STR(_memPoint)) && {!(_memPoint isEqualTo "")}) then {
+		_newParams set [0, _memPoint];
+	};
+	_obj setVariable ["CFM_doPointAlignment", true];
+	_obj setVariable ["CFM_camDirPointParams", _newParams]; 
 };
 
 CFM_fnc_getOffsetInModelSpace = {
