@@ -477,12 +477,13 @@ CFM_fnc_getCameraPoints = {
     params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH], ["_camType", ""]]; 
 
     private _droneType = toLower (typeOf _vehicle);
+	_turretPath = TURRET_INDEX(_turretPath);
 
 	if ("mavik" in _droneType) exitWith {
 		[["pos_pilotcamera", [], [-1,0,-1]], "pos_pilotcamera_dir"]
 	};
 	if ("uav_01" in _droneType) exitWith {
-		if (_turretPath isEqualTo DRIVER_TURRET_PATH) exitWith {
+		if (_turretPath in DRIVER_TURRET_PATH) exitWith {
 			[["pip_pilot_pos", [], [-1,0,-1]], "pip_pilot_dir"]
 		};
 		[["pip0_pos", [], [-1,0,-1]], "pip0_dir"]
@@ -499,7 +500,7 @@ CFM_fnc_getCameraPoints = {
     private _camPos = "uavCameraGunnerPos";  
     private _camDir = "uavCameraGunnerDir";
 
-    if (_turretPath isEqualTo [-1]) then {  
+    if (_turretPath isEqualTo -1) then {  
         if ("mavik" in _droneType) exitWith {};
         _camPos = "uavCameraDriverPos";  
         _camDir = "uavCameraDriverDir";  

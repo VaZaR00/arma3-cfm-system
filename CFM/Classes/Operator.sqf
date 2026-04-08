@@ -349,10 +349,10 @@ OBJCLASS(Operator)
 			if !(_pMemPoint isEqualTo "") then {
 				_memPoint = _pMemPoint;
 			};
-			if (count _pAddArr != 3) then {
+			if (count _pAddArr == 3) then {
 				_addArr = _pAddArr;
 			};
-			if (count _pSetArr != 3) then {
+			if (count _pSetArr == 3) then {
 				_setArr = _pSetArr;
 			};
 			[_operator, [_turrIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
