@@ -26,6 +26,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentTiTable, createHashMap);
 	OBJ_VARIABLE(_currentNvgTable, createHashMap);
 	OBJ_VARIABLE(_zoom, 1);
+	OBJ_VARIABLE(_zoomFov, 1);
 	OBJ_VARIABLE(_zoomMax, 1);
 	OBJ_VARIABLE(_zoomTable, createHashMap);
 	OBJ_VARIABLE(_turretLocal, false);
@@ -33,6 +34,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_isDroneFeed, false);
 	OBJ_VARIABLE(_canFullScreen, false);
 	OBJ_VARIABLE(_cameraPosFunc, {});
+	OBJ_VARIABLE(_currentCamPointParams, []);
 
 	METHODS
 
@@ -291,7 +293,10 @@ OBJCLASS(Monitor)
 			_newzoom
 		} else {_zoomAdd};
 
+		private _fov = _zoomTable getOrDefault [_newzoom, 1/_newzoom];
+
 		_self setVariable ["CFM_zoom", _newzoom, true];
+		_self setVariable ["CFM_zoomFov", _fov, true];
 
 		_newzoom
 	};
@@ -300,6 +305,7 @@ OBJCLASS(Monitor)
 		_self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
+		["TurretChanged", [_monitor, _turret]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;
@@ -315,7 +321,7 @@ OBJCLASS(Monitor)
 	};
 	METHOD("switchTi") { 
 		private _currentTurret = _self getVariable ["CFM_currentTurret", [-1]];
-		private _tiModes = _currentTiTable getOrDefault [_currentTurret#0, [0]];
+		private _tiModes = _currentTiTable getOrDefault [TURRET_INDEX(_currentTurret), [0]];
 		private _newEffect = if !(_currentPiPEffect in _tiModes) then {
 			_tiModes#0;
 		} else {
@@ -494,7 +500,7 @@ OBJCLASS(Monitor)
 		private _mode = "INTERNAL";
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
 		if !(_onTempCam) then {
-			_mode = switch ((_currentTurret#0)) do {
+			_mode = switch (TURRET_INDEX(_currentTurret)) do {
 				case (DRIVER_TURRET_PATH#0): {
 					_unitCam = driver (vehicle _connectedOperator);
 					"INTERNAL"

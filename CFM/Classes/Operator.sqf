@@ -6,7 +6,6 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_canSwitchNvg, false);
 	OBJ_VARIABLE(_opHasTurrets, false);
 	OBJ_VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
-	OBJ_VARIABLE(_doCheckTurretLocality, false);
 	OBJ_VARIABLE(_cameraType, "");
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
@@ -18,12 +17,20 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_isFeeding, false);
 	OBJ_VARIABLE(_isDroneFeed, false);	
 	OBJ_VARIABLE(_staticCamOffset, NULL_VECTOR);	
+	OBJ_VARIABLE(_opSides, []);	
+	OBJ_VARIABLE(_turretsParams, createHashMap);	
+	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);	
+
+	/*
+		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStatic, camPosFunc]]]
+		pointParams: [memPoint, [addArr, setArr]]
+	*/
 
 	METHODS
 
 	METHOD("Init") {
 		// should be executed globaly
-		params[["_type", ""], ["_hasTInNvg", [0, 0]], ["_turrets", [DRIVER_TURRET_PATH]], ["_params", []]];
+		params[["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
 		if !(IS_OBJ(_operator)) exitWith {};
 
@@ -35,6 +42,7 @@ OBJCLASS(Operator)
 			_classType =  [typeOf _operator] call CFM_fnc_validClassType;
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed"};
+
 
 		// NVG AND TI
 		_hasTInNvg params ["_ti", "_nvg"];
@@ -52,6 +60,7 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
 
+
 		// CAM TYPE
 		_type = if (_type isEqualTo "") then {
 			[_operator] call CFM_fnc_cameraType;
@@ -60,11 +69,22 @@ OBJCLASS(Operator)
 		};
 		_operator setVariable ["CFM_cameraType", _type];
 
-		// TURRETS
-		[_operator, _type, true] call CFM_fnc_defineOperatorTurrets;
 
-		// DEFAULT POINT ALIGNMENT
-		[_operator] call CFM_fnc_setDefaultPointAlignment;
+		// TURRETS
+		["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
+
+
+		// SIDE
+		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType;
+		if !(_sides isEqualType []) then {
+			_sides = [_sides];
+		};
+		_sides = _sides select {_x isEqualType west};
+		if (_sides isEqualTo []) then {
+			_sides = [_defaultSide];
+		};
+		_operator setVariable ["CFM_opSides", _sides];
+
 
 		// ADD OP
 		_operator setVariable ["CFM_isCameraSet", true];
@@ -86,6 +106,240 @@ OBJCLASS(Operator)
 		};
 		_operator setVariable ["CFM_operatorSet", true];
 	};
+	METHOD("DefineTurretsParams") {
+		params[["_turretsParamsInit", []]];
+
+		if (_turretsParamsInit isEqualTo []) then {
+			private _fullCrew = fullCrew [_self, "", true];
+			private _crewCount = count _fullCrew;
+			private _hasGunner = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
+			if ((_crewCount > 1) && _hasGunner && {_cameraType isEqualTo DRONETYPE}) then {
+				_turretsParamsInit = [DRIVER_TURRET_PATH, GUNNER_TURRET_PATH];
+			};
+		};
+
+		_opHasTurrets = count _turretsParamsInit > 1;
+		_operator setVariable ["CFM_opHasTurrets", _opHasTurrets]; 
+
+		private _turrets = [];
+		{
+			private _turret = _x;
+			if !(_turret isEqualType []) then {
+				_turret = [_turret];
+			};
+			_turret params [["_turretIndex", -1], ["_params", []]];
+			_turretIndex = TURRET_INDEX(_turretIndex);
+			_turrets pushBackUnique _turretIndex;
+		} forEach _turretsParamsInit;
+
+		_operator setVariable ["CFM_turrets", _turrets]; 
+
+		[] call CFM_fnc_setDefaultPointAlignment;
+
+		{
+			private _turret = _x;
+			if !(_turret isEqualType []) then {
+				_turret = [_turret];
+			};
+			private _args = [_operator] + _turret;
+			_args call CFM_fnc_setTurretParams;
+		} forEach _turretsParamsInit;
+
+		_operator setVariable ["CFM_turretsParams", _turretsParams]; 
+		
+		_turretsParams
+	};
+	METHOD("setTurretParams") {
+		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStatic", false]];
+		
+		_turretIndex = TURRET_INDEX(_turretIndex);
+		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
+
+		// POINT ALIGNMENT
+		if (_pointParams isEqualTo false) then {
+			_isStatic = true;
+		};
+		if (!_isStatic && {((_pointParams isEqualType []) && {!(_pointParams isEqualTo [])})}) then {
+			_pointParams params [["_memPoint", ""], ["_alignment", []]];
+			_alignment params [["_addArr", []], ["_setArr", []]];
+			[_operator, [_turretIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
+		};
+		_turretParams set ["isStatic", _isStatic];
+
+		// ZOOM
+		private _zoomTable = createHashMap;
+		if (_setZoomTable isEqualType 1) then {
+			for "_i" from 1 to _setZoomTable do {
+				private _fov = [_i] call CFM_fnc_getFovForZoom;
+				_zoomTable set [_i, _fov];
+			};
+		} else {
+			if ((_setZoomTable isEqualType []) && !(_setZoomTable isEqualTo [])) then {
+				private _c = (count _setZoomTable) - 1;
+				for "_i" from 0 to _c do {
+					private _val = _setZoomTable#_i;
+					if (_val isEqualType []) then {_val = [_val]};
+					_val params [["_zoom", 1], ["_fov", -1]];
+					if (_zoom < 1) then {
+						_fov = _zoom;
+						_zoom = _i + 1;
+					};
+					if (_fov == -1) then {
+						_fov = [_zoom] call CFM_fnc_getFovForZoom;
+					};
+					if ((_zoom >= 1) && {(_fov <= 1) && (_fov > 0)}) then {
+						_zoomTable set [_zoom, _fov];
+					};
+				};
+			} else {
+				_zoomTable = switch (_cameraType) do {
+					case GOPRO: {CFM_goPro_zoomTable};
+					case DRONETYPE: {CFM_drone_zoomTable};
+					default {_zoomTable};
+				};
+			};
+		};
+		_turretParams set ["zoomTable", _zoomTable];
+
+		// NVG AND TI
+		if ((_setNvgAndTi isEqualTo []) || (_setNvgAndTi isEqualTo true)) then {
+			private _currentTiParam = _tiTable getOrDefault [_turretIndex, []];
+			private _currentNvgParam = _nvgTable getOrDefault [_turretIndex, false];
+			if (_setNvgAndTi isEqualTo false) then {
+				_currentTiParam = [];
+				_currentNvgParam = false;
+			} else {
+				_setNvgAndTi params [["_nvgParam", false], ["_tiParam", []]];
+				// NVG
+				if (_nvgParams isEqualType false) then {
+					_currentNvgParam = _nvgParam;
+				};
+				// TI
+				if (_tiParam isEqualType []) exitWith {
+					private _validTIs = values CFM_tiModesTable; 
+					_tiParam = _tiParam select {
+						_x in _validTIs;
+					};
+					if (_tiParam isEqualTo []) exitWith {};
+					_currentTiParam = _tiParam;
+				};
+				if (_tiParam isEqualTo false) then {
+					_currentTiParam = [];
+				};
+				if (_tiParam isEqualTo true) then {
+					_currentTiParam = [2];
+				};
+			};
+			_tiTable set [_turretIndex, _currentTiParam];
+			_nvgTable set [_turretIndex, _currentNvgParam];
+			_turretParams set ["tiTable", _tiTable];
+			_turretParams set ["nvgTable", _nvgTable];
+			_self setVariable ["CFM_tiTable", _tiTable];
+			_self setVariable ["CFM_nvgTable", _nvgTable];
+		};
+
+		// IS LOCAL TURRET
+		private _isLocal = [_operator] call CFM_fnc_doCheckTurretLocality;
+		_turretParams set ["isLocal", _isLocal];
+
+		// CAM POS FUNC
+		private _cls = toLower (typeOf _operator);
+		private _isFpv = (("fpv" in _cls) || {("crocus" in _cls)});
+		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
+		private _camPosFunc = if (_isStatic || (_isFpv && _isDriverTurr)) then {
+			CFM_fnc_camPosVehStatic
+		} else {
+			switch (_classType) do {
+				case TYPE_UAV: {
+					if (_isDriverTurr) then {
+						CFM_fnc_camPosPilotTurret
+					} else {
+						CFM_fnc_camPosVehTurret
+					};
+				};
+				case TYPE_UNIT: {
+					CFM_fnc_camPosGoPro
+				};
+				default {CFM_fnc_camPosVehStatic};
+			};
+		};
+		_turretParams set ["camPosFunc", _camPosFunc];
+
+		_self setVariable ["CFM_turretParams", _turretParams];
+
+		_turretParams
+	}; 
+	METHOD("setPointAlignment") {
+		params[["_turretIndex", -1], ["_offset", []], ["_newMemPoint", ""], ["_setPos", []]];
+
+		if (_turretIndex isEqualType []) then {
+			_turretIndex = _turretIndex#0;
+		};
+
+		if !(_turretIndex isEqualType 1) exitWith {false};
+
+		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
+		private _prevParams = _turretParams getOrDefault ["pointParams", []];
+
+		if !(_prevParams isEqualType []) then {
+			_prevParams = [];
+		};
+
+		_prevParams params [["_memPoint", ""], ["_alignment", []]];
+		_alignment params [["_addArr", []], ["_setArr", []]];
+		
+		if (count _offset == 3) then {
+			_addArr = +_offset;
+		};
+		if (count _setPos == 3) then {
+			_setArr = +_setPos;
+		};
+		if ((IS_STR(_newMemPoint)) && {!(_newMemPoint isEqualTo "")}) then {
+			if (_newMemPoint isEqualTo "_none_") then {
+				_newMemPoint = "";
+			};
+			_memPoint = _newMemPoint;
+		};
+		private _res = [_memPoint, [_addArr, _setArr]];
+		_turretParams set ["pointParams", _res];
+		_turretsParams set [_turretIndex, _turretsParams];
+
+		_self setVariable ["CFM_turretsParams", _turretsParams];
+
+		+_res
+	};
+	METHOD("setDefaultPointAlignment") {
+		private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+		private _cls = toLower (typeof _operator);
+
+		private _predefinedAlignment = _pointSet get _cls;
+
+		if (isNil "_predefinedAlignment") exitWith {false};
+		if !(_predefinedAlignment isEqualType []) exitWith {false};
+
+		{
+			private _turrIndex = _x#0;
+
+			_params params [["_addArr", []], ["_memPoint", ""], ["_setArr", []]];
+			private _defaultMemPointParams = ([_operator, _turrIndex, _cameraType] call CFM_fnc_getCameraPoints)#1;
+			if !(_defaultMemPointParams isEqualType []) then {
+				_defaultMemPointParams = [_defaultMemPointParams];
+			};
+			_defaultMemPointParams params [["_defMemPoint", ""], ["_defAddArr", []], ["_defSetArr", []]];
+			if (_memPoint isEqualTo "") then {
+				_memPoint = _defMemPoint;
+			};
+			if (count _addArr != 3) then {
+				_addArr = _defAddArr;
+			};
+			if (count _setArr != 3) then {
+				_setArr = _defSetArr;
+			};
+			[_operator, [_turrIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
+		} forEach _turrets;
+
+		_predefinedAlignment
+	};
 	METHOD("monitorConnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
@@ -101,28 +355,9 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
 		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
-		_monitor setVariable ["CFM_currentTiTable", _tiTable];
-		_monitor setVariable ["CFM_currentNvgTable", _nvgTable];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
-		private _camParams = [_self, _cameraType] call CFM_fnc_defineCamTypeParams;
-		_camParams params [
-			["_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}], 
-			["_zoomMax", 1], 
-			["_zoomTable", createHashMap],
-			["_staticCamOffset", NULL_VECTOR],
-			["_doCheckTurretLocality", _doCheckTurretLocality]
-		];
-
-		if (count _staticCamOffset != 3) then {
-			_staticCamOffset = NULL_VECTOR;
-		};
-
-		_self setVariable ["CFM_staticCamOffset", _staticCamOffset];
-		_monitor setVariable ["CFM_zoomMax", _zoomMax];
-		_monitor setVariable ["CFM_cameraPosFunc", _cameraPosFunc];
-		_monitor setVariable ["CFM_zoomTable", _zoomTable];
-		_monitor setVariable ["CFM_turretLocal", _doCheckTurretLocality];
+		["TurretChanged", [_monitor, _turret, false]] CALL_OBJCLASS("Operator", _self);
 	};
 	METHOD("monitorDisconnected") {
 		// should be executed globaly
@@ -131,6 +366,32 @@ OBJCLASS(Operator)
 		if (player isEqualTo _caller) then {
 			["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 		};
+	};
+	METHOD("TurretChanged") {
+		params["_monitor", ["_turret", [-1]], ["_global", true]];
+
+		private _turrIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
+
+		if !(_turrIndex isEqualType 1) exitWith {false};
+
+		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
+		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+		private _isLocal = _turretData getOrDefault ["isLocal", false];
+		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
+		private _isStatic = _turretData getOrDefault ["isStatic", false];
+		private _pointParams = _turretData getOrDefault ["pointParams", []];
+		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
+		private _zoomMax = _zoomTable getOrDefault ["max", 1];
+
+		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
+		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
+		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
+		_monitor setVariable ["CFM_turretLocal", _isLocal, _global];
+		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
+		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
+		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
+
+		true
 	};
 	METHOD("addMonitor") {
 		// should be executed globaly

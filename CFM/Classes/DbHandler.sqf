@@ -5,6 +5,7 @@ CLASS(DbHandler)
 	METHOD("Init") {
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.09], [5, 0.07]];
+		CFM_defaultZoomTable = createHashMapFromArray [[-1, createHashMapFromArray [[1, 1]]]]
 		CFM_tiModesTableArray = [[0, 2], [1, 7], [6, 12]];
 		CFM_tiModesTableArrayReverse = CFM_tiModesTableArray apply {[_x#1, _x#0]};
 		CFM_tiModesTable = createHashMapFromArray CFM_tiModesTableArray;
@@ -17,14 +18,27 @@ CLASS(DbHandler)
 	};
 	METHOD("setOperator") {
 		// should be executed globaly
-		params[["_operator", objNull], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
 		if (isNil "_operator") exitWith {};
 
+		private _mainArgs = [_sides, _turrets, _zoomParams, _hasTInNvg, _params];
 		if (_operator isEqualType []) exitWith {
 			_operator apply {
 				if (isNil "_x") then {continue};
-				[_x, true, _type, _hasTInNvg, _params] call CFM_fnc_setOperator;
+				if (_x isEqualType []) then {
+					private _args = +_x;
+					for "_i" from 1 to 5 do {
+						private _val = _args#_i;
+						if (isNil "_val") then {
+							_args set [_i, (_mainArgs select (_i - 1))];
+						};
+					};
+					_args call CFM_fnc_setOperator;
+				} else {
+					private _args = [_x] + _mainArgs;
+					_args call CFM_fnc_setOperator;
+				};
 			};
 		};
 
@@ -32,7 +46,7 @@ CLASS(DbHandler)
 		private _opIsObj = IS_OBJ(_operator);
 		if (_opIsObj) then {
 			_opClass = typeOf _operator;
-			[_operator] NEW_OBJINSTANCE("Operator");
+			[_operator, _mainArgs] NEW_OBJINSTANCE("Operator");
 		};
 
 		private _classType = [_opClass] call CFM_fnc_validClassType;

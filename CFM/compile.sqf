@@ -48,7 +48,8 @@ CFM_fnc_updateOperator = {
 	private _isRemoteControlling = isRemoteControlling player;
 	if !(_isRemoteControlling) exitWith {};
 
-	private _controlledObj = vehicle (remoteControlled player);
+	private _controlledUnit = remoteControlled player;
+	private _controlledObj = vehicle _controlledUnit;
 	if !(local _controlledObj) exitWith {};
 	if (_controlledObj isEqualTo objNull) exitWith {};
 	if (_controlledObj isEqualTo player) exitWith {};
@@ -60,7 +61,19 @@ CFM_fnc_updateOperator = {
 	if !(isMultiplayer) exitWith {};
 
 	// LOCAL TURRET ORIENTATION
-	if (_controlledObj getVariable ["CFM_doCheckTurretLocality", false]) then {
+	private _turrLocal = false;
+	private _role = assignedVehicleRole _controlledUnit;
+	if (_role isEqualTo []) exitWith {};
+	private _turretIndex = _role call CFM_fnc_getTurretIndex;
+	private _turrsParams = _controlledObj getVariable "CFM_turretsParams";
+	if (isNil "_turrsParams") exitWith {};
+	if !(_turrsParams isEqualType createHashMap) exitWith {};
+	private _currTurrParams = _turrsParams get _role;
+	if (isNil "_currTurrParams") exitWith {};
+	if !(_currTurrParams isEqualType createHashMap) exitWith {};
+	_turrLocal = _currTurrParams getOrDefault ["IsTurretLocal", false];
+
+	if (_turrLocal) then {
 		private _turretIndex = -1;
 		if (_controlledObj isEqualTo (gunner (vehicle _controlledObj))) then {
 			_turretIndex = 0;
@@ -78,7 +91,8 @@ CFM_fnc_updateOperator = {
 			private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 			private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}];
-			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, nil, nil, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
+			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
+			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
 			private _prevDir = _operator getVariable [_dirVarName, []];
@@ -99,12 +113,11 @@ CFM_fnc_updateOperator = {
 CFM_fnc_updateOperatorZoom = {
 	params["_obj"];
 	private _currentFOV = getObjectFOV _obj;
-	private _currentZoom = round (1 / _currentFOV);
-	private _prevZoom = _obj getVariable ["CFM_prevZoom", -1];
-	if !(_currentZoom isEqualTo _prevZoom) then {
-		_obj setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
+	private _prevZoom = _obj getVariable ["CFM_prevZoomFov", -1];
+	if !(_currentFOV isEqualTo _prevZoom) then {
+		_obj setVariable ["CFM_prevZoomFov", _currentFOV, MONITOR_VIEWERS(false)];
 	};
-	_currentZoom
+	_currentFOV
 };
 
 CFM_fnc_onEachFrameClient = {
@@ -133,7 +146,7 @@ CFM_fnc_onEachFrameServer = {
 			// CAM DATA
 			private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
 			{
-				private _turretIndex = _x#0;
+				private _turretIndex = TURRET_INDEX(_x);
 				private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 				private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 				private _currDir = _operator getVariable [_dirVarName, []];
@@ -142,8 +155,8 @@ CFM_fnc_onEachFrameServer = {
 				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS(false)];
 			} forEach _turrets;
 			// ZOOM
-			private _currentZoom = _operator getVariable ["CFM_prevZoom", 1];
-			_operator setVariable ["CFM_prevZoom", _currentZoom, MONITOR_VIEWERS(false)];
+			private _currentZoom = _operator getVariable ["CFM_prevZoomFov", 1];
+			_operator setVariable ["CFM_prevZoomFov", _currentZoom, MONITOR_VIEWERS(false)];
 		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
 
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
@@ -167,6 +180,11 @@ CFM_fnc_zoom = {
 	["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS("Monitor", _monitor);
 };
 
+CFM_fnc_getFovForZoom = {
+	params["_zoom"];
+	
+};
+
 CFM_fnc_setMonitor = {
 	params[["_monitor", objNull], ["_params", []], ["_reset", false]];
 
@@ -188,10 +206,11 @@ CFM_fnc_setMonitor = {
 };
 
 CFM_fnc_setOperator = {
-	params[["_operator", objNull], ["_reset", true], ["_type", ""], ["_hasTInNvg", [0, 0]], ["_params", []]];
+	params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 	if (isNil "_operator") exitWith {};
+	private _reset = if (isNil "_reset") then {true} else {_reset};
 	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
-	["setOperator", [_operator, _type, _hasTInNvg, _params]] CALL_CLASS("DbHandler");
+	["setOperator", _this] CALL_CLASS("DbHandler");
 	true
 };
 
@@ -227,7 +246,8 @@ CFM_fnc_operatorCondition = {
 			if (_canFeed) exitWith {true};
 			private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", []];
 			if (_cls in _clssSetup) exitWith {
-				[_op, false] call CFM_fnc_setOperator;
+				private _reset = false;
+				[_op] call CFM_fnc_setOperator;
 				true
 			};
 			_canFeed
@@ -293,34 +313,32 @@ CFM_fnc_timeInterpolate = {
 };
 
 CFM_fnc_updateCamera = {  
-	params [["_cam", objNull], ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosVehDynamic]]; 
+	params [["_cam", objNull], ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosVehTurret]]; 
 	_cameraParams params [
 		["_operator", objNull],
 		["_turret", [-1]],
 		["_turretLocal", false],
-		["_zoom", 1], 
-		["_zoomTable", createHashMap],
-		["_monitor", objNull]
+		["_pointParams", []],
+		["_zoomFov", 1], 
+		["_monitor", objNull],
+		["_doSetCam", true]
 	];
 	private _doInterpolation = false;
 	private _turretIndex = _turret#0;
 	private _camExists = IS_OBJ(_cam);
 
 	// ZOOM
-	private _fov = if (_camExists) then {
-		private _objFOV = getObjectFOV _operator;
-		if (_zoom isEqualTo "op") then {
-			if (player in _operator) exitWith {
-				_zoom = round (1/_objFOV);
+	private _fov = if ((_zoomFov isEqualType 1) && {(_zoomFov > 0) && (_zoomFov <= 1)}) then {
+		_zoomFov
+	} else {
+		if (_zoomFov isEqualTo "op") exitWith {
+			if (local _operator) exitWith {
+				getObjectFOV _operator;
 			};
-			_zoom = _operator getVariable ['CFM_prevZoom', _zoom];
+			_operator getVariable ['CFM_prevZoomFov', 1];
 		};
-		private _zoomDefault = !(_zoom isEqualType 1);
-		if !(_zoomDefault) then {
-			private _zoomfov = _zoomTable getOrDefault [_zoom, 1/_zoom];
-			if (_zoomfov > 1) then {_objFOV} else {_zoomfov};
-		} else {1};
-	} else {1};
+		1
+	};
 
 	// POS AN VECTOR DIR AND UP
 	private _operatorLocal = local _operator;
@@ -329,7 +347,7 @@ CFM_fnc_updateCamera = {
 	private _dir = [];
 	private _up = [];
 	if (_operatorLocal || !_turretLocal) then {
-		private _posData = [_operator, _turretIndex] call _camPosFunc;
+		private _posData = [_operator, _pointParams] call _camPosFunc;
 		_pos = _posData param [0, _pos];
 		_dir = _posData param [1, _dir];
 		_up = _posData param [2, _up];
@@ -360,7 +378,7 @@ CFM_fnc_updateCamera = {
 	};
 	private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
 	_posAndVUP params ["_newpos", ["_vDirUp", []]];
-	if (_camExists) then {
+	if (_camExists && _doSetCam) then {
 		_cam setPosASL _newpos; 
 		_cam setVectorDirAndUp _vDirUp;  
 		_cam camSetFov _fov;  
@@ -370,52 +388,35 @@ CFM_fnc_updateCamera = {
 	_posAndVUP
 };
 
-CFM_fnc_camPosVehDynamic = {
-	params["_obj", "_curTurretIndex"];
+CFM_fnc_camPosVehTurret = {
+	params["_obj", ["_pointParams", []]];
 
-	private _prevTurret = (+(_obj getVariable ["CFM_prevTurret", [_curTurretIndex]]))#0;
-	private _pos = [];
-	private _dir = [];
-	private _up = [];
-	if (([_curTurretIndex] isEqualTo DRIVER_TURRET_PATH) && {[_obj] call CFM_fnc_isPilotControlled}) then {
-		_pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
-		private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
-		private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
-		private _fromToVUP = [_pos, _camDirPos] call BIS_fnc_findLookAt;
-		_dir = _fromToVUP#0;
-		_up = _fromToVUP#1;
+	_pointParams params [["_memPoint", ""], ["_alignment", []]];
+
+	private _doAlign = !(_alignment isEqualTo []);
+	private _dirPointPos = if (_doAlign) then {
+		[_obj, _memPoint, _alignment] call CFM_fnc_memoryPointAlignment;
 	} else {
-		private _dirPointParams = _obj getVariable ["CFM_camDirPointParams", []];  
-		private _dirPoint = _obj getVariable ["CFM_camDirPoint", ""];  
-
-		if (((_dirPoint isEqualTo "") || {(_dirPointParams isEqualTo []) || {(_dirPointParams isEqualTo "")}}) || !(_prevTurret isEqualTo _curTurretIndex)) then {
-			private _pointsParams = [_obj, [_curTurretIndex]] call CFM_fnc_getCameraPoints;
-			private _newDirPointParams = _pointsParams#1; 
-			_dirPoint = _newDirPointParams;
-			if (_dirPoint isEqualType []) then {
-				_obj setVariable ["CFM_doPointAlignment", true];
-				_dirPoint = _dirPoint#0
-			};
-			if (_dirPointParams isEqualTo []) then {
-				_obj setVariable ["CFM_camDirPointParams", _newDirPointParams];
-				_dirPointParams = _newDirPointParams;
-			};
-			_obj setVariable ["CFM_camDirPoint", _dirPoint];
-		};
-
-		private _lod = OBJ_LOD(_obj);
-		private _doAlign = _obj getVariable ["CFM_doPointAlignment", false];
-		private _dirPointPos = if (_doAlign) then {
-			[_obj, _dirPointParams] call CFM_fnc_memoryPointAlignment;
-		} else {
-			_obj selectionPosition [_dirPoint, "Memory"]
-		};
-		private _dirPointVUP = _obj selectionVectorDirAndUp [_dirPoint, "Memory"];
-
-		_pos = _obj modelToWorldVisualWorld _dirPointPos;
-		_dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
-		_up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
+		_obj selectionPosition [_memPoint, "Memory"]
 	};
+	private _dirPointVUP = _obj selectionVectorDirAndUp [_memPoint, "Memory"];
+
+	private _pos = _obj modelToWorldVisualWorld _dirPointPos;
+	private _dir = _obj vectorModelToWorldVisual (_dirPointVUP#0);
+	private _up = _obj vectorModelToWorldVisual (_dirPointVUP#1);
+
+	[_pos, _dir, _up]
+};
+
+CFM_fnc_camPosPilotTurret = {
+	params[["_obj", objNull]];
+
+	private _pos = _obj modelToWorldVisualWorld (getPilotCameraPosition _obj);
+	private _camDir = _obj vectorModelToWorldVisual (getPilotCameraDirection _obj);
+	private _camDirPos = ((vectorNormalized _camDir) vectorMultiply 1) vectorAdd _pos;
+	private _fromToVUP = [_pos, _camDirPos] call BIS_fnc_findLookAt;
+	private _dir = _fromToVUP#0;
+	private _up = _fromToVUP#1;
 
 	[_pos, _dir, _up]
 };
@@ -445,50 +446,18 @@ CFM_fnc_camPosGoPro = {
 	[_pos, _dir, _up]
 };
 
-CFM_fnc_defineCamTypeParams = {
-	params["_operator", ["_type", ""]];
-
-	private _cls = toLower (typeOf _operator);
-	switch (_type) do {
-		case GOPRO: {
-			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable, [], false]
-		};
-		case TYPE_WEAP: {
-			[CFM_fnc_camPosGoPro, CFM_max_zoom_gopro, CFM_goPro_zoomTable, [], false]
-		};
-		case TYPE_VEH: {
-			[CFM_fnc_camPosVehDynamic, CFM_max_zoom_drone, CFM_drone_zoomTable, [], false]
-		};
-		case DRONETYPE: {
-			private _maxzoom = CFM_max_zoom_drone;
-			private _table = CFM_drone_zoomTable;
-			private _func = CFM_fnc_camPosVehDynamic;
-			private _offset = NULL_VECTOR;
-			private _doCheckTurretLocality = true;
-			if (("fpv" in _cls) || {("crocus" in _cls)}) then {
-				_func = CFM_fnc_camPosVehStatic;
-				_offset = [0,0.1,0.15];
-				_doCheckTurretLocality = false;
-			} else {};
-			[_func, _maxzoom, _table, _offset, _doCheckTurretLocality]
-		};
-		default {[]};
-	};
-};
-
 CFM_fnc_updateMonitor = {
 	params["_monitor"];
 
 	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
-	private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
-	private _zoom = _monitor getVariable ["CFM_zoom", 1];
-	private _zoomTable = _monitor getVariable ["CFM_zoomTable", createHashMap];
+	private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
+	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
 	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
-	private _camSet = [_camera, [_operator, _turret, _turLocal, _zoom, _zoomTable, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
+	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 
@@ -504,7 +473,7 @@ CFM_fnc_updateMonitor = {
 };
 
 CFM_fnc_getCameraPoints = {  
-    params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH]]; 
+    params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH], ["_camType", ""]]; 
 
     private _droneType = toLower (typeOf _vehicle);
 
@@ -518,7 +487,6 @@ CFM_fnc_getCameraPoints = {
 		[["pip0_pos", [], [-1,0,-1]], "pip0_dir"]
 	};
 
-	private _camType = _vehicle getVariable ["CFM_cameraType", ""];
 	private _camTypeRes = switch (_camType) do {
 		case TYPE_VEH: {
 			["gunnerview", "gunnerview"]
@@ -555,7 +523,7 @@ CFM_fnc_getCameraPoints = {
 };  
 
 CFM_fnc_memoryPointAlignment = {
-	params["_obj", ["_pointParams", "", [[], ""]]];
+	params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]]];
 
 	private _lod = OBJ_LOD(_obj);
 
@@ -567,7 +535,9 @@ CFM_fnc_memoryPointAlignment = {
 		[0,0,0]
 	};
 
-	_pointParams params [["_point", "", [""]], ["_addArr", [0,0,0], [[]]], ["_setArr", [-1,-1,-1], [[]]]];
+	_pointParams params [["_addArr", [0,0,0], [[]]], ["_setArr", [-1,-1,-1], [[]]]];
+
+	if (!(IS_STR(_memPoint)) && {(_memPoint isEqualTo "")}) exitWith {NULL_VECTOR};
 
 	if ((count _addArr) != 3) then {
 		_addArr = [0,0,0];
@@ -576,9 +546,8 @@ CFM_fnc_memoryPointAlignment = {
 	if ((count _setArr) != 3) then {
 		_setArr = [-1,-1,-1];
 	};
-	if (!(IS_STR(_point)) && {(_point isEqualTo "")}) exitWith {NULL_VECTOR};
 
-	private _selPos = [_obj, [_point, "Memory"], _addArr] call CFM_fnc_getOffsetInModelSpace;
+	private _selPos = [_obj, [_memPoint, "Memory"], _addArr] call CFM_fnc_getOffsetInModelSpace;
  
 	for "_i" from 0 to 2 do {
 		private _set = _setArr#_i;
@@ -589,44 +558,19 @@ CFM_fnc_memoryPointAlignment = {
 };
 
 CFM_fnc_setPointAlignment = {
-	params["_obj", ["_offset", []], ["_memPoint", ""], ["_setPos", []]];
-	private _prevParams = _obj getVariable ["CFM_camDirPointParams", ["", NULL_VECTOR]];
-	if !(_prevParams isEqualType []) then {
-		_prevParams = [_prevParams];
-	};
-	private _newParams = +_prevParams;
-	if (count _offset == 3) then {
-		_newParams set [1, _offset];
-	};
-	if (count _setPos == 3) then {
-		_newParams set [2, _setPos];
-	};
-	if (!(IS_STR(_memPoint)) || {(_memPoint isEqualTo "")}) then {
-		_memPoint = ([_obj] call CFM_fnc_getCameraPoints)#1;
-		if (_memPoint isEqualType []) then {
-			_memPoint = _memPoint#0;
-		};
-	};
-	if ((IS_STR(_memPoint)) && {!(_memPoint isEqualTo "")}) then {
-		if (_memPoint isEqualTo "_def_") then {
-			_memPoint = "";
-		};
-		_newParams set [0, _memPoint];
-		_obj setVariable ["CFM_camDirPoint", _memPoint]; 
-	};
-	_obj setVariable ["CFM_doPointAlignment", true];
-	_obj setVariable ["CFM_camDirPointParams", _newParams]; 
+	params[["_operator", objNull], ["_args", []]];
+	["setPointAlignment", _args] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_initDefaultPointsAlignment = {
 	private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 	
 	private _defaults = [
-		["rhs_t72bc_tv", [[0,0.2,0]]]
+		["rhs_t72bc_tv", [[-1, [[0,0.2,0]]]]]
 	];
 	{
 		private _cls = toLower (_x#0);
-		private _params = _x#1;
+		private _params = createHashMapFromArray _x#1;
 		_pointSet set [_cls, _params];
 	} forEach _defaults;
 
@@ -635,45 +579,8 @@ CFM_fnc_initDefaultPointsAlignment = {
 };
 
 CFM_fnc_setDefaultPointAlignment = {
-	params["_obj"];
-
-	private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
-	private _cls = toLower (typeof _obj);
-
-	private _default = _pointSet get _cls;
-
-	if (isNil "_default") exitWith {false};
-	if !(_default isEqualType []) exitWith {false};
-
-	private _args = [_obj] + _default;
-	_args call CFM_fnc_setPointAlignment;
-
-	_default
-};
-
-CFM_fnc_defineOperatorTurrets = {
-	params["_operator", ["_type", ""], ["_setVars", true]];
-	private _hasTurrs = false;
-	private _turrets = [DRIVER_TURRET_PATH];
-
-	private _fullCrew = fullCrew [_operator, "", true];
-	private _crewCount = count _fullCrew;
-	private _hasGunner = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
-	if ((_crewCount > 1) && _hasGunner && {_type isEqualTo DRONETYPE}) then {
-		_hasTurrs = true;
-		_turrets = [DRIVER_TURRET_PATH, GUNNER_TURRET_PATH];
-	};
-	private _localTurret = [_operator] call CFM_fnc_doCheckTurretLocality;
-
-	private _res = [_hasTurrs, _turrets, _localTurret];
-
-	if !(_setVars) exitWith {_res};
-
-	_operator setVariable ["CFM_opHasTurrets", _hasTurrs]; 
-	_operator setVariable ["CFM_turrets", _turrets]; 
-	_operator setVariable ["CFM_doCheckTurretLocality", _localTurret]; 
-
-	_res
+	params[["_operator", objNull]];
+	["setDefaultPointAlignment", []] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_getOffsetInModelSpace = {
@@ -1209,6 +1116,29 @@ CFM_fnc_validClassType = {
 	if (_isWeap) exitWith {TYPE_WEAP};
 
 	""
+};
+
+CFM_fnc_getTurretIndex = {
+	params["_t", ["_path", [0]]];
+
+	switch (_t) do {
+		case "driver": {-1};
+		case "turret": {
+			private _pathIndex = _path#0;
+			_pathIndex
+		};
+		default {
+			private _i = TURRET_INDEX(_t);
+			if (_i isEqualType 1) exitWith {_i};
+			-2
+		};
+	};
+};
+
+CFM_fnc_setTurretParams = {
+	params["_operator"];
+	_this = _this - [_operator];
+	["setPointAlignment", _this] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_hasUAVterminal = {
