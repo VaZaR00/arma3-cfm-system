@@ -3,6 +3,7 @@
 #define PREFX CFM
 #define SPREFX STR(CFM)
 
+#define I ,
 #define SET_LOCAL_CAM_VECTORS_TIMEOUT 0.05
 #define STR(s) #s
 #define DEFAULT_PIP_SETTINGS [0.2, 1, 0.8]
@@ -45,4 +46,5 @@
 #define LOG_VARS ;
 #define RLOG_VARS VARS_STR RLOG
 #define LOGH hintSilent str
+#define HINT hint
 #define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);

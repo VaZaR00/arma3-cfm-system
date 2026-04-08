@@ -113,9 +113,9 @@ CFM_fnc_updateOperator = {
 CFM_fnc_updateOperatorZoom = {
 	params["_obj"];
 	private _currentFOV = getObjectFOV _obj;
-	private _prevZoom = _obj getVariable ["CFM_prevZoomFov", -1];
+	private _prevZoom = _obj getVariable ["CFM_prevZoomLocalFov", -1];
 	if !(_currentFOV isEqualTo _prevZoom) then {
-		_obj setVariable ["CFM_prevZoomFov", _currentFOV, MONITOR_VIEWERS(false)];
+		_obj setVariable ["CFM_prevZoomLocalFov", _currentFOV, MONITOR_VIEWERS(false)];
 	};
 	_currentFOV
 };
@@ -155,8 +155,8 @@ CFM_fnc_onEachFrameServer = {
 				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS(false)];
 			} forEach _turrets;
 			// ZOOM
-			private _currentZoom = _operator getVariable ["CFM_prevZoomFov", 1];
-			_operator setVariable ["CFM_prevZoomFov", _currentZoom, MONITOR_VIEWERS(false)];
+			private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];
+			_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS(false)];
 		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
 
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
@@ -183,6 +183,9 @@ CFM_fnc_zoom = {
 CFM_fnc_getFovForZoom = {
 	params["_zoom"];
 	
+	if !(_zoom isEqualType 1) exitWith {1};
+
+	1 / _zoom;
 };
 
 CFM_fnc_setMonitor = {
@@ -335,7 +338,7 @@ CFM_fnc_updateCamera = {
 			if (local _operator) exitWith {
 				getObjectFOV _operator;
 			};
-			_operator getVariable ['CFM_prevZoomFov', 1];
+			_operator getVariable ['CFM_prevZoomLocalFov', 1];
 		};
 		1
 	};
@@ -422,7 +425,7 @@ CFM_fnc_camPosPilotTurret = {
 };
 
 CFM_fnc_camPosVehStatic = {
-	params["_obj", "_curTurretIndex"];
+	params["_obj"];
 
 	private _dir = vectorDir _obj;
 	private _up = vectorUp _obj;
@@ -457,7 +460,6 @@ CFM_fnc_updateMonitor = {
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
 	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
-	LOGH [time, _camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor]];
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
@@ -938,7 +940,7 @@ CFM_fnc_exitFullScreen = {
 	if !(IS_OBJ(_currCam)) exitWith {
 		private _currCamData = (allCameras select {(_x#3) isEqualTo "Internal"})#0;
 		if (isNil "_currCamData") exitWith {
-			LOGH "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
+			HINT "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
 		};
 		_currCam = _currCamData#0;
 		_currCam cameraEffect ["Terminate", "back"];
@@ -1054,7 +1056,7 @@ CFM_fnc_remoteExec = {
 		if (_func isEqualTo "spawn") exitWith {
 			(_args#0) spawn (_args#1)
 		};
-		private _func = missionNamespace getVariable [_func, {LOGH format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
+		private _func = missionNamespace getVariable [_func, {HINT format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
 		if (_call) then {
 			_args call _func
 		} else {

@@ -196,13 +196,20 @@ OBJCLASS(Operator)
 					};
 				};
 			} else {
-				_zoomTable = switch (_cameraType) do {
-					case GOPRO: {CFM_goPro_zoomTable};
-					case DRONETYPE: {CFM_drone_zoomTable};
+				_zoomTable = +(switch (_classType) do {
+					case TYPE_UNIT: {CFM_goPro_zoomTable};
+					case TYPE_UAV: {CFM_drone_zoomTable};
+					case TYPE_VEH: {CFM_drone_zoomTable};
 					default {_zoomTable};
-				};
+				});
 			};
 		};
+		private _zooms = (keys _zoomTable) select {_x isEqualType 1};
+		_zooms sort false;
+		private _max = if (count _zooms != 0) then {_zooms#0} else {1};
+		if (isNil "_max") then {_max = 1};
+		["SETTUR", _self, _NIL(_max), _zooms, _zoomTable] RLOG
+		_zoomTable set ["max", _max];
 		_turretParams set ["zoomTable", _zoomTable];
 
 		// NVG AND TI
@@ -247,6 +254,8 @@ OBJCLASS(Operator)
 		_turretParams set ["isLocal", _isLocal];
 
 		// CAM POS FUNC
+		private _fullCrew = fullCrew [_self, "", true];
+		private _isVehWithTurrets = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
 		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
 		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
 		private _camPosFunc = if ((_isStatic && !_hasGoPro) || (_isFpv && _isDriverTurr)) then {
@@ -263,6 +272,13 @@ OBJCLASS(Operator)
 				};
 				case TYPE_UNIT: {
 					CFM_fnc_camPosGoPro
+				};
+				case TYPE_VEH: {
+					if (_isVehWithTurrets) then {
+						CFM_fnc_camPosVehTurret
+					} else {
+						CFM_fnc_camPosVehStatic
+					};
 				};
 				default {CFM_fnc_camPosVehStatic};
 			};
@@ -402,6 +418,9 @@ OBJCLASS(Operator)
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
+		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
+
+		["TurretChanged", _self, _turret, _zoomMax, _turretData] RLOG
 
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];

@@ -25,8 +25,8 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_isInNvg, false);
 	OBJ_VARIABLE(_currentTiTable, createHashMap);
 	OBJ_VARIABLE(_currentNvgTable, createHashMap);
-	OBJ_VARIABLE(_zoom, 1);
-	OBJ_VARIABLE(_zoomFov, 1);
+	TYPE_OBJ_VARIABLE(_zoom, 1, ["" I 1]);
+	TYPE_OBJ_VARIABLE(_zoomFov, 1, ["" I 1]);
 	OBJ_VARIABLE(_zoomMax, 1);
 	OBJ_VARIABLE(_zoomTable, createHashMap);
 	OBJ_VARIABLE(_turretLocal, false);
@@ -140,7 +140,7 @@ OBJCLASS(Monitor)
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
-			LOGH "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
+			HINT "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
 			false
 		};
 
@@ -186,8 +186,10 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_connectedOperator", nil];
 		_monitor setVariable ["CFM_feedActive", nil];
 		_monitor setVariable ["CFM_zoom", nil];
+		_monitor setVariable ["CFM_zoomMax", nil];
+		_monitor setVariable ["CFM_zoomFov", nil];
+		_monitor setVariable ["CFM_maxZoomed", nil];
 		_monitor setVariable ["CFM_turretLocal", nil];
-		_monitor setVariable ['CFM_maxZoomed', nil];
 		_monitor setVariable ["CFM_currentCameraType", nil];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
 		_monitor setVariable ['CFM_menuActive', false];
@@ -213,7 +215,7 @@ OBJCLASS(Monitor)
 		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
 			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
 		} else {
-			LOGH "ERROR loadMenu: UI menu WIP!";
+			HINT "ERROR loadMenu: UI menu WIP!";
 			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
 		};
 	};
@@ -275,6 +277,7 @@ OBJCLASS(Monitor)
 	METHOD("zoom") {
 		params [["_zoomAdd", 0], ["_zoomSet", -1]]; 
 
+		private _maxZoomed = false;
 		private _newzoom = if (_zoomAdd isEqualType 1) then {
 			private _newzoom = if (_zoomSet isEqualTo -1) then {
 				private _zoom = _monitor getVariable ['CFM_zoom', 1];
@@ -288,14 +291,25 @@ OBJCLASS(Monitor)
 
 			private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
 
-			private _zoomedMax = _newzoom >= _zoomMax;
-			_monitor setVariable ['CFM_maxZoomed', _zoomedMax, true];
+			_maxZoomed = _newzoom >= _zoomMax;
 
 			_newzoom
-		} else {_zoomAdd};
+		} else {
+			_maxZoomed = false;
+			_zoomAdd
+		};
 
-		private _fov = _zoomTable getOrDefault [_newzoom, 1/_newzoom];
+		private _fov = if (_newzoom isEqualType 1) then {
+			_zoomTable getOrDefault [_newzoom, 1/_newzoom];
+		} else {_newzoom};
 
+		if (_zoomAdd isEqualTo "reset") then {
+			_fov = 0.9;
+			_newzoom = 1;
+			_maxZoomed = false;
+		};
+
+		_monitor setVariable ['CFM_maxZoomed', _maxZoomed, true];
 		_self setVariable ["CFM_zoom", _newzoom, true];
 		_self setVariable ["CFM_zoomFov", _fov, true];
 
@@ -514,11 +528,11 @@ OBJCLASS(Monitor)
 			};
 		};
 		if (_mode isEqualTo "") exitWith {
-			LOGH format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
+			HINT format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
 		if !(IS_OBJ(_unitCam)) exitWith {
-			LOGH format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
+			HINT format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
 		private _hintText = FULLSCREEN_HINT;
