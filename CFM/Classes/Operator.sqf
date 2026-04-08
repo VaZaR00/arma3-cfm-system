@@ -10,6 +10,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
 	OBJ_VARIABLE(_classType, "");
+	OBJ_VARIABLE(_objClass, "");
 	OBJ_VARIABLE(_monitorsSet, createHashMap);
 	OBJ_VARIABLE(_tiTable, createHashMap);
 	OBJ_VARIABLE(_nvgTable, createHashMap);
@@ -34,15 +35,13 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_operator)) exitWith {};
 
-		if !(IS_STR(_type)) then {
-			_type = "";
-		};
-
 		if (_classType isEqualTo "") then {
 			_classType =  [typeOf _operator] call CFM_fnc_validClassType;
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed"};
 
+		_objClass = toLower (typeOf _operator);
+		_operator setVariable ["CFM_objClass", _objClass];
 
 		// NVG AND TI
 		_hasTInNvg params ["_ti", "_nvg"];
@@ -62,12 +61,8 @@ OBJCLASS(Operator)
 
 
 		// CAM TYPE
-		_type = if (_type isEqualTo "") then {
-			[_operator] call CFM_fnc_cameraType;
-		} else {
-			_type
-		};
-		_operator setVariable ["CFM_cameraType", _type];
+		_cameraType = [_operator] call CFM_fnc_cameraType;
+		_operator setVariable ["CFM_cameraType", _cameraType];
 
 
 		// TURRETS
@@ -75,7 +70,7 @@ OBJCLASS(Operator)
 
 
 		// SIDE
-		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType;
+		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
 		if !(_sides isEqualType []) then {
 			_sides = [_sides];
 		};
@@ -90,7 +85,7 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_isCameraSet", true];
 		["addOperator", [_operator]] CALL_CLASS("DbHandler");
 
-		switch (_type) do {
+		switch (_cameraType) do {
 			case GOPRO: {
 				_operator setVariable ["CFM_hasGoPro", true];
 			};
@@ -243,8 +238,7 @@ OBJCLASS(Operator)
 		_turretParams set ["isLocal", _isLocal];
 
 		// CAM POS FUNC
-		private _cls = toLower (typeOf _operator);
-		private _isFpv = (("fpv" in _cls) || {("crocus" in _cls)});
+		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
 		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
 		private _camPosFunc = if (_isStatic || (_isFpv && _isDriverTurr)) then {
 			CFM_fnc_camPosVehStatic
@@ -310,9 +304,8 @@ OBJCLASS(Operator)
 	};
 	METHOD("setDefaultPointAlignment") {
 		private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
-		private _cls = toLower (typeof _operator);
 
-		private _predefinedAlignment = _pointSet get _cls;
+		private _predefinedAlignment = _pointSet get _objClass;
 
 		if (isNil "_predefinedAlignment") exitWith {false};
 		if !(_predefinedAlignment isEqualType []) exitWith {false};

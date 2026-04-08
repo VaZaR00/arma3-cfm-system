@@ -570,7 +570,7 @@ CFM_fnc_initDefaultPointsAlignment = {
 	];
 	{
 		private _cls = toLower (_x#0);
-		private _params = createHashMapFromArray _x#1;
+		private _params = createHashMapFromArray (_x#1);
 		_pointSet set [_cls, _params];
 	} forEach _defaults;
 
