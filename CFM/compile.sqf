@@ -457,6 +457,7 @@ CFM_fnc_updateMonitor = {
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
 	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
+	LOGH [time, _camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor]];
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
@@ -1136,9 +1137,9 @@ CFM_fnc_getTurretIndex = {
 };
 
 CFM_fnc_setTurretParams = {
-	params["_operator"];
+	params[["_operator", objNull]];
 	_this = _this - [_operator];
-	["setPointAlignment", _this] CALL_OBJCLASS("Operator", _operator);
+	["setTurretParams", _this] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_hasUAVterminal = {

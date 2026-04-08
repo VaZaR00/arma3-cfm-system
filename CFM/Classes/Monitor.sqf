@@ -194,6 +194,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ['CFM_actionCaller', nil];
 		_monitor setVariable ['CFM_isInNvg', nil];
 		_monitor setVariable ["CFM_turnedOffLocal", nil]; 
+		_monitor setVariable ["CFM_currentCamPointParams", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
