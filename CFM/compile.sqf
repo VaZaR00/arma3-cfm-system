@@ -1020,6 +1020,7 @@ CFM_fnc_syncState = {
 		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {}; 
 		[_monitor, _operator] call CFM_fnc_startOperatorFeed; 
 	} else {
+		if !(_monitor getVariable ["CFM_feedActive", true]) exitWith {};
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 	}; 
 	_monitor setVariable ["CFM_waitingForStart", false]; 

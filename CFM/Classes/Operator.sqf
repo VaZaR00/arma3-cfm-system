@@ -208,7 +208,6 @@ OBJCLASS(Operator)
 		_zooms sort false;
 		private _max = if (count _zooms != 0) then {_zooms#0} else {1};
 		if (isNil "_max") then {_max = 1};
-		["SETTUR", _self, _NIL(_max), _zooms, _zoomTable] RLOG
 		_zoomTable set ["max", _max];
 		_turretParams set ["zoomTable", _zoomTable];
 
@@ -419,8 +418,6 @@ OBJCLASS(Operator)
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
-
-		["TurretChanged", _self, _turret, _zoomMax, _turretData] RLOG
 
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
