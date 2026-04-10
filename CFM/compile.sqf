@@ -224,17 +224,27 @@ CFM_fnc_setOperator = {
 };
 
 CFM_fnc_operatorCondition = {
-	params["_op", ["_player", player], ["_checkFeeding", false]];
-	
+	params["_op", ["_monitor", objNull], ["_checkFeeding", false]];
+
+	if !(IS_OBJ(_monitor)) exitWith {false};
+
 	if !(IS_OBJ(_op)) then {
 		["removeOperator", [_op]] CALL_CLASS("DbHandler");
 		continue
 	};
 	private _cls = typeOf _op;
-	private _playerSide = side _player;
-	private _sides = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
+	private _monitorSides = _monitor getVariable ["CFM_monitorSides", [side _monitor]];
+	private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
 	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
-	if (!(_playerSide in _sides) && {!((_playerSide in _sidesUseCiv) && {civilian in _sides})}) exitWith {false};
+	if !(_sidesOp isEqualType []) then {
+		_sidesOp = [_sidesOp];
+	};
+	if !(_monitorSides isEqualType []) then {
+		_monitorSides = [_monitorSides];
+	};
+	private _bySide = (_monitorSides findIf {_x in _sidesOp}) != -1;
+	private _bySideCiv = (_monitorSides findIf {_x in _sidesUseCiv}) != -1;
+	if (!_bySide && {!(_bySideCiv && {civilian in _sidesOp})}) exitWith {false};
 
 	private _type = [_op] call CFM_fnc_cameraType;
 
@@ -265,6 +275,7 @@ CFM_fnc_operatorCondition = {
 };
 
 CFM_fnc_getActiveOperatorsCheckGlobal = {
+	params[["_monitor", objNull]];
 	private _objs = [];
 	if (missionNamespace getVariable ["CFM_checkGoPros", false]) then {
 		_objs append allUnits;
@@ -276,12 +287,13 @@ CFM_fnc_getActiveOperatorsCheckGlobal = {
 		_objs append vehicles;
 	}; 
 	_objs select {
-		([_x] call CFM_fnc_operatorCondition)  
+		([_x, _monitor] call CFM_fnc_operatorCondition)  
 	}  
 }; 
 
 CFM_fnc_getActiveOperators = {
-	(missionNamespace getVariable ["CFM_Operators", []]) select {[_x] call CFM_fnc_operatorCondition};
+	params[["_monitor", objNull]];
+	(missionNamespace getVariable ["CFM_Operators", []]) select {[_x, _monitor] call CFM_fnc_operatorCondition};
 };
 
 CFM_fnc_timeInterpolate = {

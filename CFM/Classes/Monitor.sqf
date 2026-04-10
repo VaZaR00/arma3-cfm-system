@@ -3,6 +3,7 @@ OBJCLASS(Monitor)
 	SET_SELF_VAR(_monitor);
 
 	OBJ_VARIABLE(_radius, ACTION_RADIUS);
+	OBJ_VARIABLE(_monitorSides, [side player]);
 	OBJ_VARIABLE(_turnedOffLocal, false);
 	OBJ_VARIABLE(_originalTexture, "");
 	OBJ_VARIABLE(_menuActive, false);
@@ -45,14 +46,16 @@ OBJCLASS(Monitor)
 			["_reset", false]
 		]; 
 		_args params [
-			["_canFullScreen", true],
+			["_sides", [side player]],
+			["_isHandMonitorDialog", true],
+			["_canSwitchNvg", true],
+			["_canSwitchTi", true],
+			["_canSwitchTurret", true],
 			["_canZoom", true],
+			["_canFullScreen", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
-			["_canSwitchTurret", true],
-			["_canTurnOffLocal", true],
-			["_canSwitchNvg", true],
-			["_canSwitchTi", true]
+			["_canTurnOffLocal", true]
 		]; 
 
 		if (_monitor isEqualTo objNull) exitWith {};
@@ -86,6 +89,8 @@ OBJCLASS(Monitor)
 		private _radius = ACTION_RADIUS;
 		private _menuText = "Camera System Menu";
 		
+		_monitor setVariable ["CFM_monitorSides", _sides];
+		_monitor setVariable ["CFM_isHandMonitorDialog", _isHandMonitorDialog];
 		_monitor setVariable ["CFM_actionsRadius", _radius];
 		_monitor setVariable ["CFM_canFullScreen", _canFullScreen];
 
@@ -223,8 +228,8 @@ OBJCLASS(Monitor)
 		params [["_caller", objNull], ["_target", _targetInActionsConditions]]; 
 
 		private _target = _targetInActionsConditions;
-		private _ops = call CFM_fnc_getActiveOperators; 
-		private _opsGlobal = call CFM_fnc_getActiveOperatorsCheckGlobal; 
+		private _ops = [_self] call CFM_fnc_getActiveOperators; 
+		private _opsGlobal = [_self] call CFM_fnc_getActiveOperatorsCheckGlobal; 
 		{
 			_ops pushBackUnique _x;
 		} forEach _opsGlobal;
