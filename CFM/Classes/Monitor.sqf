@@ -7,8 +7,8 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_originalTexture, "");
 	OBJ_VARIABLE(_menuActive, false);
 	OBJ_VARIABLE(_isHandMonitor, false);
+	OBJ_VARIABLE(_isHandMonitorDialog, false);
 	OBJ_VARIABLE(_isLocal, false);
-	OBJ_VARIABLE(_isOff, false);
 	OBJ_VARIABLE(_actionCaller, objNull);
 	OBJ_VARIABLE(_targetInActionsConditions, "_target");
 
@@ -387,7 +387,13 @@ OBJCLASS(Monitor)
 			params ["_target", "_caller"]; 
 			[_target, _caller] call CFM_fnc_disconnectMonitorFromOperator;
 		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
-		["addActionsToActionsList", [_actionMenu, _actionDisc]] CALL_OBJCLASS("Monitor", _self);
+
+		private _actionWatch = _self addAction ["<t color='#0000FF'>Watch tablet</t>", { 
+			params ["_target", "_caller"]; 
+			[_target] call CFM_fnc_turnOnMonitorLocal;
+		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
+
+		["addActionsToActionsList", [_actionMenu, _actionDisc, _actionWatch]] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("addOptionalActions") {
 		params [

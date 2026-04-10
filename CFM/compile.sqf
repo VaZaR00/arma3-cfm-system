@@ -135,6 +135,12 @@ CFM_fnc_onEachFrameClient = {
 	} forEach _monitors;
 
 	[] call CFM_fnc_updateOperator;
+
+	if ((player getVariable ["CFM_tabletOpenedDialog", false]) && {!dialog}) then {
+		closeDialog 1;
+		player setVariable ["CFM_tabletOpenedDialog", false];
+		[player] call CFM_fnc_closePIPwindow;
+	};
 };
 
 CFM_fnc_onEachFrameServer = {
@@ -725,7 +731,7 @@ CFM_fnc_setupNvgAndTI = {
 };
 
 CFM_fnc_createPIPwindow = {
-    params [["_player", objNull], ["_renderTarget", "rendertarget0"]];
+    params [["_player", objNull], ["_renderTarget", "rendertarget0"], ["_settings", ""]];
     
     disableSerialization;
     
@@ -739,12 +745,16 @@ CFM_fnc_createPIPwindow = {
     _player setVariable ["CFM_currentRscLayer", _renderTarget];
     _player setVariable ["CFM_currentDisplay", _display];
     
-    private _settings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR]; 
-	_settings = call compile _settings; 
-	if ((isNil "_settings") || {!(_settings isEqualType [])}) then {
-		_settings = DEFAULT_PIP_SETTINGS;
+	_settings = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
+		_settings
+	} else {
+    	missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR]; 
 	};
-    _settings params [["_size", 0.2], ["_offsetX", 1], ["_offsetY", 0.8]];
+	private _settingsCompiled = call compile _settings; 
+	if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])}) then {
+		_settingsCompiled = DEFAULT_PIP_SETTINGS;
+	};
+    _settingsCompiled params [["_size", 0.2], ["_offsetX", 1], ["_offsetY", 0.8]];
 
 	private _w = _size;
 	private _h = _size;
@@ -807,10 +817,20 @@ CFM_fnc_setHandDisplay = {
 	params[["_player", player], ["_render", true]];
 
 	private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
+	private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDialogs", false];
+	private _isDialog = _isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDialog", _isAllHandMonsDialogs]);
 
 	if (_render && {IS_VALID_R2T(_renderTarget)}) then {
-		[_player, _renderTarget] spawn CFM_fnc_createPIPwindow;
+		private _settings = if (_isDialog) then {
+			createDialog 'RscDisplayEmpty';
+			player setVariable ["CFM_tabletOpenedDialog", true];
+			"[0.9, 0.5, 0.5]"
+		} else {
+			""
+		};
+		[_player, _renderTarget, _settings] spawn CFM_fnc_createPIPwindow;
 	} else {
+		closeDialog 1;
 		[_player] call CFM_fnc_closePIPwindow;
 	};
 };
@@ -1288,5 +1308,10 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_exitFullScreenActionCondition = {
 		params["_target"];
 		focusOn != player
+	};
+	CFM_fnc_watchTabletActionCondition = {
+		params["_target"];
+		HAND_MON_CONDITION
+		!(_monitor getVariable ["CFM_turnedOffLocal", false])
 	};
 };
