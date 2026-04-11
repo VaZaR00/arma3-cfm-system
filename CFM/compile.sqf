@@ -12,7 +12,7 @@ CFM_fnc_init = {
 
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
-	CFM_allHandMonitorsAreDisplays = true;
+	CFM_allHandMonitorsAreDisplays = false;
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 	["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], "CFM Settings", true] call CBA_fnc_addSetting;
@@ -434,6 +434,8 @@ CFM_fnc_updateCamera = {
 CFM_fnc_camPosVehTurret = {
 	params["_obj", ["_pointParams", []]];
 
+	LOGH _this;
+
 	_pointParams params [["_memPoint", ""], ["_alignment", []]];
 
 	private _doAlign = !(_alignment isEqualTo []);
@@ -496,7 +498,6 @@ CFM_fnc_camPosVehStatic = {
 	private _dir = _obj vectorModelToWorldVisual _dirRel;
 	private _up = _obj vectorModelToWorldVisual _upRel;
 	private _pos = _obj modelToWorldVisualWorld _offsetPos;
-	LOGH [_obj, [_offsetPos, _odir, _oup], [_pos, _dir, _up], _offsetMS];
 
 	[_pos, _dir, _up]
 };
@@ -524,7 +525,7 @@ CFM_fnc_updateMonitor = {
 	private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
-	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
+	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
 
@@ -544,13 +545,13 @@ CFM_fnc_updateMonitor = {
 CFM_fnc_getCameraPoints = {  
     params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH], ["_camType", ""]]; 
 
-    private _droneType = toLower (typeOf _vehicle);
+    private _vehType = toLower (typeOf _vehicle);
 	_turretPath = TURRET_INDEX(_turretPath);
 
-	if ("mavik" in _droneType) exitWith {
+	if ("mavik" in _vehType) exitWith {
 		[["pos_pilotcamera", [], [-1,0,-1]], "pos_pilotcamera_dir"]
 	};
-	if ("uav_01" in _droneType) exitWith {
+	if ("uav_01" in _vehType) exitWith {
 		if (_turretPath in DRIVER_TURRET_PATH) exitWith {
 			[["pip_pilot_pos", [], [-1,0,-1]], "pip_pilot_dir"]
 		};
@@ -559,7 +560,14 @@ CFM_fnc_getCameraPoints = {
 
 	private _camTypeRes = switch (_camType) do {
 		case TYPE_VEH: {
-			["gunnerview", "gunnerview"]
+			// private _name = "gunnerview";
+			// private _name = "zamerny";
+			private _name = "konec hlavne";
+			// if ((["bmp", "bmd", "t90"] findIf {_x in _vehType}) != -1) then {
+			// 	_name = "konec hlavne";
+			// };
+			private _dirParamsDef = [_name, [-0.3, 0.0, 0.2]];
+			[_name, _dirParamsDef]
 		};
 		default { };
 	};
@@ -569,7 +577,7 @@ CFM_fnc_getCameraPoints = {
     private _camDir = "uavCameraGunnerDir";
 
     if (_turretPath isEqualTo -1) then {  
-        if ("mavik" in _droneType) exitWith {};
+        if ("mavik" in _vehType) exitWith {};
         _camPos = "uavCameraDriverPos";  
         _camDir = "uavCameraDriverDir";  
     };
@@ -604,10 +612,9 @@ CFM_fnc_memoryPointAlignment = {
 	if !(_pointParams isEqualType []) exitWith {
 		[0,0,0]
 	};
+	if (!(IS_STR(_memPoint)) && {(_memPoint isEqualTo "")}) exitWith {NULL_VECTOR};
 
 	_pointParams params [["_addArr", [0,0,0], [[]]], ["_setArr", [-1,-1,-1], [[]]]];
-
-	if (!(IS_STR(_memPoint)) && {(_memPoint isEqualTo "")}) exitWith {NULL_VECTOR};
 
 	if ((count _addArr) != 3) then {
 		_addArr = [0,0,0];
@@ -637,8 +644,12 @@ CFM_fnc_initDefaultPointsAlignment = {
 	
 	private _vehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
 
+	// default offset for vehs is [-0.3, 0.0, 0.2] in CFM_fnc_getCameraPoints
 	private _defaults = [
-		["rhs_t72bc_tv", [[-1, [[0,0.2,0]]]]],
+		[["t72", "bmp", "bmd"], [[-1, [[-0.5,-0.8,0.3]]]]],
+		[["t80", "t90"], [[-1, [[-0.5,-0.6,0.3]]]]],
+		[["btr", "brdm"], [[-1, [[-0.2,0.1,0.1]]]]],
+		[["m1a2"], [[-1, [[-0.8,-0.2,0.8]]]]],
 		[["fpv", "crocus"], [[-1, [[0.0, 0.2, 0.1]]]]]
 	];
 	{

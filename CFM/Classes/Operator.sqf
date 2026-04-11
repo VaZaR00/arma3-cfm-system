@@ -370,6 +370,7 @@ OBJCLASS(Operator)
 			if (count _pSetArr == 3) then {
 				_setArr = _pSetArr;
 			};
+			[_self , _defaultMemPointParams, _pointParams, _predefinedAlignmentTurr, [_turrIndex, _addArr, _memPoint, _setArr]] RLOG
 			[_operator, [_turrIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
 		} forEach _turrets;
 
