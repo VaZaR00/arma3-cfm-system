@@ -56,11 +56,6 @@ CFM_fnc_updateOperator = {
 	if (_controlledObj isEqualTo player) exitWith {};
 	if (_controlledObj isEqualTo _currVeh) exitWith {};
 
-	// ZOOM
-	[_controlledObj] call CFM_fnc_updateOperatorZoom;
-
-	if !(isMultiplayer) exitWith {};
-
 	// LOCAL TURRET ORIENTATION
 	private _turrLocal = false;
 	private _role = assignedVehicleRole _controlledUnit;
@@ -69,7 +64,7 @@ CFM_fnc_updateOperator = {
 	private _turrsParams = _controlledObj getVariable "CFM_turretsParams";
 	if (isNil "_turrsParams") exitWith {};
 	if !(_turrsParams isEqualType createHashMap) exitWith {};
-	private _currTurrParams = _turrsParams get _role;
+	private _currTurrParams = _turrsParams get _turretIndex;
 	if (isNil "_currTurrParams") exitWith {};
 	if !(_currTurrParams isEqualType createHashMap) exitWith {};
 	_turrLocal = _currTurrParams getOrDefault ["IsTurretLocal", false];
@@ -96,16 +91,17 @@ CFM_fnc_updateOperator = {
 			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
-			private _prevDir = _operator getVariable [_dirVarName, []];
-			private _prevUp = _operator getVariable [_upVarName, []];
-			private _currDirMS = _operator vectorWorldToModelVisual _dir;
-			private _currUpMS = _operator vectorWorldToModelVisual _up;
+			private _prevDir = _controlledObj getVariable [_dirVarName, []];
+			private _prevUp = _controlledObj getVariable [_upVarName, []];
+			private _currDirMS = _controlledObj vectorWorldToModelVisual _dir;
+			private _currUpMS = _controlledObj vectorWorldToModelVisual _up;
 			if !(_currDirMS isEqualTo _prevDir) then {
-				_operator setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS(false)];
+				_controlledObj setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS(false)];
 			};
 			if !(_currUpMS isEqualTo _prevUp) then {
-				_operator setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS(false)];
+				_controlledObj setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS(false)];
 			};
+			[_controlledObj] call CFM_fnc_updateOperatorZoom;
 			missionNamespace setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
 		};
 	};
@@ -135,11 +131,9 @@ CFM_fnc_onEachFrameClient = {
 		};
 	} forEach _monitors;
 
-	[] call CFM_fnc_updateOperator;
-
-	// if ((player getVariable ["CFM_tabletDisplayIsOpened", false]) && {isNull (uiNamespace getVariable ["CFM_tabletDisplay", displayNull])}) then {
-		
-	// };
+	if (isMultiplayer) then {
+		[] call CFM_fnc_updateOperator;
+	};
 };
 
 CFM_fnc_onEachFrameServer = {
