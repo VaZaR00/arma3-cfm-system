@@ -434,8 +434,6 @@ CFM_fnc_updateCamera = {
 CFM_fnc_camPosVehTurret = {
 	params["_obj", ["_pointParams", []]];
 
-	LOGH _this;
-
 	_pointParams params [["_memPoint", ""], ["_alignment", []]];
 
 	private _doAlign = !(_alignment isEqualTo []);
@@ -526,7 +524,6 @@ CFM_fnc_updateMonitor = {
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
-	private _zoom = if (_zoom isEqualType 1) then {_zoom min _zoomMax} else {_zoom};
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
 
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
