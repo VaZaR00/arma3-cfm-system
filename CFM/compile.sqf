@@ -600,8 +600,6 @@ CFM_fnc_getCameraPoints = {
 CFM_fnc_memoryPointAlignment = {
 	params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]]];
 
-	private _lod = OBJ_LOD(_obj);
-
 	if (_pointParams isEqualType "") exitWith {
 		private _s = _obj selectionPosition [_pointParams, "Memory"];
 		_s
