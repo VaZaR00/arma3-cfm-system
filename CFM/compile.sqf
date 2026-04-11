@@ -465,12 +465,38 @@ CFM_fnc_camPosPilotTurret = {
 };
 
 CFM_fnc_camPosVehStatic = {
-	params["_obj"];
+	params["_obj", ["_offsetMS", []]];
 
-	private _dir = vectorDir _obj;
-	private _up = vectorUp _obj;
-	private _offsetMS = _obj getVariable ["CFM_staticCamOffset", [0,0,0]];
-	private _pos = _obj modelToWorldVisualWorld _offsetMS;
+	if !(_offsetMS isEqualType []) then {
+		_offsetMS = call CAM_POS_FUNC_DEF;
+	};
+	_offsetMS params [["_", ""], ["_offsets", []]];
+	_offsets params [["_offsetPos", NULL_VECTOR], ["_vdup", [NULL_VECTOR, NULL_VECTOR]]];
+
+	if (!(_offsetPos isEqualType []) || {(count _offsetPos != 3)}) then {
+		_offsetPos = NULL_VECTOR;
+	};
+	if !(_vdup isEqualType []) then {
+		_vdup = [];
+	};
+	_vdup params [["_odir", NULL_VECTOR], ["_oup", NULL_VECTOR]];
+	if (!(_odir isEqualType []) || {(count _odir != 3)}) then {
+		_odir = NULL_VECTOR;
+	};
+	if (!(_oup isEqualType []) || {(count _oup != 3)}) then {
+		_oup = NULL_VECTOR;
+	};
+
+	private _objDir = vectorDirVisual _obj;
+	private _objUp = vectorUpVisual _obj;
+	private _dirRel = _obj vectorWorldToModelVisual _objDir;
+	private _upRel = _obj vectorWorldToModelVisual _objUp;
+	_dirRel = _dirRel vectorAdd _odir;
+	_upRel = _upRel vectorAdd _oup;
+	private _dir = _obj vectorModelToWorldVisual _dirRel;
+	private _up = _obj vectorModelToWorldVisual _upRel;
+	private _pos = _obj modelToWorldVisualWorld _offsetPos;
+	LOGH [_obj, [_offsetPos, _odir, _oup], [_pos, _dir, _up], _offsetMS];
 
 	[_pos, _dir, _up]
 };
@@ -481,7 +507,7 @@ CFM_fnc_camPosGoPro = {
 	private _dirUp = _obj selectionVectorDirAndUp ["head", "memory"]; 
 	private _dir = _obj vectorModelToWorldVisual _dirUp#0;
 	private _up = _obj vectorModelToWorldVisual _dirUp#1;
-	private _headPos = [_obj, ["head", "memory"], [-0.19, 0.1, 0.25]] call CFM_fnc_getOffsetInModelSpace;
+	private _headPos = [_obj, ["head", "memory"], [-0.19, 0.1, 0.25]] call CFM_fnc_getMemPointOffsetInModelSpace;
 	private _pos = _obj modelToWorldVisualWorld _headPos; 
 
 	_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
@@ -591,7 +617,7 @@ CFM_fnc_memoryPointAlignment = {
 		_setArr = [-1,-1,-1];
 	};
 
-	private _selPos = [_obj, [_memPoint, "Memory"], _addArr] call CFM_fnc_getOffsetInModelSpace;
+	private _selPos = [_obj, [_memPoint, "Memory"], _addArr] call CFM_fnc_getMemPointOffsetInModelSpace;
  
 	for "_i" from 0 to 2 do {
 		private _set = _setArr#_i;
@@ -609,13 +635,30 @@ CFM_fnc_setPointAlignment = {
 CFM_fnc_initDefaultPointsAlignment = {
 	private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 	
+	private _vehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
+
 	private _defaults = [
-		["rhs_t72bc_tv", [[-1, [[0,0.2,0]]]]]
+		["rhs_t72bc_tv", [[-1, [[0,0.2,0]]]]],
+		[["fpv", "crocus"], [[-1, [[0.0, 0.2, 0.1]]]]]
 	];
 	{
-		private _cls = toLower (_x#0);
+		private _checkClasses = false;
+		private _cls = (_x#0);
+		if (_cls isEqualType []) then {
+			_checkClasses = true;
+			_cls = _cls apply {toLower _x};
+		} else {
+			_cls = toLower _cls;
+		};
 		private _params = createHashMapFromArray (_x#1);
-		_pointSet set [_cls, _params];
+		if (_checkClasses) then {
+			private _fitClasses = _vehConfigClasses select {private _c = _x; (_cls findIf {_x in _c}) != -1};
+			{
+				_pointSet set [_x, _params];
+			} forEach _fitClasses;
+		} else {
+			_pointSet set [_cls, _params];
+		};
 	} forEach _defaults;
 
 	missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSet];
@@ -627,7 +670,7 @@ CFM_fnc_setDefaultPointAlignment = {
 	["setDefaultPointAlignment", []] CALL_OBJCLASS("Operator", _operator);
 };
 
-CFM_fnc_getOffsetInModelSpace = {
+CFM_fnc_getMemPointOffsetInModelSpace = {
     params ["_obj", ["_selectionData", ["head", "Memory"]], ["_offset", [0,0,0]]];
 
 	_selectionData params [["_selectionName", ""], ["_lod", "Memory"]];
