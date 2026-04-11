@@ -12,6 +12,7 @@ CFM_fnc_init = {
 
 	CFM_max_zoom_gopro = 2;
 	CFM_max_zoom_drone = 5;
+	CFM_allHandMonitorsAreDisplays = true;
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 	["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], "CFM Settings", true] call CBA_fnc_addSetting;
@@ -136,11 +137,9 @@ CFM_fnc_onEachFrameClient = {
 
 	[] call CFM_fnc_updateOperator;
 
-	if ((player getVariable ["CFM_tabletOpenedDialog", false]) && {!dialog}) then {
-		closeDialog 1;
-		player setVariable ["CFM_tabletOpenedDialog", false];
-		[player] call CFM_fnc_closePIPwindow;
-	};
+	// if ((player getVariable ["CFM_tabletDisplayIsOpened", false]) && {isNull (uiNamespace getVariable ["CFM_tabletDisplay", displayNull])}) then {
+		
+	// };
 };
 
 CFM_fnc_onEachFrameServer = {
@@ -829,22 +828,36 @@ CFM_fnc_setHandDisplay = {
 	params[["_player", player], ["_render", true]];
 
 	private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
-	private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDialogs", false];
-	private _isDialog = _isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDialog", _isAllHandMonsDialogs]);
+	private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
+	private _isDialog = _isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs]);
 
 	if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		private _settings = if (_isDialog) then {
-			createDialog 'RscDisplayEmpty';
-			player setVariable ["CFM_tabletOpenedDialog", true];
+			disableSerialization;
+			private _disp = (findDisplay 46) createDisplay "RscDisplayCFM";
+			uiNamespace setVariable ["CFM_tabletDisplay", _disp];
+			player setVariable ["CFM_tabletDisplayIsOpened", true];
+			player setVariable ["CFM_turnedOffLocal", false];
 			"[0.9, 0.5, 0.5]"
 		} else {
 			""
 		};
 		[_player, _renderTarget, _settings] spawn CFM_fnc_createPIPwindow;
 	} else {
-		closeDialog 1;
+		if (_isDialog) then {
+			private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+			_disp closeDisplay 1;
+			uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
+		};
 		[_player] call CFM_fnc_closePIPwindow;
 	};
+};
+
+CFM_fnc_onDisplayUnload = {
+	params[["_display", displayNull]];
+	disableSerialization;
+	player setVariable ["CFM_tabletDisplayIsOpened", false];
+	[player] call CFM_fnc_turnOffMonitorLocal;
 };
 
 CFM_fnc_setMonitorTexture = {
@@ -1192,13 +1205,16 @@ CFM_fnc_isUAV = {
 
 CFM_fnc_initActionConditions = {
 	#define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
+	#define IS_MONITOR_ON ;
+	#define IS_MONITOR_ON if ((_target getVariable ["CFM_isHandMonitor", false]) && {_target getVariable ['CFM_turnedOffLocal', false]}) exitWith {false};
+	
 	CFM_fnc_handMonitorMenuActionCondition = {
 		params["_target"];
 
 		private _isHandMonitor = _target getVariable ["CFM_isHandMonitor", false];
 		if !(_isHandMonitor) exitWith {false};
 
-		private _isWatchingAtMonitor = !(isNil {cursorObject getVariable "CFM_originalTexture"});
+		private _isWatchingAtMonitor = (!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject isEqualTo _target)};
 		
 		_isWatchingAtMonitor
 	};
@@ -1228,16 +1244,19 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_zoomInActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && !(_target getVariable ['CFM_maxZoomed', false])
 	};
 	CFM_fnc_zoomActionsCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		_target getVariable ['CFM_feedActive', false]
 	};
 	CFM_fnc_connectDroneActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOperatorIsDrone', false]) &&
 			{[player] call CFM_fnc_hasUAVterminal}
@@ -1246,11 +1265,13 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_fixFeedActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false])
 	};
 	CFM_fnc_switchCameraToGunnerActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [-1])
@@ -1260,6 +1281,7 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_switchCameraToPilotActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
@@ -1279,6 +1301,7 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_toggleNvgActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
 				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
@@ -1293,6 +1316,7 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_toggleTiActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_monitorCanSwitchTi', false]) && {
 				!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
@@ -1315,6 +1339,12 @@ CFM_fnc_initActionConditions = {
 		if !(_target getVariable ['CFM_canFullScreen', false]) exitWith {false};
 		private _connectedOperator = _target getVariable ['CFM_connectedOperator', objNull];
 		if (_connectedOperator getVariable ['CFM_hasGoPro', false]) exitWith {false};
+		IS_MONITOR_ON
+		if (
+			(_target getVariable ['CFM_isHandMonitor', false]) &&
+			{(_target getVariable ['CFM_isHandMonitorDisplay', false]) || 
+			{MGVAR ["CFM_allHandMonitorsAreDisplays", false]}}
+		) exitWith {false};
 		focusOn == player
 	};
 	CFM_fnc_exitFullScreenActionCondition = {
@@ -1324,6 +1354,15 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_watchTabletActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
-		!(_monitor getVariable ["CFM_turnedOffLocal", false])
+		(_target getVariable ['CFM_feedActive', false]) &&
+		{(_target getVariable ["CFM_isHandMonitor", false]) &&
+		{(_target getVariable ["CFM_turnedOffLocal", false])}}
+	};
+	CFM_fnc_stopWatchTabletActionCondition = {
+		params["_target"];
+		HAND_MON_CONDITION
+		(_target getVariable ['CFM_feedActive', false]) &&
+		{(_target getVariable ["CFM_isHandMonitor", false]) &&
+		{!(_target getVariable ["CFM_turnedOffLocal", false])}}
 	};
 };

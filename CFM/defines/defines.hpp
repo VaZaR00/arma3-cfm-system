@@ -32,6 +32,7 @@
 #define TYPE_WEAP "weap"
 #define TYPE_HELM "helm"
 #define TYPE_UNIT "unit"
+#define MGVAR missionNamespace getVariable
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
 #define CHECK_EX(c) if (c) exitWith {false};
 #define IS_VALID_R2T(s) ((IS_STR(s) && {!(s isEqualTo "") && {(RENDER_TARGET_STR in s)}}))

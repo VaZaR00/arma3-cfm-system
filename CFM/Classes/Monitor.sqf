@@ -8,7 +8,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_originalTexture, "");
 	OBJ_VARIABLE(_menuActive, false);
 	OBJ_VARIABLE(_isHandMonitor, false);
-	OBJ_VARIABLE(_isHandMonitorDialog, false);
+	OBJ_VARIABLE(_isHandMonitorDisplay, false);
 	OBJ_VARIABLE(_isLocal, false);
 	OBJ_VARIABLE(_actionCaller, objNull);
 	OBJ_VARIABLE(_targetInActionsConditions, "_target");
@@ -47,7 +47,7 @@ OBJCLASS(Monitor)
 		]; 
 		_args params [
 			["_sides", [side player]],
-			["_isHandMonitorDialog", true],
+			["_isHandMonitorDisplay", false],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true],
 			["_canSwitchTurret", true],
@@ -90,9 +90,11 @@ OBJCLASS(Monitor)
 		private _menuText = "Camera System Menu";
 		
 		_monitor setVariable ["CFM_monitorSides", _sides];
-		_monitor setVariable ["CFM_isHandMonitorDialog", _isHandMonitorDialog];
 		_monitor setVariable ["CFM_actionsRadius", _radius];
 		_monitor setVariable ["CFM_canFullScreen", _canFullScreen];
+
+		// _isHandMonitorDisplay = (MGVAR ["CFM_allHandMonitorsAreDisplays", false]) || _isHandMonitorDisplay;
+		_monitor setVariable ["CFM_isHandMonitorDisplay", _isHandMonitor && _isHandMonitorDisplay];
 
 		["addMenuActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["addOptionalActions", [_radius] + _args] CALL_OBJCLASS("Monitor", _self);
@@ -367,6 +369,7 @@ OBJCLASS(Monitor)
 	METHOD("addMenuActions") {
 		params[["_radius", ACTION_RADIUS], ["_target", _targetInActionsConditions]];
 		
+		private _actions = [];
 		private _target = _targetInActionsConditions;
 		private _menuText = "Camera System Menu";
 		private _additionalCondition = if (_isHandMonitor) then {
@@ -393,12 +396,23 @@ OBJCLASS(Monitor)
 			[_target, _caller] call CFM_fnc_disconnectMonitorFromOperator;
 		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
 
-		private _actionWatch = _self addAction ["<t color='#0000FF'>Watch tablet</t>", { 
-			params ["_target", "_caller"]; 
-			[_target] call CFM_fnc_turnOnMonitorLocal;
-		}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
+		_actions append [_actionMenu, _actionDisc];
 
-		["addActionsToActionsList", [_actionMenu, _actionDisc, _actionWatch]] CALL_OBJCLASS("Monitor", _self);
+		if (_isHandMonitor) then {
+			private _actionWatch = _self addAction ["<t color='#0000FF'>Watch tablet</t>", { 
+				params ["_target", "_caller"]; 
+				[_target] call CFM_fnc_turnOnMonitorLocal;
+			}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
+
+			private _actionStopWatch = _self addAction ["<t color='#FF0000'>Stop Watching tablet</t>", { 
+				params ["_target", "_caller"]; 
+				[_target] call CFM_fnc_turnOffMonitorLocal;
+			}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
+
+			_actions append [_actionWatch, _actionStopWatch];
+		};
+
+		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("addOptionalActions") {
 		params [
@@ -476,7 +490,7 @@ OBJCLASS(Monitor)
 				_actions append [_actionSwitchTurret, _actionSwitchDriver];
 			};
 
-			if (_canTurnOffLocal) then {
+			if (_canTurnOffLocal && !_isHandMonitor) then {
 				private _actionTurnOffLocal = _self addAction ["<t color='#8a3200'>Turn off feed (local)</t>", { 
 					params ["_target"]; 
 					
