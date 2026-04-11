@@ -28,7 +28,7 @@ CLASS(DbHandler)
 				if (isNil "_x") then {continue};
 				if (_x isEqualType []) then {
 					private _args = +_x;
-					for "_i" from 1 to 5 do {
+					for "_i" from 1 to (count _mainArgs) do {
 						private _val = _args#_i;
 						if (isNil "_val") then {
 							_args set [_i, (_mainArgs select (_i - 1))];

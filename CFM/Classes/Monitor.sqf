@@ -42,17 +42,13 @@ OBJCLASS(Monitor)
 	METHOD("Init") { 
 		// should be executed globaly
 		params [
-			["_args", []],
-			["_reset", false]
-		]; 
-		_args params [
 			["_sides", [side player]],
 			["_isHandMonitorDisplay", false],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true],
 			["_canSwitchTurret", true],
 			["_canZoom", true],
-			["_canFullScreen", true],
+			["_canFullScreen", false],
 			["_canConnectDrone", true],
 			["_canFix", true],
 			["_canTurnOffLocal", true]
@@ -60,6 +56,7 @@ OBJCLASS(Monitor)
 
 		if (_monitor isEqualTo objNull) exitWith {};
 			
+		private _reset = if (isNil "_reset") then {false} else {_reset};
 		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {};
 
 		private _isPlayer = (_monitor isEqualTo player) || {(_monitor isKindOf "Man")};

@@ -194,23 +194,46 @@ CFM_fnc_getFovForZoom = {
 };
 
 CFM_fnc_setMonitor = {
-	params[["_monitor", objNull], ["_params", []], ["_reset", false]];
+	params[
+		["_monitor", objNull], 
+		["_sides", [side player]],
+		["_isHandMonitorDisplay", false],
+		["_canSwitchNvg", true],
+		["_canSwitchTi", true],
+		["_canSwitchTurret", true],
+		["_canZoom", true],
+		["_canFullScreen", true],
+		["_canConnectDrone", true],
+		["_canFix", true],
+		["_canTurnOffLocal", true]
+	];
 
 	if (isNil "_monitor") exitWith {};
 
+	private _reset = if (isNil "_reset") then {false} else {_reset};
+
 	if (_monitor isEqualType []) exitWith {
-		{
-			[_x, _params, _reset] call CFM_fnc_setMonitor;
-		} forEach _monitor;
+		private _mainArgs = [_sides, _isHandMonitorDisplay, _canSwitchNvg, _canSwitchTi, _canSwitchTurret, _canZoom, _canFullScreen, _canConnectDrone, _canFix, _canTurnOffLocal];
+		_monitor apply {
+			if (isNil "_x") then {continue};
+			if (_x isEqualType []) then {
+				private _args = +_x;
+				for "_i" from 1 to (count _mainArgs) do {
+					private _val = _args#_i;
+					if (isNil "_val") then {
+						_args set [_i, (_mainArgs select (_i - 1))];
+					};
+				};
+				_args call CFM_fnc_setMonitor;
+			} else {
+				private _args = [_x] + _mainArgs;
+				_args call CFM_fnc_setMonitor;
+			};
+		};
 	};
 	if !(IS_OBJ(_monitor)) exitWith {};
 
-	if (count _params == 0) then {
-		_params = [[]];
-	};
-	_params pushBack _reset;
-
-	[_monitor, _params] NEW_OBJINSTANCE("Monitor");
+	_this NEW_OBJINSTANCE("Monitor");
 };
 
 CFM_fnc_setOperator = {
