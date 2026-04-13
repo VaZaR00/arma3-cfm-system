@@ -1154,6 +1154,7 @@ CFM_fnc_syncState = {
 		waitUntil {
 			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 			_optimizeDistance = call compile _optimizeDistance;
+			if (_optimizeDistance <= 0) exitWith {true};
 			private _dist = _monitor distance player;
 			private _isClose = _dist < _optimizeDistance;
 			_start = _monitor getVariable ["CFM_waitingForStart", true];
