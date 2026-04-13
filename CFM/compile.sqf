@@ -363,13 +363,14 @@ CFM_fnc_updateCamera = {
 	private _doInterpolation = false;
 	private _turretIndex = _turret#0;
 	private _camExists = IS_OBJ(_cam);
+	private _operatorLocal = local _operator;
 
 	// ZOOM
 	private _fov = if ((_zoomFov isEqualType 1) && {(_zoomFov > 0) && (_zoomFov <= 1)}) then {
 		_zoomFov
 	} else {
 		if (_zoomFov isEqualTo "op") exitWith {
-			if (local _operator) exitWith {
+			if (_operatorLocal) exitWith {
 				getObjectFOV _operator;
 			};
 			_operator getVariable ['CFM_prevZoomLocalFov', 1];
@@ -378,8 +379,6 @@ CFM_fnc_updateCamera = {
 	};
 
 	// POS AN VECTOR DIR AND UP
-	private _operatorLocal = local _operator;
-
 	private _pos = [];
 	private _dir = [];
 	private _up = [];
@@ -413,16 +412,17 @@ CFM_fnc_updateCamera = {
 	if ((count _up) != 3) then {
 		_up = vectorUp _operator;
 	};
-	private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
-	_posAndVUP params ["_newpos", ["_vDirUp", []]];
+	private _vDirUp = [_dir, _up];
+	// private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
+	// _posAndVUP params ["_pos", ["_vDirUp", []]];
 	if (_camExists && _doSetCam) then {
-		_cam setPosASL _newpos; 
+		_cam setPosASL _pos; 
 		_cam setVectorDirAndUp _vDirUp;  
 		_cam camSetFov _fov;  
 		_cam camCommit 0;  
 	};
 
-	_posAndVUP
+	[_pos, [_dir, _up]]
 };
 
 CFM_fnc_camPosVehTurret = {
