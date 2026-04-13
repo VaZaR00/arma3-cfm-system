@@ -130,10 +130,6 @@ CFM_fnc_onEachFrameClient = {
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
 	} forEach _monitors;
-
-	if (isMultiplayer) then {
-		[] call CFM_fnc_updateOperator;
-	};
 };
 
 CFM_fnc_onEachFrameServer = {
@@ -164,7 +160,11 @@ CFM_fnc_onEachFrameServer = {
 
 CFM_fnc_setupDraw3dEH = {
 	if (isNil "CFM_UPD_CLIENT_EH_id") then {
-		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameClient}];
+		private _func = {call CFM_fnc_onEachFrameClient};
+		if (isMultiplayer) then {
+			_func = {call CFM_fnc_onEachFrameClient; call CFM_fnc_updateOperator};
+		};
+		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", _func];
 	};
 	if (isNil "CFM_UPD_SERVER_EH_id") then {
 		if (isServer && isMultiplayer) then {
@@ -269,8 +269,8 @@ CFM_fnc_operatorCondition = {
 	switch (_type) do {
 		case GOPRO: {
 			private _hasGoPro = _op getVariable ["CFM_hasGoPro", false];
-			private _goprohelms = missionNamespace getVariable ["CFM_goProHelmets", createHashMap];
-			if (_goprohelms isEqualTo createHashMap) exitWith {_hasGoPro};
+			private _goprohelms = missionNamespace getVariable "CFM_goProHelmets";
+			if (isNil "_goprohelms") exitWith {_hasGoPro};
 			private _playerHelm = headgear _op;
 			_playerHelm in _goprohelms;
 		};
@@ -719,16 +719,34 @@ CFM_fnc_monitorFeedActive = {
 
 	private _opType = _operator getVariable ["CFM_cameraType", GOPRO];
 
-	CHECK_EX(!(_opType isEqualTo GOPRO) && {!(alive _operator)});
+	CHECK_EX(!(_opType isEqualTo GOPRO) && {_operator call CFM_fnc_goProCondition});
 	
 	private _active = _monitor getVariable ["CFM_feedActive", false]; 
 
 	CHECK_EX(!_active);
 
 	private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
-	if (_isHandMonitor && {!([_monitor] call CFM_fnc_hasUAVterminal)}) exitWith {false};
+	if (_isHandMonitor && {!(_monitor call CFM_fnc_handMonitorCondition)}) exitWith {false};
 
 	true
+};
+
+CFM_fnc_handMonitorCondition = {
+	private _monitorItem = missionNamespace getVariable "CFM_handMonitorItem";
+	if (isNil "_monitorItem") exitWith {
+		_this call CFM_fnc_hasUAVterminal
+	};
+
+	if !(_monitorItem isEqualType "") exitWith {false};
+
+	[_this, _monitorItem] call BIS_fnc_hasItem;
+};
+
+CFM_fnc_goProCondition = {
+	private _goProClassnames = missionNamespace getVariable "CFM_goProHelmets";
+	if (isNil "_goProClassnames") exitWith {false};
+	private _headgear = headgear _this;
+	_headgear in _goProClassnames;
 };
 
 CFM_fnc_doCheckTurretLocality = {
@@ -1258,9 +1276,7 @@ CFM_fnc_setTurretParams = {
 };
 
 CFM_fnc_hasUAVterminal = {
-	params["_player"];
-
-	'terminal' in (toLower (_player getSlotItemName 612))
+	'terminal' in (toLower (_this getSlotItemName 612))
 };
 
 CFM_fnc_isUAV = {
@@ -1325,7 +1341,7 @@ CFM_fnc_initActionConditions = {
 		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOperatorIsDrone', false]) &&
-			{[player] call CFM_fnc_hasUAVterminal}
+			{player call CFM_fnc_hasUAVterminal}
 		}
 	};
 	CFM_fnc_fixFeedActionCondition = {
