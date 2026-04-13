@@ -16,6 +16,7 @@ CFM_fnc_init = {
 
 	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 	["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], "CFM Settings", true] call CBA_fnc_addSetting;
+	["CFM_optimizeByDistance",  "EDITBOX",  ["Optimize by Distance", "Distance to monitor threshold for optimizing PIP settings"], "CFM Settings", OPTIMIZE_MONITOR_FEED_DIST] call CBA_fnc_addSetting;
 
 	["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 	["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[cursorObject, +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
@@ -121,9 +122,22 @@ CFM_fnc_onEachFrameClient = {
 	if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
 	private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
+	private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
+	_optimizeDistance = call compile _optimizeDistance;
+	private _doOptimize = _optimizeDistance > 0;
 	{
 		private _monitor = _x;
-		private _condition = [_monitor, true] call CFM_fnc_monitorFeedActive;
+		private _condition = _monitor call CFM_fnc_monitorFeedActive;
+		private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
+		if (!(_isHandMonitor) && {_doOptimize}) then {
+			private _dist = player distance _monitor;
+			if (_dist > _optimizeDistance) then {
+				private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+				[_monitor] call CFM_fnc_stopOperatorFeed;
+				[_monitor, _operator, true] spawn CFM_fnc_syncState;
+				continue;
+			};
+		};
 		if (_condition) then {
 			[_monitor] call CFM_fnc_updateMonitor;
 		} else {	
@@ -709,8 +723,7 @@ CFM_fnc_isPilotControlled = {
 };
 
 CFM_fnc_monitorFeedActive = {
-	params["_monitor"];
-
+	private _monitor = _this;
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _cam = _monitor getVariable ["CFM_currentFeedCam", objNull]; 
 
@@ -1125,8 +1138,11 @@ CFM_fnc_stopOperatorFeed = {
 CFM_fnc_syncState = { 
 	params ["_mNetId", "_oNetId", ["_start", true], ["_turret", DRIVER_TURRET_PATH]]; 
 
-	private _monitor = objectFromNetId _mNetId; 
-	private _operator = objectFromNetId _oNetId; 
+	private _monitor = if (_mNetId isEqualType "") then {objectFromNetId _mNetId} else {_mNetId}; 
+	private _operator = if (_oNetId isEqualType "") then {objectFromNetId _oNetId} else {_oNetId}; 
+
+	if !(IS_OBJ(_monitor)) exitWith {};
+	if !(IS_OBJ(_operator)) exitWith {};
 
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
@@ -1136,8 +1152,10 @@ CFM_fnc_syncState = {
 
 	if (_start) then {
 		waitUntil {
+			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
+			_optimizeDistance = call compile _optimizeDistance;
 			private _dist = _monitor distance player;
-			private _isClose = _dist <= START_MONITOR_FEED_DIST;
+			private _isClose = _dist < _optimizeDistance;
 			_start = _monitor getVariable ["CFM_waitingForStart", true];
 			if (_isClose) exitWith {true};
 			if !(_start) exitWith {true};

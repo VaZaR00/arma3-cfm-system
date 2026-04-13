@@ -13,7 +13,7 @@
 #define DEF_FOV_GOPRO 0.85
 #define STATIC_ATTACHED_CAMS_TYPES [DRONETYPE]
 #define GOPRO_MEMPOINT "neck"
-#define START_MONITOR_FEED_DIST 150
+#define OPTIMIZE_MONITOR_FEED_DIST "200"
 #define OBJ_LOD(o) (o getVariable ["CFM_lod", call {private _lod = (((allLODs o) select {((_x select 1) isEqualTo "memory")}) select 0) select 0; o setVariable ["CFM_lod", _lod];_lod}]) 
 #define OBJ_LOD_VAR(var, o) private var = OBJ_LOD(o); o setVariable ["CFM_lod", var];
 #define DRIVER_TURRET_PATH [-1]
