@@ -1,7 +1,23 @@
 /*
-	CFM_fnc_setMonitor
+	Name: CFM_fnc_setMonitor
 
-	Sets obj as monitor
+	Description: 
+		Sets obj as monitor
+		SHOULD BE EXECUTED GLOBALY AND JIP!
+
+	Return: true os succes, false or any if not
+
+	Arguments:
+		1. _monitor [object]
+		2. _sides [Array[side], side] - defines which operators sides it have access to
+		3. _isHandMonitorDisplay [bool] - if its hand monitor for player than screen will pop up for full screen, otherwise its PIP
+		4. _canSwitchNvg [bool]
+		5. _canSwitchTi [bool]
+		6. _canSwitchTurret [bool]
+		7. _canZoom [bool]
+		8. _canConnectDrone [bool] - if it can connect to currently feeding drone
+		9. _canFix [bool] - if has "fix feed" action
+		10. _canTurnOffLocal [bool] - if has "turn off/on local" action
 */
 
 #include "defines.hpp"
@@ -46,5 +62,3 @@ if (_monitor isEqualType []) exitWith {
 if !(IS_OBJ(_monitor)) exitWith {false};
 
 _this NEW_OBJINSTANCE("Monitor");
-
-true

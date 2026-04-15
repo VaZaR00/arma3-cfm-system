@@ -54,16 +54,24 @@ OBJCLASS(Monitor)
 			["_canTurnOffLocal", true]
 		]; 
 
-		if (_monitor isEqualTo objNull) exitWith {};
+		if !(IS_OBJ(_monitor)) exitWith {false};
 			
+		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
+
+		if !(_hasTextureSelection) exitWith {
+			WARN format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor];
+			false
+		};
+
 		private _reset = if (isNil "_reset") then {false} else {_reset};
-		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {};
+		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {false};
 
 		private _isPlayer = (_monitor isEqualTo player) || {(_monitor isKindOf "Man")};
 		private _setlocal = !_isPlayer;
 		private _local = local _monitor;
 
-		if (_setlocal && !_local) exitWith {};
+		// Hand monitors are local
+		if (_setlocal && !_local) exitWith {false};
 
 		_isHandMonitor = _isPlayer;
 		_isLocal = _isHandMonitor;
@@ -85,6 +93,12 @@ OBJCLASS(Monitor)
 		};
 		private _radius = ACTION_RADIUS;
 		private _menuText = "Camera System Menu";
+
+		if !(_sides isEqualType []) then {
+			_sides = [_sides];
+		};
+		_sides = _sides select {_x isEqualType west};
+		if (count _sides == 0) then {_sides = [side player]};
 		
 		_monitor setVariable ["CFM_monitorSides", _sides];
 		_monitor setVariable ["CFM_actionsRadius", _radius];
@@ -98,6 +112,8 @@ OBJCLASS(Monitor)
 		["updateActionPriority"] CALL_CLASS("DbHandler");
 
 		_monitor setVariable ["CFM_isMonitorSet", true];
+
+		true
 	};
 	METHOD("setRenderPicture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
@@ -144,7 +160,7 @@ OBJCLASS(Monitor)
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_monitor setVariable ["CFM_menuActive", false];
-			HINT "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
+			WARN "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
 			false
 		};
 
@@ -219,7 +235,7 @@ OBJCLASS(Monitor)
 		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
 			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
 		} else {
-			HINT "ERROR loadMenu: UI menu WIP!";
+			WARN "ERROR loadMenu: UI menu WIP!";
 			["loadMenuScrollMenu", [_caller]] CALL_OBJCLASS("Monitor", _target);
 		};
 	};
@@ -550,11 +566,11 @@ OBJCLASS(Monitor)
 			};
 		};
 		if (_mode isEqualTo "") exitWith {
-			HINT format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
+			WARN format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
 		if !(IS_OBJ(_unitCam)) exitWith {
-			HINT format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
+			WARN format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
 			false
 		};
 		private _hintText = FULLSCREEN_HINT;

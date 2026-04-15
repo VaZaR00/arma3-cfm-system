@@ -31,14 +31,14 @@ OBJCLASS(Operator)
 
 	METHOD("Init") {
 		// should be executed globaly
-		params[["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
-		if !(IS_OBJ(_operator)) exitWith {};
+		if !(IS_OBJ(_operator)) exitWith {false};
 
 		if (_classType isEqualTo "") then {
 			_classType =  [typeOf _operator] call CFM_fnc_validClassType;
 		};
-		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed"};
+		if !(_classType in VALID_CLASS_TYPES) exitWith {WARN "Init Operator: Invalid class type passed"; false};
 		_operator setVariable ["CFM_classType", _classType];
 
 		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
@@ -101,6 +101,8 @@ OBJCLASS(Operator)
 			default {};
 		};
 		_operator setVariable ["CFM_operatorSet", true];
+
+		true
 	};
 	METHOD("DefineTurretsParams") {
 		params[["_turretsParamsInit", []]];

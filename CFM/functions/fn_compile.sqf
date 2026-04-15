@@ -971,7 +971,7 @@ CFM_fnc_exitFullScreen = {
 	if !(IS_OBJ(_currCam)) exitWith {
 		private _currCamData = (allCameras select {(_x#3) isEqualTo "Internal"})#0;
 		if (isNil "_currCamData") exitWith {
-			HINT "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
+			WARN "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
 		};
 		_currCam = _currCamData#0;
 		_currCam cameraEffect ["Terminate", "back"];
@@ -1094,7 +1094,7 @@ CFM_fnc_remoteExec = {
 		if (_func isEqualTo "spawn") exitWith {
 			(_args#0) spawn (_args#1)
 		};
-		private _func = missionNamespace getVariable [_func, {HINT format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
+		private _func = missionNamespace getVariable [_func, {WARN format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
 		if (_call) then {
 			_args call _func
 		} else {

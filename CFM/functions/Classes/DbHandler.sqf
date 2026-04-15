@@ -20,7 +20,7 @@ CLASS(DbHandler)
 		// should be executed globaly
 		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
-		if (isNil "_operator") exitWith {};
+		if (isNil "_operator") exitWith {false};
 
 		private _mainArgs = [_sides, _turrets, _zoomParams, _hasTInNvg, _params];
 		if (_operator isEqualType []) exitWith {
@@ -44,10 +44,12 @@ CLASS(DbHandler)
 
 		private _opClass = _operator;
 		private _opIsObj = IS_OBJ(_operator);
-		if (_opIsObj) then {
+		private _opSet = if (_opIsObj) then {
 			_opClass = typeOf _operator;
 			[_operator, _mainArgs] NEW_OBJINSTANCE("Operator");
-		};
+		} else {true};
+
+		if ((isNil "_opSet") || {!(_opSet isEqualTo true)}) exitWith {false};
 
 		private _classType = [_opClass] call CFM_fnc_validClassType;
 
@@ -140,7 +142,7 @@ CLASS(DbHandler)
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
 		private _ownerId = if (_player isEqualTo player) then {clientOwner} else {owner _player};
 		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
-			HINT "ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE!";
+			WARN "ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE!";
 			-1
 		};
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
