@@ -47,41 +47,50 @@ CFM_fnc_updateOperator = {
 		[_currVeh] call CFM_fnc_updateOperatorZoom;
 	};
 
-	private _isRemoteControlling = isRemoteControlling player;
-	if !(_isRemoteControlling) exitWith {};
+	private _controlledUnit = focusOn;
+	if (_controlledUnit isEqualTo player) exitWith {};
+	if (isNull _controlledUnit) exitWith {};
 
-	private _controlledUnit = remoteControlled player;
+	private _prevControlledUnit = player getVariable ["CFM_lastControlledUnit", objNull];
+	if !(_prevControlledUnit isEqualTo _controlledUnit) then {
+		// unit changed
+		player setVariable ["CFM_lastControlledUnit", _controlledUnit];
+		player setVariable ["CFM_lastControlledUnitTurretIndex", nil];
+		player setVariable ["CFM_lastControlledUnitIsTurrLocal", nil];
+		player setVariable ["CFM_lastControlledUnitMonitor", nil];
+	};
+	
 	private _controlledObj = vehicle _controlledUnit;
+
 	if !(local _controlledObj) exitWith {};
-	if (_controlledObj isEqualTo objNull) exitWith {};
-	if (_controlledObj isEqualTo player) exitWith {};
-	if (_controlledObj isEqualTo _currVeh) exitWith {};
 
-	// LOCAL TURRET ORIENTATION
-	private _turrLocal = false;
-	private _role = assignedVehicleRole _controlledUnit;
-	if (_role isEqualTo []) exitWith {};
-	private _turretIndex = _role call CFM_fnc_getTurretIndex;
-	private _turrsParams = _controlledObj getVariable "CFM_turretsParams";
-	if (isNil "_turrsParams") exitWith {};
-	if !(_turrsParams isEqualType createHashMap) exitWith {};
-	private _currTurrParams = _turrsParams get _turretIndex;
-	if (isNil "_currTurrParams") exitWith {};
-	if !(_currTurrParams isEqualType createHashMap) exitWith {};
-	_turrLocal = _currTurrParams getOrDefault ["IsTurretLocal", false];
-
-	if (_turrLocal) then {
-		private _turretIndex = -1;
-		if (_controlledObj isEqualTo (gunner (vehicle _controlledObj))) then {
-			_turretIndex = 0;
-		};
+	private _turretIndex = player getVariable ["CFM_lastControlledUnitTurretIndex", -2];
+	private _turrLocal = player getVariable ["CFM_lastControlledUnitIsTurrLocal", false];
+	private _monitor = player getVariable ["CFM_lastControlledUnitMonitor", objNull];
+	if (_turretIndex < -1) then {
+		private _role = assignedVehicleRole _controlledUnit;
+		if (_role isEqualTo []) exitWith {};
+		_turretIndex = _role call CFM_fnc_getTurretIndex;
+		private _turrsParams = _controlledObj getVariable "CFM_turretsParams";
+		if (isNil "_turrsParams") exitWith {};
+		if !(_turrsParams isEqualType createHashMap) exitWith {};
+		private _currTurrParams = _turrsParams get _turretIndex;
+		if (isNil "_currTurrParams") exitWith {};
+		if !(_currTurrParams isEqualType createHashMap) exitWith {};
+		_turrLocal = _currTurrParams getOrDefault ["IsTurretLocal", false];
 		private _monitorsSet = _controlledObj getVariable ["CFM_monitorsSet", createHashMap];
 		private _monitors = _monitorsSet getOrDefault [_turretIndex, []];
-		private _monitor = _monitors#0;
+		_monitor = _monitors#0;
+		player setVariable ["CFM_lastControlledUnitTurretIndex", _turretIndex];
+		player setVariable ["CFM_lastControlledUnitIsTurrLocal", _turrLocal];
+		player setVariable ["CFM_lastControlledUnitMonitor", _monitor];
+	};
 
-		if (isNil "_monitor") exitWith {};
-		if !(IS_OBJ(_monitor)) exitWith {};
+	if (isNil "_monitor") exitWith {};
+	if !(IS_OBJ(_monitor)) exitWith {};
 
+	// LOCAL TURRET ORIENTATION
+	if (_turrLocal) then {
 		private _prevTimeSet = missionNamespace getVariable ["CFM_prevTimeSetLocalCamVector", 0];
 		private _cooldown = (diag_tickTime - _prevTimeSet) < SET_LOCAL_CAM_VECTORS_TIMEOUT;
 		if !(_cooldown) then {
