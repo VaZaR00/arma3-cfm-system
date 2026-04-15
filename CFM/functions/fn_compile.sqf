@@ -1,46 +1,5 @@
 #include "defines.hpp"
 
-CFM_fnc_init = {
-	CFM_updateEachFrame = true;
-
-	if (CFM_updateEachFrame) then {
-		[] call CFM_fnc_setupDraw3dEH;
-	};
-
-	[] call CFM_fnc_initActionConditions;
-	[] call CFM_fnc_initDefaultPointsAlignment;
-
-	CFM_max_zoom_gopro = 2;
-	CFM_max_zoom_drone = 5;
-	CFM_allHandMonitorsAreDisplays = false;
-
-	["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
-	["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], "CFM Settings", true] call CBA_fnc_addSetting;
-	["CFM_optimizeByDistance",  "EDITBOX",  ["Optimize by Distance", "Distance to monitor threshold for optimizing PIP settings. -1 for unlimited"], "CFM Settings", OPTIMIZE_MONITOR_FEED_DIST] call CBA_fnc_addSetting;
-
-	["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[cursorObject, +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_zoomOutKey", ["Zoom Out", "Zoom Out"], {[cursorObject, -1] call CFM_fnc_zoom}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_resetZoomKey", ["Reset zoom", "Reset Zoom"], {[cursorObject, "reset"] call CFM_fnc_zoom}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_operatorZoomKey", ["Use operator zoom", "Use operator zoom"], {[cursorObject, "op"] call CFM_fnc_zoom}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_takeUavControlKey", ["Take UAV control", "Take UAV control"], {[cursorObject] call CFM_fnc_takeUAVcontorls}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {[cursorObject] call CFM_fnc_monitorSwitchTi}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {[cursorObject] call CFM_fnc_monitorToggleNVG}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {[cursorObject, player] call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
-	["CFM", "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {[cursorObject] call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
-
-	#include "Classes\DbHandler.sqf"
-	#include "Classes\Monitor.sqf"
-	#include "Classes\Operator.sqf"
-	#include "Classes\CameraManager.sqf"
-
-	NEW_INSTANCE("DbHandler");
-	NEW_INSTANCE("CameraManager");
-
-	CFM_inited = true;
-};
-
 CFM_fnc_updateOperator = {
 	private _currVeh = vehicle player;
 	if !(_currVeh isEqualTo player) then {
@@ -208,58 +167,6 @@ CFM_fnc_getFovForZoom = {
 	if !(_zoom isEqualType 1) exitWith {1};
 
 	1 / _zoom;
-};
-
-CFM_fnc_setMonitor = {
-	params[
-		["_monitor", objNull], 
-		["_sides", [side player]],
-		["_isHandMonitorDisplay", false],
-		["_canSwitchNvg", true],
-		["_canSwitchTi", true],
-		["_canSwitchTurret", true],
-		["_canZoom", true],
-		["_canFullScreen", true],
-		["_canConnectDrone", true],
-		["_canFix", true],
-		["_canTurnOffLocal", true]
-	];
-
-	if (isNil "_monitor") exitWith {};
-
-	private _reset = if (isNil "_reset") then {false} else {_reset};
-
-	if (_monitor isEqualType []) exitWith {
-		private _mainArgs = [_sides, _isHandMonitorDisplay, _canSwitchNvg, _canSwitchTi, _canSwitchTurret, _canZoom, _canFullScreen, _canConnectDrone, _canFix, _canTurnOffLocal];
-		_monitor apply {
-			if (isNil "_x") then {continue};
-			if (_x isEqualType []) then {
-				private _args = +_x;
-				for "_i" from 1 to (count _mainArgs) do {
-					private _val = _args#_i;
-					if (isNil "_val") then {
-						_args set [_i, (_mainArgs select (_i - 1))];
-					};
-				};
-				_args call CFM_fnc_setMonitor;
-			} else {
-				private _args = [_x] + _mainArgs;
-				_args call CFM_fnc_setMonitor;
-			};
-		};
-	};
-	if !(IS_OBJ(_monitor)) exitWith {};
-
-	_this NEW_OBJINSTANCE("Monitor");
-};
-
-CFM_fnc_setOperator = {
-	params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
-	if (isNil "_operator") exitWith {};
-	private _reset = if (isNil "_reset") then {true} else {_reset};
-	if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
-	["setOperator", _this] CALL_CLASS("DbHandler");
-	true
 };
 
 CFM_fnc_operatorCondition = {
