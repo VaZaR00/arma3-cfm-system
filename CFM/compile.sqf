@@ -480,20 +480,7 @@ CFM_fnc_camPosVehStatic = {
 	};
 	_offsetMS params [["_", ""], ["_offsets", []]];
 	_offsets params [["_offsetPos", NULL_VECTOR], ["_vdup", [NULL_VECTOR, NULL_VECTOR]]];
-
-	if (!(_offsetPos isEqualType []) || {(count _offsetPos != 3)}) then {
-		_offsetPos = NULL_VECTOR;
-	};
-	if !(_vdup isEqualType []) then {
-		_vdup = [];
-	};
 	_vdup params [["_odir", NULL_VECTOR], ["_oup", NULL_VECTOR]];
-	if (!(_odir isEqualType []) || {(count _odir != 3)}) then {
-		_odir = NULL_VECTOR;
-	};
-	if (!(_oup isEqualType []) || {(count _oup != 3)}) then {
-		_oup = NULL_VECTOR;
-	};
 
 	private _objDir = vectorDirVisual _obj;
 	private _objUp = vectorUpVisual _obj;
@@ -533,7 +520,6 @@ CFM_fnc_updateMonitor = {
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
-
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 
 	if (_updatePip) then {
@@ -609,23 +595,10 @@ CFM_fnc_memoryPointAlignment = {
 	params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]]];
 
 	if (_pointParams isEqualType "") exitWith {
-		private _s = _obj selectionPosition [_pointParams, "Memory"];
-		_s
+		_obj selectionPosition [_pointParams, "Memory"];
 	};
-	if !(_pointParams isEqualType []) exitWith {
-		[0,0,0]
-	};
-	if (!(IS_STR(_memPoint)) && {(_memPoint isEqualTo "")}) exitWith {NULL_VECTOR};
 
-	_pointParams params [["_addArr", [0,0,0], [[]]], ["_setArr", [-1,-1,-1], [[]]]];
-
-	if ((count _addArr) != 3) then {
-		_addArr = [0,0,0];
-	} else {
-	};
-	if ((count _setArr) != 3) then {
-		_setArr = [-1,-1,-1];
-	};
+	_pointParams params [["_addArr", [0,0,0], [[]], 3], ["_setArr", [-1,-1,-1], [[]], 3]];
 
 	private _selPos = [_obj, [_memPoint, "Memory"], _addArr] call CFM_fnc_getMemPointOffsetInModelSpace;
  

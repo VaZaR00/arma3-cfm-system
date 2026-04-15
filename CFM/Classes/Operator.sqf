@@ -291,6 +291,7 @@ OBJCLASS(Operator)
 	}; 
 	METHOD("setPointAlignment") {
 		params[["_turretIndex", -1], ["_offset", []], ["_newMemPoint", ""], ["_setPos", []]];
+		// _setPos can be [vectorDir, vectorUp] for CFM_fnc_camPosVehStatic
 
 		if (_turretIndex isEqualType []) then {
 			_turretIndex = _turretIndex#0;
@@ -308,11 +309,29 @@ OBJCLASS(Operator)
 		_prevParams params [["_memPoint", ""], ["_alignment", []]];
 		_alignment params [["_addArr", []], ["_setArr", []]];
 		
+		if !(_offset isEqualType []) then {
+			_offset = NULL_VECTOR;
+		};
+		if !(_setPos isEqualType []) then {
+			_setPos = NULL_VECTOR;
+		};
 		if (count _offset == 3) then {
 			_addArr = +_offset;
 		};
 		if (count _setPos == 3) then {
 			_setArr = +_setPos;
+		};
+		if ((count _setPos > 0) && {((_setPos#0) isEqualType [])}) then {
+			// case for CFM_fnc_camPosVehStatic
+			_setPos params [["_vdir", []], ["_vup", []]];
+			if ((_vdir isEqualType []) || {(count _vdir != 3)}) then {
+				_vdir = NULL_VECTOR;
+			};
+			if (_vup isEqualType []) || {(count _vup != 3)}) then {
+				_vup = NULL_VECTOR;
+			};
+			_addArr = +_offset;
+			_setArr = [+_vdir, +_vup];
 		};
 		if ((IS_STR(_newMemPoint)) && {!(_newMemPoint isEqualTo "")}) then {
 			if (_newMemPoint isEqualTo "_none_") then {
@@ -418,6 +437,56 @@ OBJCLASS(Operator)
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
+
+		if (_camPosFunc isEqualTo CFM_fnc_camPosVehStatic) then {
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				if ((count _pointParams) != 2) exitWith {false};
+				_pointParams params [["_", ""], ["_offsets", []]];
+				if !(_offsets isEqualType []) exitWith {false};
+				_offsets params [["_pos", []], ["_vdup", []]];
+				if !(_pos isEqualType []) exitWith {false};
+				if (count _pos != 3) exitWith {false};
+				if !(_vdup isEqualType []) exitWith {false};
+				if ((count _vdup) != 2) exitWith {false};
+				_vdup params [["_dir", []], ["_up", []]];
+				if !(_dir isEqualType []) exitWith {false};
+				if !(_up isEqualType []) exitWith {false};
+				if (count _dir != 3) exitWith {false};
+				if (count _up != 3) exitWith {false};
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = ["", [NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]];
+			};
+		};
+		if (_camPosFunc isEqualTo CFM_fnc_camPosVehTurret) then {
+			private _checkedPointParams = +_pointParams;
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				if ((count _pointParams) != 2) exitWith {false};
+				_pointParams params [["_memPoint", []], ["_align", []]];
+				if !(_memPoint isEqualType "") exitWith {false};
+				private _defAdd = [0,0,0];
+				private _defSet = [-1,-1,-1];
+				private _defAddSet = [+_defAdd, +_defSet];
+				if !(_align isEqualType []) exitWith {
+					_checkedPointParams = [_memPoint, +_defAddSet];
+					true
+				};
+				_align params [["_add", []], ["_set", []]];
+				if ((!(_add isEqualType []) || {(count _add != 3)}) || {(!(_set isEqualType []) || (count _set != 3))}) exitWith {
+					_checkedPointParams = [_memPoint, +_defAddSet];
+					true
+				};
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = ["", [NULL_VECTOR, NULL_VECTOR]];
+			} else {
+				_pointParams = +_checkedPointParams;
+			};
+		};
 
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
