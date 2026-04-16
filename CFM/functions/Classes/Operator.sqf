@@ -441,25 +441,33 @@ OBJCLASS(Operator)
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
 		if (_camPosFunc isEqualTo CFM_fnc_camPosVehStatic) then {
+			private _checkedPointParams = +_pointParams;
 			private _checkPointParams = call {
 				if !(_pointParams isEqualType []) exitWith {false};
 				if ((count _pointParams) != 2) exitWith {false};
-				_pointParams params [["_", ""], ["_offsets", []]];
+				_pointParams params [["_m", ""], ["_offsets", []]];
 				if !(_offsets isEqualType []) exitWith {false};
 				_offsets params [["_pos", []], ["_vdup", []]];
 				if !(_pos isEqualType []) exitWith {false};
 				if (count _pos != 3) exitWith {false};
-				if !(_vdup isEqualType []) exitWith {false};
-				if ((count _vdup) != 2) exitWith {false};
+				if !(_vdup isEqualType []) exitWith {
+					_checkedPointParams = [_m, [_pos, [NULL_VECTOR, NULL_VECTOR]]];
+					true
+				};
 				_vdup params [["_dir", []], ["_up", []]];
-				if !(_dir isEqualType []) exitWith {false};
-				if !(_up isEqualType []) exitWith {false};
-				if (count _dir != 3) exitWith {false};
-				if (count _up != 3) exitWith {false};
+				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
+					_dir = NULL_VECTOR;
+				};
+				if (!(_up isEqualType []) || {(count _up != 3)}) then {
+					_up = NULL_VECTOR;
+				};
+				_checkedPointParams = [_m, [_pos, [_dir, _up]]];
 				true
 			};
 			if !(_checkPointParams) then {
 				_pointParams = ["", [NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]];
+			} else {
+				_pointParams = +_checkedPointParams;
 			};
 		};
 		if (_camPosFunc isEqualTo CFM_fnc_camPosVehTurret) then {
