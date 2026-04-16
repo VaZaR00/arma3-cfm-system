@@ -65,10 +65,10 @@ CFM_fnc_updateOperator = {
 			private _currDirMS = _controlledObj vectorWorldToModelVisual _dir;
 			private _currUpMS = _controlledObj vectorWorldToModelVisual _up;
 			if !(_currDirMS isEqualTo _prevDir) then {
-				_controlledObj setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS(false)];
+				_controlledObj setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS_AND_SELF(false)];
 			};
 			if !(_currUpMS isEqualTo _prevUp) then {
-				_controlledObj setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS(false)];
+				_controlledObj setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS_AND_SELF(false)];
 			};
 			[_controlledObj] call CFM_fnc_updateOperatorZoom;
 			missionNamespace setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
@@ -81,7 +81,7 @@ CFM_fnc_updateOperatorZoom = {
 	private _currentFOV = getObjectFOV _obj;
 	private _prevZoom = _obj getVariable ["CFM_prevZoomLocalFov", -1];
 	if !(_currentFOV isEqualTo _prevZoom) then {
-		_obj setVariable ["CFM_prevZoomLocalFov", _currentFOV, MONITOR_VIEWERS(false)];
+		_obj setVariable ["CFM_prevZoomLocalFov", _currentFOV, MONITOR_VIEWERS_AND_SELF(false)];
 	};
 	_currentFOV
 };
@@ -128,12 +128,12 @@ CFM_fnc_onEachFrameServer = {
 				private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 				private _currDir = _operator getVariable [_dirVarName, []];
 				private _currUp = _operator getVariable [_upVarName, []];
-				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS(false)];
-				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS(false)];
+				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS_AND_SELF(false)];
+				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS_AND_SELF(false)];
 			} forEach _turrets;
 			// ZOOM
 			private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];
-			_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS(false)];
+			_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS_AND_SELF(false)];
 		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
 
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];

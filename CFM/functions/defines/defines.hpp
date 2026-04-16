@@ -40,6 +40,7 @@
 #define TURRET_INDEX(t) (if (t isEqualType []) then {t select 0} else {t})
 
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
+#define MONITOR_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers})
 
 #define PLAYER_ player
 #define PLAYER_STR STR(PLAYER_)
