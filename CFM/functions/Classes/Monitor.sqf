@@ -56,24 +56,24 @@ OBJCLASS(Monitor)
 
 		if !(IS_OBJ(_monitor)) exitWith {false};
 			
-		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
-
-		if !(_hasTextureSelection) exitWith {
-			WARN format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor];
-			false
-		};
 
 		private _reset = if (isNil "_reset") then {false} else {_reset};
 		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {false};
 
 		private _isPlayer = (_monitor isEqualTo player) || {(_monitor isKindOf "Man")};
-		private _setlocal = !_isPlayer;
 		private _local = local _monitor;
 
 		// Hand monitors are local
-		if (_setlocal && !_local) exitWith {false};
+		if (_isPlayer && !_local) exitWith {false};
 
 		_isHandMonitor = _isPlayer;
+
+		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
+		if (!_isHandMonitor && !(_hasTextureSelection)) exitWith {
+			WARN format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor];
+			false
+		};
+
 		_isLocal = _isHandMonitor;
 		private _originalTexture = (getObjectTextures _monitor) select 0;
 		_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
