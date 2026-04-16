@@ -1,31 +1,31 @@
 #include "defines.hpp"
 
 CFM_fnc_updateOperator = {
-	private _currVeh = vehicle player;
-	if !(_currVeh isEqualTo player) then {
+	private _currVeh = vehicle PLAYER_;
+	if !(_currVeh isEqualTo PLAYER_) then {
 		[_currVeh] call CFM_fnc_updateOperatorZoom;
 	};
 
 	private _controlledUnit = focusOn;
-	if (_controlledUnit isEqualTo player) exitWith {};
+	if (_controlledUnit isEqualTo PLAYER_) exitWith {};
 	if (isNull _controlledUnit) exitWith {};
 
-	private _prevControlledUnit = player getVariable ["CFM_lastControlledUnit", objNull];
+	private _prevControlledUnit = PLAYER_ getVariable ["CFM_lastControlledUnit", objNull];
 	if !(_prevControlledUnit isEqualTo _controlledUnit) then {
 		// unit changed
-		player setVariable ["CFM_lastControlledUnit", _controlledUnit];
-		player setVariable ["CFM_lastControlledUnitTurretIndex", nil];
-		player setVariable ["CFM_lastControlledUnitIsTurrLocal", nil];
-		player setVariable ["CFM_lastControlledUnitMonitor", nil];
+		PLAYER_ setVariable ["CFM_lastControlledUnit", _controlledUnit];
+		PLAYER_ setVariable ["CFM_lastControlledUnitTurretIndex", nil];
+		PLAYER_ setVariable ["CFM_lastControlledUnitIsTurrLocal", nil];
+		PLAYER_ setVariable ["CFM_lastControlledUnitMonitor", nil];
 	};
 	
 	private _controlledObj = vehicle _controlledUnit;
 
 	if !(local _controlledObj) exitWith {};
 
-	private _turretIndex = player getVariable ["CFM_lastControlledUnitTurretIndex", -2];
-	private _turrLocal = player getVariable ["CFM_lastControlledUnitIsTurrLocal", false];
-	private _monitor = player getVariable ["CFM_lastControlledUnitMonitor", objNull];
+	private _turretIndex = PLAYER_ getVariable ["CFM_lastControlledUnitTurretIndex", -2];
+	private _turrLocal = PLAYER_ getVariable ["CFM_lastControlledUnitIsTurrLocal", false];
+	private _monitor = PLAYER_ getVariable ["CFM_lastControlledUnitMonitor", objNull];
 	if (_turretIndex < -1) then {
 		private _role = assignedVehicleRole _controlledUnit;
 		if (_role isEqualTo []) exitWith {};
@@ -40,9 +40,9 @@ CFM_fnc_updateOperator = {
 		private _monitorsSet = _controlledObj getVariable ["CFM_monitorsSet", createHashMap];
 		private _monitors = _monitorsSet getOrDefault [_turretIndex, []];
 		_monitor = _monitors#0;
-		player setVariable ["CFM_lastControlledUnitTurretIndex", _turretIndex];
-		player setVariable ["CFM_lastControlledUnitIsTurrLocal", _turrLocal];
-		player setVariable ["CFM_lastControlledUnitMonitor", _monitor];
+		PLAYER_ setVariable ["CFM_lastControlledUnitTurretIndex", _turretIndex];
+		PLAYER_ setVariable ["CFM_lastControlledUnitIsTurrLocal", _turrLocal];
+		PLAYER_ setVariable ["CFM_lastControlledUnitMonitor", _monitor];
 	};
 
 	if (isNil "_monitor") exitWith {};
@@ -98,7 +98,7 @@ CFM_fnc_onEachFrameClient = {
 		private _condition = _monitor call CFM_fnc_monitorFeedActive;
 		private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
 		if (!(_isHandMonitor) && {_doOptimize}) then {
-			private _dist = player distance _monitor;
+			private _dist = PLAYER_ distance _monitor;
 			if (_dist > _optimizeDistance) then {
 				private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 				[_monitor] call CFM_fnc_stopOperatorFeed;
@@ -245,8 +245,8 @@ CFM_fnc_getActiveOperators = {
 CFM_fnc_timeInterpolate = {
     params ["_obj", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
     
-	if (!DO_CAM_INTERPOLATION) exitWith {
-	// if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
+	// if (!DO_CAM_INTERPOLATION) exitWith {
+	if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
 		[_targetPos, [_targetDir, _targetUp]];
 	};
 
@@ -342,9 +342,9 @@ CFM_fnc_updateCamera = {
 	if ((count _up) != 3) then {
 		_up = vectorUp _operator;
 	};
-	private _vDirUp = [_dir, _up];
-	// private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
-	// _posAndVUP params ["_pos", ["_vDirUp", []]];
+	// private _vDirUp = [_dir, _up];
+	private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
+	_posAndVUP params ["_pos", ["_vDirUp", []]];
 	if (_camExists && _doSetCam) then {
 		_cam setPosASL _pos; 
 		_cam setVectorDirAndUp _vDirUp;  
@@ -803,7 +803,7 @@ CFM_fnc_createPIPwindow = {
 };
 
 CFM_fnc_closePIPwindow = {
-	params[["_player", player]];
+	params[["_player", PLAYER_]];
 	private _renderTarget = _player getVariable ["CFM_currentRscLayer", ""];
 	_renderTarget cutFadeOut 0;
     private _prevDisplay = _player getVariable ["CFM_currentDisplay", displayNull];
@@ -811,7 +811,7 @@ CFM_fnc_closePIPwindow = {
 };
 
 CFM_fnc_setHandDisplay = {
-	params[["_player", player], ["_render", true]];
+	params[["_player", PLAYER_], ["_render", true]];
 
 	private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
 	private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
@@ -822,8 +822,8 @@ CFM_fnc_setHandDisplay = {
 			disableSerialization;
 			private _disp = (findDisplay 46) createDisplay "RscDisplayCFM";
 			uiNamespace setVariable ["CFM_tabletDisplay", _disp];
-			player setVariable ["CFM_tabletDisplayIsOpened", true];
-			player setVariable ["CFM_turnedOffLocal", false];
+			PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", true];
+			PLAYER_ setVariable ["CFM_turnedOffLocal", false];
 			"[0.9, 0.5, 0.5]"
 		} else {
 			""
@@ -842,8 +842,8 @@ CFM_fnc_setHandDisplay = {
 CFM_fnc_onDisplayUnload = {
 	params[["_display", displayNull]];
 	disableSerialization;
-	player setVariable ["CFM_tabletDisplayIsOpened", false];
-	[player] call CFM_fnc_turnOffMonitorLocal;
+	PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", false];
+	[PLAYER_] call CFM_fnc_turnOffMonitorLocal;
 };
 
 CFM_fnc_setMonitorTexture = {
@@ -884,33 +884,73 @@ CFM_fnc_takeUAVcontorls = {
 	private _drone = _monitor getVariable ["CFM_connectedOperator", objNull]; 
 	private _errtext = "Can't connect to drone";
 
-	if ((_drone isEqualTo objNull) || !(_drone isEqualType objNull)) exitWith {
-		
+	if !(IS_OBJ(_drone)) exitWith {};
+
+	private _dSide = side _drone;
+	private _playerSide = side PLAYER_;
+	private _sameSide = _dSide isEqualTo _playerSide;
+	private _canHack = missionNamespace getVariable ["CFM_canHackDrone", false];
+
+	if (!_canHack && !_sameSide) exitWith {
+		hint _errtext;
+	};
+	if (!_sameSide) exitWith {
+		// do hack
+		[_monitor, _drone, _playerSide] spawn {
+			params ["_monitor", "_drone", "_playerSide"];
+
+			[[_drone, _playerSide, clientOwner], {
+				params ["_drone", "_side", "_netId"];
+				deleteVehicleCrew _drone;
+				_side createVehicleCrew _drone;
+			}] remoteExecCall ["call", _drone];
+
+			hint "Hacking drone...";
+			sleep (missionNamespace getVariable ["CFM_hackDroneTime", 5]);
+
+			private _newSide = side _drone;
+			if !(_newSide isEqualTo _playerSide) exitWith {
+				hint "Failed to hack drone";
+			};
+
+			hint "Drone hacked!";
+
+			[_monitor] call CFM_fnc_takeUAVcontorls;
+		};
 	};
 
-	private _controler = remoteControlled _drone;
+	private _dDriver = driver _drone;
+	private _dGunner = gunner _drone;
+	private _controler = ([_dDriver, _dGunner] select {IS_OBJ((remoteControlled _x))})#0;
 
-	if (!(_controler isEqualTo objNull) || !(_controler isEqualType objNull)) exitWith {
+	if (isNil "_controler") then {
+		_controler = objNull;
+	};
+	if (IS_OBJ(_controler)) exitWith {
 		hint _errtext;
 	};
 
-	private _connect = player connectTerminalToUAV _drone;
+	private _bot = _dDriver;
+	private _currTurret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
+	if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
+		_bot = _dGunner;
+		if (isNull _bot) then {
+			_bot = _dDriver;
+		};
+	};
+	if (isNil "_bot" || {!IS_OBJ(_bot)}) exitWith {
+		hint _errtext;
+	};
+
+	PLAYER_ connectTerminalToUAV objNull;
+	private _connect = PLAYER_ connectTerminalToUAV _drone;
 
 	if !(_connect) exitWith {
 		hint _errtext;
 	};
 
-	private _bot = driver _drone;
-	private _currTurret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]; 
-	if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
-		_bot = gunner _drone;
-		if (isNull _bot) then {
-			_bot = driver _drone;
-		};
-	};
-
 	[] call CFM_fnc_exitFullScreen;
-	player remoteControl (_bot);
+	PLAYER_ remoteControl (_bot);
 	_drone switchCamera "internal";
 };
 
@@ -975,7 +1015,7 @@ CFM_fnc_exitFullScreen = {
 		};
 		_currCam = _currCamData#0;
 		_currCam cameraEffect ["Terminate", "back"];
-		player switchCamera "INTERNAL";
+		PLAYER_ switchCamera "INTERNAL";
 	};
 	private _r2t = missionNamespace getVariable ["CFM_r2tOfFullScreenCam", ""];
 	missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
@@ -984,10 +1024,10 @@ CFM_fnc_exitFullScreen = {
 	missionNamespace setVariable ["CFM_isInFullScreen", false];
 	if !(IS_VALID_R2T(_r2t)) exitWith {
 		_currCam cameraEffect ["Terminate", "back"];
-		player switchCamera "INTERNAL";
+		PLAYER_ switchCamera "INTERNAL";
 	};
 	_currCam cameraEffect ["Internal", "back", _r2t];
-	player switchCamera "INTERNAL";
+	PLAYER_ switchCamera "INTERNAL";
 };
 
 CFM_fnc_resetFeed = {
@@ -1044,7 +1084,7 @@ CFM_fnc_syncState = {
 			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 			_optimizeDistance = call compile _optimizeDistance;
 			if (_optimizeDistance <= 0) exitWith {true};
-			private _dist = _monitor distance player;
+			private _dist = _monitor distance PLAYER_;
 			private _isClose = _dist < _optimizeDistance;
 			_start = _monitor getVariable ["CFM_waitingForStart", true];
 			if (_isClose) exitWith {true};
@@ -1087,7 +1127,7 @@ CFM_fnc_remoteExec = {
 		_jip = "CFM_jip_remote_exec_id_" + _id;
 	};
 
-	if ((_targets isEqualTo player) || {(_targets isEqualTo false) || {(_targets isEqualTo (clientOwner))}}) exitWith {
+	if ((_targets isEqualTo PLAYER_) || {(_targets isEqualTo false) || {(_targets isEqualTo (clientOwner))}}) exitWith {
 		if (_func isEqualTo "call") exitWith {
 			(_args#0) call (_args#1)
 		};
@@ -1249,7 +1289,7 @@ CFM_fnc_initActionConditions = {
 		IS_MONITOR_ON
 		(_target getVariable ['CFM_feedActive', false]) && {
 			(_target getVariable ['CFM_currentOperatorIsDrone', false]) &&
-			{player call CFM_fnc_hasUAVterminal}
+			{PLAYER_ call CFM_fnc_hasUAVterminal}
 		}
 	};
 	CFM_fnc_fixFeedActionCondition = {
@@ -1335,11 +1375,11 @@ CFM_fnc_initActionConditions = {
 			{(_target getVariable ['CFM_isHandMonitorDisplay', false]) || 
 			{MGVAR ["CFM_allHandMonitorsAreDisplays", false]}}
 		) exitWith {false};
-		focusOn == player
+		focusOn == PLAYER_
 	};
 	CFM_fnc_exitFullScreenActionCondition = {
 		params["_target"];
-		focusOn != player
+		focusOn != PLAYER_
 	};
 	CFM_fnc_watchTabletActionCondition = {
 		params["_target"];

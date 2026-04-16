@@ -3,7 +3,7 @@ OBJCLASS(Monitor)
 	SET_SELF_VAR(_monitor);
 
 	OBJ_VARIABLE(_radius, ACTION_RADIUS);
-	OBJ_VARIABLE(_monitorSides, [side player]);
+	OBJ_VARIABLE(_monitorSides, [side PLAYER_]);
 	OBJ_VARIABLE(_turnedOffLocal, false);
 	OBJ_VARIABLE(_originalTexture, "");
 	OBJ_VARIABLE(_menuActive, false);
@@ -42,7 +42,7 @@ OBJCLASS(Monitor)
 	METHOD("Init") { 
 		// should be executed globaly
 		params [
-			["_sides", [side player]],
+			["_sides", [side PLAYER_]],
 			["_isHandMonitorDisplay", false],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true],
@@ -60,7 +60,7 @@ OBJCLASS(Monitor)
 		private _reset = if (isNil "_reset") then {false} else {_reset};
 		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {false};
 
-		private _isPlayer = (_monitor isEqualTo player) || {(_monitor isKindOf "Man")};
+		private _isPlayer = (_monitor isEqualTo PLAYER_) || {(_monitor isKindOf "Man")};
 		private _local = local _monitor;
 
 		// Hand monitors are local
@@ -80,7 +80,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 		
 		if (_isPlayer) then {
-			_targetInActionsConditions = "player";
+			_targetInActionsConditions = "PLAYER_";
 			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
 		};
 
@@ -98,7 +98,7 @@ OBJCLASS(Monitor)
 			_sides = [_sides];
 		};
 		_sides = _sides select {_x isEqualType west};
-		if (count _sides == 0) then {_sides = [side player]};
+		if (count _sides == 0) then {_sides = [side PLAYER_]};
 		
 		_monitor setVariable ["CFM_monitorSides", _sides];
 		_monitor setVariable ["CFM_actionsRadius", _radius];
@@ -171,7 +171,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
-		["addActiveViewer", [player]] CALL_CLASS("DbHandler");
+		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 
 		if (_reset) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
@@ -287,7 +287,7 @@ OBJCLASS(Monitor)
 			
 		private _menuHndl = [_self, _tempIDs] spawn { 
 			params["_target", "_tempIDs"];
-			waitUntil {sleep 1; !(_target getVariable ['CFM_menuActive', false]) || {(_target distance player) > 5}};
+			waitUntil {sleep 1; !(_target getVariable ['CFM_menuActive', false]) || {(_target distance PLAYER_) > 5}};
 			{ _target removeAction _x } forEach _tempIDs; 
 			_target setVariable ['CFM_menuActive', false];
 		}; 
@@ -390,7 +390,7 @@ OBJCLASS(Monitor)
 			_menuText = "Hand Tablet Camera System Menu";
 			"([_target] call CFM_fnc_hasUAVterminal)"
 		} else {"true"};
-		private _priority = player getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
+		private _priority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _radius = _self getVariable ["CFM_actionsRadius", _radius];
 		private _name = if !(_isHandMonitor) then {
 			// _menuText = _menuText + ": %1";
@@ -439,7 +439,7 @@ OBJCLASS(Monitor)
 			["_canSwitchTi", true]
 		]; 
 		private _target = _targetInActionsConditions;
-		private _priority = player getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
+		private _priority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _actions = [];
 		private _radius = _self getVariable ["CFM_actionsRadius", _radius];
 		call {
@@ -475,7 +475,7 @@ OBJCLASS(Monitor)
 				private _connectDroneAction = _self addAction ["<t color='#1c399e'>Take UAV controls</t>", { 
 					params ["_target"]; 
 
-					[_target] call CFM_fnc_takeUAVcontorls;
+					[_target] spawn CFM_fnc_takeUAVcontorls;
 				}, nil, _priority, true, false, "", format["[%1] call CFM_fnc_connectDroneActionCondition", _target], _radius]; 
 				_actions append [_connectDroneAction];
 			};
@@ -594,12 +594,12 @@ OBJCLASS(Monitor)
 		} else {
 			_unitCam switchCamera _mode;
 			_self spawn {
-				private _initPos = getPosASL player;
-				private _initDir = getDir player;
+				private _initPos = getPosASL PLAYER_;
+				private _initDir = getDir PLAYER_;
 				waitUntil {
-					!(_initPos isEqualTo (getPosASL player)) 
+					!(_initPos isEqualTo (getPosASL PLAYER_)) 
 					// ||
-					// !(_initDir isEqualTo (getDir player))
+					// !(_initDir isEqualTo (getDir PLAYER_))
 				};
 				[_this] call CFM_fnc_exitMonitorFullScreen;
 				sleep 1;
@@ -622,11 +622,11 @@ OBJCLASS(Monitor)
 				_currentFeedCam cameraEffect ["internal", "back", _currentR2T];
 			} else {
 				_currentFeedCam cameraEffect ["Terminate", "back"];
-				player switchCamera "INTERNAL";
+				PLAYER_ switchCamera "INTERNAL";
 			};
 			[_self, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		} else {
-			player switchCamera "INTERNAL";
+			PLAYER_ switchCamera "INTERNAL";
 		};
 		if (_isHandMonitor) then {
 			[_self] call CFM_fnc_turnOnMonitorLocal;

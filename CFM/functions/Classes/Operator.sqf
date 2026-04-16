@@ -402,7 +402,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_monitor)) exitWith {};
 
-		if (player isEqualTo _caller) then {
+		if (PLAYER_ isEqualTo _caller) then {
 			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 		};
 
@@ -419,7 +419,7 @@ OBJCLASS(Operator)
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
 
-		if (player isEqualTo _caller) then {
+		if (PLAYER_ isEqualTo _caller) then {
 			["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 		};
 	};

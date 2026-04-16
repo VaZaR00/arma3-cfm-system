@@ -10,7 +10,7 @@
 	Arguments:
 		1. _monitor [object]
 		2. _sides [Array[side], side] - defines which operators sides it have access to
-		3. _isHandMonitorDisplay [bool] - if its hand monitor for player than screen will pop up for full screen, otherwise its PIP
+		3. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
 		4. _canSwitchNvg [bool]
 		5. _canSwitchTi [bool]
 		6. _canSwitchTurret [bool]
@@ -24,7 +24,7 @@
 
 params [
 	["_monitor", objNull], 
-	["_sides", [side player]],
+	["_sides", [side PLAYER_]],
 	["_isHandMonitorDisplay", false],
 	["_canSwitchNvg", true],
 	["_canSwitchTi", true],

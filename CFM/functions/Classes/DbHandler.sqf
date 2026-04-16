@@ -140,7 +140,7 @@ CLASS(DbHandler)
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {-1};
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
-		private _ownerId = if (_player isEqualTo player) then {clientOwner} else {owner _player};
+		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
 		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
 			WARN "ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE!";
 			-1
@@ -185,12 +185,12 @@ CLASS(DbHandler)
 		_next
 	};
 	METHOD("updateActionPriority") {
-		private _currentPriority = player getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
+		private _currentPriority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _next = _currentPriority - 0.1;
 		if (_next < 10) then {
 			_next = ACTIONS_PRIORITY + ACTIONS_PRIORITY;
 		};
-		player setVariable ["CFM_currentActionsPriority", _next];
+		PLAYER_ setVariable ["CFM_currentActionsPriority", _next];
 		_next
 	};
 CLASS_END

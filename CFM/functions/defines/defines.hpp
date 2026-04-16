@@ -22,7 +22,7 @@
 #define NULL_VECTOR [0,0,0]
 #define MONITOR_ACTION_RADIUS(mon) (mon getVariable ["CFM_actionsRadius", ACTION_RADIUS]) 
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_feedActive', false])"
-#define DIST_ACTION_CONDITION "((_target distance player) < 5)"
+#define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
 #define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
 #define IS_STR(s) (s isEqualType "")
@@ -41,6 +41,7 @@
 
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 
+#define PLAYER_ player
 
 #define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};
 #define VARS_STR call {if !(_this isEqualType []) then {_this = ["", _this]}; params["_txt", ["_varstr", ""]]; if (_varstr isEqualTo "") then {_varstr = _txt}; private _ar = _varstr splitString ",;. "; private _arvs = _ar apply {private _val = call compile format["if !(isNil '%1') then {%1}", _x]; if (isNil "_val") then {""} else {format["%1: %2", _x, _val]}}; _txt + "  :  " + (_arvs joinString "; ")}
