@@ -329,7 +329,7 @@ OBJCLASS(Operator)
 			if ((_vdir isEqualType []) || {(count _vdir != 3)}) then {
 				_vdir = NULL_VECTOR;
 			};
-			if (_vup isEqualType []) || {(count _vup != 3)}) then {
+			if ((_vup isEqualType []) || {(count _vup != 3)}) then {
 				_vup = NULL_VECTOR;
 			};
 			_addArr = +_offset;

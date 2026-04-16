@@ -18,11 +18,11 @@ CLASS(DbHandler)
 	};
 	METHOD("setOperator") {
 		// should be executed globaly
-		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_zoomParams", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
 
 		if (isNil "_operator") exitWith {false};
 
-		private _mainArgs = [_sides, _turrets, _zoomParams, _hasTInNvg, _params];
+		private _mainArgs = [_sides, _turrets, _hasTInNvg, _params];
 		if (_operator isEqualType []) exitWith {
 			_operator apply {
 				if (isNil "_x") then {continue};

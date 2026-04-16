@@ -1031,7 +1031,7 @@ CFM_fnc_syncState = {
 	private _operator = if (_oNetId isEqualType "") then {objectFromNetId _oNetId} else {_oNetId}; 
 
 	if !(IS_OBJ(_monitor)) exitWith {};
-	if !(IS_OBJ(_operator)) exitWith {};
+	if (_start && {!(IS_OBJ(_operator))}) exitWith {};
 
 	private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false]; 
 
