@@ -474,21 +474,25 @@ OBJCLASS(Operator)
 			private _checkedPointParams = +_pointParams;
 			private _checkPointParams = call {
 				if !(_pointParams isEqualType []) exitWith {false};
-				if ((count _pointParams) != 2) exitWith {false};
 				_pointParams params [["_memPoint", []], ["_align", []]];
-				if !(_memPoint isEqualType "") exitWith {false};
+				if !(_memPoint isEqualType "") then {
+					_memPoint = "";
+				};
 				private _defAdd = [0,0,0];
 				private _defSet = [-1,-1,-1];
 				private _defAddSet = [+_defAdd, +_defSet];
-				if !(_align isEqualType []) exitWith {
+				if (!(_align isEqualType []) || {(_align isEqualTo [])}) exitWith {
 					_checkedPointParams = [_memPoint, +_defAddSet];
 					true
 				};
 				_align params [["_add", []], ["_set", []]];
-				if ((!(_add isEqualType []) || {(count _add != 3)}) || {(!(_set isEqualType []) || (count _set != 3))}) exitWith {
-					_checkedPointParams = [_memPoint, +_defAddSet];
-					true
+				if (!(_add isEqualType []) || {(count _add != 3)}) then {
+					_add = +_defAdd;
 				};
+				if (!(_set isEqualType []) || {(count _set != 3)}) then {
+					_set = +_defSet;
+				};
+				_checkedPointParams = [_memPoint, [_add, _set]];
 				true
 			};
 			if !(_checkPointParams) then {

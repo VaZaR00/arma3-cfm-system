@@ -470,9 +470,10 @@ CFM_fnc_getCameraPoints = {
 			// private _name = "gunnerview";
 			// private _name = "zamerny";
 			private _name = "konec hlavne";
-			// if ((["bmp", "bmd", "t90"] findIf {_x in _vehType}) != -1) then {
-			// 	_name = "konec hlavne";
-			// };
+			// private _name = "otocvez";
+			if ((["bmp"] findIf {_x in _vehType}) != -1) then {
+				_name = "mainturret";
+			};
 			private _dirParamsDef = [_name, [-0.3, 0.0, 0.2]];
 			[_name, _dirParamsDef]
 		};
@@ -538,7 +539,9 @@ CFM_fnc_initDefaultPointsAlignment = {
 
 	// default offset for vehs is [-0.3, 0.0, 0.2] in CFM_fnc_getCameraPoints
 	private _defaults = [
-		[["t72", "bmp", "bmd"], [[-1, [[-0.5,-0.8,0.3]]]]],
+		[["t72", "bmd2", "bmd1"], [[-1, [[-0.5,-0.8,0.3]]]]],
+		[["bmp2"], [[-1, [[-0.8,0.3,0.2]]]]],
+		[["bmp1"], [[-1, [[-0.3,0.45,0.7]]]]],
 		[["t80", "t90"], [[-1, [[-0.5,-0.6,0.3]]]]],
 		[["btr", "brdm"], [[-1, [[-0.2,0.1,0.1]]]]],
 		[["m1a2"], [[-1, [[-0.8,-0.2,0.8]]]]],
@@ -1104,7 +1107,7 @@ CFM_fnc_syncState = {
 }; 
 
 CFM_fnc_remoteExec = {
-	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", 0], ["_call", false, [false]]];
+	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", true], ["_call", false, [false]]];
 
 
 	if (_targets isEqualType true) then {
@@ -1119,7 +1122,7 @@ CFM_fnc_remoteExec = {
 		private _idArr = (_netid splitString ":");
 		private _id = "0";
 		if (count _idArr > 1) then {
-			_id = _idArr#1;
+			_id = trim (_idArr#1);
 			if !(_id isEqualType "") then {
 				_id = str _id;
 			};

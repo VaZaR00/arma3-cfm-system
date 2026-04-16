@@ -80,7 +80,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 		
 		if (_isPlayer) then {
-			_targetInActionsConditions = "PLAYER_";
+			_targetInActionsConditions = PLAYER_STR;
 			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
 		};
 
