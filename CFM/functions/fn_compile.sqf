@@ -246,7 +246,7 @@ CFM_fnc_timeInterpolate = {
     params ["_obj", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
     
 	// if (!DO_CAM_INTERPOLATION) exitWith {
-	if (!DO_CAM_INTERPOLATION && !_doInterpolate) exitWith {
+	if (!isMultiplayer || {!DO_CAM_INTERPOLATION && !_doInterpolate}) exitWith {
 		[_targetPos, [_targetDir, _targetUp]];
 	};
 
