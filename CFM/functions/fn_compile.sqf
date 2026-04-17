@@ -1145,7 +1145,11 @@ CFM_fnc_remoteExec = {
 		};
 	};
 
-	_args remoteExec [_func, _targets, _jip];
+	if (_call) then {
+		_args remoteExecCall [_func, _targets, _jip];
+	} else {
+		_args remoteExec [_func, _targets, _jip];
+	};
 };
 
 CFM_fnc_fixFeed = {

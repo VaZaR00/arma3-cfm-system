@@ -9,3 +9,5 @@
 #define FULLSCREEN_TEMPCAM_HINT_NL(nl) (format["TO EXIT FULLSCREEN PRESS 'CTRL + E' OR YOUR BIND. FULLSCREEN WILL AUTOMATICLY EXIT AFTER %2 SECONDS. %1 АБИ ВИЙТИ З ПОВНОЕКРАННОГО РЕЖИМУ НАТИСНІТЬ 'CTRL + E' АБО СВІЙ БІНД. ВИ ВИЙДЕТЕ З АВТОМАТИЧНО ПОВНОЕКРАННОГО РЕЖИМУ ЧЕРЕЗ %2 СЕКУНД.", nl, AUTOEXIT_FULLSCREEN_TIMER])
 #define FULLSCREEN_TEMPCAM_HINT FULLSCREEN_TEMPCAM_HINT_NL(endl)
 #define AUTOEXIT_FULLSCREEN_TIMER 120
+
+#define SET_MON_OP_REMOTE_EXEC

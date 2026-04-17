@@ -3,7 +3,6 @@
 
 	Description: 
 		Sets obj as monitor
-		SHOULD BE EXECUTED GLOBALY AND JIP!
 
 	Return: true os succes, false or any if not
 
@@ -61,4 +60,15 @@ if (_monitor isEqualType []) exitWith {
 };
 if !(IS_OBJ(_monitor)) exitWith {false};
 
+#ifdef SET_MON_OP_REMOTE_EXEC
+// for JIP sync
+if !(isServer) exitWith {false};
+
+[_this, {
 _this NEW_OBJINSTANCE("Monitor");
+}, 0, true, true] call CFM_fnc_remoteExec;
+#endif 
+
+#ifundef SET_MON_OP_REMOTE_EXEC
+_this NEW_OBJINSTANCE("Monitor");
+#endif 
