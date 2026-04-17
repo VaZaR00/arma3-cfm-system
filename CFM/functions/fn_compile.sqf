@@ -325,10 +325,10 @@ CFM_fnc_updateCamera = {
 		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 		private _localDirMS = _operator getVariable [_dirVarName, []];
 		private _localUpMS = _operator getVariable [_upVarName, []];
-		if (count _localDirMS == 3) then {
+		if ((_localDirMS isEqualType []) && {(count _localDirMS == 3)}) then {
 			_dir = _operator vectorModelToWorldVisual _localDirMS;
 		};
-		if (count _localUpMS == 3) then {
+		if ((_localUpMS isEqualType []) && {(count _localUpMS == 3)}) then {
 			_up = _operator vectorModelToWorldVisual _localUpMS;
 		};
 	};
