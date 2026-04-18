@@ -255,13 +255,14 @@ CFM_fnc_timeInterpolate = {
     private _interpFactor = 1 - (exp (-_tightness * _dt));
 
     // 1. Позиция
-    private _lastPos = _obj getVariable ["CFM_cam_lastPos", _targetPos];
-    private _newPos = +_lastPos;
-    // Интерполируем каждую ось (или через vectorAdd/vectorDiff)
-	for "_i" from 0 to 2 do {
-        private _diff = (_targetPos select _i) - (_lastPos select _i);
-        _newPos set [_i, (_lastPos select _i) + (_diff * _interpFactor)];
-    };
+    private _newPos = _targetPos;
+    // private _lastPos = _obj getVariable ["CFM_cam_lastPos", _targetPos];
+    // private _newPos = +_lastPos;
+    // // Интерполируем каждую ось (или через vectorAdd/vectorDiff)
+	// for "_i" from 0 to 2 do {
+    //     private _diff = (_targetPos select _i) - (_lastPos select _i);
+    //     _newPos set [_i, (_lastPos select _i) + (_diff * _interpFactor)];
+    // };
 
     // 2. Векторы (Dir и Up)
     private _lastDir = _obj getVariable ["CFM_cam_lastDir", _targetDir];
@@ -309,15 +310,12 @@ CFM_fnc_updateCamera = {
 	};
 
 	// POS AN VECTOR DIR AND UP
-	private _pos = [];
-	private _dir = [];
-	private _up = [];
-	if (_operatorLocal || !_turretLocal) then {
-		private _posData = [_operator, _pointParams] call _camPosFunc;
-		_pos = _posData param [0, _pos];
-		_dir = _posData param [1, _dir];
-		_up = _posData param [2, _up];
-	};
+	private _posData = [_operator, _pointParams] call _camPosFunc;
+	_posData params [
+		["_pos", getPosASL _operator, [[]], 3], 
+		["_dir", vectorDir _operator, [[]], 3], 
+		["_up", vectorUp _operator, [[]], 3]
+	];
 
 	if (_turretLocal && {isMultiplayer && {!_operatorLocal}}) then {
 		_doInterpolation = true;
@@ -333,15 +331,15 @@ CFM_fnc_updateCamera = {
 		};
 	};
 
-	if ((count _pos) != 3) then {
-		_pos = getPosASL _operator;
-	};
-	if ((count _dir) != 3) then {
-		_dir = vectorDir _operator;
-	};
-	if ((count _up) != 3) then {
-		_up = vectorUp _operator;
-	};
+	// if ((count _pos) != 3) then {
+	// 	_pos = getPosASL _operator;
+	// };
+	// if ((count _dir) != 3) then {
+	// 	_dir = vectorDir _operator;
+	// };
+	// if ((count _up) != 3) then {
+	// 	_up = vectorUp _operator;
+	// };
 	// private _vDirUp = [_dir, _up];
 	private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
 	_posAndVUP params ["_pos", ["_vDirUp", []]];
@@ -659,7 +657,7 @@ CFM_fnc_doCheckTurretLocality = {
 
 	if !(IS_OBJ(_operator)) exitWith {false};
 
-	[_operator] call CFM_fnc_isUAV;
+	_operator call CFM_fnc_isUAV;
 };
 
 CFM_fnc_createCamera = {
@@ -1245,9 +1243,7 @@ CFM_fnc_hasUAVterminal = {
 };
 
 CFM_fnc_isUAV = {
-	params["_obj"];
-
-	(_obj isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _obj) >> "isUav")) isEqualTo 1}
+	(_this isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _this) >> "isUav")) isEqualTo 1}
 };
 
 CFM_fnc_initActionConditions = {
