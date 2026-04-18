@@ -252,7 +252,7 @@ OBJCLASS(Operator)
 
 		// IS LOCAL TURRET
 		private _isLocal = [_operator] call CFM_fnc_doCheckTurretLocality;
-		_turretParams set ["isLocal", _isLocal];
+		_turretParams set ["IsTurretLocal", _isLocal];
 
 		// CAM POS FUNC
 		private _fullCrew = fullCrew [_self, "", true];
@@ -432,7 +432,7 @@ OBJCLASS(Operator)
 
 		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
-		private _isLocal = _turretData getOrDefault ["isLocal", false];
+		private _isLocal = _turretData getOrDefault ["IsTurretLocal", false];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
 		private _isStatic = _turretData getOrDefault ["isStatic", false];
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
