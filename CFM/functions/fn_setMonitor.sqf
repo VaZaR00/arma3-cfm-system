@@ -61,14 +61,13 @@ if (_monitor isEqualType []) exitWith {
 if !(IS_OBJ(_monitor)) exitWith {false};
 
 #ifdef SET_MON_OP_REMOTE_EXEC
-// for JIP sync
-if !(isServer) exitWith {false};
+	// for JIP sync
+	if !(isServer) exitWith {false};
 
-[_this, {
-_this NEW_OBJINSTANCE("Monitor");
-}, 0, true, true] call CFM_fnc_remoteExec;
+	[_this, {
+	_this NEW_OBJINSTANCE("Monitor");
+	}, 0, true, true] call CFM_fnc_remoteExec;
 #endif 
-
 #ifndef SET_MON_OP_REMOTE_EXEC
-_this NEW_OBJINSTANCE("Monitor");
+	_this NEW_OBJINSTANCE("Monitor");
 #endif 
