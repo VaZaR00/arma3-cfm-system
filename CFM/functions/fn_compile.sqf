@@ -1082,6 +1082,8 @@ CFM_fnc_syncState = {
 
 	if (_start) then {
 		waitUntil {
+			if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
+			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
 			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 			_optimizeDistance = call compile _optimizeDistance;
 			if (_optimizeDistance <= 0) exitWith {true};
@@ -1095,7 +1097,9 @@ CFM_fnc_syncState = {
 		};
 	};
 	if (_start) then { 
-		if (_monitor getVariable ["CFM_feedActive", false]) exitWith {}; 
+		if (_monitor getVariable ["CFM_feedActive", false]) then {
+			[_monitor] call CFM_fnc_stopOperatorFeed;
+		}; 
 		[_monitor, _operator] call CFM_fnc_startOperatorFeed; 
 	} else {
 		if !(_monitor getVariable ["CFM_feedActive", true]) exitWith {};

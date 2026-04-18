@@ -176,6 +176,7 @@ OBJCLASS(Monitor)
 		if (_reset) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		};
+		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
 
 		true
 	}; 
@@ -222,7 +223,7 @@ OBJCLASS(Monitor)
 		params["_op", ["_caller", objNull]];
 		_self setVariable ['CFM_actionCaller', _caller];
 		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
-		{ _self removeAction _x } forEach (_self getVariable ["CFM_tempActions", []]); 
+		_self setVariable ['CFM_menuActive', false, true];
 		true
 	};
 	METHOD("disconnect") {
