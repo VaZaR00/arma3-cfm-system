@@ -58,6 +58,6 @@ if !(isServer) exitWith {false};
 }, 0, true, true] call CFM_fnc_remoteExec;
 #endif 
 
-#ifundef SET_MON_OP_REMOTE_EXEC
+#ifndef SET_MON_OP_REMOTE_EXEC
 ["setOperator", _this] CALL_CLASS("DbHandler");
 #endif 

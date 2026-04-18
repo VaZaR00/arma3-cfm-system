@@ -69,6 +69,6 @@ _this NEW_OBJINSTANCE("Monitor");
 }, 0, true, true] call CFM_fnc_remoteExec;
 #endif 
 
-#ifundef SET_MON_OP_REMOTE_EXEC
+#ifndef SET_MON_OP_REMOTE_EXEC
 _this NEW_OBJINSTANCE("Monitor");
 #endif 
