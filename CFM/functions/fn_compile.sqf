@@ -1109,6 +1109,11 @@ CFM_fnc_syncState = {
 CFM_fnc_remoteExec = {
 	params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", true], ["_call", false, [false]]];
 
+	if (_func isEqualType {}) then {
+		_args = [_args, _func];
+		_func = if (_call) then {"call"} else {"spawn"};
+	};
+	if !(_func isEqualType "") exitWith {WARN format["CFM_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func]};
 
 	if (_targets isEqualType true) then {
 		if (_targets isEqualTo true) then {
