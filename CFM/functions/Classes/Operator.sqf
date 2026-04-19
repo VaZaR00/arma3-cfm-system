@@ -73,6 +73,41 @@ OBJCLASS(Operator)
 		["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
 
 
+		// CHECK NVG TI
+		private _turrets = _self getVariable ["CFM_turrets", []];
+		private _turrCount = count _turrets;
+		if (_turrCount == 1) then {
+			// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
+			private _turr = _turrets#0;
+			private _turrIndex = TURRET_INDEX(_turr);
+			if (_turrIndex isEqualTo -1) then {
+				// TI
+				call {
+					private _tiForDriver = _tiTable get _turrIndex;
+					if (isNil "_tiForDriver") exitWith {};
+					if (count _tiForDriver != 0) exitWith {};
+					private _tiForGunner = _tiTable get 0;
+					if (isNil "_tiForGunner") exitWith {};
+					if (count _tiForGunner == 0) exitWith {};
+					_tiForGunner = +_tiForGunner;
+					_tiTable = createHashMap;
+					_tiTable set [-1, _tiForGunner];
+				};
+				// NVG
+				call {
+					private _nvgForDriver = _tiTable get _turrIndex;
+					if (isNil "_nvgForDriver") exitWith {};
+					if (_nvgForDriver isEqualTo true) exitWith {};
+					private _nvgForGunner = _tiTable get 0;
+					if (isNil "_nvgForGunner") exitWith {};
+					if (_nvgForDriver isEqualTo false) exitWith {};
+					_nvgForGunner = +_nvgForGunner;
+					_nvgTable = createHashMap;
+					_nvgTable set [-1, _nvgForGunner];
+				};
+			};
+		};
+
 		// SIDE
 		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
 		if !(_sides isEqualType []) then {

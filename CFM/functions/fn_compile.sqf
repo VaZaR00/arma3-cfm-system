@@ -702,15 +702,17 @@ CFM_fnc_destroyCamera = {
 CFM_fnc_setupNvgAndTI = {
 	params["_operator"];
 
-	private _d = 0;
 	private _typeOp = typeOf _operator;
+	private _camType = _operator call CFM_fnc_cameraType;
 	private _canSwitchTi = _operator getVariable ["CFM_canSwitchTi", 0];
 	private _canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", 0];
 	private _tiTable = _operator getVariable ["CFM_tiTable", []];
 	private _nvgTable = _operator getVariable ["CFM_nvgTable", []];
 	if (!(_canSwitchTi isEqualTo false) && ((_tiTable isEqualTo []) && {!(_tiTable isEqualTo createHashMap)})) then {
-		private _tiPilot = getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "thermalMode");
 		private _tiTurret = getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "thermalMode");
+		private _tiPilot = if (_camType in [DRONETYPE]) then {
+			getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "thermalMode");
+		} else {_tiTurret};
 		
 		private _tiModesTable = missionNamespace getVariable ["CFM_tiModesTable", createHashMap];
 
@@ -720,8 +722,6 @@ CFM_fnc_setupNvgAndTI = {
 		_tiTurret = _tiTurret apply {
 			_tiModesTable getOrDefault [_x, 2]
 		};
-
-		_d = 1;
 
 		_tiTable = if ((_tiPilot isEqualTo []) && {(_tiTurret isEqualTo [])}) then {
 			createHashMap
@@ -733,10 +733,10 @@ CFM_fnc_setupNvgAndTI = {
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
 	};
 	if (!(_canSwitchNvg isEqualTo false) && (_nvgTable isEqualTo []) && {!(_nvgTable isEqualTo createHashMap)}) then {
-		private _nvgPilot = "NVG" in (getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "visionMode"));
 		private _nvgTurret = "NVG" in (getArray (configFile >> "CfgVehicles" >> _typeOp >> "Turrets" >> "MainTurret" >> "OpticsIn" >> "Wide" >> "visionMode"));
-		
-		_d = _d + 2;
+		private _nvgPilot = if (_camType in [DRONETYPE]) then {
+			"NVG" in (getArray (configFile >> "CfgVehicles" >> _typeOp >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "visionMode"));
+		} else {_nvgTurret};
 
 		_nvgTable = if (!_nvgPilot && !_nvgTurret) then {
 			createHashMap
