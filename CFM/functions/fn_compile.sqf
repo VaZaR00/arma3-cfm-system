@@ -316,6 +316,9 @@ CFM_fnc_updateCamera = {
 		_zoomFov
 	} else {
 		if (_zoomFov isEqualTo "op") exitWith {
+			if !(isMultiplayer) exitWith {
+				getObjectFov _operator
+			};
 			_operator getVariable ['CFM_prevZoomLocalFov', 1];
 		};
 		1
@@ -1264,6 +1267,21 @@ CFM_fnc_isUAV = {
 	(_this isKindOf "Air") && {(getNumber (configFile >> "CfgVehicles" >> (typeOf _this) >> "isUav")) isEqualTo 1}
 };
 
+CFM_fnc_getPlayer = {
+	params[["_target", objNull]];
+
+	private _plr = PLAYER_;
+	private _currentPlrVeh = cameraOn;
+	if ((_target isEqualTo _plr) || {_target isEqualTo _currentPlrVeh}) then {
+		if !(_currentPlrVeh isEqualTo _plr) exitWith {
+			_plr
+		};
+		_currentPlrVeh
+	} else {
+		_target
+	};
+};
+
 CFM_fnc_initActionConditions = {
 	#define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
 	#define IS_MONITOR_ON ;
@@ -1274,6 +1292,7 @@ CFM_fnc_initActionConditions = {
 
 		private _isHandMonitor = _target getVariable ["CFM_isHandMonitor", false];
 		if !(_isHandMonitor) exitWith {false};
+		if !(_target isEqualTo PLAYER_) exitWith {true};
 
 		private _isWatchingAtMonitor = (!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject isEqualTo _target)};
 		

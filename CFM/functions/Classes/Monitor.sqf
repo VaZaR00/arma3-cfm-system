@@ -81,7 +81,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
 		
 		if (_isPlayer) then {
-			_targetInActionsConditions = PLAYER_STR;
+			_targetInActionsConditions = "_target call CFM_fnc_getPlayer";
 			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
 		};
 
