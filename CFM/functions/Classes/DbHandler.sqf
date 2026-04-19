@@ -18,11 +18,11 @@ CLASS(DbHandler)
 	};
 	METHOD("setOperator") {
 		// should be executed globaly
-		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
-		if (isNil "_operator") exitWith {false};
+		if (isNil "_operator") exitWith {80};
 
-		private _mainArgs = [_sides, _turrets, _hasTInNvg, _params];
+		private _mainArgs = [_sides, _turrets, _hasTInNvg, _name, _params];
 		if (_operator isEqualType []) exitWith {
 			_operator apply {
 				if (isNil "_x") then {continue};
@@ -43,13 +43,13 @@ CLASS(DbHandler)
 		};
 
 		private _opClass = _operator;
-		private _opIsObj = IS_OBJ(_operator);
+		private _opIsObj = IS_VALID_OP(_operator);
 		private _opSet = if (_opIsObj) then {
-			_opClass = typeOf _operator;
+			_opClass = _operator call CFM_fnc_getOperatorClass;
 			[_operator, _mainArgs] NEW_OBJINSTANCE("Operator");
 		} else {true};
 
-		if ((isNil "_opSet") || {!(_opSet isEqualTo true)}) exitWith {false};
+		if ((isNil "_opSet") || {!(_opSet isEqualTo true)}) exitWith {["_opSet", _opSet]};
 
 		private _classType = [_opClass] call CFM_fnc_validClassType;
 
@@ -64,7 +64,7 @@ CLASS(DbHandler)
 			CFM_checkVehCams = true;
 		};
 
-		if !(IS_STR(_operator)) exitWith {_opIsObj};
+		if !(IS_STR(_operator)) exitWith {100};
 
 		["addToList", [_opClass, "CFM_OperatorClasses"]] CALL_CLASS(_self);
 
@@ -192,5 +192,14 @@ CLASS(DbHandler)
 		};
 		PLAYER_ setVariable ["CFM_currentActionsPriority", _next];
 		_next
+	};
+	METHOD("createDummyForStaticCam") {
+		private _dummyObj = createVehicleLocal [DUMMY_CLASSNAME, [0,0,0]];
+		["addDummy", [_dummyObj]] CALL_CLASS(_self);
+		_dummyObj
+	};
+	METHOD("addDummy") {
+		params["_dummyObj"];
+		["addToList", [_dummyObj, "CFM_DummyObjs"]] CALL_CLASS(_self);
 	};
 CLASS_END

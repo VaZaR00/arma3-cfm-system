@@ -7,6 +7,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_opHasTurrets, false);
 	OBJ_VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
 	OBJ_VARIABLE(_cameraType, "");
+	OBJ_VARIABLE(_operatorName, "");
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
 	OBJ_VARIABLE(_classType, "");
@@ -18,12 +19,13 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_isFeeding, false);
 	OBJ_VARIABLE(_isDroneFeed, false);	
 	OBJ_VARIABLE(_staticCamOffset, NULL_VECTOR);	
+	OBJ_VARIABLE(_isStaticCam, false);	
 	OBJ_VARIABLE(_opSides, []);	
 	OBJ_VARIABLE(_turretsParams, createHashMap);	
 	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);	
 
 	/*
-		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStatic, isGopro, camPosFunc, doInterpolation]]]
+		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -31,20 +33,25 @@ OBJCLASS(Operator)
 
 	METHOD("Init") {
 		// should be executed globaly
-		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_params", []]];
+		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
-		if !(IS_OBJ(_operator)) exitWith {false};
+		if !(IS_VALID_OP(_operator)) exitWith {1};
 
 		if (_classType isEqualTo "") then {
-			_classType =  [typeOf _operator] call CFM_fnc_validClassType;
+			_classType =  [_operator call CFM_fnc_getOperatorClass] call CFM_fnc_validClassType;
 		};
-		if !(_classType in VALID_CLASS_TYPES) exitWith {WARN "Init Operator: Invalid class type passed"; false};
+		if !(_classType in VALID_CLASS_TYPES) exitWith {WARN "Init Operator: Invalid class type passed"; 2};
 		_operator setVariable ["CFM_classType", _classType];
+
+		if (_classType isEqualTo TYPE_STATIC) then {
+			_isStaticCam = true;
+			_operator setVariable ["CFM_isStaticCam", _isStaticCam];
+		};
 
 		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
 		_operator setVariable ["CFM_hasGoPro", _hasGoPro];
 
-		_objClass = toLower (typeOf _operator);
+		_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
 		_operator setVariable ["CFM_objClass", _objClass];
 
 		// NVG AND TI
@@ -135,6 +142,8 @@ OBJCLASS(Operator)
 			};
 			default {};
 		};
+		_operator setVariable ["CFM_operatorName", _name];
+
 		_operator setVariable ["CFM_operatorSet", true];
 
 		true
@@ -191,21 +200,24 @@ OBJCLASS(Operator)
 		_turretsParams
 	};
 	METHOD("setTurretParams") {
-		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStatic", false], ["_doInterpolationSet", true]];
+		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStaticVeh", false], ["_doInterpolationSet", true], ["_turretName", ""]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
 
 		// POINT ALIGNMENT
 		if (_pointParams isEqualTo false) then {
-			_isStatic = true;
+			_isStaticVeh = true;
 		};
-		if (!_isStatic && {((_pointParams isEqualType []) && {!(_pointParams isEqualTo [])})}) then {
+		if (!_isStaticVeh && !_isStaticCam && {((_pointParams isEqualType []) && {!(_pointParams isEqualTo [])})}) then {
 			_pointParams params [["_memPoint", ""], ["_alignment", []]];
 			_alignment params [["_addArr", []], ["_setArr", []]];
 			[_operator, [_turretIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
 		};
-		_turretParams set ["isStatic", _isStatic];
+		_turretParams set ["isStatic", _isStaticVeh];
+		if (_isStaticCam) then {
+			_turretParams set ["pointParams", _pointParams];
+		};
 
 		// ZOOM
 		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
@@ -297,7 +309,7 @@ OBJCLASS(Operator)
 		private _fullCrew = fullCrew [_self, "", true];
 		private _isVehWithTurrets = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
 		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
-		private _camPosFunc = if ((_isStatic && !_hasGoPro) || (_isFpv && _isDriverTurr)) then {
+		private _camPosFunc = if ((_isStaticVeh && !_hasGoPro) || (_isFpv && _isDriverTurr)) then {
 			CFM_fnc_camPosVehStatic
 		} else {
 			switch (_classType) do {
@@ -311,6 +323,9 @@ OBJCLASS(Operator)
 				};
 				case TYPE_UNIT: {
 					CFM_fnc_camPosGoPro
+				};
+				case TYPE_STATIC: {
+					CFM_fnc_camPosStatic
 				};
 				case TYPE_VEH: {
 					if (_isVehWithTurrets) then {
@@ -474,7 +489,6 @@ OBJCLASS(Operator)
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
 		private _isLocal = _turretData getOrDefault ["IsTurretLocal", false];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
-		private _isStatic = _turretData getOrDefault ["isStatic", false];
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _doInterpolation = _zoomTable getOrDefault ["doInterpolation", false];
@@ -538,6 +552,29 @@ OBJCLASS(Operator)
 			};
 			if !(_checkPointParams) then {
 				_pointParams = ["", [NULL_VECTOR, NULL_VECTOR]];
+			} else {
+				_pointParams = +_checkedPointParams;
+			};
+		};
+		if (_camPosFunc isEqualTo CFM_fnc_camPosStatic) then {
+			private _checkedPointParams = +_pointParams;
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				_pointParams params [["_pos", []], ["_dir", []], ["_up", []]];
+				if (!(_pos isEqualType []) || {(count _pos != 3)}) then {
+					_pos = NULL_VECTOR;
+				};
+				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
+					_dir = NULL_VECTOR;
+				};
+				if (!(_up isEqualType []) || {(count _up != 3)}) then {
+					_up = NULL_VECTOR;
+				};
+				_checkedPointParams = [_pos, _dir, _up];
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = [NULL_VECTOR, NULL_VECTOR, NULL_VECTOR];
 			} else {
 				_pointParams = +_checkedPointParams;
 			};

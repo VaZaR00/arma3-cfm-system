@@ -202,11 +202,11 @@ CFM_fnc_operatorCondition = {
 
 	if !(IS_OBJ(_monitor)) exitWith {false};
 
-	if !(IS_OBJ(_op)) then {
+	if !(IS_VALID_OP(_op)) then {
 		["removeOperator", [_op]] CALL_CLASS("DbHandler");
 		continue
 	};
-	private _cls = typeOf _op;
+	private _cls = _op call CFM_fnc_getOperatorClass;
 	private _monitorSides = _monitor getVariable ["CFM_monitorSides", [side _monitor]];
 	private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
 	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
@@ -232,8 +232,10 @@ CFM_fnc_operatorCondition = {
 			private _playerHelm = headgear _op;
 			_playerHelm in _goprohelms;
 		};
+		case TYPE_STATIC: {
+			true
+		};
 		default {
-			private _cls = typeOf _op;
 			if !(alive _op) exitWith {false};
 			private _canFeed = _op getVariable ["CFM_canFeed", false];
 			if (_canFeed) exitWith {true};
@@ -448,6 +450,15 @@ CFM_fnc_camPosGoPro = {
 	_obj setVariable ["CFM_camPosPoint", GOPRO_MEMPOINT];
 		
 	[_pos, _dir, _up]
+};
+
+CFM_fnc_camPosStatic = {
+	params["_obj", ["_offset", []]];
+	// _offset params [["_pos", [0,0,0], [[]], 3], ["_vdirup", [], [[]], 2]];
+	// _vdirup params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+
+	// [_pos, _dir, _up]
+	_offset
 };
 
 CFM_fnc_updateMonitor = {
@@ -702,7 +713,7 @@ CFM_fnc_destroyCamera = {
 CFM_fnc_setupNvgAndTI = {
 	params["_operator"];
 
-	private _typeOp = typeOf _operator;
+	private _typeOp = _operator call CFM_fnc_getOperatorClass;
 	private _camType = _operator call CFM_fnc_cameraType;
 	private _canSwitchTi = _operator getVariable ["CFM_canSwitchTi", 0];
 	private _canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", 0];
@@ -1240,6 +1251,9 @@ CFM_fnc_cameraType = {
 	private _cls = typeOf _obj;
 	private _classType = [_cls] call CFM_fnc_validClassType;
 
+	if (_cls isEqualTo DUMMY_CLASSNAME) exitWith {
+		TYPE_STATIC
+	};
 	if ((_obj isKindOf "Man") || {_classType isEqualTo TYPE_UNIT}) exitWith {
 		GOPRO
 	};
@@ -1257,6 +1271,8 @@ CFM_fnc_cameraType = {
 
 CFM_fnc_validClassType = {
 	params["_cls"];
+
+	if (_cls isEqualTo DUMMY_CLASSNAME) exitWith {TYPE_STATIC};
 
 	private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
 	if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
@@ -1287,6 +1303,11 @@ CFM_fnc_getTurretIndex = {
 			-2
 		};
 	};
+};
+
+CFM_fnc_getOperatorClass = {
+	if (IS_OBJ(_this)) exitWith {typeOf _this};
+	typeName _this;
 };
 
 CFM_fnc_setTurretParams = {

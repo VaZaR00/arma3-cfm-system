@@ -284,17 +284,25 @@ OBJCLASS(Monitor)
 			private _grid = mapGridPosition _x;
 			private _distanceStr = format[_distanceStrFormat, round (_self distance _x), _grid];
 			private _type = _x getVariable ["CFM_currentCameraType", [_x] call CFM_fnc_cameraType];
-			private _name = switch (_type) do {
-				case GOPRO: {
-					format["%1: %2", groupId group _x, name _x]
-				};
-				default {
-					private _group = groupId group _x;
-					private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName");
-					if (_group isEqualTo "") then {
-						_dispName
-					} else {
-						format["%1: %2", _group, _dispName]
+			private _opName = _x getVariable ["CFM_operatorName", ""];
+			private _name = if ((_opName isEqualType "") && {!(_opName isEqualTo "")}) then {
+				_opName
+			} else {
+				switch (_type) do {
+					case GOPRO: {
+						format["%1: %2", groupId group _x, name _x]
+					};
+					case TYPE_STATIC: {
+						_x getVariable ["CFM_staticCameraID", "Camera"];
+					};
+					default {
+						private _group = groupId group _x;
+						private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName");
+						if (_group isEqualTo "") then {
+							_dispName
+						} else {
+							format["%1: %2", _group, _dispName]
+						};
 					};
 				};
 			};

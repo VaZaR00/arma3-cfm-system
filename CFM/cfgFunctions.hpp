@@ -14,6 +14,8 @@ class CfgFunctions
 			};
 			class setMonitor {};
 			class setOperator {};
+			class setStaticCamera {};
+			class getStaticCameraOffset {};
 		};
 	};
 };

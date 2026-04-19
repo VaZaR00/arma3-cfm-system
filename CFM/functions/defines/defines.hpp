@@ -27,13 +27,16 @@
 #define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
 #define IS_STR(s) (s isEqualType "")
 #define IS_FUNC(f) ((f isEqualType {}) && !(f isEqualTo {}))
+#define IS_LOC(l) ((typeName l) isEqualTo "LOCATION")
+#define IS_VALID_OP(op) (IS_OBJ(op))
 #define TYPE_VEH "veh"
 #define TYPE_UAV "uav"
 #define TYPE_WEAP "weap"
 #define TYPE_HELM "helm"
 #define TYPE_UNIT "unit"
+#define TYPE_STATIC "static"
 #define MGVAR missionNamespace getVariable
-#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT]
+#define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
 #define CHECK_EX(c) if (c) exitWith {false};
 #define IS_VALID_R2T(s) ((IS_STR(s) && {!(s isEqualTo "") && {(RENDER_TARGET_STR in s)}}))
 #define CAM_POS_FUNC_DEF {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}

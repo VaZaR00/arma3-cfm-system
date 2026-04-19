@@ -11,7 +11,8 @@
 		2. _sides [Array[side], side] - defines sides of monitors which can connect to operator
 		3. _turrets [array] - turrets params, check 'DefineTurretsParams' and 'setTurretParams' methods in Operator Class
 		5. _hasTInNvg [array] - array of [bool, bool] if operator has nvg and ti
-		6. _params [array] - other
+		6. _name [str] - name of camera
+		7. _params [array] - other
 */
 
 #include "defines.hpp"
@@ -21,12 +22,13 @@ params [
 	["_sides", []], 
 	["_turrets", []], 
 	["_hasTInNvg", [0, 0]], 
+	["_name", ""], 
 	["_params", []]
 ];
 if (isNil "_operator") exitWith {false};
 
 if (_operator isEqualType []) exitWith {
-	private _mainArgs = [_sides, _turrets, _hasTInNvg, _params];
+	private _mainArgs = [_sides, _turrets, _hasTInNvg, _name, _params];
 	_operator apply {
 		if (isNil "_x") then {continue};
 		if (_x isEqualType []) then {
@@ -47,7 +49,7 @@ if (_operator isEqualType []) exitWith {
 
 private _reset = if (isNil "_reset") then {true} else {_reset};
 
-if (!_reset && {(IS_OBJ(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
+if (!_reset && {(IS_VALID_OP(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 
 #ifdef SET_MON_OP_REMOTE_EXEC
 	// for JIP sync
