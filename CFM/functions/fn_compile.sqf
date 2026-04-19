@@ -7,9 +7,6 @@ CFM_fnc_updateOperator = {
 	};
 
 	private _controlledUnit = focusOn;
-	if (_controlledUnit isEqualTo PLAYER_) exitWith {};
-	if (isNull _controlledUnit) exitWith {};
-
 	private _prevControlledUnit = PLAYER_ getVariable ["CFM_lastControlledUnit", objNull];
 	if !(_prevControlledUnit isEqualTo _controlledUnit) then {
 		// unit changed
@@ -17,8 +14,12 @@ CFM_fnc_updateOperator = {
 		PLAYER_ setVariable ["CFM_lastControlledUnitTurretIndex", nil];
 		PLAYER_ setVariable ["CFM_lastControlledUnitIsTurrLocal", nil];
 		PLAYER_ setVariable ["CFM_lastControlledUnitMonitor", nil];
+		// for remote controlled menu handling
+		PLAYER_ setVariable ['CFM_menuActive', false];
 	};
 	
+	if (isNull _controlledUnit) exitWith {};
+	if (_controlledUnit isEqualTo PLAYER_) exitWith {};
 	private _controlledObj = vehicle _controlledUnit;
 
 	if !(local _controlledObj) exitWith {};
@@ -56,7 +57,7 @@ CFM_fnc_updateOperator = {
 			private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 			private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}];
-			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
+			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
@@ -112,6 +113,18 @@ CFM_fnc_onEachFrameClient = {
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
 	} forEach _monitors;
+	
+	// upd actions to remote controlled units
+	private _plr = PLAYER_;	
+	private _isHandMonitor = _plr getVariable ["CFM_isHandMonitor", false];
+	if (_isHandMonitor) then {
+		private _unit = focusOn;
+		if !(_unit isEqualTo _plr) then {
+			private _unitIsSet = _unit getVariable ["CFM_actionsSet", false];
+			if (_unitIsSet) exitWith {};
+			[_plr, _unit] call CFM_fnc_copyMenuActionsToObj;
+		};
+	};
 };
 
 CFM_fnc_onEachFrameServer = {
@@ -158,7 +171,7 @@ CFM_fnc_onEachFrameServer = {
 CFM_fnc_setupDraw3dEH = {
 	if (isNil "CFM_UPD_CLIENT_EH_id") then {
 		private _func = {call CFM_fnc_onEachFrameClient};
-		if (isMultiplayer) then {
+		if (true) then {
 			_func = {call CFM_fnc_onEachFrameClient; call CFM_fnc_updateOperator};
 		};
 		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", _func];
@@ -1272,7 +1285,7 @@ CFM_fnc_getPlayer = {
 
 	private _plr = PLAYER_;
 	private _currentPlrVeh = cameraOn;
-	if ((_target isEqualTo _plr) || {_target isEqualTo _currentPlrVeh}) then {
+	private _res = if ((_target isEqualTo _plr) || {(vehicle _target) isEqualTo _currentPlrVeh}) then {
 		if !(_currentPlrVeh isEqualTo _plr) exitWith {
 			_plr
 		};
@@ -1280,6 +1293,34 @@ CFM_fnc_getPlayer = {
 	} else {
 		_target
 	};
+
+	_res
+};
+
+CFM_fnc_copyMenuActionsToObj = {
+	params["_from", "_to"];
+
+	private _actions = _plr getVariable ["CFM_mainActions", []];
+
+	if (!(_actions isEqualType []) || {(_actions isEqualTo [])}) exitWith {
+		WARN "CAN'T COPY HAND MONITOR ACTIONS TO NEW CONTROLLED UNIT!";
+		false
+	};
+
+	private _newActions = [];
+
+	{
+		if !(_x isEqualType 1) then {continue};
+		private _actionParams = _from actionParams _x;
+		_actionParams deleteAt 10;
+		_actionParams deleteAt 11;
+		private _id = _to addAction _actionParams;
+		_newActions pushBack _id;
+	} forEach _actions;
+
+	_unit setVariable ["CFM_copiedActions", _newActions];
+	_unit setVariable ["CFM_actionsSet", true];
+	true
 };
 
 CFM_fnc_initActionConditions = {
