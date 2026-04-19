@@ -365,9 +365,14 @@ OBJCLASS(Monitor)
 
 		_newzoom
 	};
+	METHOD("nextTurret") {
+		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
+		_monitor setVariable ["CFM_doUpdatePip", true, true];
+		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
+	};
 	METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
-		_self setVariable ["CFM_currentTurret", _turret, true];
+		// _self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 		["TurretChanged", [_monitor, _turret]] CALL_OBJCLASS("Operator", _connectedOperator);
@@ -527,17 +532,23 @@ OBJCLASS(Monitor)
 			};
 
 			if (_canSwitchTurret) then {
-				private _actionSwitchTurret = _self addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
-					(_this#3) params ["_target"]; 
+				// private _actionSwitchTurret = _self addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
+				// 	(_this#3) params ["_target"]; 
 					
-					["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
-				private _actionSwitchDriver = _self addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
+				// 	["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
+				// }, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
+				// private _actionSwitchDriver = _self addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
+				// 	(_this#3) params ["_target"]; 
+
+				// 	["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
+				// }, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
+				// _actions append [_actionSwitchTurret, _actionSwitchDriver];
+				private _actionSwitchCamera = _self addAction ["<t color='#ffba4a'>Switch Camera</t>", { 
 					(_this#3) params ["_target"]; 
 
-					["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
-				_actions append [_actionSwitchTurret, _actionSwitchDriver];
+					[_target] call CFM_fnc_monitorNextTurretCamera;
+				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraTurretActionCondition", _target], _radius]; 
+				_actions append [_actionSwitchCamera];
 			};
 
 			if (_canTurnOffLocal && !_isHandMonitor) then {

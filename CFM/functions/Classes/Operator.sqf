@@ -508,6 +508,7 @@ OBJCLASS(Operator)
 			};
 		};
 
+		_monitor setVariable ["CFM_currentTurret", [_turrIndex], _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
 		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
@@ -516,6 +517,26 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+
+		true
+	};
+	METHOD("NextTurret") {
+		params["_monitor", ["_currentTurret", [-1]]];
+
+		private _curTurrIndex = TURRET_INDEX(_currentTurret);
+
+		private _turretsIndexes = _turrets apply {TURRET_INDEX(_x)};
+		private _turretsCount = count _turretsIndexes;
+
+		private _currIndex = _turretsIndexes findIf {_x isEqualTo _curTurrIndex};
+		private _nextIndex = _currIndex + 1;
+
+		if ((_nextIndex + 1) > _turretsCount) then {
+			_nextIndex = 0;
+		};
+		private _nextTurretIndex = _turretsIndexes select _nextIndex;
+
+		["TurretChanged", [_monitor, [_nextTurretIndex]]] CALL_OBJCLASS("Operator", _self);
 
 		true
 	};

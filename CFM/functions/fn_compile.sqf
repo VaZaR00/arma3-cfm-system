@@ -1013,6 +1013,11 @@ CFM_fnc_monitorToggleNVG = {
 	["switchNvg"] CALL_OBJCLASS("Monitor", _monitor);
 };
 
+CFM_fnc_monitorNextTurretCamera = {
+	params["_monitor"];
+	["nextTurret"] CALL_OBJCLASS("Monitor", _monitor);
+};
+
 CFM_fnc_disconnectMonitorFromOperatorKeybind = {
 	[] call CFM_fnc_exitFullScreen;
 	_this call CFM_fnc_disconnectMonitorFromOperator;
@@ -1425,6 +1430,14 @@ CFM_fnc_initActionConditions = {
 			(_target getVariable ['CFM_currentOpHasTurrets', false]) && {
 				((_target getVariable ['CFM_currentTurret', [-1]]) isEqualTo [0])
 			}
+		}
+	};
+	CFM_fnc_switchCameraTurretActionCondition = {
+		params["_target"];
+		HAND_MON_CONDITION
+		IS_MONITOR_ON
+		(_target getVariable ['CFM_feedActive', false]) && {
+			(_target getVariable ['CFM_currentOpHasTurrets', false])
 		}
 	};
 	CFM_fnc_turnOffActionCondition = {
