@@ -270,15 +270,35 @@ OBJCLASS(Monitor)
 		}, [_self], 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _targetStr], _radius]; 
 		_tempIDs pushBack _closeID; 
 
+		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
+		private _showGrid = missionNamespace getVariable ["CFM_menuShowOperatorGrid", false];
+		private _distanceStrFormat = format[
+			"%1 %2",
+			if (_showDist) then {"[%1 m]"} else {""}, 
+			if (_showGrid) then {"[Grid: %2]"} else {""}
+		];
+		if (_showGrid || _showDist) then {
+			_distanceStrFormat = format["<t color='#36f56f'>%1</t>", _distanceStrFormat];
+		}; 
 		{  
+			private _grid = mapGridPosition _x;
+			private _distanceStr = format[_distanceStrFormat, round (_self distance _x), _grid];
 			private _type = _x getVariable ["CFM_currentCameraType", [_x] call CFM_fnc_cameraType];
 			private _name = switch (_type) do {
 				case GOPRO: {
 					format["%1: %2", groupId group _x, name _x]
 				};
-				default {format["%1: %2", groupId group _x, (getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName"))]};
+				default {
+					private _group = groupId group _x;
+					private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _x) >> "displayName");
+					if (_group isEqualTo "") then {
+						_dispName
+					} else {
+						format["%1: %2", _group, _dispName]
+					};
+				};
 			};
-			private _id = _target addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1", _name], { 
+			private _id = _target addAction [format["        <t color='#3e99fa'>[Connect]</t>: %1 %2", _name, _distanceStr], { 
 				params ["_t", "_c", "_i", "_p"]; 
 				_p params ["_m", "_o"];
 				[_m, _o, _c] call CFM_fnc_connectMonitorToOperator;

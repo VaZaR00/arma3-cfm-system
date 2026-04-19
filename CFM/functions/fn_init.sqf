@@ -18,6 +18,8 @@ CFM_canHackDrone = false;
 ["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 ["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], "CFM Settings", true] call CBA_fnc_addSetting;
 ["CFM_optimizeByDistance",  "EDITBOX",  ["Optimize by Distance", "Distance to monitor threshold for optimizing PIP settings. -1 for unlimited"], "CFM Settings", OPTIMIZE_MONITOR_FEED_DIST] call CBA_fnc_addSetting;
+["CFM_menuShowOperatorGrid",  "CHECKBOX",  ["Show operator map grid position", "Show operator map grid position"], "CFM Settings", false] call CBA_fnc_addSetting;
+["CFM_menuShowOperatorDistance",  "CHECKBOX",  ["Show operator distance to monitor", "Show operator distance to monitor"], "CFM Settings", false] call CBA_fnc_addSetting;
 
 ["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[cursorObject, +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
