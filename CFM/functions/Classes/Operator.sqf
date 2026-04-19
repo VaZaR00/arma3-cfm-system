@@ -173,6 +173,7 @@ OBJCLASS(Operator)
 		_turretParams set ["isStatic", _isStatic];
 
 		// ZOOM
+		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
 		private _zoomTable = createHashMap;
 		if (_setZoomTable isEqualType 1) then {
 			for "_i" from 1 to _setZoomTable do {
@@ -210,6 +211,9 @@ OBJCLASS(Operator)
 		_zooms sort false;
 		private _max = if (count _zooms != 0) then {_zooms#0} else {1};
 		if (isNil "_max") then {_max = 1};
+		if (_isFpv) then {
+			_zoomTable set [1, 0.85];
+		};
 		_zoomTable set ["max", _max];
 		_turretParams set ["zoomTable", _zoomTable];
 
@@ -257,7 +261,6 @@ OBJCLASS(Operator)
 		// CAM POS FUNC
 		private _fullCrew = fullCrew [_self, "", true];
 		private _isVehWithTurrets = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
-		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
 		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
 		private _camPosFunc = if ((_isStatic && !_hasGoPro) || (_isFpv && _isDriverTurr)) then {
 			CFM_fnc_camPosVehStatic
