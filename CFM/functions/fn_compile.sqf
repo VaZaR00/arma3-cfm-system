@@ -57,7 +57,7 @@ CFM_fnc_updateOperator = {
 			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 			private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}];
 			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", {}];
-			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false], _camPosFunc] call CFM_fnc_updateCamera;
+			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
 			private _prevDir = _controlledObj getVariable [_dirVarName, []];
@@ -304,21 +304,18 @@ CFM_fnc_updateCamera = {
 		["_pointParams", []],
 		["_zoomFov", 1], 
 		["_monitor", objNull],
+		["_doInterpolation", false],
 		["_doSetCam", true]
 	];
-	private _doInterpolation = false;
 	private _turretIndex = _turret#0;
 	private _camExists = IS_OBJ(_cam);
-	private _operatorLocal = local _operator;
+	// private _operatorLocal = local _operator;
 
 	// ZOOM
 	private _fov = if ((_zoomFov isEqualType 1) && {(_zoomFov > 0) && (_zoomFov <= 1)}) then {
 		_zoomFov
 	} else {
 		if (_zoomFov isEqualTo "op") exitWith {
-			if (_operatorLocal) exitWith {
-				getObjectFOV _operator;
-			};
 			_operator getVariable ['CFM_prevZoomLocalFov', 1];
 		};
 		1
@@ -332,8 +329,7 @@ CFM_fnc_updateCamera = {
 		["_up", vectorUp _operator, [[]], 3]
 	];
 
-	if (_turretLocal && {isMultiplayer && {!_operatorLocal}}) then {
-		_doInterpolation = true;
+	if (_turretLocal && {isMultiplayer}) then {
 		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 		private _localDirMS = _operator getVariable [_dirVarName, []];
@@ -449,7 +445,8 @@ CFM_fnc_updateMonitor = {
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
-	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
+	private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
+	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
 	
 	// upd pip
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];

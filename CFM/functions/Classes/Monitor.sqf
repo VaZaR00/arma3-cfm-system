@@ -36,6 +36,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_canFullScreen, false);
 	OBJ_VARIABLE(_cameraPosFunc, {});
 	OBJ_VARIABLE(_currentCamPointParams, []);
+	OBJ_VARIABLE(_camDoInterpolation, false);
 
 	METHODS
 
@@ -218,6 +219,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ['CFM_isInNvg', nil];
 		_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		_monitor setVariable ["CFM_currentCamPointParams", nil];
+		_monitor setVariable ["CFM_camDoInterpolation", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];

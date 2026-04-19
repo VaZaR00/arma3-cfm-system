@@ -23,7 +23,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);	
 
 	/*
-		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStatic, isGopro, camPosFunc]]]
+		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStatic, isGopro, camPosFunc, doInterpolation]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -156,7 +156,7 @@ OBJCLASS(Operator)
 		_turretsParams
 	};
 	METHOD("setTurretParams") {
-		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStatic", false]];
+		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStatic", false], ["_doInterpolationSet", true]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
@@ -284,7 +284,9 @@ OBJCLASS(Operator)
 				default {CFM_fnc_camPosVehStatic};
 			};
 		};
+		private _doInterpolation = _doInterpolationSet && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)};
 		_turretParams set ["camPosFunc", _camPosFunc];
+		_turretParams set ["doInterpolation", _doInterpolation];
 
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams];
@@ -437,6 +439,7 @@ OBJCLASS(Operator)
 		private _isStatic = _turretData getOrDefault ["isStatic", false];
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
+		private _doInterpolation = _zoomTable getOrDefault ["doInterpolation", false];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -509,6 +512,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
+		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 
 		true
 	};
