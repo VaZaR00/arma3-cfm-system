@@ -138,6 +138,21 @@ CFM_fnc_onEachFrameServer = {
 
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
 	};
+
+	// check ops condition
+	private _lastOpsCondCheck =  missionNamespace getVariable ["CFM_lastOperatorsConditionCheck", 0];
+	if ((diag_tickTime - _lastOpsCondCheck) > CHECK_OP_COND_FREQ) then {
+		{
+			private _monitor = _x;
+			private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+			if !(IS_OBJ(_operator)) then {continue};
+			private _opCond = [_operator, _monitor] call CFM_fnc_operatorCondition;
+			if !(_opCond) then {
+				[_monitor, _monitor] call CFM_fnc_disconnectMonitorFromOperator;
+			};
+		} forEach (missionNamespace getVariable ["CFM_Monitors", []]);
+		missionNamespace setVariable ["CFM_lastOperatorsConditionCheck", diag_tickTime];
+	};
 };
 
 CFM_fnc_setupDraw3dEH = {
@@ -426,6 +441,7 @@ CFM_fnc_camPosGoPro = {
 CFM_fnc_updateMonitor = {
 	params["_monitor"];
 
+	// upd cam pos
 	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
@@ -434,8 +450,9 @@ CFM_fnc_updateMonitor = {
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor], _camPosFunc] call CFM_fnc_updateCamera;
+	
+	// upd pip
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
-
 	if (_updatePip) then {
 		private _feedActive = _monitor getVariable ["CFM_feedActive", false];
 		if !(_feedActive) exitWith {};
