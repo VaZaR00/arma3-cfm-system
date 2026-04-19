@@ -1476,8 +1476,8 @@ CFM_fnc_initActionConditions = {
 		HAND_MON_CONDITION
 		if !(_target getVariable ['CFM_feedActive', false]) exitWith {false};
 		if !(_target getVariable ['CFM_canFullScreen', false]) exitWith {false};
-		private _connectedOperator = _target getVariable ['CFM_connectedOperator', objNull];
-		if (_connectedOperator getVariable ['CFM_hasGoPro', false]) exitWith {false};
+		// private _connectedOperator = _target getVariable ['CFM_connectedOperator', objNull];
+		// if (_connectedOperator getVariable ['CFM_hasGoPro', false]) exitWith {false};
 		IS_MONITOR_ON
 		if (
 			(_target getVariable ['CFM_isHandMonitor', false]) &&
