@@ -51,7 +51,7 @@ OBJCLASS(Monitor)
 			["_canSwitchTi", true],
 			["_canSwitchTurret", true],
 			["_canZoom", true],
-			["_canFullScreen", false],
+			["_canFullScreen", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
 			["_canTurnOffLocal", true]
@@ -452,7 +452,7 @@ OBJCLASS(Monitor)
 				[_monitor] call CFM_fnc_turnOnMonitorLocal;
 			}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
 
-			private _actionStopWatch = _self addAction ["<t color='#FF0000'>Stop Watching tablet</t>", { 
+			private _actionStopWatch = _self addAction ["<t color='#FF3344'>Stop Watching tablet</t>", { 
 				params ["_target", "_caller", "_", "_p"];
 				_p params ["_monitor"]; 
 
@@ -586,6 +586,10 @@ OBJCLASS(Monitor)
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("monitorEnterFullScreen") {
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _self];
+		if (missionNamespace getVariable ["CFM_fullscreenIsPip", false]) exitWith {
+			[_self, true, true] call CFM_fnc_setHandDisplay;
+		};
 		private _unitCam = _currentFeedCam;
 		private _mode = "INTERNAL";
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
@@ -647,7 +651,6 @@ OBJCLASS(Monitor)
 			[_self] call CFM_fnc_turnOffMonitorLocal;
 		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
-		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _self];
 		hint _hintText;
 		cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true

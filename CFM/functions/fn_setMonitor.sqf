@@ -14,9 +14,10 @@
 		5. _canSwitchTi [bool]
 		6. _canSwitchTurret [bool]
 		7. _canZoom [bool]
-		8. _canConnectDrone [bool] - if it can connect to currently feeding drone
-		9. _canFix [bool] - if has "fix feed" action
-		10. _canTurnOffLocal [bool] - if has "turn off/on local" action
+		8. _canFullScreen [bool]
+		9. _canConnectDrone [bool] - if it can connect to currently feeding drone
+		10. _canFix [bool] - if has "fix feed" action
+		11. _canTurnOffLocal [bool] - if has "turn off/on local" action
 */
 
 #include "defines.hpp"

@@ -842,11 +842,11 @@ CFM_fnc_closePIPwindow = {
 };
 
 CFM_fnc_setHandDisplay = {
-	params[["_player", PLAYER_], ["_render", true]];
+	params[["_player", PLAYER_], ["_render", true], ["_fullscreen", false]];
 
 	private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
 	private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
-	private _isDialog = _isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs]);
+	private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
 
 	if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		private _settings = if (_isDialog) then {
@@ -855,6 +855,12 @@ CFM_fnc_setHandDisplay = {
 			uiNamespace setVariable ["CFM_tabletDisplay", _disp];
 			PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", true];
 			PLAYER_ setVariable ["CFM_turnedOffLocal", false];
+			[_disp, _player] spawn {
+				params['_disp', '_player'];
+				// for safety
+				waitUntil {uiSleep 1; isNull _disp};
+				[_player, false] call CFM_fnc_setHandDisplay;
+			};
 			"[0.9, 0.5, 0.5]"
 		} else {
 			""
@@ -873,8 +879,14 @@ CFM_fnc_setHandDisplay = {
 CFM_fnc_onDisplayUnload = {
 	params[["_display", displayNull]];
 	disableSerialization;
-	PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", false];
-	[PLAYER_] call CFM_fnc_turnOffMonitorLocal;
+	private _currentFullscreenedMonitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", PLAYER_];
+	_currentFullscreenedMonitor setVariable ["CFM_tabletDisplayIsOpened", false];
+	if (_currentFullscreenedMonitor isEqualTo PLAYER_) then {
+		[PLAYER_] call CFM_fnc_turnOffMonitorLocal;
+	} else {
+		[_currentFullscreenedMonitor, false] call CFM_fnc_setHandDisplay;
+	};
+	missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
 };
 
 CFM_fnc_setMonitorTexture = {
