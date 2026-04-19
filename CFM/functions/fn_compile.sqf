@@ -946,7 +946,7 @@ CFM_fnc_takeUAVcontorls = {
 
 			hint "Drone hacked!";
 
-			[_monitor] call CFM_fnc_takeUAVcontorls;
+			[_monitor] spawn CFM_fnc_takeUAVcontorls;
 		};
 	};
 
@@ -974,6 +974,12 @@ CFM_fnc_takeUAVcontorls = {
 	};
 
 	PLAYER_ connectTerminalToUAV objNull;
+	PLAYER_ switchCamera "internal";
+
+	hint "Connecting...";
+	sleep 0.3;
+	hint "";
+
 	private _connect = PLAYER_ connectTerminalToUAV _drone;
 
 	if !(_connect) exitWith {
