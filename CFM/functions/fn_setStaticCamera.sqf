@@ -11,8 +11,8 @@
 		2. _posAndOffsetsTurrets:
 			A. One turr param: [_pos:vector, _vDirUp:[vector, vector], (_turretIndex:int), (_zoomTable), (_nvgAndTi)]
 			B. [{turr param}, ...]
-		3. _obj:[object] - camera/operator object, if none dummy will be created and used as operator
-		4. _sides:[Array[side], side] - defines sides of monitors which can connect to operator
+		3. _sides:[Array[side], side] - defines sides of monitors which can connect to operator
+		4. _obj:[object] - camera/operator object, if none dummy will be created and used as operator
 		5. _hasTInNvg - array of [bool, bool] if operator has nvg and ti
 		6. _params - other
 */
@@ -25,8 +25,8 @@ private _code = {
 params [
 	["_name", ""],
 	["_posAndOffsetsTurrets", []], 
-	["_dummyObj", objNull],
 	["_sides", [civilian]], 
+	["_dummyObj", objNull],
 	["_hasTInNvg", [0, 0]], 
 	["_params", []]
 ];
@@ -62,7 +62,7 @@ private _lastPos = [0,0,0];
 		_dummyObj = _turretObj;
 	};
 	_lastPos = +_pos;
-	private _turrArgs = [_turretIndex, [_zoomTable, _nvgAndTi, [_pos, _dir, _up], false, false, _turrName]];
+	private _turrArgs = [_turretIndex, [_turretObj, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, false, _turrName]];
 	_turrParams pushBack _turrArgs;
 } forEach _posAndOffsetsTurrets;
 
