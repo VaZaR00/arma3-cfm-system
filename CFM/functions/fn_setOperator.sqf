@@ -12,7 +12,8 @@
 		3. _turrets [array] - turrets params, check 'DefineTurretsParams' and 'setTurretParams' methods in Operator Class
 		5. _hasTInNvg [array] - array of [bool, bool] if operator has nvg and ti
 		6. _name [str] - name of camera
-		7. _params [array] - other
+		7. _params [array]:
+			1. canMoveCameraByDefault [bool] - if true, operator can move camera by default, if false, can't, if not set, it will be set based on turret params (def: false)
 */
 
 #include "defines.hpp"

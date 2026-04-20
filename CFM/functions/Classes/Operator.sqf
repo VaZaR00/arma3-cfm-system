@@ -10,6 +10,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_operatorName, "");
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
+	OBJ_VARIABLE(_canMoveCameraByDefault, false);
 	OBJ_VARIABLE(_classType, "");
 	OBJ_VARIABLE(_objClass, "");
 	OBJ_VARIABLE(_monitorsSet, createHashMap);
@@ -44,6 +45,10 @@ OBJCLASS(Operator)
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {WARN "Init Operator: Invalid class type passed"; 2};
 		_operator setVariable ["CFM_classType", _classType];
+		
+		_params params [["_canMoveCameraByDefault", false]];
+		_canMoveCameraByDefault = _canMoveCameraByDefault isEqualTo true;
+		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault];
 
 		if (_classType isEqualTo TYPE_STATIC) then {
 			_isStaticCam = true;
@@ -209,6 +214,7 @@ OBJCLASS(Operator)
 		params [
 			["_turretIndex", -1], 
 			["_turretObject", objNull], 
+			["_canMoveCamera", -1], 
 			["_setZoomTable", []], 
 			["_setNvgAndTi", []], 
 			["_pointParams", []], 
@@ -356,6 +362,7 @@ OBJCLASS(Operator)
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
+		// TURRET OBJECT
 		if !(IS_OBJ(_turretObject)) then {
 			_turretObject = _self;
 		} else {
@@ -365,6 +372,16 @@ OBJCLASS(Operator)
 			};
 		};
 		_turretParams set ["turretObject", _turretObject];
+
+		// CAN MOVE CAMERA
+		if !(_canMoveCamera isEqualType true) then {
+			if (!(_canMoveCamera isEqualType 1) || {(_canMoveCamera isEqualTo -1)}) then {
+				_canMoveCamera = _canMoveCameraByDefault;
+			} else {
+				_canMoveCamera = _canMoveCamera isEqualTo 1;
+			};
+		};
+		_turretParams set ["canMoveCamera", _canMoveCamera];
 
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams];
@@ -519,6 +536,7 @@ OBJCLASS(Operator)
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _doInterpolation = _zoomTable getOrDefault ["doInterpolation", false];
+		private _canMoveCamera = _zoomTable getOrDefault ["canMoveCamera", false];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -620,6 +638,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
 			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];
