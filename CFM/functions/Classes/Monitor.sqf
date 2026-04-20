@@ -17,6 +17,7 @@ OBJCLASS(Monitor)
 
 	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
 	OBJ_VARIABLE(_connectedOperator, objNull);
+	OBJ_VARIABLE(_connectedTurretObject, _connectedOperator);
 	OBJ_VARIABLE(_feedActive, false);
 	OBJ_VARIABLE(_currentCameraType, "");
 	OBJ_VARIABLE(_currentFeedCam, objNull);

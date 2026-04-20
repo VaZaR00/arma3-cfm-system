@@ -58,7 +58,8 @@ CFM_fnc_updateOperator = {
 			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 			private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}];
 			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
-			private _posVDUp = [objNull, [_controlledObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false], _camPosFunc] call CFM_fnc_updateCamera;
+			private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", objNull];
+			private _posVDUp = [objNull, [_controlledObj, _turretObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
 			private _prevDir = _controlledObj getVariable [_dirVarName, []];
@@ -130,27 +131,36 @@ CFM_fnc_onEachFrameClient = {
 CFM_fnc_onEachFrameServer = {
 	if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
+	private _updOps = missionNamespace getVariable ["CFM_operatorsToUpdate", []];
+	if !(_updOps isEqualType []) then {_updOps = [_updOps]};
 	if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
-		{
-			private _operator = _x;
-			// CAM DATA
-			private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
-			{
-				private _turretIndex = TURRET_INDEX(_x);
-				private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-				private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
-				private _currDir = _operator getVariable [_dirVarName, []];
-				private _currUp = _operator getVariable [_upVarName, []];
-				_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS_AND_SELF(false)];
-				_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS_AND_SELF(false)];
-			} forEach _turrets;
-			// ZOOM
-			private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];
-			_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS_AND_SELF(false)];
-		} forEach (missionNamespace getVariable ["CFM_Operators", []]);
-
+		_updOps = _updOps + (missionNamespace getVariable ["CFM_Operators", []]);
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
 	};
+	{
+		private _operator = _x;
+		if !(IS_OBJ(_operator)) then {continue};
+		// CAM DATA
+		private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
+		{
+			private _turretIndex = TURRET_INDEX(_x);
+			private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
+			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+			private _currDir = _operator getVariable [_dirVarName, []];
+			private _currUp = _operator getVariable [_upVarName, []];
+			_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS_AND_SELF(false)];
+			_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS_AND_SELF(false)];
+		} forEach _turrets;
+		// ZOOM
+		private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];
+		_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS_AND_SELF(false)];
+		// ACTIVE TURRETS
+		private _hasActiveTurretsObjects = _operator getVariable ["CFM_hasActiveTurretsObjects", -1];
+		_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
+		_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+	} forEach _updOps;
+	missionNamespace setVariable ["CFM_operatorsToUpdate", []];
 
 	// check ops condition
 	private _lastOpsCondCheck =  missionNamespace getVariable ["CFM_lastOperatorsConditionCheck", 0];
@@ -163,6 +173,7 @@ CFM_fnc_onEachFrameServer = {
 			if !(_opCond) then {
 				[_monitor, _monitor] call CFM_fnc_disconnectMonitorFromOperator;
 			};
+			_operator call CFM_fnc_checkOperatorTurrets;
 		} forEach (missionNamespace getVariable ["CFM_Monitors", []]);
 		missionNamespace setVariable ["CFM_lastOperatorsConditionCheck", diag_tickTime];
 	};
@@ -202,6 +213,9 @@ CFM_fnc_operatorCondition = {
 
 	if !(IS_OBJ(_monitor)) exitWith {false};
 
+	private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
+	if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};
+
 	if !(IS_VALID_OP(_op)) then {
 		["removeOperator", [_op]] CALL_CLASS("DbHandler");
 		continue
@@ -220,9 +234,9 @@ CFM_fnc_operatorCondition = {
 	private _bySideCiv = (_monitorSides findIf {_x in _sidesUseCiv}) != -1;
 	if (!_bySide && {!(_bySideCiv && {civilian in _sidesOp})}) exitWith {false};
 
-	private _type = [_op] call CFM_fnc_cameraType;
-
 	if (_checkFeeding && {!(_op getVariable ["CFM_isFeeding", false])}) exitWith {false};
+
+	private _type = [_op] call CFM_fnc_cameraType;
 
 	switch (_type) do {
 		case GOPRO: {
@@ -248,6 +262,40 @@ CFM_fnc_operatorCondition = {
 			_canFeed
 		};
 	};
+};
+
+CFM_fnc_checkOperatorTurrets = {
+	params["_operator"];
+
+	private _hasActiveTurretsObjects = _operator getVariable ["CFM_hasActiveTurretsObjects", -1];
+
+	if (_hasActiveTurretsObjects isEqualTo -1) exitWith {-1};
+
+	private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
+	private _aliveTurret = 0;
+	private ["_turretIndex", "_turretObj"];
+	{
+		_turretIndex = _x;
+		_turretObj = _y;
+		if (IS_OBJ(_turretObj) && {alive _turretObj}) then {
+			_aliveTurret = _aliveTurret + 1;
+		} else {
+			[_operator, _turretIndex] call CFM_fnc_removeActiveTurret;
+		};
+	} forEach _activeTurretsObjects;
+	_operator setVariable ["CFM_hasActiveTurretsObjects", _aliveTurret, MONITOR_VIEWERS_AND_SELF(false)];
+
+	_aliveTurret
+};
+
+CFM_fnc_removeActiveTurret = {
+	params[["_operator", objNull], ["_turretIndex", -1]];
+	["removeActiveTurret", _turretIndex] CALL_OBJCLASS("Operator", _operator);
+};
+
+CFM_fnc_addActiveTurret = {
+	params[["_operator", objNull], ["_turretIndex", -1], ["_turretObject", objNull]];
+	["addActiveTurret", [_turretIndex, _turretObject]] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_getActiveOperatorsCheckGlobal = {
@@ -314,6 +362,7 @@ CFM_fnc_updateCamera = {
 	params [["_cam", objNull], ["_cameraParams", []], ["_camPosFunc", CFM_fnc_camPosVehTurret]]; 
 	_cameraParams params [
 		["_operator", objNull],
+		["_turretObject", objNull],
 		["_turret", [-1]],
 		["_turretLocal", false],
 		["_pointParams", []],
@@ -340,7 +389,7 @@ CFM_fnc_updateCamera = {
 	};
 
 	// POS AN VECTOR DIR AND UP
-	private _posData = [_operator, _pointParams] call _camPosFunc;
+	private _posData = [_turretObject, _pointParams] call _camPosFunc;
 	_posData params [
 		["_pos", getPosASL _operator, [[]], 3], 
 		["_dir", vectorDir _operator, [[]], 3], 
@@ -467,13 +516,14 @@ CFM_fnc_updateMonitor = {
 	// upd cam pos
 	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+	private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
-	private _camSet = [_camera, [_operator, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
+	private _camSet = [_camera, [_operator, _turretObj, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
 	
 	// upd pip
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];

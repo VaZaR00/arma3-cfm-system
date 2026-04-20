@@ -22,10 +22,12 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_isStaticCam, false);	
 	OBJ_VARIABLE(_opSides, []);	
 	OBJ_VARIABLE(_turretsParams, createHashMap);	
-	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);	
+	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);
+	OBJ_VARIABLE(_hasActiveTurretsObjects, -1);
+	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
 
 	/*
-		_turretsParams: [[turretIndex, [isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation]]]
+		_turretsParams: [[turretIndex, [turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -197,10 +199,23 @@ OBJCLASS(Operator)
 			_args call CFM_fnc_setTurretParams;
 		} forEach _turretsParamsInit;
 
+		if (isServer) then {
+			_self call CFM_fnc_checkOperatorTurrets;
+		};
+
 		_turretsParams
 	};
 	METHOD("setTurretParams") {
-		params [["_turretIndex", -1], ["_setZoomTable", []], ["_setNvgAndTi", []], ["_pointParams", []], ["_isStaticVeh", false], ["_doInterpolationSet", true], ["_turretName", ""]];
+		params [
+			["_turretIndex", -1], 
+			["_turretObject", objNull], 
+			["_setZoomTable", []], 
+			["_setNvgAndTi", []], 
+			["_pointParams", []], 
+			["_isStaticVeh", false], 
+			["_doInterpolationSet", true], 
+			["_turretName", ""]
+		];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
@@ -341,6 +356,16 @@ OBJCLASS(Operator)
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
+		if !(IS_OBJ(_turretObject)) then {
+			_turretObject = _self;
+		} else {
+			if (isServer) then {
+				_hasActiveTurretsObjects = 0;
+				_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
+			};
+		};
+		_turretParams set ["turretObject", _turretObject];
+
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams];
 
@@ -457,7 +482,8 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_monitor)) exitWith {};
 
-		if (IS_OBJ(_caller) && {(local _caller)}) then {
+		private _callerLocal = IS_OBJ(_caller) && {(local _caller)};
+		if (_callerLocal) then {
 			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 		};
 
@@ -468,7 +494,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
-		["TurretChanged", [_monitor, _turret, false]] CALL_OBJCLASS("Operator", _self);
+		["TurretChanged", [_monitor, _turret, false, _callerLocal]] CALL_OBJCLASS("Operator", _self);
 	};
 	METHOD("monitorDisconnected") {
 		// should be executed globaly
@@ -479,7 +505,7 @@ OBJCLASS(Operator)
 		};
 	};
 	METHOD("TurretChanged") {
-		params["_monitor", ["_turret", [-1]], ["_global", true]];
+		params["_monitor", ["_turret", [-1]], ["_global", true], ["_globalUpdOp", false]];
 
 		private _turrIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
 
@@ -487,6 +513,7 @@ OBJCLASS(Operator)
 
 		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+		private _turretObj = _turretData getOrDefault ["turretObject", _self];
 		private _isLocal = _turretData getOrDefault ["IsTurretLocal", false];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
@@ -579,8 +606,12 @@ OBJCLASS(Operator)
 				_pointParams = +_checkedPointParams;
 			};
 		};
+		if !(IS_OBJ(_turretObj)) then {
+			_turretObj = _self;
+		};
 
 		_monitor setVariable ["CFM_currentTurret", [_turrIndex], _global];
+		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
 		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
@@ -589,6 +620,11 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+
+		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
+			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];
+			[_self, _turrIndex, _turretObj] call CFM_fnc_addActiveTurret;
+		};
 
 		true
 	};
@@ -634,6 +670,28 @@ OBJCLASS(Operator)
 		_monitorsOnTurret = _monitorsOnTurret - [_monitor];
 		_monitorsSet set [_turretIndex, _monitorsOnTurret];
 		_self setVariable ["CFM_monitorsSet", _monitorsSet, true];
+		true
+	};
+	METHOD("removeActiveTurret") {
+		// should be executed globaly
+		params[["_turretIndex", -1]];
+
+		_activeTurretsObjects deleteAt _turretIndex;
+		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
+		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+	};
+	METHOD("addActiveTurret") {
+		// should be executed globaly
+		params[["_turretIndex", -1], ["_turretObject", objNull]];
+
+		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _self}) exitWith {false};
+
+		_activeTurretsObjects set [_turretIndex, _turretObject];
+		_hasActiveTurretsObjects = _hasActiveTurretsObjects max 0;
+		_hasActiveTurretsObjects = (_hasActiveTurretsObjects + 1) max 0;
+		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
 		true
 	};
 CLASS_END
