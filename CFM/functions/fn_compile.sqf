@@ -514,17 +514,22 @@ CFM_fnc_updateMonitor = {
 	params["_monitor"];
 
 	// upd cam pos
-	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
-	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-	private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];
-	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
-	private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
-	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
-	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
-	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
-	private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
-	private _camSet = [_camera, [_operator, _turretObj, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
-	
+	private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
+
+	private _camSet = if (!_isStatic || {(_monitor getVariable ["CFM_doUpdateCamera", false])}) then {
+		private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+		private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+		private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];
+		private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
+		private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
+		private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
+		private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
+		private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
+		private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
+		_monitor setVariable ["CFM_doUpdateCamera", false];
+		[_camera, [_operator, _turretObj, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
+	} else {false};
+
 	// upd pip
 	private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
 	if (_updatePip) then {
@@ -1490,6 +1495,14 @@ CFM_fnc_initActionConditions = {
 		IS_MONITOR_ON
 		_target getVariable ['CFM_feedActive', false]
 	};
+	CFM_fnc_operatorZoomActionsCondition = {
+		params["_target"];
+		HAND_MON_CONDITION
+		IS_MONITOR_ON
+		(_target getVariable ['CFM_feedActive', false]) && {
+			!(_target getVariable ['CFM_currentCameraIsStatic', false])
+		}
+	};
 	CFM_fnc_connectDroneActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
@@ -1610,4 +1623,24 @@ CFM_fnc_initActionConditions = {
 		{(_target getVariable ["CFM_isHandMonitor", false]) &&
 		{!(_target getVariable ["CFM_turnedOffLocal", false])}}
 	};
+};
+
+#define CAMERA_MOVE_DIRECTIONS ["up", "down", "left", "right"]
+
+CFM_fnc_monitorCameraMove = {
+	params["_monitor", ["_direction", ""]];
+
+	private _canMove = _monitor getVariable ["CFM_currentCameraCanMove", false];
+	if !(_canMove isEqualTo true) exitWith {false};
+
+	private _directionIndex = CAMERA_MOVE_DIRECTIONS find _direction;
+	if (_directionIndex == -1) exitWith {false};
+
+	private _camera = _monitor getVariable ["CFM_currentFullScreenCam", objNull];
+};
+
+CFM_fnc_monitorCameraTurnUp = {
+	params["_monitor"];
+
+	[_monitor, "up"] call CFM_fnc_monitorCameraMove;
 };

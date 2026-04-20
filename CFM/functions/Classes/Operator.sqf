@@ -279,6 +279,7 @@ OBJCLASS(Operator)
 					case TYPE_UNIT: {CFM_goPro_zoomTable};
 					case TYPE_UAV: {CFM_drone_zoomTable};
 					case TYPE_VEH: {CFM_drone_zoomTable};
+					case TYPE_STATIC: {CFM_drone_zoomTable};
 					default {_zoomTable};
 				});
 			};
@@ -647,8 +648,10 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
+		_monitor setVariable ["CFM_doUpdateCamera", true, _global];
 
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
 			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];

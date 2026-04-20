@@ -23,6 +23,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentFeedCam, objNull);
 	OBJ_VARIABLE(_currentR2T, "");
 	OBJ_VARIABLE(_currentOpHasTurrets, false);
+	OBJ_VARIABLE(_currentCameraIsStatic, false);
 	OBJ_VARIABLE(_currentCameraCanMove, false);
 	OBJ_VARIABLE(_currentMovementRestrictions, []);
 	OBJ_VARIABLE(_monitorCanSwitchNvg, false);
@@ -371,8 +372,9 @@ OBJCLASS(Monitor)
 		};
 
 		_monitor setVariable ['CFM_maxZoomed', _maxZoomed, true];
-		_self setVariable ["CFM_zoom", _newzoom, true];
-		_self setVariable ["CFM_zoomFov", _fov, true];
+		_monitor setVariable ["CFM_zoom", _newzoom, true];
+		_monitor setVariable ["CFM_zoomFov", _fov, true];
+		_monitor setVariable ["CFM_doUpdateCamera", true, true];
 
 		_newzoom
 	};
@@ -519,7 +521,7 @@ OBJCLASS(Monitor)
 					(_this#3) params ["_target"]; 
 
 					[_target, "op"] call CFM_fnc_zoom;
-				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
+				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_operatorZoomActionsCondition", _target], _radius]; 
 
 				_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 			};

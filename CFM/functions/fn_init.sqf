@@ -34,6 +34,7 @@ CFM_canHackDrone = false;
 ["CFM", "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {[cursorObject, PLAYER_] call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {[cursorObject] call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
+
 ["CFM", "CFM_cameraTurnUpKey", ["Turn Camera Up", "Turn Camera Up"], {[cursorObject] call CFM_fnc_monitorCameraTurnUp}, "", [72, [false, false, true]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_cameraTurnDownKey", ["Turn Camera Down", "Turn Camera Down"], {[cursorObject] call CFM_fnc_monitorCameraTurnDown}, "", [80, [false, false, true]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_cameraTurnRightKey", ["Turn Camera Right", "Turn Camera Right"], {[cursorObject] call CFM_fnc_monitorCameraTurnRight}, "", [77, [false, false, true]]] call CBA_fnc_addKeybind;
