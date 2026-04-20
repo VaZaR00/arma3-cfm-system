@@ -327,7 +327,7 @@ CFM_fnc_timeInterpolate = {
     params ["_obj", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
     
 	// if (!DO_CAM_INTERPOLATION) exitWith {
-	if (!isMultiplayer || {!DO_CAM_INTERPOLATION && !_doInterpolate}) exitWith {
+	if (!DO_CAM_INTERPOLATION && {!_doInterpolate}) exitWith {
 		[_targetPos, [_targetDir, _targetUp]];
 	};
 
@@ -412,16 +412,6 @@ CFM_fnc_updateCamera = {
 		};
 	};
 
-	// if ((count _pos) != 3) then {
-	// 	_pos = getPosASL _operator;
-	// };
-	// if ((count _dir) != 3) then {
-	// 	_dir = vectorDir _operator;
-	// };
-	// if ((count _up) != 3) then {
-	// 	_up = vectorUp _operator;
-	// };
-	// private _vDirUp = [_dir, _up];
 	private _posAndVUP = [_monitor, _pos, _dir, _up, _doInterpolation] call CFM_fnc_timeInterpolate;
 	_posAndVUP params ["_pos", ["_vDirUp", []]];
 	if (_camExists && _doSetCam) then {

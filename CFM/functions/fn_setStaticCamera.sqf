@@ -64,7 +64,7 @@ private _lastPos = [0,0,0];
 		_dummyObj = _turretObj;
 	};
 	_lastPos = +_pos;
-	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, true, _turrName]];
+	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, DO_INTERPOLATE_STATIC_CAMS, _turrName]];
 	_turrParams pushBack _turrArgs;
 } forEach _posAndOffsetsTurrets;
 
