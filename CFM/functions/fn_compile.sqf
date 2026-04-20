@@ -1439,6 +1439,13 @@ CFM_fnc_copyMenuActionsToObj = {
 	true
 };
 
+CFM_fnc_getTargetMonitor = {
+	private _watchingAtMonitor = [cursorObject] call CFM_fnc_handMonitorMenuActionCondition;
+	if (_watchingAtMonitor) exitWith {cursorObject};
+	if ((player getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {player};
+	objNull
+};
+
 CFM_fnc_initActionConditions = {
 	#define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
 	#define IS_MONITOR_ON ;
