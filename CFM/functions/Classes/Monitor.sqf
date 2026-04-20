@@ -25,7 +25,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentOpHasTurrets, false);
 	OBJ_VARIABLE(_currentCameraIsStatic, false);
 	OBJ_VARIABLE(_currentCameraCanMove, false);
-	OBJ_VARIABLE(_currentMovementRestrictions, []);
+	OBJ_VARIABLE(_currentCameraMoveRestrictions, []);
 	OBJ_VARIABLE(_monitorCanSwitchNvg, false);
 	OBJ_VARIABLE(_monitorCanSwitchTi, false);
 	OBJ_VARIABLE(_currentPiPEffect, 0);

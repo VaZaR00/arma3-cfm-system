@@ -48,6 +48,7 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_classType", _classType];
 		
 		// OTHER PARAMS
+		if !(_params isEqualType []) then {_params = [_params]};
 		_params params [
 			["_canMoveCameraByDefault", false]
 		];
@@ -541,12 +542,12 @@ OBJCLASS(Operator)
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
 		private _turretObj = _turretData getOrDefault ["turretObject", _self];
 		private _isLocal = _turretData getOrDefault ["IsTurretLocal", false];
-		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
 		private _pointParams = _turretData getOrDefault ["pointParams", []];
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
-		private _doInterpolation = _zoomTable getOrDefault ["doInterpolation", false];
-		private _canMoveCamera = _zoomTable getOrDefault ["canMoveCamera", false];
-		private _cameraMoveRestrictions = _zoomTable getOrDefault ["cameraMoveRestrictions", []];
+		private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
+		private _canMoveCamera = _turretData getOrDefault ["canMoveCamera", false];
+		private _cameraMoveRestrictions = _turretData getOrDefault ["cameraMoveRestrictions", []];
+		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -637,6 +638,7 @@ OBJCLASS(Operator)
 		if !(IS_OBJ(_turretObj)) then {
 			_turretObj = _self;
 		};
+		_cameraMoveRestrictions resize [4, 180];
 
 		_monitor setVariable ["CFM_currentTurret", [_turrIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
@@ -724,6 +726,43 @@ OBJCLASS(Operator)
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects + 1) max 0;
 		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
 		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		true
+	};
+	METHOD("moveCamera") {
+		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2]];
+
+		if (_axisAngles isEqualTo [0,0]) exitWith {false};
+
+		private _turretIndex = TURRET_INDEX(_turret);
+		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+		private _pointParams = _turretData get "pointParams";
+
+		if (isNil "_pointParams") exitWith {false};
+
+		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
+
+		if (_monitorsOnTurret isEqualTo []) exitWith {false};
+
+		_pointParams params [["_pos", []], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+
+		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+
+		private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+		private _newDir = _newDirUp#0;
+		private _newUp = _newDirUp#1;
+
+		_pointParams = [_pos, _newDir, _newUp];
+		_turretData set ["pointParams", _pointParams];
+		_turretsParams set [_turretIndex, _turretData];
+
+		private _targets = MONITOR_VIEWERS_AND_SELF(false);
+		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
+
+		{
+			_x setVariable ["CFM_currentCamPointParams", _pointParams, _targets];
+			_x setVariable ["CFM_doUpdateCamera", true, _targets];
+		} forEach _monitorsOnTurret;
+
 		true
 	};
 CLASS_END

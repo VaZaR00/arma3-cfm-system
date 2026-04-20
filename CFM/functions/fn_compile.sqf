@@ -159,6 +159,9 @@ CFM_fnc_onEachFrameServer = {
 		_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
 		private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
 		_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		// TURRET PARAMS
+		private _turretsParams = _operator getVariable ["CFM_turretsParams", createHashMap];
+		_operator setVariable ["CFM_turretsParams", _turretsParams, MONITOR_VIEWERS_AND_SELF(false)];
 	} forEach _updOps;
 	missionNamespace setVariable ["CFM_operatorsToUpdate", []];
 
@@ -1378,6 +1381,8 @@ CFM_fnc_defineCameraMovementOptions = {
 	if (_option isEqualTo -1) exitWith {_defFalse};
 	if (_option isEqualTo 0) exitWith {_defFalse};
 	if (_option isEqualTo 1) exitWith {[true, []]};
+	if (_option isEqualTo true) exitWith {[true, []]};
+	if (_option isEqualTo false) exitWith {_defFalse};
 	if !(_option isEqualType []) exitWith {_defFalse};
 
 	_option = _option select {_x isEqualType 1};
@@ -1626,6 +1631,62 @@ CFM_fnc_initActionConditions = {
 };
 
 #define CAMERA_MOVE_DIRECTIONS ["up", "down", "left", "right"]
+#define CAMERA_MOVE_STEP 5
+
+CFM_fnc_rotateAroundAxis = {
+	params ["_v", "_axis", "_angle"];
+	private _c = cos _angle;
+	private _s = sin _angle;
+	(_v vectorMultiply _c) vectorAdd 
+	((_axis vectorCrossProduct _v) vectorMultiply _s) vectorAdd 
+	(_axis vectorMultiply ((_axis vectorDotProduct _v) * (1 - _c)))
+};
+
+CFM_fnc_transformTurret = {
+    params ["_dir", "_up", "_pitch", "_yaw"];
+
+    // 1. Глобальный Yaw (вокруг оси [0, 0, 1])
+    if (_yaw != 0) then {
+        private _worldZ = [0, 0, 1];
+        _dir = [_dir, _worldZ, _yaw] call CFM_fnc_rotateAroundAxis;
+        _up = [_up, _worldZ, _yaw] call CFM_fnc_rotateAroundAxis;
+    };
+
+    // 2. Локальный Pitch
+    if (_pitch != 0) then {
+        // Вычисляем "право" ПОСЛЕ поворота по Yaw, чтобы оно было актуальным
+        private _side = _dir vectorCrossProduct _up;
+        
+        _dir = [_dir, _side, _pitch] call CFM_fnc_rotateAroundAxis;
+        _up = [_up, _side, _pitch] call CFM_fnc_rotateAroundAxis;
+    };
+
+    [_dir, _up]
+};
+
+CFM_fnc_cameraMove = {
+	params["_operator", ["_turretIndex", -1], ["_direction", ""], ["_step", CAMERA_MOVE_STEP]];
+
+	private _axisAngles = switch (_direction) do {
+		case "up": {
+			[0, _step]
+		};
+		case "down": {
+			[0, -_step]
+		};
+		case "right": {
+			[-_step, 0]
+		};
+		case "left": {
+			[_step, 0]
+		};
+		default {[0,0]};
+	};
+
+	if (_axisAngles isEqualTo [0,0]) exitWith {false};
+
+	["moveCamera", [_turretIndex, _axisAngles], _operator, false] CALL_OBJCLASS("Operator", _operator);
+};
 
 CFM_fnc_monitorCameraMove = {
 	params["_monitor", ["_direction", ""]];
@@ -1636,11 +1697,45 @@ CFM_fnc_monitorCameraMove = {
 	private _directionIndex = CAMERA_MOVE_DIRECTIONS find _direction;
 	if (_directionIndex == -1) exitWith {false};
 
-	private _camera = _monitor getVariable ["CFM_currentFullScreenCam", objNull];
+	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+
+	if (!IS_OBJ(_camera)) exitWith {false};
+
+	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", []];
+	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", []];
+	private _directionRestriction = _movementRestrictions param [_directionIndex, 0];
+	private _currentCameraMove = _currentCameraMoves param [_directionIndex, 0];
+	private _newMove = _currentCameraMove + CAMERA_MOVE_STEP;
+
+	if (_directionRestriction < 1) exitWith {false};
+	if (_newMove > _directionRestriction) exitWith {false};
+
+	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+	private _turretIndex = _monitor getVariable ["CFM_currentTurret", [-1]];
+
+	[_operator, _turretIndex, _direction, CAMERA_MOVE_STEP] call CFM_fnc_cameraMove;
 };
 
 CFM_fnc_monitorCameraTurnUp = {
 	params["_monitor"];
 
 	[_monitor, "up"] call CFM_fnc_monitorCameraMove;
+};
+
+CFM_fnc_monitorCameraTurnDown = {
+	params["_monitor"];
+
+	[_monitor, "down"] call CFM_fnc_monitorCameraMove;
+};
+
+CFM_fnc_monitorCameraTurnLeft = {
+	params["_monitor"];
+
+	[_monitor, "left"] call CFM_fnc_monitorCameraMove;
+};
+
+CFM_fnc_monitorCameraTurnRight = {
+	params["_monitor"];
+
+	[_monitor, "right"] call CFM_fnc_monitorCameraMove;
 };
