@@ -339,6 +339,8 @@ OBJCLASS(Monitor)
 	METHOD("zoom") {
 		params [["_zoomAdd", 0], ["_zoomSet", -1]]; 
 
+		if ((_zoomAdd isEqualTo 1) && {_maxZoomed}) exitWith {_zoom};
+
 		private _maxZoomed = false;
 		private _newzoom = if (_zoomAdd isEqualType 1) then {
 			private _newzoom = if (_zoomSet isEqualTo -1) then {

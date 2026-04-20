@@ -1691,11 +1691,13 @@ CFM_fnc_monitorCameraMove = {
 
 	if (!IS_OBJ(_camera)) exitWith {false};
 
+	private _currZoom = _monitor getVariable ["CFM_zoomFov", 1];
+	private _step = CAMERA_MOVE_STEP * _currZoom;
 	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", []];
 	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", []];
 	private _directionRestriction = _movementRestrictions param [_directionIndex, 0];
 	private _currentCameraMove = _currentCameraMoves param [_directionIndex, 0];
-	private _newMove = _currentCameraMove + CAMERA_MOVE_STEP;
+	private _newMove = _currentCameraMove + _step;
 
 	if (_directionRestriction < 1) exitWith {false};
 	if (_newMove > _directionRestriction) exitWith {false};
@@ -1703,7 +1705,7 @@ CFM_fnc_monitorCameraMove = {
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _turretIndex = _monitor getVariable ["CFM_currentTurret", [-1]];
 
-	[_operator, _turretIndex, _direction, CAMERA_MOVE_STEP] call CFM_fnc_cameraMove;
+	[_operator, _turretIndex, _direction, _step] call CFM_fnc_cameraMove;
 };
 
 CFM_fnc_monitorCameraTurnUp = {
