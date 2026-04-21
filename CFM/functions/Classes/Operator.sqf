@@ -29,7 +29,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
 
 	/*
-		_turretsParams: [[turretIndex, [turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation]]]
+		_turretsParams: [[turretIndex, [turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -54,10 +54,10 @@ OBJCLASS(Operator)
 		];
 		
 		// CAN MOVE CAMERA
-		private _moveParams = _canMoveCameraByDefault call CFM_fnc_defineCameraMovementOptions;
-		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", []]];
+		private _moveParams = [_canMoveCameraByDefault] call CFM_fnc_defineCameraMovementOptions;
+		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
 		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault];
-		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", _cameraMoveRestrictionsByDefault];
+		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault];
 
 		if (_classType isEqualTo TYPE_STATIC) then {
 			_isStaticCam = true;
@@ -384,12 +384,16 @@ OBJCLASS(Operator)
 		_turretParams set ["turretObject", _turretObject];
 
 		// CAN MOVE CAMERA
+		private _cameraMoveRestrictionsByDefault = _self getVariable ["CFM_cameraMoveRestrictionsByDefault", []];
 		private _moveParams = if (_canMoveCamera isEqualTo -1) then {
-			[_canMoveCameraByDefault, _cameraMoveRestrictionsByDefault]
+			[_canMoveCameraByDefault, +_cameraMoveRestrictionsByDefault]
 		} else {
-			_canMoveCamera call CFM_fnc_defineCameraMovementOptions
+			[_canMoveCamera] call CFM_fnc_defineCameraMovementOptions
 		};
-		_moveParams params [["_canMoveCamera", _canMoveCameraByDefault], ["_cameraMoveRestrictions", _cameraMoveRestrictionsByDefault]];
+		_moveParams params [["_canMoveCamera", _canMoveCameraByDefault], ["_cameraMoveRestrictions", +_cameraMoveRestrictionsByDefault]];
+		if (count _cameraMoveRestrictions != 4) then {
+			_cameraMoveRestrictions = +_cameraMoveRestrictionsByDefault;
+		};
 		_turretParams set ["canMoveCamera", _canMoveCamera];
 		_turretParams set ["cameraMoveRestrictions", _cameraMoveRestrictions];
 

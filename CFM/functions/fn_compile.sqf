@@ -1375,7 +1375,7 @@ CFM_fnc_defineCameraMovementOptions = {
 	if (_option isEqualTo false) exitWith {_defFalse};
 	if !(_option isEqualType []) exitWith {_defFalse};
 
-	_option = _option select {_x isEqualType 1};
+	private _option = (+_option) select {_x isEqualType 1};
 	private _sum = 0;
 	{
 		_sum = _sum + _x;
@@ -1440,7 +1440,7 @@ CFM_fnc_copyMenuActionsToObj = {
 };
 
 CFM_fnc_getTargetMonitor = {
-	private _watchingAtMonitor = [cursorObject] call CFM_fnc_handMonitorMenuActionCondition;
+	private _watchingAtMonitor = [PLAYER_] call CFM_fnc_isWatchingAtMonitor;
 	if (_watchingAtMonitor) exitWith {cursorObject};
 	if ((player getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {player};
 	objNull
@@ -1451,6 +1451,10 @@ CFM_fnc_initActionConditions = {
 	#define IS_MONITOR_ON ;
 	#define IS_MONITOR_ON if ((_target getVariable ["CFM_isHandMonitor", false]) && {_target getVariable ['CFM_turnedOffLocal', false]}) exitWith {false};
 	
+	CFM_fnc_isWatchingAtMonitor = {
+		params[["_target", PLAYER_]];
+		(!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject isEqualTo _target)};
+	};
 	CFM_fnc_handMonitorMenuActionCondition = {
 		params["_target"];
 
@@ -1458,9 +1462,7 @@ CFM_fnc_initActionConditions = {
 		if !(_isHandMonitor) exitWith {false};
 		if !(_target isEqualTo PLAYER_) exitWith {true};
 
-		private _isWatchingAtMonitor = (!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject isEqualTo _target)};
-		
-		_isWatchingAtMonitor
+		[_target] call CFM_fnc_isWatchingAtMonitor;
 	};
 	CFM_fnc_menuActionCondition = {
 		params["_target"];
@@ -1700,8 +1702,8 @@ CFM_fnc_monitorCameraMove = {
 
 	private _currZoom = _monitor getVariable ["CFM_zoomFov", 1];
 	private _step = CAMERA_MOVE_STEP * _currZoom;
-	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", []];
-	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", []];
+	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [180,180,180,180]];
+	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", [0,0,0,0]];
 	private _directionRestriction = _movementRestrictions param [_directionIndex, 0];
 	private _currentCameraMove = _currentCameraMoves param [_directionIndex, 0];
 	private _newMove = _currentCameraMove + _step;
