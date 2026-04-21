@@ -12,6 +12,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_canFeed, false);
 	OBJ_VARIABLE(_canMoveCameraByDefault, false);
 	OBJ_VARIABLE(_cameraMoveRestrictionsByDefault, []); // [degrees up, degrees down, degrees left, degrees right]
+	OBJ_VARIABLE(_cameraZoomSmoothDefault, false); 
 	OBJ_VARIABLE(_classType, "");
 	OBJ_VARIABLE(_objClass, "");
 	OBJ_VARIABLE(_monitorsSet, createHashMap);
@@ -50,22 +51,24 @@ OBJCLASS(Operator)
 		// OTHER PARAMS
 		if !(_params isEqualType []) then {_params = [_params]};
 		_params params [
-			["_canMoveCameraByDefault", false]
+			["_canMoveCameraByDefault", false],
+			["_cameraZoomSmoothDefault", true, [true]]
 		];
+
+		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
+		_operator setVariable ["CFM_hasGoPro", _hasGoPro];
 		
 		// CAN MOVE CAMERA
 		private _moveParams = [_canMoveCameraByDefault] call CFM_fnc_defineCameraMovementOptions;
 		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
 		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault];
 		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault];
+		_operator setVariable ["CFM_cameraZoomSmoothDefault", !_hasGoPro && _cameraZoomSmoothDefault];
 
 		if (_classType isEqualTo TYPE_STATIC) then {
 			_isStaticCam = true;
 			_operator setVariable ["CFM_isStaticCam", _isStaticCam];
 		};
-
-		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
-		_operator setVariable ["CFM_hasGoPro", _hasGoPro];
 
 		_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
 		_operator setVariable ["CFM_objClass", _objClass];
@@ -229,7 +232,8 @@ OBJCLASS(Operator)
 			["_pointParams", []], 
 			["_isStaticVeh", false], 
 			["_doInterpolationSet", true], 
-			["_turretName", ""]
+			["_turretName", ""],
+			["_smoothZoomSetTurr", -1]
 		];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
@@ -294,6 +298,12 @@ OBJCLASS(Operator)
 		};
 		_zoomTable set ["max", _max];
 		_turretParams set ["zoomTable", _zoomTable];
+		private _smoothZoom = if (_smoothZoomSetTurr == -1) then {
+			_cameraZoomSmoothDefault && !_hasGoPro
+		} else {
+			_smoothZoomSetTurr isEqualTo 1
+		};
+		_turretParams set ["smoothZoom", _smoothZoom];
 
 		// NVG AND TI
 		if ((_setNvgAndTi isEqualTo []) || (_setNvgAndTi isEqualTo true)) then {
@@ -368,7 +378,7 @@ OBJCLASS(Operator)
 				default {CFM_fnc_camPosVehStatic};
 			};
 		};
-		private _doInterpolation = _doInterpolationSet && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)};
+		private _doInterpolation = _doInterpolationSet && !_hasGoPro && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)};
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
@@ -551,6 +561,7 @@ OBJCLASS(Operator)
 		private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
 		private _canMoveCamera = _turretData getOrDefault ["canMoveCamera", false];
 		private _cameraMoveRestrictions = _turretData getOrDefault ["cameraMoveRestrictions", []];
+		private _smoothZoom = _turretData getOrDefault ["smoothZoom", true];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
@@ -658,6 +669,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
 		_monitor setVariable ["CFM_doUpdateCamera", true, _global];
+		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
 			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];

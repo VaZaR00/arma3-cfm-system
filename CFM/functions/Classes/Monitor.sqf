@@ -23,6 +23,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_currentFeedCam, objNull);
 	OBJ_VARIABLE(_currentR2T, "");
 	OBJ_VARIABLE(_currentOpHasTurrets, false);
+	OBJ_VARIABLE(_currentCameraSmoothZoom, true);
 	OBJ_VARIABLE(_currentCameraIsStatic, false);
 	OBJ_VARIABLE(_currentCameraCanMove, false);
 	OBJ_VARIABLE(_currentCameraMoves, [0 I 0 I 0 I 0]);

@@ -16,6 +16,7 @@
 		5. _hasTInNvg - array of [bool, bool] if operator has nvg and ti
 		6. _params [array]:
 			1. canMoveCameraByDefault [bool] - if true, operator can move camera by default, if false, can't, if not set, it will be set based on turret params (def: false)
+			2. smoothZoomDefault [bool] - if true, camera zooms smoothly by default, if false, it doesn't, if not set, it will be set based on turret params (def: false)
 
 */
 
@@ -50,7 +51,7 @@ private _turrParams = [];
 private _turrs = [];
 private _lastPos = [0,0,0];
 {
-	_x params [["_pos", [0,0,0], [[]], 3], ["_vDirUp", [], [[]], 2], ["_turretObj", objNull], ["_canMoveCamera", -1], ["_turretIndex", -2], ["_zoomTable", []], ["_nvgAndTi", []], ["_turrName", _name]];
+	_x params [["_pos", [0,0,0], [[]], 3], ["_vDirUp", [], [[]], 2], ["_turretObj", objNull], ["_canMoveCamera", -1], ["_turretIndex", -2], ["_zoomTable", []], ["_nvgAndTi", []], ["_turrName", _name], ["_smoothZoom", -1]];
 	_vDirUp params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
 	if (_turretIndex in _turrs) then {
 		private _lastTurrIndex = _turrs select -1;
@@ -64,7 +65,7 @@ private _lastPos = [0,0,0];
 		_dummyObj = _turretObj;
 	};
 	_lastPos = +_pos;
-	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, DO_INTERPOLATE_STATIC_CAMS, _turrName]];
+	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom]];
 	_turrParams pushBack _turrArgs;
 } forEach _posAndOffsetsTurrets;
 

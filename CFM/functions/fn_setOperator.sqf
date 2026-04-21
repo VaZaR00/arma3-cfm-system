@@ -14,6 +14,8 @@
 		6. _name [str] - name of camera
 		7. _params [array]:
 			1. canMoveCameraByDefault [bool] - if true, operator can move camera by default, if false, can't, if not set, it will be set based on turret params (def: false)
+			2. smoothZoomDefault [bool] - if true, camera zooms smoothly by default, if false, it doesn't, if not set, it will be set based on turret params (def: false)
+
 */
 
 #include "defines.hpp"
