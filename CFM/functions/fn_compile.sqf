@@ -324,54 +324,27 @@ CFM_fnc_getActiveOperators = {
 };
 
 CFM_fnc_timeInterpolate = {
-    params ["_obj", "_targetPos", "_targetDir", "_targetUp", "_targetFov", ["_doInterpolate", true], ["_tightness", 7], ["_dt", diag_deltaTime]];
+    params ["_prevValue", "_targetValue", ["_tightness", 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightness", "5"]))], ["_dt", diag_deltaTime]];
     
-	// if (!DO_CAM_INTERPOLATION) exitWith {
-	if (!DO_CAM_INTERPOLATION && {!_doInterpolate}) exitWith {
-		[_targetPos, [_targetDir, _targetUp], _targetFov];
-	};
-
     // Формула затухания, независимая от FPS: 
     // Эффект = 1 - e^(-tightness * dt)
     private _interpFactor = 1 - (exp (-_tightness * _dt));
 
-    // 1. Позиция
-    private _newPos = _targetPos;
-    // private _lastPos = _obj getVariable ["CFM_camInterp_lastPos", _targetPos];
-    // private _newPos = +_lastPos;
-    // // Интерполируем каждую ось (или через vectorAdd/vectorDiff)
-	// for "_i" from 0 to 2 do {
-    //     private _diff = (_targetPos select _i) - (_lastPos select _i);
-    //     _newPos set [_i, (_lastPos select _i) + (_diff * _interpFactor)];
-    // };
-
-    // 2. Векторы (Dir и Up)
-    private _lastDir = _obj getVariable ["CFM_camInterp_lastDir", _targetDir];
-    private _lastUp = _obj getVariable ["CFM_camInterp_lastUp", _targetUp];
-    private _lastFov = _obj getVariable ["CFM_camInterp_lastFov", _targetFov];
-
-    // Плавный поворот векторов
-    private _newDir = _lastDir vectorAdd ((_targetDir vectorDiff _lastDir) vectorMultiply _interpFactor);
-    private _newUp = _lastUp vectorAdd ((_targetUp vectorDiff _lastUp) vectorMultiply _interpFactor);
-	private _newFov = _lastFov + ((_targetFov - _lastFov) * _interpFactor);
-
-	if ([_targetDir, _newDir, DO_INTERPOLATE_TOLERANCE] call CFM_fnc_compareVectors) then {
-		_newDir = +_targetDir;
+	if (_targetValue isEqualType []) exitWith {
+    	private _newValue = _prevValue vectorAdd ((_targetValue vectorDiff _prevValue) vectorMultiply _interpFactor);
+		if ([_targetValue, _newValue, DO_INTERPOLATE_TOLERANCE] call CFM_fnc_compareVectors) then {
+			_newValue = +_targetValue;
+		};
+		_newValue
 	};
-	if ([_targetUp, _newUp, DO_INTERPOLATE_TOLERANCE] call CFM_fnc_compareVectors) then {
-		_newUp = +_targetUp;
+	if (_targetValue isEqualType 1) exitWith {
+    	private _newValue = _prevValue + ((_targetValue - _prevValue) * _interpFactor);
+		if ((abs (_targetFov - _newFov)) < DO_INTERPOLATE_TOLERANCE) then {
+			_newValue = _targetValue;
+		};
+		_newValue
 	};
-	if ((abs (_targetFov - _newFov)) < DO_INTERPOLATE_TOLERANCE) then {
-		_newFov = _targetFov;
-	};
-
-    // 3. Сохраняем состояние
-    _obj setVariable ["CFM_camInterp_lastPos", _newPos];
-    _obj setVariable ["CFM_camInterp_lastDir", _newDir];
-    _obj setVariable ["CFM_camInterp_lastUp", _newUp];
-    _obj setVariable ["CFM_camInterp_lastFov", _newFov];
-
-    [_newPos, [_newDir, _newUp], _newFov];
+	_targetValue
 };
 
 CFM_fnc_updateCamera = {  
@@ -426,19 +399,36 @@ CFM_fnc_updateCamera = {
 		};
 	};
 
-	private _posAndVUP = [_monitor, _pos, _dir, _up, _fov, _doInterpolation] call CFM_fnc_timeInterpolate;
-	_posAndVUP params ["_pos", ["_vDirUp", []], ["_newFov", _fov]];
-	if !(_smoothZoom) then {
-		_newFov = _fov;
+	private _newFov = _fov;
+	private _newPos = _pos;
+	private _newDir = _dir;
+	private _newUp = _up;
+	if (_doInterpolation) then {
+		private _interpTightnessOffset = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessOffset", "5"]));
+		private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
+		private _lastDir = _monitor getVariable ["CFM_camInterp_lastDir", _dir];
+		private _lastUp = _monitor getVariable ["CFM_camInterp_lastUp", _up];
+		_newPos = [_lastPos, _pos, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
+		_newDir = [_lastDir, _dir, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
+		_newUp = [_lastUp, _up, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
+		_monitor setVariable ["CFM_camInterp_lastPos", _newPos];
+		_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
+		_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
+	};
+	if (_smoothZoom) then {
+		private _interpTightnessZoom = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessZoom", "10"]));
+		private _lastFov = _monitor getVariable ["CFM_camInterp_lastFov", _fov];
+		_newFov = [_lastFov, _fov, _interpTightnessZoom] call CFM_fnc_timeInterpolate;
+		_monitor setVariable ["CFM_camInterp_lastFov", _newFov];
 	};
 	if (_camExists && _doSetCam) then {
-		_cam setPosASL _pos; 
-		_cam setVectorDirAndUp _vDirUp;  
+		_cam setPosASL _newPos; 
+		_cam setVectorDirAndUp [_newDir, _newUp];  
 		_cam camSetFov _newFov;  
 		_cam camCommit 0;  
 	};
 
-	[_pos, [_dir, _up]]
+	[_newPos, [_newDir, _newUp]]
 };
 
 CFM_fnc_camPosVehTurret = {
@@ -1762,7 +1752,8 @@ CFM_fnc_monitorCameraMove = {
 	if (!IS_OBJ(_camera)) exitWith {false};
 
 	private _currZoom = _monitor getVariable ["CFM_zoomFov", 1];
-	private _step = CAMERA_MOVE_STEP * _currZoom;
+	private _sensitivity = (MGVAR ["CFM_cameraMoveSensitivity", 5]);
+	private _step = _sensitivity * _currZoom;
 	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [180,180,180,180]];
 	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", [0,0,0,0]];
 	private _directionRestriction = _movementRestrictions param [_directionIndex, 0];

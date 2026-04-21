@@ -22,6 +22,9 @@ CFM_canHackDrone = false;
 ["CFM_menuShowOperatorDistance",  "CHECKBOX",  ["Show operator distance to monitor", "Show operator distance to monitor"], "CFM Settings", false] call CBA_fnc_addSetting;
 ["CFM_allHandMonitorsAreDisplays",  "CHECKBOX",  ["All hand monitors are fullscreen displays", "All hand monitors are fullscreen displays"], "CFM Settings", false] call CBA_fnc_addSetting;
 ["CFM_fullscreenIsPip",  "CHECKBOX",  ["Fullscreen is PIP", "Fullscreen is Picture In Picture window"], "CFM Settings", true] call CBA_fnc_addSetting;
+["CFM_cameraMoveSensitivity",  "SLIDER",  ["Camera Move Sensitivity", "Sensitivity of camera movement"], "CFM Settings", [0, 50, 5, 1, false]] call CBA_fnc_addSetting;
+["CFM_camInterpolation_tightnessOffset",  "EDITBOX",  ["Camera Rotation Tightness", "Tightness of camera rotation interpolation. Lower is more smooth"], "CFM Settings", "5", 1] call CBA_fnc_addSetting;
+["CFM_camInterpolation_tightnessZoom",  "EDITBOX",  ["Camera Zoom Tightness", "Tightness of camera zoom interpolation. Lower is more smooth"], "CFM Settings", "10", 1] call CBA_fnc_addSetting;
 
 ["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullScreen}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[(call CFM_fnc_getTargetMonitor), +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
