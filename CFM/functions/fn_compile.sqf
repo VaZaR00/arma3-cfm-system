@@ -324,7 +324,7 @@ CFM_fnc_getActiveOperators = {
 };
 
 CFM_fnc_timeInterpolate = {
-    params ["_obj", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 5], ["_dt", diag_deltaTime]];
+    params ["_obj", "_targetPos", "_targetDir", "_targetUp", ["_doInterpolate", true], ["_tightness", 7], ["_dt", diag_deltaTime]];
     
 	// if (!DO_CAM_INTERPOLATION) exitWith {
 	if (!DO_CAM_INTERPOLATION && {!_doInterpolate}) exitWith {
@@ -352,6 +352,13 @@ CFM_fnc_timeInterpolate = {
     // Плавный поворот векторов
     private _newDir = _lastDir vectorAdd ((_targetDir vectorDiff _lastDir) vectorMultiply _interpFactor);
     private _newUp = _lastUp vectorAdd ((_targetUp vectorDiff _lastUp) vectorMultiply _interpFactor);
+
+	if ([_targetDir, _newDir, DO_INTERPOLATE_TOLERANCE] call CFM_fnc_compareVectors) then {
+		_newDir = +_targetDir;
+	};
+	if ([_targetUp, _newUp, DO_INTERPOLATE_TOLERANCE] call CFM_fnc_compareVectors) then {
+		_newUp = +_targetUp;
+	};
 
     // 3. Сохраняем состояние
     _obj setVariable ["CFM_cam_lastPos", _newPos];
@@ -508,9 +515,27 @@ CFM_fnc_updateMonitor = {
 
 	// upd cam pos
 	private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
+	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+	private _offsetReached = true;
 
-	private _camSet = if (!_isStatic || {(_monitor getVariable ["CFM_doUpdateCamera", false])}) then {
-		private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+	private _camSet = if (!_isStatic || {
+		private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
+		if (_doUpdateCamera isEqualType true) exitWith {_doUpdateCamera};
+		if !(_doUpdateCamera isEqualType []) exitWith {false};
+		private _currPos = getPosASL _camera;
+		private _currDir = vectorDir _camera;
+		private _currUp = vectorUp _camera;
+		_doUpdateCamera params [["_pos", _currPos, [[]], 3], ["_dir", _currDir, [[]], 3], ["_up", _currUp, [[]], 3]];
+		_offsetReached = (
+			([_pos, _currPos] call CFM_fnc_compareVectors) && 
+			{([_dir, _currDir] call CFM_fnc_compareVectors) && 
+			{([_up, _currUp] call CFM_fnc_compareVectors)}}
+		);
+		if (_offsetReached) then {
+			_monitor setVariable ["CFM_doUpdateCamera", false];
+		};
+		!_offsetReached
+	}) then {
 		private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 		private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];
 		private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
@@ -519,7 +544,9 @@ CFM_fnc_updateMonitor = {
 		private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
 		private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 		private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
-		_monitor setVariable ["CFM_doUpdateCamera", false];
+		if (_offsetReached) then {
+			_monitor setVariable ["CFM_doUpdateCamera", false];
+		};
 		[_camera, [_operator, _turretObj, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation], _camPosFunc] call CFM_fnc_updateCamera;
 	} else {false};
 
@@ -1437,6 +1464,18 @@ CFM_fnc_copyMenuActionsToObj = {
 	_unit setVariable ["CFM_copiedActions", _newActions];
 	_unit setVariable ["CFM_actionsSet", true];
 	true
+};
+
+CFM_fnc_compareVectors = {
+	params[["_v1", []], ["_v2", []], ["_tolerance", DO_INTERPOLATE_TOLERANCE]];
+
+	if (_tolerance <= 0) exitWith {
+		_v1 isEqualTo _v2
+	};
+
+	private _dist = _v1 distance _v2;
+
+	(_dist) < _tolerance
 };
 
 CFM_fnc_getTargetMonitor = {

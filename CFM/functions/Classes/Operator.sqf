@@ -772,7 +772,7 @@ OBJCLASS(Operator)
 
 		{
 			_x setVariable ["CFM_currentCamPointParams", _pointParams, _targets];
-			_x setVariable ["CFM_doUpdateCamera", true, _targets];
+			_x setVariable ["CFM_doUpdateCamera", _pointParams, _targets];
 			_x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
 		} forEach _monitorsOnTurret;
 
