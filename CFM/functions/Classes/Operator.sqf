@@ -751,6 +751,14 @@ OBJCLASS(Operator)
 		private _newDir = _newDirUp#0;
 		private _newUp = _newDirUp#1;
 
+		private _currentMove = _turretData getOrDefault ["currentCamMove", [0,0,0,0]];
+		private _vertUp = (_currentMove#0) + _vertical;
+		private _vertDown = (_currentMove#1) - _vertical;
+		private _vertLeft = (_currentMove#2) + _horizontal;
+		private _vertRight = (_currentMove#3) - _horizontal;
+		_currentMove = [_vertUp, _vertDown, _vertLeft, _vertRight];
+		_turretData set ["currentCamMove", _currentMove];
+
 		_pointParams = [_pos, _newDir, _newUp];
 		_turretData set ["pointParams", _pointParams];
 		_turretsParams set [_turretIndex, _turretData];
@@ -761,6 +769,7 @@ OBJCLASS(Operator)
 		{
 			_x setVariable ["CFM_currentCamPointParams", _pointParams, _targets];
 			_x setVariable ["CFM_doUpdateCamera", true, _targets];
+			_x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
 		} forEach _monitorsOnTurret;
 
 		true
