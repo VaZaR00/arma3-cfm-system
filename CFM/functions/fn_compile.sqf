@@ -140,6 +140,7 @@ CFM_fnc_onEachFrameServer = {
 	{
 		private _operator = _x;
 		if !(IS_OBJ(_operator)) then {continue};
+		private _targets = MONITOR_VIEWERS_AND_SELF(false);
 		// CAM DATA
 		private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
 		{
@@ -148,20 +149,20 @@ CFM_fnc_onEachFrameServer = {
 			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 			private _currDir = _operator getVariable [_dirVarName, []];
 			private _currUp = _operator getVariable [_upVarName, []];
-			_operator setVariable [_dirVarName, _currDir, MONITOR_VIEWERS_AND_SELF(false)];
-			_operator setVariable [_upVarName, _currUp, MONITOR_VIEWERS_AND_SELF(false)];
+			_operator setVariable [_dirVarName, _currDir, _targets];
+			_operator setVariable [_upVarName, _currUp, _targets];
 		} forEach _turrets;
 		// ZOOM
 		private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];
-		_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, MONITOR_VIEWERS_AND_SELF(false)];
+		_operator setVariable ["CFM_prevZoomLocalFov", _currentZoom, _targets];
 		// ACTIVE TURRETS
 		private _hasActiveTurretsObjects = _operator getVariable ["CFM_hasActiveTurretsObjects", -1];
-		_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 		private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
-		_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, _targets];
 		// TURRET PARAMS
 		private _turretsParams = _operator getVariable ["CFM_turretsParams", createHashMap];
-		_operator setVariable ["CFM_turretsParams", _turretsParams, MONITOR_VIEWERS_AND_SELF(false)];
+		_operator setVariable ["CFM_turretsParams", _turretsParams, _targets];
 	} forEach _updOps;
 	missionNamespace setVariable ["CFM_operatorsToUpdate", []];
 
