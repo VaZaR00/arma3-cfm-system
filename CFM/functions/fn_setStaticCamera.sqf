@@ -23,7 +23,8 @@
 
 #include "defines.hpp"
 
-private _code = {
+// for JIP sync
+if !(isServer) exitWith {false};
 
 params [
 	["_name", ""],
@@ -81,15 +82,6 @@ if ((isNil "_dummyObj") || {!IS_OBJ(_dummyObj)}) exitWith {
 
 private _args = [_dummyObj, _sides, _turrParams, _hasTInNvg, _name, _params];
 
-_args call CFM_fnc_setOperator;
-};
+[_args, {_this call CFM_fnc_setOperator}, 0, true, true] call CFM_fnc_remoteExec;
 
-#ifdef SET_MON_OP_REMOTE_EXEC
-	// for JIP sync
-	if !(isServer) exitWith {false};
-
-	[_this, _code, 0, true, true] call CFM_fnc_remoteExec;
-#endif 
-#ifndef SET_MON_OP_REMOTE_EXEC
-	_this call _code
-#endif 
+true

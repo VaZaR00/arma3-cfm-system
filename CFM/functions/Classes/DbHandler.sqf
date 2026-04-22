@@ -194,7 +194,8 @@ CLASS(DbHandler)
 		_next
 	};
 	METHOD("createDummyForStaticCam") {
-		private _dummyObj = createVehicleLocal [DUMMY_CLASSNAME, [0,0,0]];
+		// execute only on server, because of JIP sync and to avoid creating multiple dummies on different machines
+		private _dummyObj = createVehicle [DUMMY_CLASSNAME, [0,0,0]];
 		["addDummy", [_dummyObj]] CALL_CLASS(_self);
 		_dummyObj
 	};
