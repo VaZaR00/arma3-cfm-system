@@ -22,6 +22,11 @@
 
 #include "defines.hpp"
 
+#ifdef SET_MON_OP_REMOTE_EXEC
+// for JIP sync
+if !(isServer) exitWith {false};
+#endif
+
 params [
 	["_monitor", objNull], 
 	["_sides", [side PLAYER_]],
@@ -61,10 +66,7 @@ if (_monitor isEqualType []) exitWith {
 };
 if !(IS_OBJ(_monitor)) exitWith {false};
 
-#ifdef SET_MON_OP_REMOTE_EXEC
-	// for JIP sync
-	if !(isServer) exitWith {false};
-
+#ifndef SET_MON_OP_REMOTE_EXEC
 	[_this, {
 	_this NEW_OBJINSTANCE("Monitor");
 	}, 0, true, true] call CFM_fnc_remoteExec;

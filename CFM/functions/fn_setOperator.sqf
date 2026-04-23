@@ -20,6 +20,11 @@
 
 #include "defines.hpp"
 
+#ifdef SET_MON_OP_REMOTE_EXEC
+// for JIP sync
+if !(isServer) exitWith {false};
+#endif
+
 params [
 	["_operator", objNull], 
 	["_sides", []], 
@@ -55,9 +60,6 @@ private _reset = if (isNil "_reset") then {true} else {_reset};
 if (!_reset && {(IS_VALID_OP(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 
 #ifdef SET_MON_OP_REMOTE_EXEC
-	// for JIP sync
-	if !(isServer) exitWith {false};
-
 	[_this, {
 	["setOperator", _this] CALL_CLASS("DbHandler");
 	}, 0, true, true] call CFM_fnc_remoteExec;
