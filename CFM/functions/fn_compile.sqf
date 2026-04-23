@@ -527,6 +527,7 @@ CFM_fnc_updateMonitor = {
 		(_smoothZoom && {
 			// zoom interpolation
 			private _currentFov = _monitor getVariable ["CFM_camInterp_lastFov", _zoomFov];
+			if !(_currentFov isEqualType 1) exitWith {true};
 			private _fovDiff = abs (_zoomFov - _currentFov);
 			_fovDiff > DO_INTERPOLATE_TOLERANCE
 		}) ||
