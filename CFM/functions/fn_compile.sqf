@@ -406,13 +406,13 @@ CFM_fnc_updateCamera = {
 	private _newUp = _up;
 	if (_doInterpolation) then {
 		private _interpTightnessOffset = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessOffset", "5"]));
-		private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
+		// private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
 		private _lastDir = _monitor getVariable ["CFM_camInterp_lastDir", _dir];
 		private _lastUp = _monitor getVariable ["CFM_camInterp_lastUp", _up];
-		_newPos = [_lastPos, _pos, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
+		// _newPos = [_lastPos, _pos, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
 		_newDir = [_lastDir, _dir, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
 		_newUp = [_lastUp, _up, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
-		_monitor setVariable ["CFM_camInterp_lastPos", _newPos];
+		// _monitor setVariable ["CFM_camInterp_lastPos", _newPos];
 		_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
 		_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
 	};

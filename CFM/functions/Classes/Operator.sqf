@@ -378,7 +378,7 @@ OBJCLASS(Operator)
 				default {CFM_fnc_camPosVehStatic};
 			};
 		};
-		private _doInterpolation = _doInterpolationSet && !_hasGoPro && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)};
+		private _doInterpolation = _doInterpolationSet && (isMultiplayer || _isStaticCam) && {!_hasGoPro && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)}};
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
@@ -664,12 +664,24 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
 		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
-		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
 		_monitor setVariable ["CFM_doUpdateCamera", true, _global];
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
+
+		// small delay before enabling interpolation so there is no camera movement on spawn
+		if (_doInterpolation) then {
+			[_monitor, _doInterpolation, _global, _self] spawn {
+				params['_monitor', '_doInterpolation', '_global', '_op'];
+				sleep (MGVAR ["CFM_waitCamSetPosForInterpolation", 0.2]);
+				private _currentMonOp = _monitor getVariable ["CFM_connectedOperator", objNull];
+				if !(_currentMonOp isEqualTo _op) exitWith {};
+				_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+			};
+		} else {
+			_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		};
 
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
 			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];

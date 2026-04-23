@@ -603,7 +603,6 @@ OBJCLASS(Monitor)
 					(_this#3) params ["_target"]; 
 					[_target] call CFM_fnc_enterMonitorFullScreen;
 				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
-				_actions append [_actionFullScreen];
 				// private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
 				// 	(_this#3) params ["_target"]; 
 				// 	[_target] call CFM_fnc_exitMonitorFullScreen;
