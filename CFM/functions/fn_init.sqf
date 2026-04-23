@@ -6,6 +6,11 @@ if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;
 };
 
+if (isServer) then {
+	call CFM_fnc_setupOpSyncVarEH;
+	CFM_serverLoop_handle = 0 spawn CFM_fnc_serverLoop;
+};
+
 [] call CFM_fnc_initActionConditions;
 [] call CFM_fnc_initDefaultPointsAlignment;
 

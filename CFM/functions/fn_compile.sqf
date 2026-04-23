@@ -128,9 +128,32 @@ CFM_fnc_onEachFrameClient = {
 	};
 };
 
-CFM_fnc_onEachFrameServer = {
-	if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
+CFM_fnc_serverLoop = {
+	while {missionNamespace getVariable ["CFM_doServerLoop", true]} do {
+		if (missionNamespace getVariable ["CFM_stopServerLoop", false]) then {continue};
+		call CFM_fnc_checkupAllActiveOperators;
+		uiSleep CHECK_OP_COND_FREQ;
+	};
+};
 
+CFM_fnc_checkupAllActiveOperators = {
+	{
+		private _monitor = _x;
+		private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+		if !(IS_OBJ(_operator)) then {continue};
+		private _opCond = [_operator, _monitor] call CFM_fnc_operatorCondition;
+		if !(_opCond) then {
+			[_monitor, _monitor] call CFM_fnc_disconnectMonitorFromOperator;
+		};
+		_operator call CFM_fnc_checkOperatorTurrets;
+	} forEach (missionNamespace getVariable ["CFM_Monitors", []]);
+};
+
+CFM_fnc_setupOpSyncVarEH = {
+	"CFM_operatorsToUpdate" addPublicVariableEventHandler CFM_fnc_syncOperators;
+};
+
+CFM_fnc_syncOperators = {
 	private _updOps = missionNamespace getVariable ["CFM_operatorsToUpdate", []];
 	if !(_updOps isEqualType []) then {_updOps = [_updOps]};
 	if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
@@ -165,36 +188,17 @@ CFM_fnc_onEachFrameServer = {
 		_operator setVariable ["CFM_turretsParams", _turretsParams, _targets];
 	} forEach _updOps;
 	missionNamespace setVariable ["CFM_operatorsToUpdate", []];
-
-	// check ops condition
-	private _lastOpsCondCheck =  missionNamespace getVariable ["CFM_lastOperatorsConditionCheck", 0];
-	if ((diag_tickTime - _lastOpsCondCheck) > CHECK_OP_COND_FREQ) then {
-		{
-			private _monitor = _x;
-			private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-			if !(IS_OBJ(_operator)) then {continue};
-			private _opCond = [_operator, _monitor] call CFM_fnc_operatorCondition;
-			if !(_opCond) then {
-				[_monitor, _monitor] call CFM_fnc_disconnectMonitorFromOperator;
-			};
-			_operator call CFM_fnc_checkOperatorTurrets;
-		} forEach (missionNamespace getVariable ["CFM_Monitors", []]);
-		missionNamespace setVariable ["CFM_lastOperatorsConditionCheck", diag_tickTime];
-	};
+	_updOps
 };
 
 CFM_fnc_setupDraw3dEH = {
 	if (isNil "CFM_UPD_CLIENT_EH_id") then {
+		if !(hasInterface) exitWith {};
 		private _func = {call CFM_fnc_onEachFrameClient};
 		if (true) then {
 			_func = {call CFM_fnc_onEachFrameClient; call CFM_fnc_updateOperator};
 		};
 		CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", _func];
-	};
-	if (isNil "CFM_UPD_SERVER_EH_id") then {
-		if (isServer && isMultiplayer) then {
-			CFM_UPD_SERVER_EH_id = addMissionEventHandler ["EachFrame", {call CFM_fnc_onEachFrameServer}];
-		};
 	};
 };
 

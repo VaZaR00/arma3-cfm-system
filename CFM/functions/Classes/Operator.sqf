@@ -691,7 +691,8 @@ OBJCLASS(Operator)
 		};
 
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
-			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];
+			CFM_operatorsToUpdate = _self;
+			publicVariableServer "CFM_operatorsToUpdate";
 			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
 		};
 
