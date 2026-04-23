@@ -668,6 +668,8 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
 		_monitor setVariable ["CFM_doUpdateCamera", [true, _pointParams] select _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
+		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
+		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
 
 		// small delay before enabling interpolation so there is no camera movement on spawn
 		if (_doInterpolation) then {
