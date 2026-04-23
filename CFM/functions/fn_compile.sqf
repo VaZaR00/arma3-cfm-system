@@ -59,7 +59,7 @@ CFM_fnc_updateOperator = {
 			private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}];
 			private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 			private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", objNull];
-			private _posVDUp = [objNull, [_controlledObj, _turretObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false, false], _camPosFunc] call CFM_fnc_updateCamera;
+			private _posVDUp = [objNull, [_controlledObj, _turretObj, [_turretIndex], true, _pointParams, nil, _monitor, false, false, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 			_posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 			_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
 			private _prevDir = _controlledObj getVariable [_dirVarName, []];
@@ -360,7 +360,8 @@ CFM_fnc_updateCamera = {
 		["_monitor", objNull],
 		["_doInterpolation", false],
 		["_smoothZoom", true],
-		["_doSetCam", true]
+		["_doSetCam", true],
+		["_setLocalOpTurretDir", true]
 	];
 	private _turretIndex = _turret#0;
 	private _camExists = IS_OBJ(_cam);
@@ -387,7 +388,7 @@ CFM_fnc_updateCamera = {
 		["_up", vectorUp _operator, [[]], 3]
 	];
 
-	if (_turretLocal && {isMultiplayer}) then {
+	if (_turretLocal && {isMultiplayer && {_setLocalOpTurretDir}}) then {
 		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 		private _localDirMS = _operator getVariable [_dirVarName, []];
