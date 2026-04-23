@@ -137,6 +137,9 @@ if ((isNil "_dummyObj") || {!IS_OBJ(_dummyObj)}) exitWith {
 
 private _args = [_dummyObj, _sides, _turrParams, _hasTInNvg, _name, _params];
 
-[_args, {_this call CFM_fnc_setOperator}, 0, true, true] call CFM_fnc_remoteExec;
+[_args, {
+	waitUntil { !(isNil "CFM_inited") };
+	_this call CFM_fnc_setOperator
+}, 0, true, false] call CFM_fnc_remoteExec;
 
 true

@@ -68,8 +68,9 @@ if (!_reset && {(IS_VALID_OP(_operator)) && {((_operator getVariable ["CFM_opera
 
 #ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
-	["setOperator", _this] CALL_CLASS("DbHandler");
-	}, 0, true, true] call CFM_fnc_remoteExec;
+		waitUntil { !(isNil "CFM_inited") };
+		["setOperator", _this] CALL_CLASS("DbHandler");
+	}, 0, true, false] call CFM_fnc_remoteExec;
 #endif 
 #ifndef SET_MON_OP_REMOTE_EXEC
 	["setOperator", _this] CALL_CLASS("DbHandler");

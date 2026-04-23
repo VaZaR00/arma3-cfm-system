@@ -76,8 +76,9 @@ if !(IS_OBJ(_monitor)) exitWith {false};
 
 #ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
-	_this NEW_OBJINSTANCE("Monitor");
-	}, 0, true, true] call CFM_fnc_remoteExec;
+		waitUntil { !(isNil "CFM_inited") };
+		_this NEW_OBJINSTANCE("Monitor");
+	}, 0, true, false] call CFM_fnc_remoteExec;
 #endif 
 #ifndef SET_MON_OP_REMOTE_EXEC
 	_this NEW_OBJINSTANCE("Monitor");
