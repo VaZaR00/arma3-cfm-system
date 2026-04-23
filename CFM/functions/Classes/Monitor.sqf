@@ -228,6 +228,11 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		_monitor setVariable ["CFM_currentCamPointParams", nil];
 		_monitor setVariable ["CFM_camDoInterpolation", nil];
+		_monitor setVariable ["CFM_currentCameraMoveRestrictions", nil];
+		_monitor setVariable ["CFM_currentCameraMoves", nil];
+		_monitor setVariable ["CFM_currentCameraCanMove", nil];
+		_monitor setVariable ["CFM_currentCameraIsStatic", nil];
+		_monitor setVariable ["CFM_currentCameraSmoothZoom", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
@@ -392,7 +397,7 @@ OBJCLASS(Monitor)
 		// _self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
-		["TurretChanged", [_monitor, _turret]] CALL_OBJCLASS("Operator", _connectedOperator);
+		["TurretChanged", [_monitor, _turret, true, true]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;

@@ -524,9 +524,6 @@ OBJCLASS(Operator)
 		if !(IS_OBJ(_monitor)) exitWith {};
 
 		private _callerLocal = IS_OBJ(_caller) && {(local _caller)};
-		if (_callerLocal) then {
-			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
-		};
 
 		_self setVariable ["CFM_isFeeding", true];
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
@@ -546,13 +543,12 @@ OBJCLASS(Operator)
 		};
 	};
 	METHOD("TurretChanged") {
-		params["_monitor", ["_turret", [-1]], ["_global", true], ["_globalUpdOp", false]];
-
-		private _turrIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
-
-		if !(_turrIndex isEqualType 1) exitWith {false};
+		params["_monitor", ["_turret", [-1]], ["_global", true], ["_globalUpdOp", true]];
 
 		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
+
+		if !(_turretIndex isEqualType 1) exitWith {false};
+
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
 		private _turretObj = _turretData getOrDefault ["turretObject", _self];
 		private _isLocal = _turretData getOrDefault ["IsTurretLocal", false];
@@ -560,6 +556,7 @@ OBJCLASS(Operator)
 		private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 		private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
 		private _canMoveCamera = _turretData getOrDefault ["canMoveCamera", false];
+		private _currentCameraMoves = _turretData getOrDefault ["currentCamMove", [0,0,0,0]];
 		private _cameraMoveRestrictions = _turretData getOrDefault ["cameraMoveRestrictions", []];
 		private _smoothZoom = _turretData getOrDefault ["smoothZoom", true];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
@@ -655,7 +652,7 @@ OBJCLASS(Operator)
 		};
 		_cameraMoveRestrictions resize [4, 180];
 
-		_monitor setVariable ["CFM_currentTurret", [_turrIndex], _global];
+		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
@@ -666,12 +663,14 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
 		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
+		_monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
-		_monitor setVariable ["CFM_doUpdateCamera", true, _global];
+		_monitor setVariable ["CFM_doUpdateCamera", [true, _pointParams] select _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 
 		// small delay before enabling interpolation so there is no camera movement on spawn
 		if (_doInterpolation) then {
+			_monitor setVariable ["CFM_camDoInterpolation", false, _global];
 			[_monitor, _doInterpolation, _global, _self] spawn {
 				params['_monitor', '_doInterpolation', '_global', '_op'];
 				sleep (MGVAR ["CFM_waitCamSetPosForInterpolation", 0.2]);
@@ -683,9 +682,13 @@ OBJCLASS(Operator)
 			_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 		};
 
+		if (_globalUpdOp) then {
+			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+		};
+
 		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
 			missionNamespace setVariable ["CFM_operatorsToUpdate", _self, 2];
-			[_self, _turrIndex, _turretObj] call CFM_fnc_addActiveTurret;
+			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
 		};
 
 		true
@@ -706,7 +709,7 @@ OBJCLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
-		["TurretChanged", [_monitor, [_nextTurretIndex]]] CALL_OBJCLASS("Operator", _self);
+		["TurretChanged", [_monitor, [_nextTurretIndex], true, true]] CALL_OBJCLASS("Operator", _self);
 
 		true
 	};
@@ -716,7 +719,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 
-		private _turretIndex = _turret#0;
+		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
 		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
 		private _i = _monitorsOnTurret pushBackUnique _monitor;
 		_monitorsSet set [_turretIndex, _monitorsOnTurret];
@@ -785,10 +788,10 @@ OBJCLASS(Operator)
 		private _vertLeft = (_currentMove#2) + _horizontal;
 		private _vertRight = (_currentMove#3) - _horizontal;
 		_currentMove = [_vertUp, _vertDown, _vertLeft, _vertRight];
-		_turretData set ["currentCamMove", _currentMove];
+		_turretData set ["currentCamMove", +_currentMove];
 
 		_pointParams = [_pos, _newDir, _newUp];
-		_turretData set ["pointParams", _pointParams];
+		_turretData set ["pointParams", +_pointParams];
 		_turretsParams set [_turretIndex, _turretData];
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);
