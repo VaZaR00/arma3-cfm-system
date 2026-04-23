@@ -158,8 +158,7 @@ OBJCLASS(Monitor)
 		} else {
 			_turret = _currentTurret;
 		};
-
-		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
+		
 		_self setVariable ['CFM_actionCaller', nil];
 
 		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
@@ -174,13 +173,14 @@ OBJCLASS(Monitor)
 		};
 
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
+		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
+		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		_monitor setVariable ["CFM_currentFeedCam", _camera];
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
-		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 
 		if (_reset) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;

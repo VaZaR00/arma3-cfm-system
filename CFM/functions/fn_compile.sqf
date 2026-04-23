@@ -137,10 +137,10 @@ CFM_fnc_onEachFrameServer = {
 		_updOps = _updOps + (missionNamespace getVariable ["CFM_Operators", []]);
 		missionNamespace setVariable ["CFM_makeCamDataSync", false];
 	};
+	private _targets = MONITOR_VIEWERS_AND_SELF(false);
 	{
 		private _operator = _x;
 		if !(IS_OBJ(_operator)) then {continue};
-		private _targets = MONITOR_VIEWERS_AND_SELF(false);
 		// CAM DATA
 		private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
 		{

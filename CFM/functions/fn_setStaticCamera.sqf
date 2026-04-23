@@ -73,7 +73,7 @@
 if !(isServer) exitWith {false};
 
 if !(canSuspend) exitWith {
-	_this spawn CFM_fnc_setMonitor;
+	_this spawn CFM_fnc_setStaticCamera;
 };
 waitUntil { !(isNil "CFM_inited") };
 

@@ -28,7 +28,7 @@ if !(isServer) exitWith {false};
 #endif
 
 if !(canSuspend) exitWith {
-	_this spawn CFM_fnc_setMonitor;
+	_this spawn CFM_fnc_setOperator;
 };
 waitUntil { !(isNil "CFM_inited") };
 
