@@ -1,6 +1,8 @@
 /*
 	Name: CFM_fnc_setMonitor
 
+	Call: spawn
+
 	Description: 
 		Sets obj as monitor
 
@@ -22,10 +24,16 @@
 
 #include "defines.hpp"
 
+
 #ifdef SET_MON_OP_REMOTE_EXEC
 // for JIP sync
 if !(isServer) exitWith {false};
 #endif
+
+if !(canSuspend) exitWith {
+	_this spawn CFM_fnc_setMonitor;
+};
+waitUntil { !(isNil "CFM_inited") };
 
 params [
 	["_monitor", objNull], 
@@ -66,7 +74,7 @@ if (_monitor isEqualType []) exitWith {
 };
 if !(IS_OBJ(_monitor)) exitWith {false};
 
-#ifndef SET_MON_OP_REMOTE_EXEC
+#ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
 	_this NEW_OBJINSTANCE("Monitor");
 	}, 0, true, true] call CFM_fnc_remoteExec;

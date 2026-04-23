@@ -1,6 +1,8 @@
 /*
 	Name: CFM_fnc_setOperator
 
+	Call: spawn
+
 	Description: 
 		Sets obj as operator
 
@@ -24,6 +26,11 @@
 // for JIP sync
 if !(isServer) exitWith {false};
 #endif
+
+if !(canSuspend) exitWith {
+	_this spawn CFM_fnc_setMonitor;
+};
+waitUntil { !(isNil "CFM_inited") };
 
 params [
 	["_operator", objNull], 

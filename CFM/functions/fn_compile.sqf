@@ -1164,7 +1164,7 @@ CFM_fnc_exitFullScreen = {
 	if !(IS_OBJ(_currCam)) exitWith {
 		private _currCamData = (allCameras select {(_x#3) isEqualTo "Internal"})#0;
 		if (isNil "_currCamData") exitWith {
-			WARN "ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!";
+			"ERROR CFM_fnc_exitFullScreen: cant find current Internal camera!" WARN;
 		};
 		_currCam = _currCamData#0;
 		_currCam cameraEffect ["Terminate", "back"];
@@ -1267,7 +1267,7 @@ CFM_fnc_remoteExec = {
 		_args = [_args, _func];
 		_func = if (_call) then {"call"} else {"spawn"};
 	};
-	if !(_func isEqualType "") exitWith {WARN format["CFM_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func]};
+	if !(_func isEqualType "") exitWith {format["CFM_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func] WARN};
 
 	if (_targets isEqualType true) then {
 		if (_targets isEqualTo true) then {
@@ -1289,14 +1289,14 @@ CFM_fnc_remoteExec = {
 		_jip = "CFM_jip_remote_exec_id_" + _id;
 	};
 
-	if ((_targets isEqualTo PLAYER_) || {(_targets isEqualTo false) || {(_targets isEqualTo (clientOwner))}}) exitWith {
+	if (_targets in [PLAYER_, false, clientOwner]) exitWith {
 		if (_func isEqualTo "call") exitWith {
 			(_args#0) call (_args#1)
 		};
 		if (_func isEqualTo "spawn") exitWith {
 			(_args#0) spawn (_args#1)
 		};
-		private _func = missionNamespace getVariable [_func, {WARN format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func]}];
+		private _func = missionNamespace getVariable [_func, {format["CFM_fnc_remoteExec ERROR: func '%1' not found!", _func] WARN}];
 		if (_call) then {
 			_args call _func
 		} else {
@@ -1459,7 +1459,7 @@ CFM_fnc_copyMenuActionsToObj = {
 	private _actions = _plr getVariable ["CFM_mainActions", []];
 
 	if (!(_actions isEqualType []) || {(_actions isEqualTo [])}) exitWith {
-		WARN "CAN'T COPY HAND MONITOR ACTIONS TO NEW CONTROLLED UNIT!";
+		"CAN'T COPY HAND MONITOR ACTIONS TO NEW CONTROLLED UNIT!" WARN;
 		false
 	};
 

@@ -1,6 +1,8 @@
 /*
 	Name: CFM_fnc_setStaticCamera
 
+	Call: spawn
+
 	Description: 
 		Sets satic camera at position and with direction
 
@@ -25,6 +27,11 @@
 
 // for JIP sync
 if !(isServer) exitWith {false};
+
+if !(canSuspend) exitWith {
+	_this spawn CFM_fnc_setMonitor;
+};
+waitUntil { !(isNil "CFM_inited") };
 
 params [
 	["_name", ""],
@@ -76,7 +83,7 @@ if !(IS_OBJ(_dummyObj)) then {
 };
 
 if ((isNil "_dummyObj") || {!IS_OBJ(_dummyObj)}) exitWith {
-	WARN "CFM_fnc_setStaticCamera ERROR: can't create dummyObj";
+	"CFM_fnc_setStaticCamera ERROR: can't create dummyObj" WARN;
 	false
 };
 

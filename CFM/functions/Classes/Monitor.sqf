@@ -79,7 +79,7 @@ OBJCLASS(Monitor)
 
 		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
 		if (!_isHandMonitor && !(_hasTextureSelection)) exitWith {
-			WARN format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor];
+			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
 			false
 		};
 
@@ -169,7 +169,7 @@ OBJCLASS(Monitor)
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_self setVariable ["CFM_menuActive", false];
-			WARN "ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET";
+			"ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET" WARN;
 			false
 		};
 
@@ -247,7 +247,7 @@ OBJCLASS(Monitor)
 		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
 			["loadMenuScrollMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _self);
 		} else {
-			WARN "ERROR loadMenu: UI menu WIP!";
+			"ERROR loadMenu: UI menu WIP!" WARN;
 			["loadMenuScrollMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _self);
 		};
 	};
@@ -635,11 +635,11 @@ OBJCLASS(Monitor)
 			};
 		};
 		if (_mode isEqualTo "") exitWith {
-			WARN format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret];
+			format["ERROR monitorFullScreen: NO CAMERA MODE FOR THIS TURRET PATH: %1", _currentTurret] WARN;
 			false
 		};
 		if !(IS_OBJ(_unitCam)) exitWith {
-			WARN format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret];
+			format["ERROR monitorFullScreen: NO UNIT IN VEHICLE FOR THIS TURRET PATH: %1", _currentTurret] WARN;
 			false
 		};
 		private _hintText = FULLSCREEN_HINT;

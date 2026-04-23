@@ -54,5 +54,5 @@
 #define RLOG_VARS VARS_STR RLOG
 #define LOGH hintSilent str
 #define HINT hint
-#define WARN HINT
+#define WARN RLOG
 #define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);

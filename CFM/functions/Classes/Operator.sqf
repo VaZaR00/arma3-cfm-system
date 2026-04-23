@@ -45,7 +45,7 @@ OBJCLASS(Operator)
 		if (_classType isEqualTo "") then {
 			_classType =  [_operator call CFM_fnc_getOperatorClass] call CFM_fnc_validClassType;
 		};
-		if !(_classType in VALID_CLASS_TYPES) exitWith {WARN "Init Operator: Invalid class type passed"; 2};
+		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed" WARN; 2};
 		_operator setVariable ["CFM_classType", _classType];
 		
 		// OTHER PARAMS
