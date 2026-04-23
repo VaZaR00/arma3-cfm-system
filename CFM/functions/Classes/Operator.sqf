@@ -652,6 +652,7 @@ OBJCLASS(Operator)
 		};
 		_cameraMoveRestrictions resize [4, 180];
 
+		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
@@ -683,6 +684,7 @@ OBJCLASS(Operator)
 		};
 
 		if (_globalUpdOp) then {
+			["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _self);
 			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 		};
 
