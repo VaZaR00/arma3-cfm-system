@@ -82,19 +82,32 @@ OBJCLASS(Monitor)
 			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
 			false
 		};
-
-		_isLocal = _isHandMonitor;
-		private _originalTexture = (getObjectTextures _monitor) select 0;
-		_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
-		_monitor setVariable ["CFM_originalTexture", _originalTexture]; 
-
-		[_monitor] call CFM_fnc_stopOperatorFeed;
-
+		
+		if ((_monitor getVariable ["CFM_isMonitorSet", false]) && {_feedActive}) then {
+			[_monitor] call CFM_fnc_stopOperatorFeed;
+		};
+		
 		if (_local) then {
+			_isLocal = _isHandMonitor;
+			private _originalTexture = (getObjectTextures _monitor) select 0;
+			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
+			_monitor setVariable ["CFM_originalTexture", _originalTexture, !_isLocal]; 
+
 			["addMonitor", [_monitor]] CALL_CLASS("DbHandler");
 			_monitor setVariable ["CFM_isHandMonitor", _isHandMonitor, true];
 			_monitor setVariable ["CFM_isLocal", _isLocal, true];
+
+			if !(_sides isEqualType []) then {
+				_sides = [_sides];
+			};
+			_sides = _sides select {_x isEqualType west};
+			if (count _sides == 0) then {_sides = [side PLAYER_]};
+
+			_monitor setVariable ["CFM_monitorSides", _sides, !_isLocal];
+			_monitor setVariable ["CFM_canFullScreen", _canFullScreen, !_isLocal];
+			_monitor setVariable ["CFM_isHandMonitorDisplay", _isHandMonitor && _isHandMonitorDisplay];
 		};
+
 		private _radius = ACTION_RADIUS;
 		private _menuText = "Camera System Menu";
 		if (_isPlayer) then {
@@ -103,18 +116,6 @@ OBJCLASS(Monitor)
 			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
 		};
 		_monitor setVariable ["CFM_actionsRadius", _radius];
-
-		if !(_sides isEqualType []) then {
-			_sides = [_sides];
-		};
-		_sides = _sides select {_x isEqualType west};
-		if (count _sides == 0) then {_sides = [side PLAYER_]};
-		
-		_monitor setVariable ["CFM_monitorSides", _sides];
-		_monitor setVariable ["CFM_canFullScreen", _canFullScreen];
-
-		// _isHandMonitorDisplay = (MGVAR ["CFM_allHandMonitorsAreDisplays", false]) || _isHandMonitorDisplay;
-		_monitor setVariable ["CFM_isHandMonitorDisplay", _isHandMonitor && _isHandMonitorDisplay];
 
 		["addMenuActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["addOptionalActions", [_radius] + _args] CALL_OBJCLASS("Monitor", _self);

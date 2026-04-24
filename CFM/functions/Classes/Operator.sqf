@@ -1,3 +1,5 @@
+#define SET_VARS_INIT_GLOBAL true
+
 OBJCLASS(Operator)
 
 	SET_SELF_VAR(_operator);
@@ -40,128 +42,133 @@ OBJCLASS(Operator)
 		// should be executed globaly
 		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
+		private _global = SET_VARS_INIT_GLOBAL;
+
 		if !(IS_VALID_OP(_operator)) exitWith {1};
 
 		if (_classType isEqualTo "") then {
 			_classType =  [_operator call CFM_fnc_getOperatorClass] call CFM_fnc_validClassType;
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed" WARN; 2};
-		_operator setVariable ["CFM_classType", _classType];
-		
-		// OTHER PARAMS
-		if !(_params isEqualType []) then {_params = [_params]};
-		_params params [
-			["_canMoveCameraByDefault", false],
-			["_cameraZoomSmoothDefault", true, [true]]
-		];
 
-		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
-		_operator setVariable ["CFM_hasGoPro", _hasGoPro];
-		
-		// CAN MOVE CAMERA
-		private _moveParams = [_canMoveCameraByDefault] call CFM_fnc_defineCameraMovementOptions;
-		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
-		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault];
-		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault];
-		_operator setVariable ["CFM_cameraZoomSmoothDefault", !_hasGoPro && _cameraZoomSmoothDefault];
+		if (isServer) then {
+			_operator setVariable ["CFM_classType", _classType, _global];
 
-		if (_classType isEqualTo TYPE_STATIC) then {
-			_isStaticCam = true;
-			_operator setVariable ["CFM_isStaticCam", _isStaticCam];
-		};
+			
+			// OTHER PARAMS
+			if !(_params isEqualType []) then {_params = [_params]};
+			_params params [
+				["_canMoveCameraByDefault", false],
+				["_cameraZoomSmoothDefault", true, [true]]
+			];
 
-		_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
-		_operator setVariable ["CFM_objClass", _objClass];
+			_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
+			_operator setVariable ["CFM_hasGoPro", _hasGoPro, _global];
+			
+			// CAN MOVE CAMERA
+			private _moveParams = [_canMoveCameraByDefault] call CFM_fnc_defineCameraMovementOptions;
+			_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
+			_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault, _global];
+			_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault, _global];
+			_operator setVariable ["CFM_cameraZoomSmoothDefault", !_hasGoPro && _cameraZoomSmoothDefault, _global];
 
-		// NVG AND TI
-		_hasTInNvg params ["_ti", "_nvg"];
-		if !(_ti isEqualType true) then {
-			_ti = true;
-		};
-		if !(_nvg isEqualType true) then {
-			_nvg = true;
-		};
-		([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
-		_canSwitchTi = _ti && _canSwitchTi;
-		_canSwitchNvg = _nvg && _canSwitchNvg;
-		_operator setVariable ["CFM_tiTable", _tiTable];
-		_operator setVariable ["CFM_nvgTable", _nvgTable];
-		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi];
-		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
+			if (_classType isEqualTo TYPE_STATIC) then {
+				_isStaticCam = true;
+				_operator setVariable ["CFM_isStaticCam", _isStaticCam, _global];
+			};
 
+			_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
+			_operator setVariable ["CFM_objClass", _objClass, _global];
 
-		// CAM TYPE
-		_cameraType = [_operator] call CFM_fnc_cameraType;
-		_operator setVariable ["CFM_cameraType", _cameraType];
+			// NVG AND TI
+			_hasTInNvg params ["_ti", "_nvg"];
+			if !(_ti isEqualType true) then {
+				_ti = true;
+			};
+			if !(_nvg isEqualType true) then {
+				_nvg = true;
+			};
+			([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
+			_canSwitchTi = _ti && _canSwitchTi;
+			_canSwitchNvg = _nvg && _canSwitchNvg;
+			_operator setVariable ["CFM_tiTable", _tiTable, _global];
+			_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
+			_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
+			_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
 
 
-		// TURRETS
-		["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
+			// CAM TYPE
+			_cameraType = [_operator] call CFM_fnc_cameraType;
+			_operator setVariable ["CFM_cameraType", _cameraType, _global];
 
 
-		// CHECK NVG TI
-		private _turrets = _self getVariable ["CFM_turrets", []];
-		private _turrCount = count _turrets;
-		if (_turrCount == 1) then {
-			// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
-			private _turr = _turrets#0;
-			private _turrIndex = TURRET_INDEX(_turr);
-			if (_turrIndex isEqualTo -1) then {
-				// TI
-				call {
-					private _tiForDriver = _tiTable get _turrIndex;
-					if (isNil "_tiForDriver") exitWith {};
-					if (count _tiForDriver != 0) exitWith {};
-					private _tiForGunner = _tiTable get 0;
-					if (isNil "_tiForGunner") exitWith {};
-					if (count _tiForGunner == 0) exitWith {};
-					_tiForGunner = +_tiForGunner;
-					_tiTable = createHashMap;
-					_tiTable set [-1, _tiForGunner];
+			// TURRETS
+			["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
+
+
+			// CHECK NVG TI
+			private _turrets = _self getVariable ["CFM_turrets", []];
+			private _turrCount = count _turrets;
+			if (_turrCount == 1) then {
+				// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
+				private _turr = _turrets#0;
+				private _turrIndex = TURRET_INDEX(_turr);
+				if (_turrIndex isEqualTo -1) then {
+					// TI
+					call {
+						private _tiForDriver = _tiTable get _turrIndex;
+						if (isNil "_tiForDriver") exitWith {};
+						if (count _tiForDriver != 0) exitWith {};
+						private _tiForGunner = _tiTable get 0;
+						if (isNil "_tiForGunner") exitWith {};
+						if (count _tiForGunner == 0) exitWith {};
+						_tiForGunner = +_tiForGunner;
+						_tiTable = createHashMap;
+						_tiTable set [-1, _tiForGunner];
+					};
+					// NVG
+					call {
+						private _nvgForDriver = _tiTable get _turrIndex;
+						if (isNil "_nvgForDriver") exitWith {};
+						if (_nvgForDriver isEqualTo true) exitWith {};
+						private _nvgForGunner = _tiTable get 0;
+						if (isNil "_nvgForGunner") exitWith {};
+						if (_nvgForDriver isEqualTo false) exitWith {};
+						_nvgForGunner = +_nvgForGunner;
+						_nvgTable = createHashMap;
+						_nvgTable set [-1, _nvgForGunner];
+					};
 				};
-				// NVG
-				call {
-					private _nvgForDriver = _tiTable get _turrIndex;
-					if (isNil "_nvgForDriver") exitWith {};
-					if (_nvgForDriver isEqualTo true) exitWith {};
-					private _nvgForGunner = _tiTable get 0;
-					if (isNil "_nvgForGunner") exitWith {};
-					if (_nvgForDriver isEqualTo false) exitWith {};
-					_nvgForGunner = +_nvgForGunner;
-					_nvgTable = createHashMap;
-					_nvgTable set [-1, _nvgForGunner];
+			};
+
+			// SIDE
+			private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
+			if !(_sides isEqualType []) then {
+				_sides = [_sides];
+			};
+			_sides = _sides select {_x isEqualType west};
+			if (_sides isEqualTo []) then {
+				_sides = [_defaultSide];
+			};
+			_operator setVariable ["CFM_opSides", _sides, _global];
+
+
+			// ADD OP
+			["addOperator", [_operator]] CALL_CLASS("DbHandler");
+
+			switch (_cameraType) do {
+				case DRONETYPE: {
+					_operator setVariable ["CFM_canFeed", true, _global];
+					_operator setVariable ["CFM_isDroneFeed", true, _global];
 				};
+				case TYPE_VEH: {
+					_operator setVariable ["CFM_canFeed", true, _global];
+					_operator setVariable ["CFM_isVehFeed", true, _global];
+				};
+				default {};
 			};
+			_operator setVariable ["CFM_operatorName", _name, _global];
 		};
-
-		// SIDE
-		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
-		if !(_sides isEqualType []) then {
-			_sides = [_sides];
-		};
-		_sides = _sides select {_x isEqualType west};
-		if (_sides isEqualTo []) then {
-			_sides = [_defaultSide];
-		};
-		_operator setVariable ["CFM_opSides", _sides];
-
-
-		// ADD OP
-		_operator setVariable ["CFM_isCameraSet", true];
-		["addOperator", [_operator]] CALL_CLASS("DbHandler");
-
-		switch (_cameraType) do {
-			case DRONETYPE: {
-				_operator setVariable ["CFM_canFeed", true];
-				_operator setVariable ["CFM_isDroneFeed", true];
-			};
-			case TYPE_VEH: {
-				_operator setVariable ["CFM_canFeed", true];
-				_operator setVariable ["CFM_isVehFeed", true];
-			};
-			default {};
-		};
-		_operator setVariable ["CFM_operatorName", _name];
 
 		_operator setVariable ["CFM_operatorSet", true];
 
@@ -188,7 +195,7 @@ OBJCLASS(Operator)
 		};
 
 		_opHasTurrets = count _turretsParamsInit > 1;
-		_operator setVariable ["CFM_opHasTurrets", _opHasTurrets]; 
+		_operator setVariable ["CFM_opHasTurrets", _opHasTurrets, SET_VARS_INIT_GLOBAL]; 
 
 		private _turrets = [];
 		{
@@ -201,7 +208,7 @@ OBJCLASS(Operator)
 			_turrets pushBackUnique _turretIndex;
 		} forEach _turretsParamsInit;
 
-		_operator setVariable ["CFM_turrets", _turrets]; 
+		_operator setVariable ["CFM_turrets", _turrets, SET_VARS_INIT_GLOBAL]; 
 
 		[_operator] call CFM_fnc_setDefaultPointAlignment;
 
@@ -338,8 +345,6 @@ OBJCLASS(Operator)
 			_nvgTable set [_turretIndex, _currentNvgParam];
 			_turretParams set ["tiTable", _tiTable];
 			_turretParams set ["nvgTable", _nvgTable];
-			_self setVariable ["CFM_tiTable", _tiTable];
-			_self setVariable ["CFM_nvgTable", _nvgTable];
 		};
 
 		// IS LOCAL TURRET
@@ -408,7 +413,7 @@ OBJCLASS(Operator)
 		_turretParams set ["cameraMoveRestrictions", _cameraMoveRestrictions];
 
 		_turretsParams set [_turretIndex, _turretParams];
-		_self setVariable ["CFM_turretsParams", _turretsParams];
+		_self setVariable ["CFM_turretsParams", _turretsParams, SET_VARS_INIT_GLOBAL];
 
 		_turretParams
 	}; 
@@ -466,7 +471,7 @@ OBJCLASS(Operator)
 		private _res = [_memPoint, [_addArr, _setArr]];
 		_turretParams set ["pointParams", _res];
 		_turretsParams set [_turretIndex, _turretParams];
-		_self setVariable ["CFM_turretsParams", _turretsParams];
+		_self setVariable ["CFM_turretsParams", _turretsParams, true];
 
 		+_res
 	};
@@ -719,7 +724,6 @@ OBJCLASS(Operator)
 		true
 	};
 	METHOD("addMonitor") {
-		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
@@ -732,7 +736,6 @@ OBJCLASS(Operator)
 		_i
 	};
 	METHOD("removeMonitor") {
-		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		private _turretIndex = _turret#0;
@@ -743,7 +746,6 @@ OBJCLASS(Operator)
 		true
 	};
 	METHOD("removeActiveTurret") {
-		// should be executed globaly
 		params[["_turretIndex", -1]];
 
 		_activeTurretsObjects deleteAt _turretIndex;
@@ -752,7 +754,6 @@ OBJCLASS(Operator)
 		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
 	};
 	METHOD("addActiveTurret") {
-		// should be executed globaly
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
 
 		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _self}) exitWith {false};

@@ -123,9 +123,9 @@ CLASS(DbHandler)
 		["addToList", [_monitor, "CFM_Monitors", _global]] CALL_CLASS(_self);
 	};
 	METHOD("addOperator") {
-		params["_operator"];
+		params["_operator", ["_global", true]];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["addToList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
+		["addToList", [_operator, "CFM_Operators", _global]] CALL_CLASS(_self);
 	};
 	METHOD("removeOperator") {
 		params["_operator"];
