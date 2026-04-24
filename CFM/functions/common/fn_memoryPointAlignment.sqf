@@ -12,7 +12,13 @@ if (_pointParams isEqualType "") exitWith {
 	_obj selectionPosition [_pointParams, "Memory"];
 };
 
-_pointParams params [["_addArr", [0,0,0], [[]], 3], ["_setArr", [-1,-1,-1], [[]], 3]];
+_pointParams params [["_addArr", [0,0,0]], ["_setArr", [-1,-1,-1]]];
+if (count _addArr != 3) then {
+	_addArr = [0,0,0];
+};
+if (count _setArr != 3) then {
+	_addArr = [0,0,0];
+};
 
 private _selPos = [_obj, [_memPoint, "Memory"], _addArr] call CFM_fnc_getMemPointOffsetInModelSpace;
 
