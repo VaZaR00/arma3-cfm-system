@@ -193,6 +193,10 @@ OBJCLASS(Monitor)
 	METHOD("stopFeed") {
 		params[["_reset", false]];
 		if !(_reset) then {
+			if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _self) then {
+				closeDialog 1;
+				call CFM_fnc_onDisplayUnload;
+			};
 			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
 			_self setVariable ['CFM_actionCaller', nil];
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
