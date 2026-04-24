@@ -662,12 +662,15 @@ OBJCLASS(Monitor)
 			false
 		};
 		private _hintText = FULLSCREEN_HINT;
+		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
+		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
 		if (_onTempCam) then {
 			createDialog "RscDisplayCFM";
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
 			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
 			_unitCam cameraEffect ["internal", "BACK"];
+			showCinemaBorder false;
 			if (_isInNvg) then {
 				camUseNVG true;
 			} else {
@@ -675,6 +678,16 @@ OBJCLASS(Monitor)
 				if ((_tiMode isEqualType 1) && {!(_tiMode isEqualTo -1)}) then {
 					true setCamUseTI _tiMode; 
 				};
+			};
+			if (_isMavic) exitWith {
+				if (MGVAR ["Mavic_showInterface", true]) then {
+					("DB_Mavic_Layer" call BIS_fnc_rscLayer) cutRsc ["Mavic_Interface", "PLAIN"];
+
+					mavic_3dehId = addMissionEventHandler ["Draw3D", { call mavic_fnc_drawHud }];
+				};
+			};
+			if (_isFPV) exitWith {
+				call DB_fnc_fpv_createDialog;
 			};
 		} else {
 			_unitCam switchCamera _mode;
@@ -702,6 +715,8 @@ OBJCLASS(Monitor)
 	};
 	METHOD("monitorExitFullScreen") {
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
+		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
+		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
 		if (_onTempCam) then {
 			if (IS_VALID_R2T(_currentR2T)) then {
 				_currentFeedCam cameraEffect ["internal", "back", _currentR2T];
@@ -710,6 +725,12 @@ OBJCLASS(Monitor)
 				PLAYER_ switchCamera "INTERNAL";
 			};
 			[_self, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
+			if (_isMavic) exitWith {
+				false call MAVIC_fnc_handleConnect;
+			};
+			if (_isFPV) exitWith {
+				call DB_fnc_fpv_destroyUI;
+			};
 		} else {
 			PLAYER_ switchCamera "INTERNAL";
 		};

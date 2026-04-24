@@ -23,6 +23,8 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_operatorSet, false);
 	OBJ_VARIABLE(_isFeeding, false);
 	OBJ_VARIABLE(_isDroneFeed, false);	
+	OBJ_VARIABLE(_isMavic, false);	
+	OBJ_VARIABLE(_isFPV, false);	
 	OBJ_VARIABLE(_staticCamOffset, NULL_VECTOR);	
 	OBJ_VARIABLE(_isStaticCam, false);	
 	OBJ_VARIABLE(_opSides, []);	
@@ -62,13 +64,20 @@ OBJCLASS(Operator)
 				["_cameraZoomSmoothDefault", true, [true]]
 			];
 
+			_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
+			_operator setVariable ["CFM_objClass", _objClass, _global];
+
+			_isFPV = (("fpv" in _objClass) || {("crocus" in _objClass)});
+			_isMavic = ("mavik_3" in _objClass);
 			_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
 			_operator setVariable ["CFM_hasGoPro", _hasGoPro, _global];
+			_operator setVariable ["CFM_isFPV", _isFPV, _global];
+			_operator setVariable ["CFM_isMavic", _isMavic, _global];
 			
 			// CAN MOVE CAMERA
 			if ((_classType isEqualTo TYPE_UAV) && {
 				!(_canMoveCameraByDefaultSet isEqualTo false) && {
-					!(("fpv" in _objClass) || {("crocus" in _objClass)})
+					!_isFPV
 				}
 			}) then { // && {MGVAR ["CFM_canMoveDroneCameras", false]}
 				_canMoveCameraByDefaultSet = true;
@@ -83,9 +92,6 @@ OBJCLASS(Operator)
 				_isStaticCam = true;
 				_operator setVariable ["CFM_isStaticCam", _isStaticCam, _global];
 			};
-
-			_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
-			_operator setVariable ["CFM_objClass", _objClass, _global];
 
 			// NVG AND TI
 			_hasTInNvg params ["_ti", "_nvg"];
@@ -267,7 +273,6 @@ OBJCLASS(Operator)
 		};
 
 		// ZOOM
-		private _isFpv = (("fpv" in _objClass) || {("crocus" in _objClass)});
 		private _zoomTable = createHashMap;
 		if (_setZoomTable isEqualType 1) then {
 			for "_i" from 1 to _setZoomTable do {
@@ -306,7 +311,7 @@ OBJCLASS(Operator)
 		_zooms sort false;
 		private _max = if (count _zooms != 0) then {_zooms#0} else {1};
 		if (isNil "_max") then {_max = 1};
-		if (_isFpv) then {
+		if (_isFPV) then {
 			_zoomTable set [1, 0.85];
 		};
 		_zoomTable set ["max", _max];
@@ -361,7 +366,7 @@ OBJCLASS(Operator)
 		private _fullCrew = fullCrew [_self, "", true];
 		private _isVehWithTurrets = (_fullCrew findIf {(_x#1) isEqualTo "gunner"}) != -1;
 		private _isDriverTurr = _turretIndex in DRIVER_TURRET_PATH;
-		private _camPosFunc = if ((_isStaticVeh && !_hasGoPro) || (_isFpv && _isDriverTurr)) then {
+		private _camPosFunc = if ((_isStaticVeh && !_hasGoPro) || (_isFPV && _isDriverTurr)) then {
 			CFM_fnc_camPosVehStatic
 		} else {
 			switch (_classType) do {
