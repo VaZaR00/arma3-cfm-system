@@ -154,6 +154,7 @@
             };
             class initDefaultPointsAlignment {
                 file = FUNC_PATH(common\fn_initDefaultPointsAlignment.sqf);
+                preStart = 1;
                 DO_FUNC_RECOMPILE
             };
             class isPilotControlled {

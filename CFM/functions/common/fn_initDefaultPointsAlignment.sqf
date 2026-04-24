@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+private _pointSet = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 
 private _vehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
 
@@ -40,5 +40,5 @@ private _defaults = [
 	};
 } forEach _defaults;
 
-missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSet];
+parsingNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSet];
 _pointSet

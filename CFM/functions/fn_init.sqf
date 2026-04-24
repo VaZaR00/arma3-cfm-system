@@ -14,7 +14,13 @@ if (isServer) then {
 	publicVariableServer "CFM_makeCamDataSync";
 };
 
-[] call CFM_fnc_initDefaultPointsAlignment;
+// default point alignments
+private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+if (_pointSetDef isEqualTo createHashMap) then {
+	[] call CFM_fnc_initDefaultPointsAlignment;
+} else {
+	missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
+};
 
 CFM_max_zoom_gopro = 2;
 CFM_max_zoom_drone = 5;
