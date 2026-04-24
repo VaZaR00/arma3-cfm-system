@@ -49,32 +49,32 @@ if (!_sameSide) exitWith {
 
 private _dDriver = driver _drone;
 private _dGunner = gunner _drone;
-private _controler = ([_dDriver, _dGunner] select {IS_OBJ((remoteControlled _x))})#0;
-
-if (isNil "_controler") then {
-	_controler = objNull;
-};
-if (IS_OBJ(_controler)) exitWith {
-	hint _errtext;
-};
 
 private _bot = _dDriver;
+private _turretName = "DRIVER";
 private _currTurret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];
 if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
 	_bot = _dGunner;
 	if (isNull _bot) then {
 		_bot = _dDriver;
+	} else {
+		_turretName = "GUNNER";
 	};
 };
 if (isNil "_bot" || {!IS_OBJ(_bot)}) exitWith {
 	hint _errtext;
 };
 
+private _controled = [_drone, _turretName] call CFM_fnc_isUAVControlled;
+if (_controled && {(missionNamespace getVariable ["CFM_canInterceptUAVcontrol", false])}) exitWith {
+	hint "Someone is controlling drone!";
+};
+
 PLAYER_ connectTerminalToUAV objNull;
 PLAYER_ switchCamera "internal";
 
 hint "Connecting...";
-sleep 0.3;
+sleep 0.15;
 hint "";
 
 private _connect = PLAYER_ connectTerminalToUAV _drone;

@@ -6,6 +6,8 @@
 
 #include "defines.hpp" 
 
+if !(missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {};
+
 private _monitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull];
 private _exited = if (IS_OBJ(_monitor)) then {
 	["monitorExitFullScreen", [_monitor], _monitor, false] CALL_OBJCLASS("Monitor", _monitor);
