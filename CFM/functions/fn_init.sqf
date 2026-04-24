@@ -11,7 +11,6 @@ if (isServer) then {
 	CFM_serverLoop_handle = 0 spawn CFM_fnc_serverLoop;
 };
 
-[] call CFM_fnc_initActionConditions;
 [] call CFM_fnc_initDefaultPointsAlignment;
 
 CFM_max_zoom_gopro = 2;

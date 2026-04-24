@@ -1,6 +1,7 @@
+#include "includes\main.hpp"
 
 class CfgPatches {
-	class CFM {
+	class PREFX {
 		name = "Camera Feed for Monitors";
 		author = "Vazar";
 		requiredAddons[] = {

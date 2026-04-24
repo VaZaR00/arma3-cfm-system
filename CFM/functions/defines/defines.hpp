@@ -41,6 +41,11 @@
 #define IS_VALID_R2T(s) ((IS_STR(s) && {!(s isEqualTo "") && {(RENDER_TARGET_STR in s)}}))
 #define CAM_POS_FUNC_DEF {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}
 #define TURRET_INDEX(t) (if (t isEqualType []) then {t select 0} else {t})
+#define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
+#define IS_MONITOR_ON ;
+#define IS_MONITOR_ON if ((_target getVariable ["CFM_isHandMonitor", false]) && {_target getVariable ['CFM_turnedOffLocal', false]}) exitWith {false};
+#define CAMERA_MOVE_DIRECTIONS ["up", "down", "left", "right"]
+#define CAMERA_MOVE_STEP 5
 
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 #define MONITOR_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers})
