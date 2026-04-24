@@ -66,7 +66,7 @@ if (isNil "_bot" || {!IS_OBJ(_bot)}) exitWith {
 };
 
 private _controled = [_drone, _turretName] call CFM_fnc_isUAVControlled;
-if (_controled && {(missionNamespace getVariable ["CFM_canInterceptUAVcontrol", false])}) exitWith {
+if (_controled && {!(missionNamespace getVariable ["CFM_canInterceptUAVcontrol", false])}) exitWith {
 	hint "Someone is controlling drone!";
 };
 

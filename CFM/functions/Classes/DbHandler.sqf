@@ -147,7 +147,8 @@ CLASS(DbHandler)
 		};
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
-		missionNamespace setVariable ["CFM_makeCamDataSync", true, 2];
+		CFM_makeCamDataSync = true;
+		publicVariableServer "CFM_makeCamDataSync";
 	};
 	METHOD("removeActiveMonitor") {
 		params["_monitor"];

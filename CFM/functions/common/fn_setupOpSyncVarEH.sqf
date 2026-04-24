@@ -6,4 +6,5 @@
 
 #include "defines.hpp" 
 
-"CFM_operatorsToUpdate" addPublicVariableEventHandler CFM_fnc_syncOperators;
+"CFM_operatorsToUpdate" addPublicVariableEventHandler {call CFM_fnc_syncOperators};
+"CFM_makeCamDataSync" addPublicVariableEventHandler {call CFM_fnc_syncOperators};

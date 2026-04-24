@@ -9,6 +9,9 @@ if (CFM_updateEachFrame) then {
 if (isServer) then {
 	call CFM_fnc_setupOpSyncVarEH;
 	CFM_serverLoop_handle = 0 spawn CFM_fnc_serverLoop;
+} else {
+	CFM_makeCamDataSync = true;
+	publicVariableServer "CFM_makeCamDataSync";
 };
 
 [] call CFM_fnc_initDefaultPointsAlignment;
