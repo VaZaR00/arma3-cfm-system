@@ -677,18 +677,18 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
 
 		// small delay before enabling interpolation so there is no camera movement on spawn
-		if (_doInterpolation) then {
-			_monitor setVariable ["CFM_camDoInterpolation", false, _global];
-			[_monitor, _doInterpolation, _global, _self] spawn {
-				params['_monitor', '_doInterpolation', '_global', '_op'];
-				sleep (MGVAR ["CFM_waitCamSetPosForInterpolation", 0.2]);
-				private _currentMonOp = _monitor getVariable ["CFM_connectedOperator", objNull];
-				if !(_currentMonOp isEqualTo _op) exitWith {};
-				_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
-			};
-		} else {
+		// if (_doInterpolation) then {
+		// 	_monitor setVariable ["CFM_camDoInterpolation", false, _global];
+		// 	[_monitor, _doInterpolation, _global, _self] spawn {
+		// 		params['_monitor', '_doInterpolation', '_global', '_op'];
+		// 		sleep (MGVAR ["CFM_waitCamSetPosForInterpolation", 0.2]);
+		// 		private _currentMonOp = _monitor getVariable ["CFM_connectedOperator", objNull];
+		// 		if !(_currentMonOp isEqualTo _op) exitWith {};
+		// 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		// 	};
+		// } else {
 			_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
-		};
+		// };
 
 		if (_globalUpdOp) then {
 			["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _self);
@@ -803,7 +803,12 @@ OBJCLASS(Operator)
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);
 		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
 
+		// private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
+
 		{
+			// if (_doInterpolation) then {
+			// 	_x setVariable ["CFM_camDoInterpolation", _doInterpolation, _targets];
+			// };
 			_x setVariable ["CFM_currentCamPointParams", _pointParams, _targets];
 			_x setVariable ["CFM_doUpdateCamera", _pointParams, _targets];
 			_x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
