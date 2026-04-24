@@ -16,6 +16,8 @@
 #define OPTIMIZE_MONITOR_FEED_DIST "200"
 #define OBJ_LOD(o) (o getVariable ["CFM_lod", call {private _lod = (((allLODs o) select {((_x select 1) isEqualTo "memory")}) select 0) select 0; o setVariable ["CFM_lod", _lod];_lod}]) 
 #define OBJ_LOD_VAR(var, o) private var = OBJ_LOD(o); o setVariable ["CFM_lod", var];
+#define IS_FPV(cls) (("fpv" in cls) || {("crocus" in cls)})
+#define IS_MAVIC(cls) ("mavik_3" in cls)
 #define DRIVER_TURRET_PATH [-1]
 #define GUNNER_TURRET_PATH [0]
 #define ACTION_RADIUS 5
