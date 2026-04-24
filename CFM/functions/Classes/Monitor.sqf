@@ -651,6 +651,7 @@ OBJCLASS(Monitor)
 		};
 		private _hintText = FULLSCREEN_HINT;
 		if (_onTempCam) then {
+			createDialog "RscDisplayCFM";
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
 			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
@@ -684,7 +685,7 @@ OBJCLASS(Monitor)
 		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
 		hint _hintText;
-		cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
+		// cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
 	};
 	METHOD("monitorExitFullScreen") {

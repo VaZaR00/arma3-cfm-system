@@ -991,6 +991,9 @@ CFM_fnc_onDisplayUnload = {
 	} else {
 		[_currentFullscreenedMonitor, false] call CFM_fnc_setHandDisplay;
 	};
+	if (missionNamespace getVariable ["CFM_isInFullScreen", false]) then {
+		[] call CFM_fnc_exitFullScreen;
+	};
 	missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
 };
 
