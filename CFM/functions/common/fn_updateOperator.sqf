@@ -6,12 +6,16 @@
 
 #include "defines.hpp" 
 
+params[["_controlledUnit", objNull]];
+
 private _currVeh = vehicle PLAYER_;
 if !(_currVeh isEqualTo PLAYER_) then {
 	[_currVeh] call CFM_fnc_updateOperatorZoom;
 };
 
-private _controlledUnit = focusOn;
+if !(IS_OBJ(_controlledUnit)) then {
+	_controlledUnit = focusOn;
+};
 private _prevControlledUnit = PLAYER_ getVariable ["CFM_lastControlledUnit", objNull];
 if !(_prevControlledUnit isEqualTo _controlledUnit) then {
 	// unit changed

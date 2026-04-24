@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-params[["_option", -1]];
+params[["_option", -1], ["_veh", objNull]];
 
 private _defFalse = [false, []];
 if (_option isEqualTo -1) exitWith {_defFalse};

@@ -119,3 +119,18 @@ if ((_types findIf {name isEqualType _x}) == -1) then {name = def};
 	private _ooCallResult = _this call (_classFuncExists select 1); \
 	if (isNil "_ooCallResult") then {CALL_PARAMS_CLASS; _NIL(_def)} else {_ooCallResult}; \
 }
+#define SPAWN_OBJCLASS(name, obj) call { \
+	[_this, name, obj] spawn { \
+		params["_this", "_name", "_obj"]; \
+		private _self = _obj;  \
+		_this call THIS_INSTANCE(_name, _obj); \
+		if (isNil "_ooCallResult") then {CALL_PARAMS_OBJCLASS; _NIL(_def)} else {_ooCallResult}; \
+	} \
+}
+#define SPAWN_CLASS(name) [name] spawn { \
+	params["_name"]; \
+	private _classFuncExists = CLASSNAME_EXISTS_STR(_name); \
+	if !(_classFuncExists select 0) exitWith {_this call {CALL_PARAMS_CLASS; _NIL(_def)}}; \
+	private _ooCallResult = _this call (_classFuncExists select 1); \
+	if (isNil "_ooCallResult") then {CALL_PARAMS_CLASS; _NIL(_def)} else {_ooCallResult}; \
+}
