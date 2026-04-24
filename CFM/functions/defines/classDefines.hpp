@@ -15,6 +15,7 @@
 	if (isNil "_ooInitResult") then {NILDEF(_def, _self)} else {_ooInitResult}; \
 };
 #define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
+#define SPAWN_NEW_OBJINSTANCE(name) call {[_this, name] spawn {params[["_this", []], ["_name", ""]]; _this NEW_OBJINSTANCE_GLOBAL(_name, false)};};
 #define NEW_INSTANCE(name) call {["Init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
 #define CLASSNAME_EXISTS(name) (call { \
 	private _classFunc = (missionNamespace getVariable [STR(name), {}]) \

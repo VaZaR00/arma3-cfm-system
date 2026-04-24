@@ -77,6 +77,14 @@ OBJCLASS(Monitor)
 
 		_isHandMonitor = _isPlayer;
 
+		if (_isHandMonitor) then {
+			// if hand monitor then wait for terminal
+			waitUntil {
+				sleep 2;
+				_self call CFM_fnc_hasUAVterminal;
+			};
+		};
+
 		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
 		if (!_isHandMonitor && !(_hasTextureSelection)) exitWith {
 			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
