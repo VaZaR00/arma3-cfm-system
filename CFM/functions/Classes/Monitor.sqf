@@ -663,16 +663,13 @@ OBJCLASS(Monitor)
 					true setCamUseTI _tiMode; 
 				};
 			};
-			_self spawn {
-				uiSleep AUTOEXIT_FULLSCREEN_TIMER;
-				[_this] call CFM_fnc_exitMonitorFullScreen;
-			};
 		} else {
 			_unitCam switchCamera _mode;
 			_self spawn {
 				private _initPos = getPosASL PLAYER_;
 				private _initDir = getDir PLAYER_;
 				waitUntil {
+					uiSleep 1;
 					!(_initPos isEqualTo (getPosASL PLAYER_)) 
 					// ||
 					// !(_initDir isEqualTo (getDir PLAYER_))
