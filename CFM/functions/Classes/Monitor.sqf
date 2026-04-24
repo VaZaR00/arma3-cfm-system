@@ -126,7 +126,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_actionsRadius", _radius];
 
 		["addMenuActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
-		["addOptionalActions", [_radius] + _args] CALL_OBJCLASS("Monitor", _self);
+		["addOptionalActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["updateActionPriority"] CALL_CLASS("DbHandler");
 
 		_monitor setVariable ["CFM_isMonitorSet", true];

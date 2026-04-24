@@ -66,7 +66,7 @@ CLASS(DbHandler)
 
 		if !(IS_STR(_operator)) exitWith {100};
 
-		["addToList", [_opClass, "CFM_OperatorClasses"]] CALL_CLASS(_self);
+		["addToHashMap", [_opClass, _mainArgs, "CFM_OperatorClasses"]] CALL_CLASS(_self);
 
 		true
 	};
@@ -106,7 +106,19 @@ CLASS(DbHandler)
 		} else {false};
 	};
 	METHOD("addToHashMap") {
-		-1
+		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
+		
+		if (isNil "_obj") exitWith {false};
+		if (_varName isEqualTo "") exitWith {false};
+
+		private _hash = (missionNamespace getVariable [_varName, createHashMap]);
+		if !(_hash isEqualType createHashMap) then {
+			_hash = createHashMap;
+		} else {
+			_hash set [_key, _val];
+		};
+		missionNamespace setVariable [_varName, _hash, _global];
+		true
 	};
 	METHOD("addCameraToPool") {
 		params[["_cam", objNull]];

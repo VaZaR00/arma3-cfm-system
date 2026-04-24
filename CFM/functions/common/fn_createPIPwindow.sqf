@@ -23,7 +23,12 @@ _player setVariable ["CFM_currentDisplay", _display];
 _settings = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
 	_settings
 } else {
-	missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR];
+    private _pipSettings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR];
+    if !(_pipSettings isEqualType "") then {
+        _pipSettings = str _pipSettings;
+        missionNamespace setVariable ["CFM_PIPsettings", _pipSettings];
+    };
+    _pipSettings
 };
 private _settingsCompiled = call compile _settings;
 if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])}) then {

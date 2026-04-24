@@ -50,10 +50,17 @@ switch (_type) do {
 		if !(alive _op) exitWith {false};
 		private _canFeed = _op getVariable ["CFM_canFeed", false];
 		if (_canFeed) exitWith {true};
-		private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", []];
-		if (_cls in _clssSetup) exitWith {
-			private _reset = false;
-			[_op] call CFM_fnc_setOperator;
+		private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", createHashMap];
+		private _clsArgs = _clssSetup get _cls;
+		if !(isNil "_clsArgs") exitWith {
+			if !(_clsArgs isEqualType []) then {
+				_clsArgs = [_clsArgs];
+			};
+			private _args = [_op] + _clsArgs;
+			[_args, {
+				private _reset = false;
+				_this call CFM_fnc_setOperator;
+			}, 2, false, false] call CFM_fnc_remoteExec;
 			true
 		};
 		_canFeed

@@ -60,7 +60,12 @@ private _newPos = _pos;
 private _newDir = _dir;
 private _newUp = _up;
 if (_doInterpolation) then {
-	private _interpTightnessOffset = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessOffset", "5"]));
+	private _interpTightnessOffsetVal = MGVAR ["CFM_camInterpolation_tightnessOffset", "5"];
+	if !(_interpTightnessOffsetVal isEqualType "") then {
+		_interpTightnessOffsetVal = str _interpTightnessOffsetVal;
+		missionNamespace setVariable ["CFM_optimizeByDistance", _interpTightnessOffsetVal];
+	};
+	private _interpTightnessOffset = 0.01 max (parseNumber (_interpTightnessOffsetVal));
 	// private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
 	private _lastDir = _monitor getVariable ["CFM_camInterp_lastDir", _dir];
 	private _lastUp = _monitor getVariable ["CFM_camInterp_lastUp", _up];
@@ -72,7 +77,12 @@ if (_doInterpolation) then {
 	_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
 };
 if (_smoothZoom) then {
-	private _interpTightnessZoom = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessZoom", "10"]));
+	private _interpTightnessZoomVal = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessZoom", "10"]));
+	if !(_interpTightnessZoomVal isEqualType "") then {
+		_interpTightnessZoomVal = str _interpTightnessZoomVal;
+		missionNamespace setVariable ["CFM_optimizeByDistance", _interpTightnessZoomVal];
+	};
+	private _interpTightnessZoom = 0.01 max (parseNumber (_interpTightnessZoomVal));
 	private _lastFov = _monitor getVariable ["CFM_camInterp_lastFov", _fov];
 	_newFov = [_lastFov, _fov, _interpTightnessZoom] call CFM_fnc_timeInterpolate;
 	_monitor setVariable ["CFM_camInterp_lastFov", _newFov];

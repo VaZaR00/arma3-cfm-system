@@ -10,7 +10,11 @@ if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
 private _monitors = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
-_optimizeDistance = call compile _optimizeDistance;
+if !(_optimizeDistance isEqualType "") then {
+	_optimizeDistance = str _optimizeDistance;
+	missionNamespace setVariable ["CFM_optimizeByDistance", _optimizeDistance];
+};
+_optimizeDistance = parseNumber _optimizeDistance;
 private _doOptimize = _optimizeDistance > 0;
 {
 	private _monitor = _x;
