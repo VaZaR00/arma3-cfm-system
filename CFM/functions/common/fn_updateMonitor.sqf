@@ -9,41 +9,41 @@
 params["_monitor"];
 
 // upd cam pos
-private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
+private _isStaticVeh = _monitor getVariable ["CFM_currentCameraIsStatic", false];
 private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 private _smoothZoom = _monitor getVariable ["CFM_currentCameraSmoothZoom", true];
 private _offsetReached = true;
 
-private _camSet = if (!_isStatic ||
-{
-	(_smoothZoom && {
-		// zoom interpolation
-		private _currentFov = _monitor getVariable ["CFM_camInterp_lastFov", _zoomFov];
-		if !(_currentFov isEqualType 1) exitWith {true};
-		private _fovDiff = abs (_zoomFov - _currentFov);
-		_fovDiff > DO_INTERPOLATE_TOLERANCE
-	}) ||
+private _camSet = if (!_isStaticVeh ||
 	{
-		// offset interpolation
-		private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
-		if (_doUpdateCamera isEqualType true) exitWith {_doUpdateCamera};
-		if !(_doUpdateCamera isEqualType []) exitWith {false};
-		private _currPos = getPosASL _camera;
-		private _currDir = vectorDir _camera;
-		private _currUp = vectorUp _camera;
-		_doUpdateCamera params [["_pos", _currPos, [[]], 3], ["_dir", _currDir, [[]], 3], ["_up", _currUp, [[]], 3]];
-		_offsetReached = (
-			([_pos, _currPos] call CFM_fnc_compareVectors) &&
-			{([_dir, _currDir] call CFM_fnc_compareVectors) &&
-			{([_up, _currUp] call CFM_fnc_compareVectors)}}
-		);
-		if (_offsetReached) then {
-			_monitor setVariable ["CFM_doUpdateCamera", false];
-		};
-		!_offsetReached
+		(_smoothZoom && {
+			// zoom interpolation
+			private _currentFov = _monitor getVariable ["CFM_camInterp_lastFov", _zoomFov];
+			if !(_currentFov isEqualType 1) exitWith {true};
+			private _fovDiff = abs (_zoomFov - _currentFov);
+			_fovDiff > DO_INTERPOLATE_TOLERANCE
+		}) ||
+		{
+			// offset interpolation
+			private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
+			if (_doUpdateCamera isEqualType true) exitWith {_doUpdateCamera};
+			if !(_doUpdateCamera isEqualType []) exitWith {false};
+			private _currPos = getPosASL _camera;
+			private _currDir = vectorDir _camera;
+			private _currUp = vectorUp _camera;
+			_doUpdateCamera params [["_pos", _currPos, [[]], 3], ["_dir", _currDir, [[]], 3], ["_up", _currUp, [[]], 3]];
+			_offsetReached = (
+				([_pos, _currPos] call CFM_fnc_compareVectors) &&
+				{([_dir, _currDir] call CFM_fnc_compareVectors) &&
+				{([_up, _currUp] call CFM_fnc_compareVectors)}}
+			);
+			if (_offsetReached) then {
+				_monitor setVariable ["CFM_doUpdateCamera", false];
+			};
+			!_offsetReached
+		}
 	}
-}
 ) then {
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];

@@ -400,7 +400,7 @@ OBJCLASS(Operator)
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 		_isStaticVeh = _isStaticVeh || {_camPosFunc in [CFM_fnc_camPosVehStatic, CFM_fnc_camPosStatic]};
-		_turretParams set ["isStatic", _isStaticVeh];
+		_turretParams set ["isStaticVeh", _isStaticVeh];
 
 		// TURRET OBJECT
 		if !(IS_OBJ(_turretObject)) then {
@@ -792,9 +792,11 @@ OBJCLASS(Operator)
 
 		private _turretIndex = TURRET_INDEX(_turret);
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
-		private _isStatic = _turretData getOrDefault ["isStatic", true];
+		private _isStaticVeh = _turretData getOrDefault ["isStaticVeh", true];
 
-		if (_isStatic) exitWith {false};
+		if (_isStaticVeh && !_isStaticCam) exitWith {false};
+
+		private _pointParams = _turretData get "pointParams";
 
 		if (isNil "_pointParams") exitWith {false};
 
@@ -845,9 +847,9 @@ OBJCLASS(Operator)
 
 		private _turretIndex = TURRET_INDEX(_turret);
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
-		private _isStatic = _turretData getOrDefault ["isStatic", true];
+		private _isStaticVeh = _turretData getOrDefault ["isStaticVeh", true];
 
-		if (_isStatic) exitWith {false};
+		if (_isStaticVeh && !_isStaticCam) exitWith {false};
 
 		private _isGunnerTurret = _turretIndex isEqualTo 0;
 		private _isUAVcontrolled = _isDroneFeed && {[_self, ["DRIVER", "GUNNER"] select (_isGunnerTurret)] call CFM_fnc_isUAVControlled};
@@ -885,7 +887,7 @@ OBJCLASS(Operator)
 		private _hasPrevMove = !(_self getVariable ["CFM_moveDone", true]);
 		if (_hasPrevMove) then {
 			_self setVariable ["CFM_newMove", true];
-			waitUntil { _self getVariable ["CFM_moveDone", true] };
+			waitUntil { sleep 0.01; _self getVariable ["CFM_moveDone", true] };
 		};
 		_self setVariable ["CFM_moveDone", false];
 
@@ -906,6 +908,7 @@ OBJCLASS(Operator)
 
 			private _waitStart = time;
 			waitUntil {
+				sleep 0.01;
 				[_self] call CFM_fnc_updateOperator;
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
@@ -928,10 +931,15 @@ OBJCLASS(Operator)
 			private _newDirUp = [_prevCamDir, _prevCamUp, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newCamDir = _newDirUp#0;
 
-			[_self, _prevCamDir, _newCamDir] spawn CFM_fnc_smoothRotateCam;
+			private _prevHandle = _self getVariable ["CFM_rotationHandle", scriptNull];
+			terminate _prevHandle;
+
+			private _rotationHandle = [_self, _prevCamDir, _newCamDir] spawn CFM_fnc_smoothRotateCam;
+			_self setVariable ["CFM_rotationHandle", _rotationHandle];
 
 			private _waitStart = time;
 			waitUntil {
+				sleep 0.01;
 				[_self] call CFM_fnc_updateOperator;
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
