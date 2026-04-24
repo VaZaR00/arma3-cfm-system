@@ -30,10 +30,7 @@ private _fov = if ((_zoomFov isEqualType 1) && {(_zoomFov > 0) && (_zoomFov <= 1
 	_zoomFov
 } else {
 	if (_zoomFov isEqualTo "op") exitWith {
-		if !(isMultiplayer) exitWith {
-			getObjectFov _operator
-		};
-		_operator getVariable ['CFM_prevZoomLocalFov', 1];
+		_operator getVariable ['CFM_prevZoomLocalFov', getObjectFov _operator];
 	};
 };
 
