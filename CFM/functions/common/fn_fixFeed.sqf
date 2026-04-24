@@ -6,7 +6,16 @@
 
 #include "defines.hpp" 
 
-private _monitors = missionNamespace getVariable ["CFM_Monitors", []];
+params[["_monitors", []]];
+
+if !(_monitors isEqualType []) then {
+    _monitors = [_monitors];
+    _monitors = _monitors select {IS_OBJ(_x)};
+};
+if (_monitors isEqualTo []) then {
+    _monitors = missionNamespace getVariable ["CFM_Monitors", []];
+};
+
 {
 	[_x] spawn CFM_fnc_resetFeed;
 } forEach _monitors;

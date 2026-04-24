@@ -555,7 +555,7 @@ OBJCLASS(Monitor)
 				private _actionFix = _self addAction ["<t color='#690707'>Reset/Fix feed (local)</t>", { 
 					(_this#3) params ["_target"]; 
 					
-					[] call CFM_fnc_fixFeed;
+					[_target] call CFM_fnc_fixFeed;
 				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_fixFeedActionCondition", _target], _radius]; 
 				_actions append [_actionFix];
 			};
