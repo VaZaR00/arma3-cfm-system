@@ -1658,6 +1658,7 @@ CFM_fnc_initActionConditions = {
 	CFM_fnc_enterFullScreenActionCondition = {
 		params["_target"];
 		HAND_MON_CONDITION
+		if !(missionNamespace getVariable ['CFM_canFullscreen', true]) exitWith {false};
 		if !(_target getVariable ['CFM_feedActive', false]) exitWith {false};
 		if !(_target getVariable ['CFM_canFullScreen', false]) exitWith {false};
 		// private _connectedOperator = _target getVariable ['CFM_connectedOperator', objNull];
