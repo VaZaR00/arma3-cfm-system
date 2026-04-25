@@ -95,3 +95,8 @@ CFM_fnc_setOperatorInfo = {
 	params["_monitor", ["_set", false]];
 	["setOperatorInfo", [_set], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
 };
+
+CFM_fnc_switchUAV = {
+	params["_monitor"];
+	["switchUAV"] SPAWN_OBJCLASS("Monitor", _monitor);
+};

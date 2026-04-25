@@ -12,6 +12,10 @@
                 file = FUNC_PATH(actions\fn_operatorInfoActionCondition.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class switchUAVActionCondition {
+                file = FUNC_PATH(actions\fn_switchUAVActionCondition.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class disconnectActionCondition {
                 file = FUNC_PATH(actions\fn_disconnectActionCondition.sqf);
                 DO_FUNC_RECOMPILE

@@ -43,7 +43,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_zoomTable, createHashMap);
 	OBJ_VARIABLE(_turretLocal, false);
 	OBJ_VARIABLE(_maxZoomed, false);
-	OBJ_VARIABLE(_isDroneFeed, false);
+	OBJ_VARIABLE(_currentOperatorIsDrone, false);
 	OBJ_VARIABLE(_canFullScreen, false);
 	OBJ_VARIABLE(_cameraPosFunc, {});
 	OBJ_VARIABLE(_currentCamPointParams, []);
@@ -508,7 +508,14 @@ OBJCLASS(Monitor)
 				[_monitor] call CFM_fnc_turnOffMonitorLocal;
 			}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
 
-			_actions append [_actionWatch, _actionStopWatch];
+			private _actionSwitchDrones = _self addAction ["<t color='#c31cff'>Switch UAV</t>", { 
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor"]; 
+
+				[_monitor] call CFM_fnc_switchUAV;
+			}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_switchUAVActionCondition", _target], _radius]; 
+
+			_actions append [_actionWatch, _actionStopWatch, _actionSwitchDrones];
 		};
 
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
@@ -785,5 +792,57 @@ OBJCLASS(Monitor)
 		_self setUserActionText [_operatorInfoActionId, _infoStr];
 
 		_infoStr
+	};
+	METHOD("switchUAV") {
+		if !(_currentOperatorIsDrone) exitWith {
+			"Current feed is not UAV!" _HINT
+			false
+		};
+
+		private _currentUav = vehicle (remoteControlled PLAYER_);
+
+		if !(IS_OBJ(_currentUav)) exitWith {
+			"You're not controlling any UAV!" _HINT
+			false
+		};
+
+		private _newUav = _connectedOperator;
+		private _controled = [_newUav, "DRIVER"] call CFM_fnc_isUAVControlled;
+
+		if (_controled) exitWith {
+			"Can't connect! UAV is controlled" _HINT
+			false
+		};
+
+		private _currentUavIsOp = _currentUav getVariable ["CFM_operatorSet", false];
+
+		if !(_currentUavIsOp) exitWith {
+			"Current UAV can't feed!" _HINT
+			false
+		};
+
+		// take uav control
+		[_self] spawn CFM_fnc_takeUAVcontorls;
+
+		// wait for taking uav controll
+		private _waitStart = time;
+		waitUntil {
+			(
+				(MGVAR ["CFM_currentControlledUAV", objNull]) isEqualTo _newUav
+			) || {
+				(time - _waitStart) > 2
+			}
+		};
+
+		// check if we have taken control of new uav
+		if !((MGVAR ["CFM_currentControlledUAV", objNull]) isEqualTo _newUav) exitWith {
+			"Can't connect to UAV!" _HINT
+			false
+		};
+
+		// connect previuos uav to hand monitor
+		[_self, _currentUav, PLAYER_] call CFM_fnc_connectMonitorToOperator;
+
+		true
 	};
 CLASS_END

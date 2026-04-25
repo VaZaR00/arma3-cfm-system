@@ -86,3 +86,5 @@ if !(_connect) exitWith {
 [] call CFM_fnc_exitFullScreen;
 PLAYER_ remoteControl (_bot);
 _drone switchCamera "internal";
+
+CFM_currentControlledUAV = _drone;
