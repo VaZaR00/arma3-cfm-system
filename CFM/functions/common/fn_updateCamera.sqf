@@ -37,10 +37,19 @@ private _fov = if ((_zoomFov isEqualType 1) && {(_zoomFov > 0) && (_zoomFov <= 1
 // POS AN VECTOR DIR AND UP
 private _posData = [_turretObject, _pointParams] call _camPosFunc;
 _posData params [
-	["_pos", getPosASL _operator, [[]], 3],
-	["_dir", vectorDir _operator, [[]], 3],
-	["_up", vectorUp _operator, [[]], 3]
+	["_pos", getPosASL _operator],
+	["_dir", vectorDir _operator],
+	["_up", vectorUp _operator]
 ];
+if (count _pos != 3) then {
+	_pos = getPosASL _operator;
+};
+if (count _dir != 3) then {
+	_dir = vectorDir _operator;
+};
+if (count _up != 3) then {
+	_up = vectorUp _operator;
+};
 
 if (_turretLocal && {isMultiplayer && {_setLocalOpTurretDir}}) then {
 	private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;

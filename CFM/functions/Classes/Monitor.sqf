@@ -184,14 +184,13 @@ OBJCLASS(Monitor)
 			false
 		};
 
-		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
-		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
-		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
-
 		_monitor setVariable ["CFM_currentFeedCam", _camera];
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
+		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
+		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
+		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
 		["setOperatorInfo", [true]] CALL_OBJCLASS("Monitor", _monitor);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");

@@ -52,7 +52,8 @@
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 #define MONITOR_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers})
 
-#define PLAYER_ player
+#define PLAYER_ (MGVAR ['bis_fnc_moduleremotecontrol_unit', player])
+// #define PLAYER_ player
 #define PLAYER_STR STR(PLAYER_)
 
 #define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};

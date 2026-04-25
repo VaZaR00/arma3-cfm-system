@@ -82,4 +82,15 @@ _pictureCtrl ctrlCommit 0;
 
 _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
 
+_player spawn {
+    private _isWatching = _this getVariable ["CFM_feedActive", false];
+    waitUntil {
+        sleep 1;
+        _isWatching = _this getVariable ["CFM_feedActive", false];
+        !_isWatching || {!(focusOn isEqualTo _this)}
+    };
+    if !(_isWatching) exitWith {};
+    [_this, false] call CFM_fnc_setHandDisplay;
+};
+
 [_display, _pictureCtrl, _background, _title]

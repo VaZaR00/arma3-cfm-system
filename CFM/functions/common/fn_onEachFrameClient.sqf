@@ -44,6 +44,12 @@ if (_isHandMonitor) then {
 	if !(_unit isEqualTo _plr) then {
 		private _unitIsSet = _unit getVariable ["CFM_actionsSet", false];
 		if (_unitIsSet) exitWith {};
+		if ((_unit getVariable ["CFM_isMonitorSet", false]) isEqualTo true) exitWith {
+			_unit setVariable ["CFM_actionsSet", true];
+		};
+		if !((vehicle _unit) call CFM_fnc_isUAV) exitWith {
+			_unit setVariable ["CFM_actionsSet", true];
+		};
 		[_plr, _unit] call CFM_fnc_copyMenuActionsToObj;
 	};
 };

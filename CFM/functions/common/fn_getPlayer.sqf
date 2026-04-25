@@ -8,15 +8,7 @@
 
 params[["_target", objNull]];
 
-private _plr = PLAYER_;
-private _currentPlrVeh = cameraOn;
-private _res = if ((_target isEqualTo _plr) || {(vehicle _target) isEqualTo _currentPlrVeh}) then {
-	if !(_currentPlrVeh isEqualTo _plr) exitWith {
-		_plr
-	};
-	_currentPlrVeh
-} else {
-	_target
-};
+private _playerVeh = cameraOn;
+if (_playerVeh isEqualTo _target) exitWith {PLAYER_};
 
-_res
+_target
