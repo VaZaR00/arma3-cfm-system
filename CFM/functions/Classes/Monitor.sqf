@@ -280,7 +280,7 @@ OBJCLASS(Monitor)
 	};
 	METHOD("loadMenuScrollMenu") { 
 		params [["_caller", objNull], ["_target", _self], ["_targetStr", _targetInActionsConditions]]; 
-
+		format["Monitor.loadMenuScrollMenu. Self: %1, Target: %2", _self, _target] DLOG
 		private _targetStr = _targetInActionsConditions;
 		private _ops = [_self] call CFM_fnc_getActiveOperators; 
 		// private _opsGlobal = [_self] call CFM_fnc_getActiveOperatorsCheckGlobal; 

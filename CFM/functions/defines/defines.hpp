@@ -56,10 +56,11 @@
 #define PLAYER_STR STR(PLAYER_)
 
 #define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};
+#define DLOG call {_txt = text format["[DLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; diag_log _txt};
 #define VARS_STR call {if !(_this isEqualType []) then {_this = ["", _this]}; params["_txt", ["_varstr", ""]]; if (_varstr isEqualTo "") then {_varstr = _txt}; private _ar = _varstr splitString ",;. "; private _arvs = _ar apply {private _val = call compile format["if !(isNil '%1') then {%1}", _x]; if (isNil "_val") then {""} else {format["%1: %2", _x, _val]}}; _txt + "  :  " + (_arvs joinString "; ")}
 #define LOG_VARS ;
 #define RLOG_VARS VARS_STR RLOG
 #define LOGH hintSilent str
 #define HINT hint
-#define WARN RLOG
+#define WARN DLOG
 #define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);
