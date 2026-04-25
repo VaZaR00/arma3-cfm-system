@@ -163,7 +163,6 @@ CLASS(DbHandler)
 		} else {
 			_id
 		};
-		[_operator, _res, _id, _operator getVariable ["CFM_operatorId", -2]] RLOG
 		if (_res < 0) then {
 			format["DbHandler.setOperatorId: problem occured when trying to set id for object: '%1'. Id returned: '%2'. Current existing ids: '%3'", 
 			_operator, _res, keys _opsIdsHash
@@ -176,12 +175,10 @@ CLASS(DbHandler)
 		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
 		if !(_opsIdsHash isEqualType createHashMap) then {
 			_opsIdsHash = createHashMap;
-			["nextOperatorId", "RESET"] RLOG
 			missionNamespace setVariable ["CFM_OperatorsIds", _opsIdsHash];
 		};
 		private _opsIds = keys _opsIdsHash;
-		if (count _opsIds == 0) exitWith {
-		["nextOperatorId", 0, _opsIds] RLOG;0};
+		if (count _opsIds == 0) exitWith {0};
 		_opsIds sort true;
 		private _idRight = false;
 		private _id = -1;
@@ -196,7 +193,6 @@ CLASS(DbHandler)
 				_idRight = true;
 			};
 		};
-		["nextOperatorId", _id, _opsIds] RLOG
 		if (_id in _opsIds) exitWith {-1};
 		_id
 	};
