@@ -14,6 +14,11 @@ class Main
         DO_FUNC_RECOMPILE
         postInit = 1;
     };
+    class initSettings {
+        file = FUNC_PATH(fn_initSettings.sqf);
+        DO_FUNC_RECOMPILE
+        postInit = 1;
+    };
     class setMonitor {
         file = FUNC_PATH(fn_setMonitor.sqf);
         DO_FUNC_RECOMPILE
