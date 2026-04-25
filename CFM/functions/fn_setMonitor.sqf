@@ -24,12 +24,6 @@
 
 #include "defines.hpp"
 
-
-#ifdef SET_MON_OP_REMOTE_EXEC
-// for JIP sync
-if !(isServer) exitWith {false};
-#endif
-
 if !(canSuspend) exitWith {
 	_this spawn CFM_fnc_setMonitor;
 };
@@ -73,6 +67,21 @@ if (_monitor isEqualType []) exitWith {
 	};
 };
 if !(IS_OBJ(_monitor)) exitWith {false};
+
+private _isPlayer = (_monitor isEqualTo PLAYER_) || {(_monitor isKindOf "Man")};
+private _local = local _monitor;
+
+// Hand monitors are local
+if (_isPlayer && !_local) exitWith {};
+
+if (_isPlayer && _local) exitWith {
+	_this SPAWN_NEW_OBJINSTANCE("Monitor");
+};
+
+#ifdef SET_MON_OP_REMOTE_EXEC
+// for JIP sync
+if !(isServer) exitWith {false};
+#endif
 
 #ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
