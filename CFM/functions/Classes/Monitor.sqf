@@ -1,3 +1,5 @@
+#define OPERATOR_INFO_TEXT_DEF "<t color='#0d6aff'>Operator Info</t>"
+
 OBJCLASS(Monitor)
 
 	SET_SELF_VAR(_monitor);
@@ -12,6 +14,7 @@ OBJCLASS(Monitor)
 	OBJ_VARIABLE(_isLocal, false);
 	OBJ_VARIABLE(_actionCaller, objNull);
 	OBJ_VARIABLE(_mainActions, objNull);
+	OBJ_VARIABLE(_operatorInfoActionId, -1);
 	OBJ_VARIABLE(_currentMenuObj, _self);
 	OBJ_VARIABLE(_targetInActionsConditions, "_target");
 
@@ -189,6 +192,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
+		["setOperatorInfo", [true]] CALL_OBJCLASS("Monitor", _monitor);
+
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
 		if (_reset) then {
@@ -210,6 +215,7 @@ OBJCLASS(Monitor)
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+			["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
 		} else {
 			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		};
@@ -523,6 +529,16 @@ OBJCLASS(Monitor)
 		private _actions = [];
 		private _radius = _self getVariable ["CFM_actionsRadius", _radius];
 		call {
+			if (true) then {
+				_operatorInfoActionId = _self addAction [OPERATOR_INFO_TEXT_DEF, { 
+					(_this#3) params ["_target"];
+					
+					[_target] call CFM_fnc_getOperatorInfo;
+				}, [_self], _priority + 1, true, false, "", format["[%1] call CFM_fnc_operatorInfoActionCondition", _target], _radius]; 
+				_self setVariable ["CFM_operatorInfoActionId", _operatorInfoActionId];
+				_actions append [_operatorInfoActionId];
+			};
+
 			if (_canZoom) then {
 				private _actionZoomIn = _self addAction ["<t color='#c5dafa'>Zoom In</t>", { 
 					(_this#3) params ["_target"];
@@ -747,5 +763,27 @@ OBJCLASS(Monitor)
 		missionNamespace setVariable ["CFM_currentFullScreenCam", nil];
 		missionNamespace setVariable ["CFM_r2tOfFullScreenCam", nil];
 		true
+	};
+	METHOD("getOperatorInfo") {
+		private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
+		private _dist = _self distance _connectedOperator;
+		private _grid = mapGridPosition _connectedOperator;
+
+		private _infoStr = format["Operator info %1 Name: %2%1 Map pos: %3%1 Distance: %4%1", endl, _opName, _grid, _dist];
+
+		hint _infoStr;
+	};
+	METHOD("setOperatorInfo") {
+		params[["_set", false]];
+		private _infoStr = if (_set && {IS_OBJ(_connectedOperator)}) then {
+			private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
+			format["<t color='#0d6aff'>Camera:</t> %1", _opName];
+		} else {
+			OPERATOR_INFO_TEXT_DEF
+		};
+
+		_self setUserActionText [_operatorInfoActionId, _infoStr];
+
+		_infoStr
 	};
 CLASS_END

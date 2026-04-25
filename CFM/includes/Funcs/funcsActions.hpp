@@ -8,6 +8,10 @@
                 file = FUNC_PATH(actions\fn_connectDroneActionCondition.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class operatorInfoActionCondition {
+                file = FUNC_PATH(actions\fn_operatorInfoActionCondition.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class disconnectActionCondition {
                 file = FUNC_PATH(actions\fn_disconnectActionCondition.sqf);
                 DO_FUNC_RECOMPILE

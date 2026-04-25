@@ -180,6 +180,25 @@ OBJCLASS(Operator)
 			};
 			default {};
 		};
+		if (_name isEqualTo "") then {
+			_name = switch (_cameraType) do {
+				case GOPRO: {
+					format["%1: %2", groupId group _self, name _self]
+				};
+				case TYPE_STATIC: {
+					_self getVariable ["CFM_staticCameraID", "Camera"];
+				};
+				default {
+					private _group = groupId group _self;
+					private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _self) >> "displayName");
+					if (_group isEqualTo "") then {
+						_dispName
+					} else {
+						format["%1: %2", _group, _dispName]
+					};
+				};
+			};
+		};
 		_operator setVariable ["CFM_operatorName", _name, _global];
 
 		_operator setVariable ["CFM_operatorSet", true, _global];

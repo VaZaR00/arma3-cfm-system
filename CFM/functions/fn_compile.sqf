@@ -85,3 +85,13 @@ CFM_fnc_getVectorUpFromDir = {
 	private _up = _right vectorCrossProduct _dir;
 	vectorNormalized _up
 };
+
+CFM_fnc_getOperatorInfo = {
+	params["_monitor"];
+	["getOperatorInfo", [], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
+};
+
+CFM_fnc_setOperatorInfo = {
+	params["_monitor", ["_set", false]];
+	["setOperatorInfo", [_set], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
+};
