@@ -277,10 +277,10 @@ OBJCLASS(Monitor)
 
 		private _targetStr = _targetInActionsConditions;
 		private _ops = [_self] call CFM_fnc_getActiveOperators; 
-		private _opsGlobal = [_self] call CFM_fnc_getActiveOperatorsCheckGlobal; 
-		{
-			_ops pushBackUnique _x;
-		} forEach _opsGlobal;
+		// private _opsGlobal = [_self] call CFM_fnc_getActiveOperatorsCheckGlobal; 
+		// {
+		// 	_ops pushBackUnique _x;
+		// } forEach _opsGlobal;
 
 		private _radius = MONITOR_ACTION_RADIUS(_self);
 

@@ -1,7 +1,7 @@
 /*
     Function: CFM_fnc_getActiveOperatorsCheckGlobal
     Author: Vazar
-    Description: Automatically generated SQF file.
+    Description: Checks globaly for operators, checks by classes, if not set - sets
 */
 
 #include "defines.hpp" 

@@ -197,6 +197,10 @@
                 file = FUNC_PATH(common\fn_operatorCondition.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class checkIfNewOperator {
+                file = FUNC_PATH(common\fn_checkIfNewOperator.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class remoteExec {
                 file = FUNC_PATH(common\fn_remoteExec.sqf);
                 DO_FUNC_RECOMPILE

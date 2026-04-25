@@ -53,137 +53,135 @@ OBJCLASS(Operator)
 		};
 		if !(_classType in VALID_CLASS_TYPES) exitWith {"Init Operator: Invalid class type passed" WARN; 2};
 
-		if (isServer) then {
-			_operator setVariable ["CFM_classType", _classType, _global];
+		_operator setVariable ["CFM_classType", _classType, _global];
 
-			
-			// OTHER PARAMS
-			if !(_params isEqualType []) then {_params = [_params]};
-			_params params [
-				["_canMoveCameraByDefaultSet", -1],
-				["_cameraZoomSmoothDefault", true, [true]]
-			];
+		
+		// OTHER PARAMS
+		if !(_params isEqualType []) then {_params = [_params]};
+		_params params [
+			["_canMoveCameraByDefaultSet", -1],
+			["_cameraZoomSmoothDefault", true, [true]]
+		];
 
-			_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
-			_operator setVariable ["CFM_objClass", _objClass, _global];
+		_objClass = toLower (_operator call CFM_fnc_getOperatorClass);
+		_operator setVariable ["CFM_objClass", _objClass, _global];
 
-			_isFPV = (("fpv" in _objClass) || {("crocus" in _objClass)});
-			_isMavic = ("mavik_3" in _objClass);
-			_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
-			_operator setVariable ["CFM_hasGoPro", _hasGoPro, _global];
-			_operator setVariable ["CFM_isFPV", _isFPV, _global];
-			_operator setVariable ["CFM_isMavic", _isMavic, _global];
-			
-			// CAN MOVE CAMERA
-			if ((_classType isEqualTo TYPE_UAV) && {
-				!(_canMoveCameraByDefaultSet isEqualTo false) && {
-					!_isFPV
-				}
-			}) then { // && {MGVAR ["CFM_canMoveDroneCameras", false]}
-				_canMoveCameraByDefaultSet = true;
-			};
-			private _moveParams = [_canMoveCameraByDefaultSet, _self] call CFM_fnc_defineCameraMovementOptions;
-			_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
-			_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault, _global];
-			_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault, _global];
-			_operator setVariable ["CFM_cameraZoomSmoothDefault", !_hasGoPro && _cameraZoomSmoothDefault, _global];
+		_isFPV = (("fpv" in _objClass) || {("crocus" in _objClass)});
+		_isMavic = ("mavik_3" in _objClass);
+		_hasGoPro = _classType in [TYPE_UNIT, TYPE_HELM];
+		_operator setVariable ["CFM_hasGoPro", _hasGoPro, _global];
+		_operator setVariable ["CFM_isFPV", _isFPV, _global];
+		_operator setVariable ["CFM_isMavic", _isMavic, _global];
+		
+		// CAN MOVE CAMERA
+		if ((_classType isEqualTo TYPE_UAV) && {
+			!(_canMoveCameraByDefaultSet isEqualTo false) && {
+				!_isFPV
+			}
+		}) then { // && {MGVAR ["CFM_canMoveDroneCameras", false]}
+			_canMoveCameraByDefaultSet = true;
+		};
+		private _moveParams = [_canMoveCameraByDefaultSet, _self] call CFM_fnc_defineCameraMovementOptions;
+		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
+		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault, _global];
+		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault, _global];
+		_operator setVariable ["CFM_cameraZoomSmoothDefault", !_hasGoPro && _cameraZoomSmoothDefault, _global];
 
-			if (_classType isEqualTo TYPE_STATIC) then {
-				_isStaticCam = true;
-				_operator setVariable ["CFM_isStaticCam", _isStaticCam, _global];
-			};
-
-			// NVG AND TI
-			_hasTInNvg params ["_ti", "_nvg"];
-			if !(_ti isEqualType true) then {
-				_ti = true;
-			};
-			if !(_nvg isEqualType true) then {
-				_nvg = true;
-			};
-			([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
-			_canSwitchTi = _ti && _canSwitchTi;
-			_canSwitchNvg = _nvg && _canSwitchNvg;
-			_operator setVariable ["CFM_tiTable", _tiTable, _global];
-			_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
-			_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
-			_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
-
-
-			// CAM TYPE
-			_cameraType = [_operator] call CFM_fnc_cameraType;
-			_operator setVariable ["CFM_cameraType", _cameraType, _global];
-
-
-			// TURRETS
-			["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
-
-
-			// CHECK NVG TI
-			private _turrets = _self getVariable ["CFM_turrets", []];
-			private _turrCount = count _turrets;
-			if (_turrCount == 1) then {
-				// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
-				private _turr = _turrets#0;
-				private _turrIndex = TURRET_INDEX(_turr);
-				if (_turrIndex isEqualTo -1) then {
-					// TI
-					call {
-						private _tiForDriver = _tiTable get _turrIndex;
-						if (isNil "_tiForDriver") exitWith {};
-						if (count _tiForDriver != 0) exitWith {};
-						private _tiForGunner = _tiTable get 0;
-						if (isNil "_tiForGunner") exitWith {};
-						if (count _tiForGunner == 0) exitWith {};
-						_tiForGunner = +_tiForGunner;
-						_tiTable = createHashMap;
-						_tiTable set [-1, _tiForGunner];
-					};
-					// NVG
-					call {
-						private _nvgForDriver = _tiTable get _turrIndex;
-						if (isNil "_nvgForDriver") exitWith {};
-						if (_nvgForDriver isEqualTo true) exitWith {};
-						private _nvgForGunner = _tiTable get 0;
-						if (isNil "_nvgForGunner") exitWith {};
-						if (_nvgForDriver isEqualTo false) exitWith {};
-						_nvgForGunner = +_nvgForGunner;
-						_nvgTable = createHashMap;
-						_nvgTable set [-1, _nvgForGunner];
-					};
-				};
-			};
-
-			// SIDE
-			private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
-			if !(_sides isEqualType []) then {
-				_sides = [_sides];
-			};
-			_sides = _sides select {_x isEqualType west};
-			if (_sides isEqualTo []) then {
-				_sides = [_defaultSide];
-			};
-			_operator setVariable ["CFM_opSides", _sides, _global];
-
-
-			// ADD OP
-			["addOperator", [_operator]] CALL_CLASS("DbHandler");
-
-			switch (_cameraType) do {
-				case DRONETYPE: {
-					_operator setVariable ["CFM_canFeed", true, _global];
-					_operator setVariable ["CFM_isDroneFeed", true, _global];
-				};
-				case TYPE_VEH: {
-					_operator setVariable ["CFM_canFeed", true, _global];
-					_operator setVariable ["CFM_isVehFeed", true, _global];
-				};
-				default {};
-			};
-			_operator setVariable ["CFM_operatorName", _name, _global];
+		if (_classType isEqualTo TYPE_STATIC) then {
+			_isStaticCam = true;
+			_operator setVariable ["CFM_isStaticCam", _isStaticCam, _global];
 		};
 
-		_operator setVariable ["CFM_operatorSet", true];
+		// NVG AND TI
+		_hasTInNvg params ["_ti", "_nvg"];
+		if !(_ti isEqualType true) then {
+			_ti = true;
+		};
+		if !(_nvg isEqualType true) then {
+			_nvg = true;
+		};
+		([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
+		_canSwitchTi = _ti && _canSwitchTi;
+		_canSwitchNvg = _nvg && _canSwitchNvg;
+		_operator setVariable ["CFM_tiTable", _tiTable, _global];
+		_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
+		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
+		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
+
+
+		// CAM TYPE
+		_cameraType = [_operator] call CFM_fnc_cameraType;
+		_operator setVariable ["CFM_cameraType", _cameraType, _global];
+
+
+		// TURRETS
+		["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
+
+
+		// CHECK NVG TI
+		private _turrets = _self getVariable ["CFM_turrets", []];
+		private _turrCount = count _turrets;
+		if (_turrCount == 1) then {
+			// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
+			private _turr = _turrets#0;
+			private _turrIndex = TURRET_INDEX(_turr);
+			if (_turrIndex isEqualTo -1) then {
+				// TI
+				call {
+					private _tiForDriver = _tiTable get _turrIndex;
+					if (isNil "_tiForDriver") exitWith {};
+					if (count _tiForDriver != 0) exitWith {};
+					private _tiForGunner = _tiTable get 0;
+					if (isNil "_tiForGunner") exitWith {};
+					if (count _tiForGunner == 0) exitWith {};
+					_tiForGunner = +_tiForGunner;
+					_tiTable = createHashMap;
+					_tiTable set [-1, _tiForGunner];
+				};
+				// NVG
+				call {
+					private _nvgForDriver = _tiTable get _turrIndex;
+					if (isNil "_nvgForDriver") exitWith {};
+					if (_nvgForDriver isEqualTo true) exitWith {};
+					private _nvgForGunner = _tiTable get 0;
+					if (isNil "_nvgForGunner") exitWith {};
+					if (_nvgForDriver isEqualTo false) exitWith {};
+					_nvgForGunner = +_nvgForGunner;
+					_nvgTable = createHashMap;
+					_nvgTable set [-1, _nvgForGunner];
+				};
+			};
+		};
+
+		// SIDE
+		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
+		if !(_sides isEqualType []) then {
+			_sides = [_sides];
+		};
+		_sides = _sides select {_x isEqualType west};
+		if (_sides isEqualTo []) then {
+			_sides = [_defaultSide];
+		};
+		_operator setVariable ["CFM_opSides", _sides, _global];
+
+
+		// ADD OP
+		["addOperator", [_operator]] CALL_CLASS("DbHandler");
+
+		switch (_cameraType) do {
+			case DRONETYPE: {
+				_operator setVariable ["CFM_canFeed", true, _global];
+				_operator setVariable ["CFM_isDroneFeed", true, _global];
+			};
+			case TYPE_VEH: {
+				_operator setVariable ["CFM_canFeed", true, _global];
+				_operator setVariable ["CFM_isVehFeed", true, _global];
+			};
+			default {};
+		};
+		_operator setVariable ["CFM_operatorName", _name, _global];
+
+		_operator setVariable ["CFM_operatorSet", true, _global];
 
 		true
 	};

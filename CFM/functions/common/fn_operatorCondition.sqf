@@ -37,6 +37,7 @@ private _type = [_op] call CFM_fnc_cameraType;
 
 switch (_type) do {
 	case GOPRO: {
+		if (!(MGVAR ["CFM_goProCanFeedIfDead", true]) && {!(alive _op)}) exitWith {false};
 		private _hasGoPro = _op getVariable ["CFM_hasGoPro", false];
 		private _goprohelms = missionNamespace getVariable "CFM_goProHelmets";
 		if (isNil "_goprohelms") exitWith {_hasGoPro};
@@ -50,19 +51,8 @@ switch (_type) do {
 		if !(alive _op) exitWith {false};
 		private _canFeed = _op getVariable ["CFM_canFeed", false];
 		if (_canFeed) exitWith {true};
-		private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", createHashMap];
-		private _clsArgs = _clssSetup get _cls;
-		if !(isNil "_clsArgs") exitWith {
-			if !(_clsArgs isEqualType []) then {
-				_clsArgs = [_clsArgs];
-			};
-			private _args = [_op] + _clsArgs;
-			[_args, {
-				private _reset = false;
-				_this call CFM_fnc_setOperator;
-			}, 2, false, false] call CFM_fnc_remoteExec;
-			true
-		};
-		_canFeed
+		private _isnew = [_op] call CFM_fnc_checkIfNewOperator;
+		if (isNil "_isnew") exitWith {false};
+		_isnew isEqualTo true
 	};
 };

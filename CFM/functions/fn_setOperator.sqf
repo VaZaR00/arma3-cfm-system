@@ -22,10 +22,9 @@
 
 #include "defines.hpp"
 
-#ifdef SET_MON_OP_REMOTE_EXEC
 // for JIP sync
+// OPERATORS INIT ONLY ON SERVER
 if !(isServer) exitWith {false};
-#endif
 
 if !(canSuspend) exitWith {
 	_this spawn CFM_fnc_setOperator;
@@ -66,12 +65,4 @@ private _reset = if (isNil "_reset") then {true} else {_reset};
 
 if (!_reset && {(IS_VALID_OP(_operator)) && {((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true)}}) exitWith {false};
 
-#ifdef SET_MON_OP_REMOTE_EXEC
-	[_this, {
-		waitUntil { !(isNil "CFM_inited") };
-		["setOperator", _this] CALL_CLASS("DbHandler");
-	}, 0, true, false] call CFM_fnc_remoteExec;
-#endif 
-#ifndef SET_MON_OP_REMOTE_EXEC
-	["setOperator", _this] CALL_CLASS("DbHandler");
-#endif 
+["setOperator", _this] CALL_CLASS("DbHandler");

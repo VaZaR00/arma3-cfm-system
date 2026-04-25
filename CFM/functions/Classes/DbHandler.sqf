@@ -17,7 +17,7 @@ CLASS(DbHandler)
 		};
 	};
 	METHOD("setOperator") {
-		// should be executed globaly
+		// should be only server
 		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
 		if (isNil "_operator") exitWith {80};
@@ -54,7 +54,7 @@ CLASS(DbHandler)
 		private _classType = [_opClass] call CFM_fnc_validClassType;
 
 		if (_classType isEqualTo TYPE_HELM) then {
-			["addToList", [_opClass, "CFM_goProHelmets"]] CALL_CLASS(_self);
+			["addToList", [_opClass, "CFM_goProHelmets", true]] CALL_CLASS(_self);
 			CFM_checkGoPros = true;
 		};
 		if (_classType isEqualTo TYPE_UAV) then {
@@ -66,7 +66,7 @@ CLASS(DbHandler)
 
 		if !(IS_STR(_operator)) exitWith {100};
 
-		["addToHashMap", [_opClass, _mainArgs, "CFM_OperatorClasses"]] CALL_CLASS(_self);
+		["addToHashMap", [_opClass, _mainArgs, "CFM_OperatorClasses", true]] CALL_CLASS(_self);
 
 		true
 	};
@@ -140,7 +140,7 @@ CLASS(DbHandler)
 		["addToList", [_operator, "CFM_Operators", _global]] CALL_CLASS(_self);
 	};
 	METHOD("removeOperator") {
-		params["_operator"];
+		params["_operator", ["_global", false]];
 		["removeFromList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
 	};
 	METHOD("addActiveMonitor") {
