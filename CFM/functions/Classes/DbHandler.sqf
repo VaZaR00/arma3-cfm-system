@@ -1,8 +1,11 @@
+#define NEXT_OPERATOR_ID_FIND_TRIES 30
+
 CLASS(DbHandler)
 
 	METHODS
 
 	METHOD("Init") {
+		if !(isNil "CFM_inited") exitWith {};
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.08], [5, 0.04]];
 		CFM_defaultZoomTable = createHashMapFromArray [[-1, createHashMapFromArray [[1, 1]]]];
@@ -12,8 +15,9 @@ CLASS(DbHandler)
 		CFM_tiModesTableReverse = createHashMapFromArray CFM_tiModesTableArrayReverse;
 		CFM_R2T_index = 0;
 		if (isServer) then {
-			missionNamespace setVariable ["CFM_ActiveMonitors", [], true];
+			missionNamespace setVariable ["CFM_ActiveMonitors", []];
 			missionNamespace setVariable ["CFM_ActiveMonitorViewers", [2], true];
+			missionNamespace setVariable ["CFM_OperatorsIds", createHashMap];
 		};
 	};
 	METHOD("setOperator") {
@@ -108,7 +112,7 @@ CLASS(DbHandler)
 	METHOD("addToHashMap") {
 		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
 		
-		if (isNil "_obj") exitWith {false};
+		if (isNil "_key") exitWith {false};
 		if (_varName isEqualTo "") exitWith {false};
 
 		private _hash = (missionNamespace getVariable [_varName, createHashMap]);
@@ -137,11 +141,64 @@ CLASS(DbHandler)
 	METHOD("addOperator") {
 		params["_operator", ["_global", true]];
 		if !(IS_OBJ(_operator)) exitWith {-1};
+		["setOperatorId", [_operator]] CALL_CLASS(_self);
 		["addToList", [_operator, "CFM_Operators", _global]] CALL_CLASS(_self);
 	};
 	METHOD("removeOperator") {
 		params["_operator", ["_global", false]];
 		["removeFromList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
+	};
+	METHOD("setOperatorId") {
+		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {-1};
+		private _id = _operator getVariable ["CFM_operatorId", -1];
+		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
+		private _res = if (_id isEqualTo -1) then {
+			private _nextId = ["nextOperatorId"] CALL_CLASS(_self);
+			if (_nextId < 0) exitWith {-1};
+			_opsIdsHash set [_nextId, _operator];
+			_operator setVariable ["CFM_operatorId", _nextId, true];
+			missionNamespace setVariable ["CFM_OperatorsIds", _opsIdsHash, true];
+			_nextId
+		} else {
+			_id
+		};
+		[_operator, _res, _id, _operator getVariable ["CFM_operatorId", -2]] RLOG
+		if (_res < 0) then {
+			format["DbHandler.setOperatorId: problem occured when trying to set id for object: '%1'. Id returned: '%2'. Current existing ids: '%3'", 
+			_operator, _res, keys _opsIdsHash
+			] WARN
+		};
+		_res
+	};
+	METHOD("nextOperatorId") {
+		// safe id generation
+		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
+		if !(_opsIdsHash isEqualType createHashMap) then {
+			_opsIdsHash = createHashMap;
+			["nextOperatorId", "RESET"] RLOG
+			missionNamespace setVariable ["CFM_OperatorsIds", _opsIdsHash];
+		};
+		private _opsIds = keys _opsIdsHash;
+		if (count _opsIds == 0) exitWith {
+		["nextOperatorId", 0, _opsIds] RLOG;0};
+		_opsIds sort true;
+		private _idRight = false;
+		private _id = -1;
+		private _tryCount = 0;
+		private _lastId = _opsIds select -1;
+		while {!_idRight && {_tryCount < NEXT_OPERATOR_ID_FIND_TRIES}} do {
+			_tryCount = _tryCount + 1;
+			_id = _lastId + 1;
+			if (_id in _opsIds) then {
+				_lastId = _id;
+			} else {
+				_idRight = true;
+			};
+		};
+		["nextOperatorId", _id, _opsIds] RLOG
+		if (_id in _opsIds) exitWith {-1};
+		_id
 	};
 	METHOD("addActiveMonitor") {
 		params["_monitor"];

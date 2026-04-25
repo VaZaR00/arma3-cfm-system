@@ -10,6 +10,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
 	OBJ_VARIABLE(_cameraType, "");
 	OBJ_VARIABLE(_operatorName, "");
+	OBJ_VARIABLE(_operatorId, -1);
 	OBJ_VARIABLE(_hasGoPro, false);
 	OBJ_VARIABLE(_canFeed, false);
 	OBJ_VARIABLE(_canMoveCameraByDefault, false);

@@ -17,6 +17,11 @@ if (isNil "CFM_SERVER_CHECK_FOR_NEW_OPERATORS_EC_EH_id") then {
 	}];
 };
 
+0 spawn {
+	uiSleep 2;
+	0 call CFM_fnc_getActiveOperatorsCheckGlobal;
+};
+
 while {missionNamespace getVariable ["CFM_doServerLoop", true]} do {
 	if (missionNamespace getVariable ["CFM_stopServerLoop", false]) then {continue};
 	call CFM_fnc_checkupAllActiveOperators;

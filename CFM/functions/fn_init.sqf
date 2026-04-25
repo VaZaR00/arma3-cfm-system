@@ -24,8 +24,6 @@ if (_pointSetDef isEqualTo createHashMap) then {
 
 CFM_max_zoom_gopro = 2;
 CFM_max_zoom_drone = 5;
-CFM_allHandMonitorsAreDisplays = false;
-CFM_canHackDrone = false;
 
 // CBA settings
 ["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], "CFM Settings", DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
@@ -42,6 +40,7 @@ CFM_canHackDrone = false;
 ["CFM_canInterceptUAVcontrol",  "CHECKBOX",  ["Can intercept UAV control", "Can intercept UAV control so if someone already controlling drone then he will be disconnected"], "CFM Settings", false, 1] call CBA_fnc_addSetting;
 ["CFM_canMoveDroneCameras",  "CHECKBOX",  ["Can move UAV cameras", "Can move UAV cameras via monitor"], "CFM Settings", false, 1] call CBA_fnc_addSetting;
 ["CFM_canMoveDroneCameraIfUavControlled",  "CHECKBOX",  ["Can intercept move UAV cameras", "Can move UAV cameras via monitor even if drone turret is controlled by other player"], "CFM Settings", false, 1] call CBA_fnc_addSetting;
+["CFM_canHackDrone",  "CHECKBOX",  ["Can hack UAV", "Can hack UAV if using other side monitor"], "CFM Settings", true, 1] call CBA_fnc_addSetting;
 
 ["CFM", "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_onDisplayUnload}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 ["CFM", "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[(call CFM_fnc_getTargetMonitor), +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
