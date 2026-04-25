@@ -35,21 +35,3 @@ private _doOptimize = _optimizeDistance > 0;
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 	};
 } forEach _monitors;
-
-// upd actions to remote controlled units
-private _plr = PLAYER_;
-private _isHandMonitor = _plr getVariable ["CFM_isHandMonitor", false];
-if (_isHandMonitor) then {
-	private _unit = focusOn;
-	if !(_unit isEqualTo _plr) then {
-		private _unitIsSet = _unit getVariable ["CFM_actionsSet", false];
-		if (_unitIsSet) exitWith {};
-		if ((_unit getVariable ["CFM_isMonitorSet", false]) isEqualTo true) exitWith {
-			_unit setVariable ["CFM_actionsSet", true];
-		};
-		if !((vehicle _unit) call CFM_fnc_isUAV) exitWith {
-			_unit setVariable ["CFM_actionsSet", true];
-		};
-		[_plr, _unit] call CFM_fnc_copyMenuActionsToObj;
-	};
-};
