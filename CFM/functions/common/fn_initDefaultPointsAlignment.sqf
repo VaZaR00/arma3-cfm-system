@@ -6,9 +6,15 @@
 
 #include "defines.hpp" 
 
-private _pointSet = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+private _defaultPreset = 
+#include "..\other\defaultAlignmentsPresetVTG.sqf"
+;
 
-private _vehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
+private _pointSet = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", _defaultPreset];
+
+private _allVehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
+parsingNamespace setVariable ["CFM_allVehConfigClasses", _allVehConfigClasses];
+private _vehConfigClasses = _allVehConfigClasses select {!(_x in _pointSet)};
 
 // default offset for vehs is [-0.3, 0.0, 0.2] in CFM_fnc_getCameraPoints
 private _defaults = [
