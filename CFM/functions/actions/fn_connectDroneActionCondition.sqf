@@ -10,6 +10,7 @@ params["_target"];
 HAND_MON_CONDITION
 IS_MONITOR_ON
 (_target getVariable ['CFM_feedActive', false]) && {
-	(_target getVariable ['CFM_currentOperatorIsDrone', false]) &&
-	{PLAYER_ call CFM_fnc_hasUAVterminal}
+	(_target getVariable ['CFM_currentOperatorIsDrone', false]) && {
+    (focusOn isEqualTo player) &&
+	{player call CFM_fnc_hasUAVterminal}}
 }

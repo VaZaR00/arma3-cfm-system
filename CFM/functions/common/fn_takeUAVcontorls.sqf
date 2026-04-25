@@ -9,18 +9,22 @@
 
 params ["_monitor"];
 
+if !(focusOn isEqualTo player) exitWith {
+	"Can't take UAV controls when remote controlling other unit!" _HINT
+};
+
 private _drone = _monitor getVariable ["CFM_connectedOperator", objNull];
 private _errtext = "Can't connect to drone";
 
 if !(IS_OBJ(_drone)) exitWith {};
 
 private _dSide = side _drone;
-private _playerSide = side PLAYER_;
+private _playerSide = side player;
 private _sameSide = _dSide isEqualTo _playerSide;
 private _canHack = missionNamespace getVariable ["CFM_canHackDrone", false];
 
 if (!_canHack && !_sameSide) exitWith {
-	hint _errtext;
+	_errtext _HINT;
 };
 if (!_sameSide) exitWith {
 	// do hack
@@ -33,15 +37,15 @@ if (!_sameSide) exitWith {
 			_side createVehicleCrew _drone;
 		}] remoteExecCall ["call", _drone];
 
-		hint "Hacking drone...";
+		"Hacking drone..." _HINT;
 		sleep (missionNamespace getVariable ["CFM_hackDroneTime", 5]);
 
 		private _newSide = side _drone;
 		if !(_newSide isEqualTo _playerSide) exitWith {
-			hint "Failed to hack drone";
+			"Failed to hack drone" _HINT;
 		};
 
-		hint "Drone hacked!";
+		"Drone hacked!" _HINT;
 
 		[_monitor] spawn CFM_fnc_takeUAVcontorls;
 	};
@@ -62,29 +66,30 @@ if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
 	};
 };
 if (isNil "_bot" || {!IS_OBJ(_bot)}) exitWith {
-	hint _errtext;
+	_errtext _HINT;
 };
 
 private _controled = [_drone, _turretName] call CFM_fnc_isUAVControlled;
 if (_controled && {!(missionNamespace getVariable ["CFM_canInterceptUAVcontrol", false])}) exitWith {
-	hint "Someone is controlling drone!";
+	"Someone is controlling drone!" _HINT;
 };
 
-PLAYER_ connectTerminalToUAV objNull;
-PLAYER_ switchCamera "internal";
+player connectTerminalToUAV objNull;
+player remoteControl objNull;
+player switchCamera "internal";
 
-hint "Connecting...";
+"Connecting..." _HINT;
 sleep 0.15;
-hint "";
+"" _HINT;
 
-private _connect = PLAYER_ connectTerminalToUAV _drone;
+private _connect = player connectTerminalToUAV _drone;
 
 if !(_connect) exitWith {
-	hint _errtext;
+	_errtext _HINT;
 };
 
 [] call CFM_fnc_exitFullScreen;
-PLAYER_ remoteControl (_bot);
+player remoteControl (_bot);
 _drone switchCamera "internal";
 
 CFM_currentControlledUAV = _drone;

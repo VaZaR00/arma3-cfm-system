@@ -309,7 +309,7 @@ OBJCLASS(Monitor)
 
 		private _radius = MONITOR_ACTION_RADIUS(_self);
 
-		if (count _ops == 0) exitWith { hint "No active cameras!" }; 
+		if (count _ops == 0) exitWith { "No active cameras!" _HINT }; 
 			
 		private _tempIDs = []; 
 
@@ -752,7 +752,7 @@ OBJCLASS(Monitor)
 			[_self] call CFM_fnc_turnOffMonitorLocal;
 		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
-		hint _hintText;
+		_hintText _HINT;
 		// cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
 	};
@@ -782,7 +782,7 @@ OBJCLASS(Monitor)
 		};
 		false setCamUseTI 0;
 		camUseNVG false;
-		hint "";
+		"" _HINT;
 		cutText ["", "PLAIN"];
 		missionNamespace setVariable ["CFM_isInFullScreen", false];
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
@@ -797,7 +797,7 @@ OBJCLASS(Monitor)
 
 		private _infoStr = format["Operator info %1 Name: %2%1 Map pos: %3%1 Distance: %4%1", endl, _opName, _grid, _dist];
 
-		hint _infoStr;
+		_infoStr _HINT;
 	};
 	METHOD("setOperatorInfo") {
 		params[["_set", false]];
