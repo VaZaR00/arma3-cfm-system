@@ -2,6 +2,7 @@
 
 #define LGVAR _logic GV 
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
+#define SELECT_DEF(var, def) (call {private _val = (LGVAR [var, def]); if (_val isEqualTo -1) then {-1} else {_val isEqualTo 1}})
 
 private _logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
 private _units = [_this,1,[],[[]]] call BIS_fnc_param;
@@ -62,11 +63,11 @@ if (is3DEN) exitWith {};
 		_turretsCustom = [];
 	};
 
-	private _nvgTi = [BOOL("operatorHasNvg", 1), BOOL("operatorHasTI", 1)];
+	private _nvgTi = [SELECT_DEF("operatorHasNvg", 1), SELECT_DEF("operatorHasTI", 1)];
 
 	private _name = LGVAR ["operatorName", ""];
-	private _canMoveCam = BOOL("operatorCanMoveCamera", 1);
-	private _smoothZoom = BOOL("operatorSmoothZoom", 1);
+	private _canMoveCam = SELECT_DEF("operatorCanMoveCamera", 1);
+	private _smoothZoom = SELECT_DEF("operatorSmoothZoom", 1);
 
 	[
 		_operators,

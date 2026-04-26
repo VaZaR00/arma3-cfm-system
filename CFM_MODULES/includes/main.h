@@ -1,5 +1,5 @@
-#define PREFX DGM
-#define ADDON_NAME DGM_MODULES
+#define PREFX CFM
+#define ADDON_NAME CFM_MODULES
 
 #define STR(s) #s
 #define DOUBLE(v1, v2) v1##v2

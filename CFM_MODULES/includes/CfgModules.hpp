@@ -24,6 +24,19 @@
         class No   {name = SSTR(No); value = 0;}; \
     }; \
 };
+#define PARAMETER_SELECT_DEFAULT(paramName, default) class paramName \
+{ \
+    displayName = SSTR(paramName); \
+    description = SSTR_DESC(paramName); \
+    typeName = "NUMBER"; \
+    defaultValue = default; \
+    class values \
+    { \
+        class Default   {name = SSTR(Default); value = -1;}; \
+        class Yes    {name = SSTR(Yes); value = 1;}; \
+        class No   {name = SSTR(No); value = 0;}; \
+    }; \
+};
 
 class CfgFactionClasses
 {
@@ -89,11 +102,11 @@ class CfgVehicles
             PARAMETER(operatorObject, "STRING", "")
             PARAMETER(operatorName, "STRING", "")
             PARAMETER(operatorSides, "STRING", "west")
-            PARAMETER_SELECT(operatorCanMoveCamera, 1)
+            PARAMETER_SELECT_DEFAULT(operatorCanMoveCamera, -1)
             PARAMETER(operatorTurretsCustom, "STRING", "")
-            PARAMETER_SELECT(operatorHasTI, 1)
-            PARAMETER_SELECT(operatorHasNvg, 1)
-            PARAMETER_SELECT(operatorSmoothZoom, 1)
+            PARAMETER_SELECT_DEFAULT(operatorHasTI, -1)
+            PARAMETER_SELECT_DEFAULT(operatorHasNvg, -1)
+            PARAMETER_SELECT_DEFAULT(operatorSmoothZoom, -1)
         };
     };
     class CFM_Module_StaticCamera: Module_F
