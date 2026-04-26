@@ -10,7 +10,7 @@ params["_obj"];
 
 if !(IS_OBJ(_obj)) exitWith {false};
 
-if ((_obj getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith {false};
+if ((_obj getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith {true};
 
 private _cls = _obj call CFM_fnc_getOperatorClass;
 private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", createHashMap];
