@@ -960,7 +960,7 @@ OBJCLASS(Operator)
 				{((time - _waitStart) > 2) || {
 					[
 						[_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock, 
-						_newCamLook
+						_lockPos
 					] call CFM_fnc_compareVectors
 				}}
 			};

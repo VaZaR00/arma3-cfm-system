@@ -50,6 +50,7 @@ if (_turretIndex < -1) then {
 	private _monitorsSet = _controlledObj getVariable ["CFM_monitorsSet", createHashMap];
 	private _monitors = _monitorsSet getOrDefault [_turretIndex, []];
 	_monitor = _monitors#0;
+	if (isNil "_monitor") exitWith {};
 	PLAYER_ setVariable ["CFM_lastControlledUnitTurretIndex", _turretIndex];
 	PLAYER_ setVariable ["CFM_lastControlledUnitIsTurrLocal", _turrLocal];
 	PLAYER_ setVariable ["CFM_lastControlledUnitMonitor", _monitor];
