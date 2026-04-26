@@ -51,7 +51,7 @@ if (count _up != 3) then {
 	_up = vectorUp _operator;
 };
 
-if (_turretLocal && {isMultiplayer && {_setLocalOpTurretDir}}) then {
+if (_turretLocal && {_setLocalOpTurretDir}) then {
 	private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 	private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
 	private _localDirMS = _operator getVariable [_dirVarName, []];
