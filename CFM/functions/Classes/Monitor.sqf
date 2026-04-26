@@ -211,7 +211,6 @@ OBJCLASS(Monitor)
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
-		["setOperatorInfo", [true]] CALL_OBJCLASS("Monitor", _monitor);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
@@ -794,16 +793,24 @@ OBJCLASS(Monitor)
 		private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
 		private _dist = _self distance _connectedOperator;
 		private _grid = mapGridPosition _connectedOperator;
+		private _currentTurret = _self getVariable ["CFM_currentTurret", _currentTurret];
+		private _turrIndex = TURRET_INDEX(_currentTurret);
 
-		private _infoStr = format["Operator info %1 Name: %2%1 Map pos: %3%1 Distance: %4%1", endl, _opName, _grid, _dist];
+		private _infoStr = format["Operator info %1 Name: %2%1 Map pos: %3%1 Distance: %4%1 Turret: %5", endl, _opName, _grid, _dist, _turrIndex];
 
 		_infoStr _HINT;
 	};
 	METHOD("setOperatorInfo") {
 		params[["_set", false]];
 		private _infoStr = if (_set && {IS_OBJ(_connectedOperator)}) then {
-			private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
-			format["<t color='#0d6aff'>Camera:</t> %1", _opName];
+			private _currentTurret = _self getVariable ["CFM_currentTurret", _currentTurret];
+			private _turrIndex = TURRET_INDEX(_currentTurret);
+			private _opName = [_connectedOperator, _turrIndex] call CFM_fnc_getOperatorName;
+			if (_currentOpHasTurrets) then {
+				format["<t color='#0d6aff'>Camera:</t> %1 <t color='#0d6aff'>Turret</t>: %2", _opName, _turrIndex];
+			} else {
+				format["<t color='#0d6aff'>Camera:</t> %1", _opName];
+			};
 		} else {
 			OPERATOR_INFO_TEXT_DEF
 		};

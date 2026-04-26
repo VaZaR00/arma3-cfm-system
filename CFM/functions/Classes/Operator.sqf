@@ -35,7 +35,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
 
 	/*
-		_turretsParams: [[turretIndex, [turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
+		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -450,6 +450,8 @@ OBJCLASS(Operator)
 		_turretParams set ["canMoveCamera", _canMoveCamera];
 		_turretParams set ["cameraMoveRestrictions", _cameraMoveRestrictions];
 
+		_turretParams set ["turretName", _turretName];
+
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams, SET_VARS_INIT_GLOBAL];
 
@@ -732,6 +734,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
+		[_monitor, true] call CFM_fnc_setOperatorInfo;
 
 		// small delay before enabling interpolation so there is no camera movement on spawn
 		// if (_doInterpolation) then {
@@ -1027,5 +1030,16 @@ OBJCLASS(Operator)
 		_opSides = _sides;
 		_self setVariable ["CFM_opSides", _sides];
 		true
+	};
+	METHOD("getOperatorName") {
+		params[["_turret", -1]];
+
+		private _turrIndex = TURRET_INDEX(_turret);
+		private _turretData = _turretsParams get _turrIndex;
+		if (isNil "_turretData") exitWith {_operatorName};
+		private _turretName = _turretData getOrDefault ["turretName", ""];
+		if (isNil "_turretName") exitWith {_operatorName};
+		if (_turretName isEqualTo "") exitWith {_operatorName};
+		_turretName
 	};
 CLASS_END

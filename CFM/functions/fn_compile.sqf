@@ -86,6 +86,11 @@ CFM_fnc_getVectorUpFromDir = {
 	vectorNormalized _up
 };
 
+CFM_fnc_getOperatorName = {
+	params["_operator", ["_turret", -1]];
+	["getOperatorName", [_turret], _operator, ""] CALL_OBJCLASS("Operator", _operator);
+};
+
 CFM_fnc_getOperatorInfo = {
 	params["_monitor"];
 	["getOperatorInfo", [], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
