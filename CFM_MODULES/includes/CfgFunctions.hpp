@@ -1,14 +1,10 @@
-class CfgFunctions
-{
-	class PREFX
-	{
+
+
 		class modules
         {
 			recompile=1;
-            file = CFG_FUNCTIONS_PATH;
+            file = STR(MAIN_PATH_MODULES);
 			class initModuleOperator {};
 			class initModuleMonitor {};
 			class initModuleStaticCamera {};
 		};
-	};
-};

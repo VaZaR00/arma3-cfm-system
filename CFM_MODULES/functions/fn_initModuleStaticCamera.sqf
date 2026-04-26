@@ -36,17 +36,18 @@ if (is3DEN) exitWith {};
 
 	private _proccessArrayString = {
 		params["_offsetsStr", ['_isOffset', true]];
-		private _offsets = [];
-		if (_isOffset && {(_offsetsStr isEqualTo "this")}) then {
-			_offsets = [[getPosASL _logic, [vectorDir _logic, vectorUp _logic]]];
+		private _res = [];
+		private _isThis = (_offsetsStr isEqualTo "this");
+		if (_isOffset && {_isThis}) then {
+			_res = [[getPosASL _logic, [vectorDir _logic, vectorUp _logic]]];
 		};
-		if !(_offsetsStr isEqualTo "") then {
-			_offsets = call compile _offsetsStr;
+		if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
+			_res = call compile _offsetsStr;
 		};
-		if (isNil "_offsets") then {
-			_offsets = [];
+		if (isNil "_res") then {
+			_res = [];
 		};
-		_offsets
+		[+_res]
 	};
 	private _proccessCameraParams = {
 		params["_logic"];
@@ -90,7 +91,7 @@ if (is3DEN) exitWith {};
 				_turrOffsets = [];
 			};
 			private _turrParams = _logic call _proccessCameraParams;
-			private _turrArgs = [_turrOffsets] + _turrParams;
+			private _turrArgs = [[_turrOffsets]] + _turrParams;
 			_offsets pushBack _turrArgs;
 		} forEach _syncedModules;
 	};

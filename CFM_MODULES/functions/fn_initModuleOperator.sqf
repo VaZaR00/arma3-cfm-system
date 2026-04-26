@@ -23,7 +23,7 @@ if (is3DEN) exitWith {};
 	if !(isNil "_mainObject") then {
 		if (_mainObject isEqualType objNull) then {
 			if !(_mainObject isEqualTo objNull) then {
-				_syncedObjs pushBackUnique _mainObject;
+				_syncedObjs = [_mainObject] + _syncedObjs;
 			};
 		};
 	};
@@ -31,9 +31,11 @@ if (is3DEN) exitWith {};
 	private _operators = _syncedObjs select {
 		private _obj = _x;
 
-		if (isNil "_obj") then {continue};
-		if !(_obj isEqualType objNull) then {continue};
-		if (isNull _obj) then {continue};
+		if (isNil "_obj") exitWith {false};
+		if !(_obj isEqualType objNull) exitWith {false};
+		if (isNull _obj) exitWith {false};
+
+		true
 	};
 
 	if (_operators isEqualTo []) exitWith {
@@ -51,6 +53,10 @@ if (is3DEN) exitWith {};
 	};
 	_sides = _sides select {_x isEqualType west};
 
+	if (_sides isEqualTo []) then {
+		_sides = [side (_operators#0)];
+	};
+
 	if (_sides isEqualTo []) exitWith {
 		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
 	};
@@ -62,12 +68,15 @@ if (is3DEN) exitWith {};
 	if (isNil "_turretsCustom") then {
 		_turretsCustom = [];
 	};
+	if !(_turretsCustom isEqualType []) then {
+		_turretsCustom = [];
+	};
 
 	private _nvgTi = [SELECT_DEF("operatorHasNvg", 1), SELECT_DEF("operatorHasTI", 1)];
 
 	private _name = LGVAR ["operatorName", ""];
 	private _canMoveCam = SELECT_DEF("operatorCanMoveCamera", 1);
-	private _smoothZoom = SELECT_DEF("operatorSmoothZoom", 1);
+	private _smoothZoom = BOOL("operatorSmoothZoom", 1);
 
 	[
 		_operators,

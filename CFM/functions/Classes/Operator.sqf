@@ -234,6 +234,10 @@ OBJCLASS(Operator)
 			if !(_turret isEqualType []) then {
 				_turret = [_turret];
 			};
+			if !((_turret#0) isEqualType 1) then {
+				private _nextTurret = if (_turrets isEqualTo []) then {-1} else {(_turrets#-1) + 1};
+				_turret = [_nextTurret, _turret];
+			};
 			_turret params [["_turretIndex", -1], ["_params", []]];
 			_turretIndex = TURRET_INDEX(_turretIndex);
 			_turrets pushBackUnique _turretIndex;

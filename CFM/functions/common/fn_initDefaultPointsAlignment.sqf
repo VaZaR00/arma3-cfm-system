@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-private _defaultPreset = 
+private _defaultPreset = createHashMapFromArray
 #include "..\other\defaultAlignmentsPresetVTG.sqf"
 ;
 

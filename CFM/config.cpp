@@ -13,6 +13,11 @@ class CfgPatches {
         skipWhenMissingDependencies = 1;
 	};
 };
-
-#include "includes\CfgFunctions.hpp"
+class CfgFunctions
+{
+	class CFM
+	{
+		#include "includes\CfgFunctions.hpp"
+	};
+};
 #include "includes\CfgRemoteExec.hpp"

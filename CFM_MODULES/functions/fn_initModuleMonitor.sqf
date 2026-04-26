@@ -30,9 +30,11 @@ if (is3DEN) exitWith {};
 	private _monitors = _syncedObjs select {
 		private _obj = _x;
 
-		if (isNil "_obj") then {continue};
-		if !(_obj isEqualType objNull) then {continue};
-		if (isNull _obj) then {continue};
+		if (isNil "_obj") exitWith {false};
+		if !(_obj isEqualType objNull) exitWith {false};
+		if (isNull _obj) exitWith {false};
+
+		true
 	};
 
 	if (_monitors isEqualTo []) exitWith {
