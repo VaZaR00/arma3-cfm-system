@@ -806,6 +806,17 @@ OBJCLASS(Monitor)
 			private _currentTurret = _self getVariable ["CFM_currentTurret", _currentTurret];
 			private _turrIndex = TURRET_INDEX(_currentTurret);
 			private _opName = [_connectedOperator, _turrIndex] call CFM_fnc_getOperatorName;
+			private _turrName = if (_currentCameraIsStatic) then {_turrIndex} else {
+				switch (_turrIndex) do {
+					case -1: {
+						if (_currentOperatorIsDrone) then {"Pilot"} else {"Driver"};
+					};
+					case 0: {
+						"Gunner"
+					};
+					default {_turrIndex};
+				};
+			};
 			if (_currentOpHasTurrets) then {
 				format["<t color='#0d6aff'>Camera:</t> %1 <t color='#0d6aff'>Turret</t>: %2", _opName, _turrIndex];
 			} else {
