@@ -296,7 +296,7 @@ OBJCLASS(Operator)
 
 		// ZOOM
 		private _zoomTable = createHashMap;
-		if (_setZoomTable isEqualType 1) then {
+		if ((_setZoomTable isEqualType 1) && {_setZoomTable > 0}) then {
 			for "_i" from 1 to _setZoomTable do {
 				private _fov = [_i] call CFM_fnc_getFovForZoom;
 				_zoomTable set [_i, _fov];
@@ -338,9 +338,10 @@ OBJCLASS(Operator)
 		};
 		_zoomTable set ["max", _max];
 		_turretParams set ["zoomTable", _zoomTable];
-		private _smoothZoom = if (_smoothZoomSetTurr == -1) then {
+		private _smoothZoom = if (_smoothZoomSetTurr isEqualTo -1) then {
 			_cameraZoomSmoothDefault && !_hasGoPro
 		} else {
+			if (_smoothZoomSetTurr isEqualType true) exitWith {_smoothZoomSetTurr};
 			_smoothZoomSetTurr isEqualTo 1
 		};
 		_turretParams set ["smoothZoom", _smoothZoom];

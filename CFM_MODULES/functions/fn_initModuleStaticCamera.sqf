@@ -35,11 +35,11 @@ if (is3DEN) exitWith {};
 	};
 
 	private _proccessArrayString = {
-		params["_offsetsStr", ['_isOffset', true]];
+		params["_l", "_offsetsStr", ['_isOffset', true]];
 		private _res = [];
 		private _isThis = (_offsetsStr isEqualTo "this");
 		if (_isOffset && {_isThis}) then {
-			_res = [[getPosASL _logic, [vectorDir _logic, vectorUp _logic]]];
+			_res = [getPosASL _l, [vectorDir _l, vectorUp _l]];
 		};
 		if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
 			_res = call compile _offsetsStr;
@@ -47,6 +47,7 @@ if (is3DEN) exitWith {};
 		if (isNil "_res") then {
 			_res = [];
 		};
+		if (_res isEqualTo []) exitWith {[]};
 		[+_res]
 	};
 	private _proccessCameraParams = {
@@ -61,7 +62,7 @@ if (is3DEN) exitWith {};
 		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
 		private _turretIndex = parseNumber (LGVAR ["turretIndex", ""]);
 		private _zoomParamsStr = (LGVAR ["zoomParams", ""]);
-		private _zoomParams = [_zoomParamsStr, false] call _proccessArrayString;
+		private _zoomParams = [_logic, _zoomParamsStr, false] call _proccessArrayString;
 
 		[
 			_camObj,
@@ -75,10 +76,11 @@ if (is3DEN) exitWith {};
 	};
 
 	private _offsetsStr = LGVAR ["cameraPosAndOffsetsTurretsCustom", "this"];
-	private _offsets = _offsetsStr call _proccessArrayString;
+	private _offsets = [_logic, _offsetsStr] call _proccessArrayString;
 	if (isNil "_offsets") then {
 		_offsets = [];
 	};
+	_offsets = [_offsets];
 
 	private _staticCamModuleClass = (tolower "CFM_Module_StaticCamera");
 	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
@@ -86,12 +88,12 @@ if (is3DEN) exitWith {};
 	if !(_syncedModules isEqualTo []) then {
 		{
 			private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
-			private _turrOffsets = _turrOffsetsStr call _proccessArrayString;
+			private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
 			if (isNil "_turrOffsets") then {
 				_turrOffsets = [];
 			};
-			private _turrParams = _logic call _proccessCameraParams;
-			private _turrArgs = [[_turrOffsets]] + _turrParams;
+			private _turrParams = _x call _proccessCameraParams;
+			private _turrArgs = [_turrOffsets] + _turrParams;
 			_offsets pushBack _turrArgs;
 		} forEach _syncedModules;
 	};
