@@ -10,7 +10,7 @@ params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", true], ["_cal
 
 if (_func isEqualType {}) then {
 	_args = [_args, _func];
-	_func = if (_call) then {"call"} else {"spawn"};
+	_func = if (_call) then {"call"} else {"call"};
 };
 if !(_func isEqualType "") exitWith {format["CFM_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func] WARN};
 
@@ -34,7 +34,7 @@ if (_jip isEqualType objNull) then {
 	_jip = "CFM_jip_remote_exec_id_" + _id;
 };
 
-if (_targets in [PLAYER_, false, clientOwner]) exitWith {
+if (!isMultiplayer || {(_targets in [PLAYER_, false, clientOwner])}) exitWith {
 	if (_func isEqualTo "call") exitWith {
 		(_args#0) call (_args#1)
 	};
@@ -48,8 +48,7 @@ if (_targets in [PLAYER_, false, clientOwner]) exitWith {
 		_args spawn _func
 	};
 };
-
-if (_call) then {
+if (_call isEqualTo true) then {
 	_args remoteExecCall [_func, _targets, _jip];
 } else {
 	_args remoteExec [_func, _targets, _jip];

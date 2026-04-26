@@ -10,6 +10,8 @@ params["_obj"];
 
 if !(IS_OBJ(_obj)) exitWith {false};
 
+if ((_obj getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith {false};
+
 private _cls = _obj call CFM_fnc_getOperatorClass;
 private _clssSetup = missionNamespace getVariable ["CFM_OperatorClasses", createHashMap];
 private _clsArgs = _clssSetup get _cls;
@@ -24,5 +26,15 @@ if !(isNil "_clsArgs") exitWith {
 		_this call CFM_fnc_setOperator;
 	}, 2, false, false] call CFM_fnc_remoteExec;
 	true
+};
+if ((MGVAR ["CFM_allUavsAreFeedingByDefault", false]) isEqualTo true) exitWith {
+	if (_obj call CFM_fnc_isUAV) exitWith {
+		[[_obj], {
+			private _reset = false;
+			_this call CFM_fnc_setOperator;
+		}, 2, false, false] call CFM_fnc_remoteExec;
+		true
+	};
+	false
 };
 false
