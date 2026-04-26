@@ -18,6 +18,8 @@ if (isServer) then {
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 if (_pointSetDef isEqualTo createHashMap) then {
 	[] call CFM_fnc_initDefaultPointsAlignment;
+	_pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+	missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
 } else {
 	missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
 };

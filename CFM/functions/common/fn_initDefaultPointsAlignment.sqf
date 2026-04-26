@@ -6,9 +6,13 @@
 
 #include "defines.hpp" 
 
-private _defaultPreset = createHashMapFromArray
+private _defaultPresetArray = 
 #include "..\other\defaultAlignmentsPresetVTG.sqf"
 ;
+private _defaultPreset = createHashMap;
+{
+	_defaultPreset set [_x#0, createHashMapFromArray (_x#1)];
+} forEach _defaultPresetArray;
 
 private _pointSet = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", _defaultPreset];
 

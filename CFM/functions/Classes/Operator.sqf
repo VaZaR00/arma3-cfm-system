@@ -517,6 +517,12 @@ OBJCLASS(Operator)
 
 		private _predefinedAlignment = _pointSet get _objClass;
 
+		if ((isNil "_predefinedAlignment") || {(_predefinedAlignment isEqualTo [])}) then {
+			_predefinedAlignment = createHashMap;
+		};
+		if !(_predefinedAlignment isEqualType createHashMap) then {
+			_predefinedAlignment = createHashMapFromArray _predefinedAlignment;
+		};
 		if ((isNil "_predefinedAlignment") || {!(_predefinedAlignment isEqualType createHashMap)}) then {
 			_predefinedAlignment = createHashMap;
 		};
@@ -528,6 +534,16 @@ OBJCLASS(Operator)
 
 			private _predefinedAlignmentTurr = _predefinedAlignment getOrDefault [_turrIndex, []];
 			_predefinedAlignmentTurr params [["_pAddArr", []], ["_pMemPoint", ""], ["_pSetArr", []]];
+			private _dir = [0,0,0];
+			private _up = [0,0,0];
+			private _isStatic = false;
+			if (_pMemPoint isEqualType []) then {
+				_isStatic = true;
+				_dir = +_pMemPoint;
+			};
+			if (_isStatic) then {
+				_up = +_pSetArr;
+			};
 			_pointParams params [["_addArr", []], ["_memPoint", ""], ["_setArr", []]];
 			// FIRST DEFAULT
 			private _defaultMemPointParams = ([_operator, _turrIndex, _cameraType] call CFM_fnc_getCameraPoints)#1;
@@ -553,6 +569,9 @@ OBJCLASS(Operator)
 			};
 			if (count _pSetArr == 3) then {
 				_setArr = _pSetArr;
+			};
+			if (_isStatic) then {
+				_setArr = +[_dir, _up];
 			};
 			[_operator, [_turrIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
 		} forEach _turrets;
