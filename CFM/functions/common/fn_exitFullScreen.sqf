@@ -15,7 +15,7 @@ private _exited = if (IS_OBJ(_monitor)) then {
 
 if (!(isNil "_exited") && {(_exited isEqualTo true)}) exitWith {};
 
-"" _HINT;
+CLEAR_HINT
 cutText ["", "PLAIN"];
 false setCamUseTI 0;
 camUseNVG false;

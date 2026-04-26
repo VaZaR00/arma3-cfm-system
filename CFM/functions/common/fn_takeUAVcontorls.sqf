@@ -88,7 +88,7 @@ player switchCamera "internal";
 
 "Connecting..." _HINT;
 sleep 0.15;
-"" _HINT;
+CLEAR_HINT
 
 private _connect = player connectTerminalToUAV _drone;
 

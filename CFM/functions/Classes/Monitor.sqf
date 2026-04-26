@@ -782,7 +782,7 @@ OBJCLASS(Monitor)
 		};
 		false setCamUseTI 0;
 		camUseNVG false;
-		"" _HINT;
+		CLEAR_HINT
 		cutText ["", "PLAIN"];
 		missionNamespace setVariable ["CFM_isInFullScreen", false];
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
