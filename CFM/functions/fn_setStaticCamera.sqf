@@ -11,6 +11,7 @@
 	Arguments:
 		1. _name:str
 		2. _posAndOffsetsTurrets:
+			{turr param} or
 			[{turr param}, ...]
 			turr param: [offset:[_pos:vector, _vDirUp:[vector, vector]], (_turretIndex:int), (_zoomTable), (_nvgAndTi)]
 		3. _sides:[Array[side], side] - defines sides of monitors which can connect to operator
@@ -87,6 +88,11 @@ params [
 ];
 
 if !(_posAndOffsetsTurrets isEqualType []) exitWith {false};
+if (_posAndOffsetsTurrets isEqualTo []) exitWith {false};
+if !((_posAndOffsetsTurrets#0) isEqualType []) exitWith {false};
+if ((_posAndOffsetsTurrets#0#0) isEqualType 1) then {
+	_posAndOffsetsTurrets = [_posAndOffsetsTurrets];
+};
 
 
 if (!(_name isEqualType "") || {_name isEqualTo ""}) then {
@@ -100,7 +106,17 @@ private _lastPos = [0,0,0];
 private _lastTurrIndex = -1;
 
 private _proccesTurret = {
-	_this params [["_offset", []], ["_turretObj", objNull], ["_canMoveCamera", -1], ["_turretIndex", _lastTurrIndex], ["_zoomTable", []], ["_nvgAndTi", []], ["_turrName", _name], ["_smoothZoom", -1]];
+	_this params [
+		["_offset", []], 
+		["_turretObj", objNull], 
+		["_canMoveCamera", -1], 
+		["_turretIndex", _lastTurrIndex], 
+		["_zoomTable", []], 
+		["_nvgAndTi", []], 
+		["_turrName", _name], 
+		["_smoothZoom", -1]
+	];
+	
 	private _offsetPos = _offset param [0, [0], [[]]];
 	private _offsetFirstEl = _offsetPos param [0, [0]];
 	if (_offsetFirstEl isEqualType []) exitWith {
@@ -137,9 +153,6 @@ if ((isNil "_dummyObj") || {!IS_OBJ(_dummyObj)}) exitWith {
 
 private _args = [_dummyObj, _sides, _turrParams, _hasTInNvg, _name, _params];
 
-[_args, {
-	waitUntil { !(isNil "CFM_inited") };
-	_this call CFM_fnc_setOperator
-}, 0, true, false] call CFM_fnc_remoteExec;
+_args call CFM_fnc_setOperator;
 
 true

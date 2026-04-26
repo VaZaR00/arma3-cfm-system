@@ -17,7 +17,7 @@ if (is3DEN) exitWith {};
 
 	private _syncedObjs = (synchronizedObjects _logic);
 
-	private _mainObject = missionNamespace getVariable [(LGVAR ["operatorObject", ""]), objNull];
+	private _mainObject = missionNamespace getVariable [(LGVAR ["monitorObject", ""]), objNull];
 
 	if !(isNil "_mainObject") then {
 		if (_mainObject isEqualType objNull) then {
@@ -27,7 +27,7 @@ if (is3DEN) exitWith {};
 		};
 	};
 	
-	private _operators = _syncedObjs select {
+	private _monitors = _syncedObjs select {
 		private _obj = _x;
 
 		if (isNil "_obj") then {continue};
@@ -35,11 +35,11 @@ if (is3DEN) exitWith {};
 		if (isNull _obj) then {continue};
 	};
 
-	if (_operators isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: ZERO OPERATORS. Synced objects given: %1", _syncedObjs] DLOG
+	if (_monitors isEqualTo []) exitWith {
+		format["CFM_fnc_initModuleMonitor: ZERO MONITORS. Synced objects given: %1", _syncedObjs] DLOG
 	};
 
-	private _sidesStr = LGVAR ["operatorSides", ""];
+	private _sidesStr = LGVAR ["monitorSides", ""];
 	private _sides = (_sidesStr splitString " ,.;:[](){}") apply {
 		private _compile = call compile _x;
 		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
@@ -51,33 +51,19 @@ if (is3DEN) exitWith {};
 	_sides = _sides select {_x isEqualType west};
 
 	if (_sides isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
+		format["CFM_fnc_initModuleMonitor: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
 	};
-
-	private _turretsCustom = LGVAR ["operatorTurretsCustom", ""];
-	if !(_turretsCustom isEqualTo "") then {
-		_turretsCustom = call compile _turretsCustom;
-	};
-	if (isNil "_turretsCustom") then {
-		_turretsCustom = [];
-	};
-
-	private _nvgTi = [BOOL("operatorHasNvg", 1), BOOL("operatorHasTI", 1)];
-
-	private _name = LGVAR ["operatorName", ""];
-	private _canMoveCam = BOOL("operatorCanMoveCamera", 1);
-	private _smoothZoom = BOOL("operatorSmoothZoom", 1);
 
 	[
-		_operators,
+		_monitors,
 		_sides,
-		_turretsCustom,
-		_nvgTi,
-		_name,
-		[
-			_canMoveCam,
-			_smoothZoom
-		]
-	] call CFM_fnc_setOperator;
+		BOOL("IsHandMonitorDisplay", 1),
+		BOOL("monitorcanSwitchNvg", 1),
+		BOOL("monitorCanSwitchTi", 1),
+		BOOL("monitorCanSwitchTurret", 1),
+		BOOL("monitorCanZoom", 1),
+		BOOL("monitorCanFullScreen", 1),
+		BOOL("monitorCanConnectDrone", 1)
+	] call CFM_fnc_setMonitor;
 };
 

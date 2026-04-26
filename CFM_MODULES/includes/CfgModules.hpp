@@ -1,14 +1,35 @@
-#define STR_PREF STR_DGM_Module_Device_
+#define STR_PREF STR_CFM_Module_
 #define SSTR_N(s) $##STR_PREF##s
 #define SSTR_DESC_N(s) $##STR_PREF##DESC_##s
 #define SSTR(s) STR(SSTR_N(s))
 #define SSTR_DESC(s) STR(SSTR_DESC_N(s))
 
+#define PARAMETER(paramName, type, default) class paramName \
+{ \
+    displayName = SSTR(paramName); \
+    description = SSTR_DESC(paramName); \
+    typeName = type; \
+    defaultValue = default; \
+};
+
+#define PARAMETER_SELECT(paramName, default) class paramName \
+{ \
+    displayName = SSTR(paramName); \
+    description = SSTR_DESC(paramName); \
+    typeName = "NUMBER"; \
+    defaultValue = default; \
+    class values \
+    { \
+        class Yes    {name = SSTR(Yes); value = 1;}; \
+        class No   {name = SSTR(No); value = 0;}; \
+    }; \
+};
+
 class CfgFactionClasses
 {
-	class DGM
+	class CFM
 	{
-		displayName="$STR_DGM_Module_Device_FactionName";
+		displayName="Camera System";
 		priority=0;
 		side=7;
 	};
@@ -24,117 +45,83 @@ class CfgVehicles
             class AnyBrain;
         };
     };
-    class PREF(Device): Module_F
+    class CFM_Module_Monitor: Module_F
     {
         scope = 2;
         author = "Vazar";
-        displayName = "$STR_DGM_Module_Device_FactionName";
-        category = STR(PREFX);
-        function = SFUNC(initModuleDropDevice);
-        // icon = "a3\weapons_f\data\ui\icon_gl_ca.paa";
-        // portrait = "a3\weapons_f\data\ui\icon_gl_ca.paa";
-        icon = "a3\ui_f\data\gui\rsc\rscdisplayarsenal\cargothrow_ca.paa";
-        portrait = "a3\ui_f\data\gui\rsc\rscdisplayarsenal\cargothrow_ca.paa";
+        displayName = "Monitor";
+        category = "CFM";
+        function = "CFM_fnc_initModuleMonitor";
+        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
         functionPriority = 2;
-        isGlobal = 1;
+        isGlobal = 2;
         isTriggerActivated = 0;
 
         class Arguments: ArgumentsBaseUnits
         {
-            class Object
-            {
-                displayName = SSTR(Object);
-                description = SSTR_DESC(Object);
-                typeName = "STRING";
-                defaultValue = "";
-            };
-            class slotNum
-            {
-                displayName = SSTR(slotNum);
-                description = SSTR_DESC(slotNum);
-                typeName = "NUMBER";
-                defaultValue = 1;
-            };
-            class spawnWithGren
-            {
-                displayName = SSTR(spawnWithGren);
-                description = SSTR_DESC(spawnWithGren);
-                typeName = "STRING";
-                defaultValue = "HandGrenade";
-            };
-            class addedItems
-            {
-                displayName = SSTR(addedItems);
-                description = SSTR_DESC(addedItems);
-                typeName = "STRING";
-                defaultValue = "";
-            };
-            class removedItems
-            {
-                displayName = SSTR(removedItems);
-                description = SSTR_DESC(removedItems);
-                typeName = "STRING";
-                defaultValue = "";
-            };
-            class allowSetCharge
-            {
-                displayName = SSTR(allowSetCharge);
-                description = SSTR_DESC(allowSetCharge);
-                typeName = "NUMBER";
-                defaultValue = 0;
-                class values
-                {
-                    class Yes    {name = SSTR(Yes); value = 1;};
-                    class No   {name = SSTR(No); value = 0;};
-                };
-            };
-            class spawnTempGren
-            {
-                displayName = SSTR(spawnTempGren);
-                description = SSTR_DESC(spawnTempGren);
-                typeName = "NUMBER";
-                defaultValue = 1;
-                class values
-                {
-                    class Yes    {name = SSTR(Yes); value = 1;};
-                    class No   {name = SSTR(No); value = 0;};
-                };
-            };
-            class allowOnlyListed
-            {
-                displayName = SSTR(allowOnlyListed);
-                description = SSTR_DESC(allowOnlyListed);
-                typeName = "NUMBER";
-                class values
-                {
-                    class Yes    {name = SSTR(Yes); value = 1;};
-                    class No   {name = SSTR(No); value = 0;};
-                };
-            };
-            class removeChemlights
-            {
-                displayName = SSTR(removeChemlights);
-                description = SSTR_DESC(removeChemlights);
-                typeName = "NUMBER";
-                defaultValue = 1;
-                class values
-                {
-                    class Yes    {name = SSTR(Yes); value = 1;};
-                    class No   {name = SSTR(No); value = 0;};
-                };
-            };
-            class removeSmokes
-            {
-                displayName = SSTR(removeSmokes);
-                description = SSTR_DESC(removeSmokes);
-                typeName = "NUMBER";
-                defaultValue = 1;
-                class values
-                {
-                    class Yes    {name = SSTR(Yes); value = 1;};
-                    class No   {name = SSTR(No); value = 0;};
-                };
-            };
+            PARAMETER(monitorObject, "STRING", "")
+            PARAMETER(monitorSides, "STRING", "west")
+            PARAMETER_SELECT(IsHandMonitorDisplay, 0)
+            PARAMETER_SELECT(monitorcanSwitchNvg, 1)
+            PARAMETER_SELECT(monitorCanSwitchTi, 1)
+            PARAMETER_SELECT(monitorCanSwitchTurret, 1)
+            PARAMETER_SELECT(monitorCanZoom, 1)
+            PARAMETER_SELECT(monitorCanFullScreen, 1)
+            PARAMETER_SELECT(monitorCanConnectDrone, 1)
+        };
+    };
+    class CFM_Module_Operator: Module_F
+    {
+        scope = 2;
+        author = "Vazar";
+        displayName = "Operator";
+        category = "CFM";
+        function = "CFM_fnc_initModuleOperator";
+        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        functionPriority = 2;
+        isGlobal = 0;
+        isTriggerActivated = 0;
+
+        class Arguments: ArgumentsBaseUnits
+        {
+            PARAMETER(operatorObject, "STRING", "")
+            PARAMETER(operatorName, "STRING", "")
+            PARAMETER(operatorSides, "STRING", "west")
+            PARAMETER_SELECT(operatorCanMoveCamera, 1)
+            PARAMETER(operatorTurretsCustom, "STRING", "")
+            PARAMETER_SELECT(operatorHasTI, 1)
+            PARAMETER_SELECT(operatorHasNvg, 1)
+            PARAMETER_SELECT(operatorSmoothZoom, 1)
+        };
+    };
+    class CFM_Module_StaticCamera: Module_F
+    {
+        scope = 2;
+        author = "Vazar";
+        displayName = "Static Camera";
+        category = "CFM";
+        function = "CFM_fnc_initModuleStaticCamera";
+        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        functionPriority = 2;
+        isGlobal = 0;
+        isTriggerActivated = 0;
+
+        class Arguments: ArgumentsBaseUnits
+        {
+            PARAMETER_SELECT(isStaticCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
+            PARAMETER(cameraName, "STRING", "Camera 1")
+            PARAMETER(cameraSides, "STRING", "west")
+            PARAMETER(cameraPosAndOffsetsTurretsCustom, "STRING", "this")
+            PARAMETER(cameraObject, "STRING", "")
+            PARAMETER_SELECT(cameraHasTI, 1)
+            PARAMETER_SELECT(cameraHasNvg, 1)
+            PARAMETER_SELECT(cameraCanMoveCamera, 1)
+            PARAMETER_SELECT(cameraSmoothZoom, 1)
+            PARAMETER(turretIndex, "STRING", "")
+            PARAMETER(zoomParams, "STRING", "")
         };
     };
     // Change priority to default module for create diary

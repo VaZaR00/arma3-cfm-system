@@ -13,40 +13,104 @@ if (is3DEN) exitWith {};
 [_logic] spawn {
 	params["_logic"];
 
+	private _isJustTurret = BOOL("isStaticCameraTurret", 0);
+
+	if (_isJustTurret) exitWith {};
+
 	sleep 0.1;	
 
-	private _syncedObjs = (synchronizedObjects _logic);
-
-	private _mainObject = missionNamespace getVariable [(LGVAR ["Object", ""]), objNull];
-
-	if !(isNil "_mainObject") then {
-		if (_mainObject isEqualType objNull) then {
-			if !(_mainObject isEqualTo objNull) then {
-				_syncedObjs pushBackUnique _mainObject;
-			};
+	private _sidesStr = LGVAR ["cameraSides", ""];
+	private _sides = (_sidesStr splitString " ,.;:[](){}") apply {
+		private _compile = call compile _x;
+		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
+			false
+		} else {
+			_compile
 		};
 	};
-	
-	{
-		private _obj = _x;
+	_sides = _sides select {_x isEqualType west};
 
-		if (isNil "_obj") then {continue};
-		if !(_obj isEqualType objNull) then {continue};
-		if (isNull _obj) then {continue};
-		if !(local _obj) then {continue};
+	if (_sides isEqualTo []) exitWith {
+		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
+	};
+
+	private _proccessArrayString = {
+		params["_offsetsStr", ['_isOffset', true]];
+		private _offsets = [];
+		if (_isOffset && {(_offsetsStr isEqualTo "this")}) then {
+			_offsets = [[getPosASL _logic, [vectorDir _logic, vectorUp _logic]]];
+		};
+		if !(_offsetsStr isEqualTo "") then {
+			_offsets = call compile _offsetsStr;
+		};
+		if (isNil "_offsets") then {
+			_offsets = [];
+		};
+		_offsets
+	};
+	private _proccessCameraParams = {
+		params["_logic"];
+
+		private _name = LGVAR ["cameraName", ""];
+
+		private _camObj = MGVAR [LGVAR ["cameraObject", ""], objNull];
+		private _hasNvg = BOOL("cameraHasNvg", 1);
+		private _hasTi = BOOL("cameraHasTI", 1);
+		private _canMoveCam = BOOL("cameraCanMoveCamera", 1);
+		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
+		private _turretIndex = parseNumber (LGVAR ["turretIndex", ""]);
+		private _zoomParamsStr = (LGVAR ["zoomParams", ""]);
+		private _zoomParams = [_zoomParamsStr, false] call _proccessArrayString;
 
 		[
-			_obj,
-			LGVAR ["slotNum", 1],
-			LGVAR ["spawnWithGren", "HandGrenade"],
-			LGVAR ["addedItems", ""],
-			LGVAR ["removedItems", ""],
-			BOOL("allowSetCharge", 0),
-			BOOL("spawnTempGren", 1),
-			BOOL("allowOnlyListed", 0),
-			BOOL("removeChemlights", 1),
-			BOOL("removeSmokes", 1)
-		] call DGM_fnc_dropDevice;
-	} forEach _syncedObjs;
+			_camObj,
+			_canMoveCam,
+			_turretIndex,
+			_zoomParams,
+			[_hasNvg, _hasTi],
+			_name,
+			_smoothZoom
+		]
+	};
+
+	private _offsetsStr = LGVAR ["cameraPosAndOffsetsTurretsCustom", "this"];
+	private _offsets = _offsetsStr call _proccessArrayString;
+	if (isNil "_offsets") then {
+		_offsets = [];
+	};
+
+	private _staticCamModuleClass = (tolower "CFM_Module_StaticCamera");
+	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
+
+	if !(_syncedModules isEqualTo []) then {
+		{
+			private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
+			private _turrOffsets = _turrOffsetsStr call _proccessArrayString;
+			if (isNil "_turrOffsets") then {
+				_turrOffsets = [];
+			};
+			private _turrParams = _logic call _proccessCameraParams;
+			private _turrArgs = [_turrOffsets] + _turrParams;
+			_offsets pushBack _turrArgs;
+		} forEach _syncedModules;
+	};
+
+	if (_offsets isEqualTo []) exitWith {
+		format["CFM_fnc_initModuleStaticCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] DLOG
+	};
+
+	private _params = _logic call _proccessCameraParams;
+
+	[
+		_params param [5, ""],
+		_offsets,
+		_sides,
+		_params param [0, objNull],
+		_params param [4, [true, true]],
+		[
+			_params param [1, -1],
+			_params param [6, -1]
+		]
+	] call CFM_fnc_setStaticCamera;
 };
 
