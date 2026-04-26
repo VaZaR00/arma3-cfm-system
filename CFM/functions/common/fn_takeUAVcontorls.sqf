@@ -31,6 +31,8 @@ if (!_sameSide) exitWith {
 	[_monitor, _drone, _playerSide] spawn {
 		params ["_monitor", "_drone", "_playerSide"];
 
+		private _playerStartPos = getPosASL player;
+
 		[[_drone, _playerSide, clientOwner], {
 			params ["_drone", "_side", "_netId"];
 			deleteVehicleCrew _drone;
@@ -46,6 +48,12 @@ if (!_sameSide) exitWith {
 		};
 
 		"Drone hacked!" _HINT;
+
+		[_drone, _playerSide] call CFM_fnc_setOperatorSides;
+
+		if ((_playerStartPos distance (getPosASL player)) > 0.5) exitWith {
+			"Drone hacked! But connection canceled because you moved." _HINT;
+		};
 
 		[_monitor] spawn CFM_fnc_takeUAVcontorls;
 	};

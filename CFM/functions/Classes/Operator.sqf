@@ -990,4 +990,18 @@ OBJCLASS(Operator)
 
 		true
 	};
+	METHOD("setOperatorSides") {
+		params[["_sides", civilian]];
+
+		if !(_sides isEqualType []) then {
+			_sides = [_sides];
+		};
+		_sides = _sides select {_x isEqualType west};
+
+		if (_sides isEqualTo []) exitWith {false};
+
+		_opSides = _sides;
+		_self setVariable ["CFM_opSides", _sides];
+		true
+	};
 CLASS_END

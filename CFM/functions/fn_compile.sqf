@@ -100,3 +100,8 @@ CFM_fnc_switchUAV = {
 	params["_monitor"];
 	["switchUAV"] SPAWN_OBJCLASS("Monitor", _monitor);
 };
+
+CFM_fnc_setOperatorSides = {
+	params["_operator", ["_sides", civilian]];
+	["setOperatorSides", [_sides], _operator, false] SPAWN_OBJCLASS("Operator", _operator);
+};
