@@ -1,4 +1,5 @@
 #define SET_VARS_INIT_GLOBAL true
+#define DO_OVERWRITE_CURRENT_MOVE false
 
 OBJCLASS(Operator)
 
@@ -35,7 +36,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
 
 	/*
-		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
+		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove, cameraMoveRestrictions]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -64,7 +65,8 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_canFeed", true, _global];
 		switch (_cameraType) do {
 			case DRONETYPE: {
-				_operator setVariable ["CFM_isDroneFeed", true, _global];
+				_isDroneFeed = true;
+				_operator setVariable ["CFM_isDroneFeed", _isDroneFeed, _global];
 			};
 			case TYPE_VEH: {
 				_operator setVariable ["CFM_isVehFeed", true, _global];
@@ -417,12 +419,11 @@ OBJCLASS(Operator)
 		} else {
 			switch (_classType) do {
 				case TYPE_UAV: {
-					// if (_isDriverTurr) then {
-					// 	CFM_fnc_camPosPilotTurret
-					// } else {
-					// 	CFM_fnc_camPosVehTurret
-					// };
-					CFM_fnc_camPosVehTurret
+					if (_isDriverTurr) then {
+						CFM_fnc_camPosPilotTurret
+					} else {
+						CFM_fnc_camPosVehTurret
+					};
 				};
 				case TYPE_UNIT: {
 					CFM_fnc_camPosGoPro
@@ -453,7 +454,7 @@ OBJCLASS(Operator)
 		private _moveParams = if (_canMoveCamera isEqualTo -1) then {
 			[_canMoveCameraByDefault, +_cameraMoveRestrictionsByDefault]
 		} else {
-			[_canMoveCamera] call CFM_fnc_defineCameraMovementOptions
+			[_canMoveCamera, _self] call CFM_fnc_defineCameraMovementOptions
 		};
 		_moveParams params [["_canMoveCamera", _canMoveCameraByDefault], ["_cameraMoveRestrictions", +_cameraMoveRestrictionsByDefault]];
 		if (count _cameraMoveRestrictions != 4) then {
@@ -846,6 +847,7 @@ OBJCLASS(Operator)
 		if (_isDroneFeed) exitWith {
 			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
 			["moveDroneCamera", [_turretIndex, _axisAngles]] SPAWN_OBJCLASS("Operator", _self);
+			true
 		};
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
@@ -872,8 +874,9 @@ OBJCLASS(Operator)
 		private _newDir = _newDirUp param [0, _dir];
 		private _newUp = _newDirUp param [1, _up];
 
+		private _restrictions = _turretData getOrDefault ["cameraMoveRestrictions", [0,0,0,0]];
 		private _currentMove = _turretData getOrDefault ["currentCamMove", [0,0,0,0]];
-		_currentMove = [_currentMove, _axisAngles] call CFM_fnc_calculateCameraMoves;
+		_currentMove = [_currentMove, _axisAngles, _restrictions] call CFM_fnc_calculateCameraMoves;
 		_turretData set ["currentCamMove", +_currentMove];
 
 		_pointParams = [_pos, _newDir, _newUp];
@@ -935,17 +938,21 @@ OBJCLASS(Operator)
 		// calculate moves
 		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
-		private _dir = _self getVariable [_dirVarName, vectorDir _self];
-		private _up = _self getVariable [_upVarName, vectorUp _self];
+		private _dir = _self getVariable [_dirVarName, [0,1,0]];
+		private _up = _self getVariable [_upVarName, [0,0,1]];
 		private _initialDirUp = +(_turretData getOrDefault ["initialDirUp", [[0,1,0], [0,0,1]]]);
+		private _restrictions = _turretData getOrDefault ["cameraMoveRestrictions", [0,0,0,0]];
 		private _currentMove = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;
-		_currentMove = [_currentMove, _axisAngles] call CFM_fnc_calculateCameraMoves;
+		_currentMove = [_currentMove, _axisAngles, _restrictions] call CFM_fnc_calculateCameraMoves;
 
 		private _hasPrevMove = !(_self getVariable ["CFM_moveDone", true]);
-		if (_hasPrevMove) then {
+		private _exit = if (_hasPrevMove) then {
+			if !(DO_OVERWRITE_CURRENT_MOVE) exitWith {true};
 			_self setVariable ["CFM_newMove", true];
 			waitUntil { sleep 0.01; _self getVariable ["CFM_moveDone", true] };
-		};
+			false
+		} else {false};
+		if (_exit) exitWith {false};
 		_self setVariable ["CFM_moveDone", false];
 
 		private _havingNewMove = false;
@@ -957,7 +964,6 @@ OBJCLASS(Operator)
 			private _lockPos = [_self, _newDir, 1] call CFM_fnc_getObjCamOffsetMS;
 			private _prevCamLook = [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
-			_self setVariable ["T_lockPos", _lockPos];
 			_self lockCameraTo [_lockPos, [_turretIndex]];
 
 			private _waitStart = time;
@@ -998,7 +1004,7 @@ OBJCLASS(Operator)
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
 				{((time - _waitStart) > 2) || {
-					([_newCamDir, getPilotCameraDirection _self] call CFM_fnc_compareVectors)
+					([_newCamDir, getPilotCameraDirection _self, 0.01] call CFM_fnc_compareVectors)
 				}}
 			};
 			
