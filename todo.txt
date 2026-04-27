@@ -1,0 +1,8 @@
+
+turret cam move fix
+
+change module icons
+
+LONG mb:
+shortcuts for operators switch
+анимация просмотра в диалоге
