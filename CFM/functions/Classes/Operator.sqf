@@ -925,7 +925,12 @@ OBJCLASS(Operator)
 		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
 
 		// calculate moves
-		private _currentMove = +(_turretData getOrDefault ["currentCamMove", [0,0,0,0]]);
+		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
+		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+		private _dir = _self getVariable [_dirVarName, vectorDir _self];
+		private _up = _self getVariable [_upVarName, vectorUp _self];
+		private _initialDirUp = +(_turretData getOrDefault ["initialDirUp", [[0,1,0], [0,0,1]]]);
+		private _currentMove = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;
 		private _vertUp = (_currentMove#0) + _vertical;
 		private _vertDown = (_currentMove#1) - _vertical;
 		private _vertLeft = (_currentMove#2) + _horizontal;
@@ -942,10 +947,6 @@ OBJCLASS(Operator)
 		private _havingNewMove = false;
 
 		private _done = if (_isGunnerTurret) then {
-			private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-			private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
-			private _dir = _self getVariable [_dirVarName, vectorDir _self];
-			private _up = _self getVariable [_upVarName, vectorUp _self];
 			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newDir = _newDirUp param [0, _dir];
 			private _newUp = _newDirUp param [0, _up];

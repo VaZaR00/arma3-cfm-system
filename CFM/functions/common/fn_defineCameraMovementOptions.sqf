@@ -15,7 +15,7 @@ private _vehLimits = if (IS_OBJ(_veh)) then {
     private _cls = toLower typeOf _veh;
     if (IS_MAVIC(_cls)) exitWith {
         _doSet = _optionDefault || _optionIsTrue;
-        [50, 90, 75, 75]
+        [40, 90, 30, 30]
     };
     [30, 100, 180, 180] // 360 default
 } else {[]};
