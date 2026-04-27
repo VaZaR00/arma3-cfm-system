@@ -1,6 +1,7 @@
 
 
 LONG mb:
+continuous ca move
 shortcuts for operators switch
 анимация просмотра в диалоге
 
