@@ -10,9 +10,12 @@ if (isServer) then {
 	call CFM_fnc_setupOpSyncVarEH;
 	CFM_serverLoop_handle = 0 spawn CFM_fnc_serverLoop;
 } else {
-	CFM_makeCamDataSync = true;
-	publicVariableServer "CFM_makeCamDataSync";
+	if (didJIP) then {
+		CFM_makeCamDataSync = true;
+		publicVariableServer "CFM_makeCamDataSync";
+	};
 };
+"CFM_ActiveOperators" addPublicVariableEventHandler {call CFM_fnc_setupLocalActiveOperators};
 
 // default point alignments
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];

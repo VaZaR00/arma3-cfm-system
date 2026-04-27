@@ -75,7 +75,7 @@ CLASS(DbHandler)
 		true
 	};
 	METHOD("addToList") {
-		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true]];
+		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
 		
 		if (isNil "_obj") exitWith {-1};
 		if (_listName isEqualTo "") exitWith {-1};
@@ -92,7 +92,12 @@ CLASS(DbHandler)
 				_list pushBack _obj;
 			};
 		};
-		missionNamespace setVariable [_listName, _list, _global];
+		if (_global && _viaPubVar) then {
+			missionNamespace setVariable [_listName, _list];
+			publicVariable _listName;
+		} else {
+			missionNamespace setVariable [_listName, _list, _global];
+		};
 		_i
 	};
 	METHOD("removeFromList") {
@@ -209,12 +214,18 @@ CLASS(DbHandler)
 	METHOD("addActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["addToList", [_operator, "CFM_ActiveOperators", true]] CALL_CLASS(_self);
+		["addToList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
+		if !(isMultiplayer) then {
+			CFM_LocalActiveOperators = CFM_ActiveOperators;
+		};
 	};
 	METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["removeFromList", [_operator, "CFM_ActiveOperators", true]] CALL_CLASS(_self);
+		["removeFromList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
+		if !(isMultiplayer) then {
+			CFM_LocalActiveOperators = CFM_ActiveOperators;
+		};
 	};
 	METHOD("addActiveViewer") {
 		params["_player"];

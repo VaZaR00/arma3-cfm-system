@@ -301,6 +301,10 @@
                 file = FUNC_PATH(common\fn_updateOperator.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class updateLocalOperators {
+                file = FUNC_PATH(common\fn_updateLocalOperators.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class updateOperatorZoom {
                 file = FUNC_PATH(common\fn_updateOperatorZoom.sqf);
                 DO_FUNC_RECOMPILE

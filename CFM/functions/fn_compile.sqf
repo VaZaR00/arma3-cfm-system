@@ -193,3 +193,9 @@ CFM_fnc_checkIfOperatorFeedsToAnyMonitor = {
 	params["_operator"];
 	["checkIfFeedsToAnyMonitor", [], _operator, false] CALL_OBJCLASS("Operator", _operator);
 };
+
+CFM_fnc_setupLocalActiveOperators = {
+	private _activeOperators = missionNamespace getVariable ["CFM_ActiveOperators", []];
+	CFM_LocalActiveOperators = _activeOperators select {local _x};
+	CFM_LocalActiveOperators
+};

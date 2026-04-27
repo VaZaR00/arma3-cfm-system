@@ -837,7 +837,7 @@ OBJCLASS(Operator)
 	};
 	METHOD("checkIfFeedsToAnyMonitor") {
 		private _monitorsOnTurretsArray = values _monitorsSet;
-		private _activeTurrets = _monitorsOnTurretsArray count {!(_x isEqualTo [])};
+		private _activeTurrets = {!(_x isEqualTo [])} count _monitorsOnTurretsArray;
 		_activeTurrets > 0
 	};
 	METHOD("removeActiveTurret") {

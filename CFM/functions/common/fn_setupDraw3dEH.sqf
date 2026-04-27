@@ -10,7 +10,7 @@ if (isNil "CFM_UPD_CLIENT_EH_id") then {
 	if !(hasInterface) exitWith {};
 	private _func = {call CFM_fnc_onEachFrameClient};
 	if (true) then {
-		_func = {call CFM_fnc_onEachFrameClient; [] call CFM_fnc_updateOperator};
+		_func = {call CFM_fnc_onEachFrameClient; [] call CFM_fnc_updateLocalOperators};
 	};
 	CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", _func];
 };
