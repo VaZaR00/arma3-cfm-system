@@ -106,7 +106,7 @@ class CfgVehicles
             PARAMETER(operatorTurretsCustom, "STRING", "")
             PARAMETER_SELECT_DEFAULT(operatorHasTI, -1)
             PARAMETER_SELECT_DEFAULT(operatorHasNvg, -1)
-            PARAMETER_SELECT(operatorSmoothZoom, -1)
+            PARAMETER_SELECT(operatorSmoothZoom, 1)
         };
     };
     class CFM_Module_StaticCamera: Module_F
