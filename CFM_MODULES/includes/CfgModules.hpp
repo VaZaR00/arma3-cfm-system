@@ -65,8 +65,8 @@ class CfgVehicles
         displayName = "Monitor";
         category = "CFM";
         function = "CFM_fnc_initModuleMonitor";
-        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
-        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        icon = "\A3\modules_f\data\portraitStrategicMapImage_ca.paa";
+        portrait = "\A3\modules_f\data\portraitStrategicMapImage_ca.paa";
         functionPriority = 2;
         isGlobal = 2;
         isTriggerActivated = 0;
@@ -91,8 +91,8 @@ class CfgVehicles
         displayName = "Operator";
         category = "CFM";
         function = "CFM_fnc_initModuleOperator";
-        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
-        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        icon = "IconCamera";
+        portrait = "IconCamera";
         functionPriority = 2;
         isGlobal = 0;
         isTriggerActivated = 0;
@@ -116,8 +116,8 @@ class CfgVehicles
         displayName = "Static Camera";
         category = "CFM";
         function = "CFM_fnc_initModuleStaticCamera";
-        icon = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
-        portrait = "\a3\Modules_F_Curator\Data\portraitRadioChannelCreate_ca.paa";
+        icon = "IconCamera";
+        portrait = "IconCamera";
         functionPriority = 2;
         isGlobal = 0;
         isTriggerActivated = 0;

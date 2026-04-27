@@ -1,9 +1,7 @@
 
-turret cam move fix
-use pilot cam func
-
-change module icons
 
 LONG mb:
 shortcuts for operators switch
 анимация просмотра в диалоге
+
+turret cam move fix (via lock turret)
