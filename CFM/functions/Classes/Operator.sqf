@@ -727,6 +727,9 @@ OBJCLASS(Operator)
 			_turretObj = _self;
 		};
 		_cameraMoveRestrictions resize [4, 180];
+		_turretData set ["pointParams", _pointParams]; 
+		_turretsParams set [_turretIndex, _turretData];
+		_self setVariable ["CFM_turretsParams", _turretsParams];
 
 		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
@@ -954,12 +957,13 @@ OBJCLASS(Operator)
 			private _lockPos = [_self, _newDir, 1] call CFM_fnc_getObjCamOffsetMS;
 			private _prevCamLook = [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
+			_self setVariable ["T_lockPos", _lockPos];
 			_self lockCameraTo [_lockPos, [_turretIndex]];
 
 			private _waitStart = time;
 			waitUntil {
 				sleep 0.01;
-				[_self, _turretIndex] call CFM_fnc_updateOperator;
+				[_self, _turretIndex, false] call CFM_fnc_updateTurretCamera;
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
 				{((time - _waitStart) > 2) || {
@@ -990,7 +994,7 @@ OBJCLASS(Operator)
 			private _waitStart = time;
 			waitUntil {
 				sleep 0.01;
-				[_self] call CFM_fnc_updateOperator;
+				[_self, -1, false] call CFM_fnc_updateTurretCamera;
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
 				{((time - _waitStart) > 2) || {

@@ -305,6 +305,10 @@
                 file = FUNC_PATH(common\fn_updateOperatorZoom.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class updateTurretCamera {
+                file = FUNC_PATH(common\fn_updateTurretCamera.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class validClassType {
                 file = FUNC_PATH(common\fn_validClassType.sqf);
                 DO_FUNC_RECOMPILE
