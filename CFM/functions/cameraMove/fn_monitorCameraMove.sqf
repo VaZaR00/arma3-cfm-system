@@ -25,11 +25,15 @@ if !(_currZoom isEqualType 1) then {
 };
 private _sensitivity = (MGVAR ["CFM_cameraMoveSensitivity", 5]);
 private _step = _sensitivity * _currZoom;
-private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [90,90,180,180]];
+private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [85,85,180,180]];
 private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", [0,0,0,0]];
 private _directionRestriction = _movementRestrictions param [_directionIndex, 0];
 private _currentCameraMove = _currentCameraMoves param [_directionIndex, 0];
-private _newMove = _currentCameraMove + _step;
+private _newMove = (_currentCameraMove + _step);
+
+if ((_currentCameraMove < _directionRestriction) && {_newMove > _directionRestriction}) then {
+    _newMove = _directionRestriction; // snap to max
+};
 
 if (_directionRestriction < 1) exitWith {false};
 if ((_directionRestriction < 180) && {_newMove > _directionRestriction}) exitWith {false};
