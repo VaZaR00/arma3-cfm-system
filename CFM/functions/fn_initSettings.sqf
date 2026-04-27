@@ -25,6 +25,7 @@
 [CFM_CATEGORY, "CFM_resetZoomKey", ["Reset zoom", "Reset Zoom"], {[(call CFM_fnc_getTargetMonitor), "reset"] call CFM_fnc_zoom}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_operatorZoomKey", ["Use operator zoom", "Use operator zoom"], {[(call CFM_fnc_getTargetMonitor), "op"] call CFM_fnc_zoom}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_takeUavControlKey", ["Take UAV control", "Take UAV control"], {[(call CFM_fnc_getTargetMonitor)] spawn CFM_fnc_takeUAVcontorls}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_switchTurret", ["Switch Turrets", "Switch between turrets/cameras"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorNextTurretCamera}, "", [83, [false, false, true]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorSwitchTi}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorToggleNVG}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {[(call CFM_fnc_getTargetMonitor), PLAYER_] call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
