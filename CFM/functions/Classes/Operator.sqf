@@ -35,7 +35,7 @@ OBJCLASS(Operator)
 	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
 
 	/*
-		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
+		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isStaticVeh, isGopro, camPosFunc, doInterpolation, currentCamMove]]]
 		pointParams: [memPoint, [addArr, setArr]]
 	*/
 
@@ -56,6 +56,21 @@ OBJCLASS(Operator)
 
 		_operator setVariable ["CFM_classType", _classType, _global];
 
+
+		// CAM TYPE
+		_cameraType = [_operator] call CFM_fnc_cameraType;
+		_operator setVariable ["CFM_cameraType", _cameraType, _global];
+
+		_operator setVariable ["CFM_canFeed", true, _global];
+		switch (_cameraType) do {
+			case DRONETYPE: {
+				_operator setVariable ["CFM_isDroneFeed", true, _global];
+			};
+			case TYPE_VEH: {
+				_operator setVariable ["CFM_isVehFeed", true, _global];
+			};
+			default {};
+		};
 		
 		// OTHER PARAMS
 		if !(_params isEqualType []) then {_params = [_params]};
@@ -108,11 +123,6 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
-
-
-		// CAM TYPE
-		_cameraType = [_operator] call CFM_fnc_cameraType;
-		_operator setVariable ["CFM_cameraType", _cameraType, _global];
 
 
 		// TURRETS
@@ -169,24 +179,14 @@ OBJCLASS(Operator)
 		// ADD OP
 		["addOperator", [_operator]] CALL_CLASS("DbHandler");
 
-		switch (_cameraType) do {
-			case DRONETYPE: {
-				_operator setVariable ["CFM_canFeed", true, _global];
-				_operator setVariable ["CFM_isDroneFeed", true, _global];
-			};
-			case TYPE_VEH: {
-				_operator setVariable ["CFM_canFeed", true, _global];
-				_operator setVariable ["CFM_isVehFeed", true, _global];
-			};
-			default {};
-		};
 		if (_name isEqualTo "") then {
 			_name = switch (_cameraType) do {
 				case GOPRO: {
 					format["%1: %2", groupId group _self, name _self]
 				};
 				case TYPE_STATIC: {
-					_self getVariable ["CFM_staticCameraID", "Camera"];
+					private _operatorId = _self getVariable ["CFM_operatorId", 0];
+					_self getVariable ["CFM_staticCameraID", "Camera " + str _operatorId];
 				};
 				default {
 					private _group = groupId group _self;
@@ -292,6 +292,9 @@ OBJCLASS(Operator)
 		};
 		if (_isStaticCam) then {
 			_turretParams set ["pointParams", _pointParams];
+		};
+		if (_isDroneFeed) then {
+			_turretParams set ["initialDirUp", [[0,1,0], [0,0,1]]];
 		};
 
 		// ZOOM
