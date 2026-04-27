@@ -159,6 +159,8 @@ OBJCLASS(Monitor)
 	METHOD("setRenderPicture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
+		// if !(hasInterface) exitWith {};
+
 		if (_render && {_r2t isEqualTo ""}) then {
 			_r2t = _currentR2T;
 		};
@@ -818,7 +820,7 @@ OBJCLASS(Monitor)
 				};
 			};
 			if (_currentOpHasTurrets) then {
-				format["<t color='#0d6aff'>Camera:</t> %1 <t color='#0d6aff'>Turret</t>: %2", _opName, _turrIndex];
+				format["<t color='#0d6aff'>Camera:</t> %1 <t color='#0d6aff'>Turret</t>: %2", _opName, _turrName];
 			} else {
 				format["<t color='#0d6aff'>Camera:</t> %1", _opName];
 			};

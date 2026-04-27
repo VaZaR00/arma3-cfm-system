@@ -201,6 +201,21 @@ CLASS(DbHandler)
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
+	METHOD("removeActiveMonitor") {
+		params["_monitor"];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
+	};
+	METHOD("addActiveOperator") {
+		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {-1};
+		["addToList", [_operator, "CFM_ActiveOperators", true]] CALL_CLASS(_self);
+	};
+	METHOD("removeActiveOperator") {
+		params["_operator"];
+		if !(IS_OBJ(_operator)) exitWith {-1};
+		["removeFromList", [_operator, "CFM_ActiveOperators", true]] CALL_CLASS(_self);
+	};
 	METHOD("addActiveViewer") {
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {-1};
@@ -214,11 +229,6 @@ CLASS(DbHandler)
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
 		publicVariableServer "CFM_makeCamDataSync";
-	};
-	METHOD("removeActiveMonitor") {
-		params["_monitor"];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
-		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
 	METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

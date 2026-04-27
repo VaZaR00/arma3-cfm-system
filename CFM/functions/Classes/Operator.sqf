@@ -420,7 +420,14 @@ OBJCLASS(Operator)
 			switch (_classType) do {
 				case TYPE_UAV: {
 					if (_isDriverTurr) then {
-						CFM_fnc_camPosPilotTurret
+						if (_isMavic || {
+							("uav_01" in _objClass) || 
+							{("uav_06" in _objClass)}
+						}) then {
+							CFM_fnc_camPosPilotTurret
+						} else {
+							CFM_fnc_camPosVehTurret
+						};
 					} else {
 						CFM_fnc_camPosVehTurret
 					};
@@ -609,6 +616,10 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
+		if (local _operator) then {
+			["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
+		};
+
 		["TurretChanged", [_monitor, _turret, false, _callerLocal]] CALL_OBJCLASS("Operator", _self);
 	};
 	METHOD("monitorDisconnected") {
@@ -617,6 +628,9 @@ OBJCLASS(Operator)
 
 		if (IS_OBJ(_caller) && {(local _caller)}) then {
 			["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+			if !([_self] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
+				["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
+			};
 		};
 	};
 	METHOD("TurretChanged") {
@@ -804,7 +818,7 @@ OBJCLASS(Operator)
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 
-		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
+		private _turretIndex = TURRET_INDEX(_turret);
 		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
 		private _i = _monitorsOnTurret pushBackUnique _monitor;
 		_monitorsSet set [_turretIndex, _monitorsOnTurret];
@@ -814,12 +828,17 @@ OBJCLASS(Operator)
 	METHOD("removeMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
-		private _turretIndex = _turret#0;
+		private _turretIndex = TURRET_INDEX(_turret);
 		private _monitorsOnTurret = _monitorsSet getOrDefault [_turretIndex, []];
 		_monitorsOnTurret = _monitorsOnTurret - [_monitor];
 		_monitorsSet set [_turretIndex, _monitorsOnTurret];
 		_self setVariable ["CFM_monitorsSet", _monitorsSet, true];
 		true
+	};
+	METHOD("checkIfFeedsToAnyMonitor") {
+		private _monitorsOnTurretsArray = values _monitorsSet;
+		private _activeTurrets = _monitorsOnTurretsArray count {!(_x isEqualTo [])};
+		_activeTurrets > 0
 	};
 	METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
@@ -961,7 +980,7 @@ OBJCLASS(Operator)
 			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newDir = _newDirUp param [0, _dir];
 			private _newUp = _newDirUp param [0, _up];
-			private _lockPos = [_self, _newDir, 1] call CFM_fnc_getObjCamOffsetMS;
+			private _lockPos = (_self modelToWorldVisualWorld (vectorNormalized _newDir));
 			private _prevCamLook = [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
 			_self lockCameraTo [_lockPos, [_turretIndex]];
@@ -975,7 +994,8 @@ OBJCLASS(Operator)
 				{((time - _waitStart) > 2) || {
 					[
 						[_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock, 
-						_lockPos
+						_lockPos,
+						0.01
 					] call CFM_fnc_compareVectors
 				}}
 			};

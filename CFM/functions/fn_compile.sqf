@@ -188,3 +188,8 @@ CFM_fnc_calculateCameraMoves = {
 
 	[_vertUp, _vertDown, _horizLeft, _horizRight]
 };
+
+CFM_fnc_checkIfOperatorFeedsToAnyMonitor = {
+	params["_operator"];
+	["checkIfFeedsToAnyMonitor", [], _operator, false] CALL_OBJCLASS("Operator", _operator);
+};
