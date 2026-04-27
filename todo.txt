@@ -1,5 +1,6 @@
 
 turret cam move fix
+use pilot cam func
 
 change module icons
 

@@ -54,13 +54,18 @@ if (count _up != 3) then {
 if (_turretLocal && {_setLocalOpTurretDir}) then {
 	private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
 	private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+	private _posVarName = "CFM_currentTurretPosMS" + str _turretIndex;
 	private _localDirMS = _operator getVariable [_dirVarName, []];
 	private _localUpMS = _operator getVariable [_upVarName, []];
+	private _localPosMS = _operator getVariable [_posVarName, []];
 	if ((_localDirMS isEqualType []) && {(count _localDirMS == 3)}) then {
 		_dir = _operator vectorModelToWorldVisual _localDirMS;
 	};
 	if ((_localUpMS isEqualType []) && {(count _localUpMS == 3)}) then {
 		_up = _operator vectorModelToWorldVisual _localUpMS;
+	};
+	if ((_localPosMS isEqualType []) && {(count _localPosMS == 3)}) then {
+		_pos = _operator modelToWorldVisualWorld _localPosMS;
 	};
 };
 

@@ -959,7 +959,7 @@ OBJCLASS(Operator)
 			private _waitStart = time;
 			waitUntil {
 				sleep 0.01;
-				[_self] call CFM_fnc_updateOperator;
+				[_self, _turretIndex] call CFM_fnc_updateOperator;
 				_havingNewMove = _self getVariable ["CFM_newMove", false];
 				_havingNewMove ||
 				{((time - _waitStart) > 2) || {

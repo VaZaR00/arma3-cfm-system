@@ -24,4 +24,4 @@ if (_pitch != 0) then {
     _up = [_up, _side, _pitch] call CFM_fnc_rotateAroundAxis;
 };
 
-[_dir, _up]
+[+_dir, +_up]
