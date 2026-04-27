@@ -281,6 +281,17 @@ OBJCLASS(Operator)
 		_turretIndex = TURRET_INDEX(_turretIndex);
 		private _turretParams = _turretsParams getOrDefault [_turretIndex, createHashMap];
 
+		// TURRET OBJECT
+		if !(IS_OBJ(_turretObject)) then {
+			_turretObject = _self;
+		} else {
+			if (isServer) then {
+				_hasActiveTurretsObjects = 0;
+				_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
+			};
+		};
+		_turretParams set ["turretObject", _turretObject];
+
 		// POINT ALIGNMENT
 		if (_pointParams isEqualTo false) then {
 			_isStaticVeh = true;
@@ -291,11 +302,20 @@ OBJCLASS(Operator)
 			[_operator, [_turretIndex, _addArr, _memPoint, _setArr]] call CFM_fnc_setPointAlignment;
 		};
 		if (_isStaticCam) then {
+			if !(_pointParams isEqualType []) then {
+				_pointParams = [getPosASL _turretObject, vectorDir _turretObject, vectorUp _turretObject];
+			};
 			_turretParams set ["pointParams", _pointParams];
 		};
-		if (_isDroneFeed) then {
-			_turretParams set ["initialDirUp", [[0,1,0], [0,0,1]]];
+		private _initialDir = if (_isDroneFeed) then {
+			[0,1,0]
+		} else {
+			if (_isStaticCam) exitWith {
+				_pointParams param [1, vectorDir _turretObject];
+			};
+			vectorDir _turretObject;
 		};
+		_turretParams set ["initialDirUp", [_initialDir, [0,0,1]]];
 
 		// ZOOM
 		private _zoomTable = createHashMap;
@@ -427,17 +447,6 @@ OBJCLASS(Operator)
 		_turretParams set ["doInterpolation", _doInterpolation];
 		_isStaticVeh = _isStaticVeh || {_camPosFunc in [CFM_fnc_camPosVehStatic, CFM_fnc_camPosStatic]};
 		_turretParams set ["isStaticVeh", _isStaticVeh];
-
-		// TURRET OBJECT
-		if !(IS_OBJ(_turretObject)) then {
-			_turretObject = _self;
-		} else {
-			if (isServer) then {
-				_hasActiveTurretsObjects = 0;
-				_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
-			};
-		};
-		_turretParams set ["turretObject", _turretObject];
 
 		// CAN MOVE CAMERA
 		private _cameraMoveRestrictionsByDefault = _self getVariable ["CFM_cameraMoveRestrictionsByDefault", []];
@@ -852,7 +861,7 @@ OBJCLASS(Operator)
 
 		if (_monitorsOnTurret isEqualTo []) exitWith {false};
 
-		_pointParams params [["_pos", []], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+		_pointParams params [["_pos", [], [[]], 3], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
 
 		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
 
@@ -861,11 +870,7 @@ OBJCLASS(Operator)
 		private _newUp = _newDirUp param [1, _up];
 
 		private _currentMove = _turretData getOrDefault ["currentCamMove", [0,0,0,0]];
-		private _vertUp = (_currentMove#0) + _vertical;
-		private _vertDown = (_currentMove#1) - _vertical;
-		private _vertLeft = (_currentMove#2) + _horizontal;
-		private _vertRight = (_currentMove#3) - _horizontal;
-		_currentMove = [_vertUp, _vertDown, _vertLeft, _vertRight];
+		_currentMove = [_currentMove, _axisAngles] call CFM_fnc_calculateCameraMoves;
 		_turretData set ["currentCamMove", +_currentMove];
 
 		_pointParams = [_pos, _newDir, _newUp];
@@ -931,11 +936,7 @@ OBJCLASS(Operator)
 		private _up = _self getVariable [_upVarName, vectorUp _self];
 		private _initialDirUp = +(_turretData getOrDefault ["initialDirUp", [[0,1,0], [0,0,1]]]);
 		private _currentMove = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;
-		private _vertUp = (_currentMove#0) + _vertical;
-		private _vertDown = (_currentMove#1) - _vertical;
-		private _vertLeft = (_currentMove#2) + _horizontal;
-		private _vertRight = (_currentMove#3) - _horizontal;
-		_currentMove = [_vertUp, _vertDown, _vertLeft, _vertRight];
+		_currentMove = [_currentMove, _axisAngles] call CFM_fnc_calculateCameraMoves;
 
 		private _hasPrevMove = !(_self getVariable ["CFM_moveDone", true]);
 		if (_hasPrevMove) then {

@@ -160,3 +160,29 @@ CFM_fnc_calculateCurrentCameraMoves = {
 
 	[_degPitch, -_degPitch, _degYaw, -_degYaw]
 };
+
+CFM_fnc_calculateCameraMoves = {
+	params[["_currentMoves", [0,0,0,0], [[]], 4], ["_moves", [0,0], [[]], 2]];
+
+	_moves params [["_horizontal", 0], ["_vertical", 0]];
+
+	private _vertUp = (_currentMoves#0) + _vertical;
+	private _vertDown = (_currentMoves#1) - _vertical;
+	private _vertLeft = (_currentMoves#2) + _horizontal;
+	private _vertRight = (_currentMoves#3) - _horizontal;
+
+	if (_vertUp >= 180) then {
+		_vertUp = 0;
+	};
+	if (_vertDown >= 180) then {
+		_vertDown = 0;
+	};
+	if (_vertLeft >= 180) then {
+		_vertLeft = 0;
+	};
+	if (_vertRight >= 180) then {
+		_vertRight = 0;
+	};
+
+	[_vertUp, _vertDown, _vertLeft, _vertRight]
+};

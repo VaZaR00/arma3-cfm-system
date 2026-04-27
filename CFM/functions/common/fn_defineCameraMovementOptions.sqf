@@ -17,8 +17,8 @@ private _vehLimits = if (IS_OBJ(_veh)) then {
         _doSet = _optionDefault || _optionIsTrue;
         [40, 90, 30, 30]
     };
-    [30, 100, 180, 180] // 360 default
-} else {[]};
+    [30, 90, 180, 180] // 360 default
+} else {[90,90,180,180]};
 
 private _defFalse = [_doSet, _vehLimits];
 if (_optionDefault) exitWith {_defFalse};

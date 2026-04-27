@@ -103,6 +103,7 @@ private _hasDummyObj = IS_OBJ(_dummyObj);
 private _turrParams = [];
 private _turrs = [];
 private _lastPos = [0,0,0];
+private _lastDirUp = [[0,0,0], [0,0,0]];
 private _lastTurrIndex = -1;
 
 private _proccesTurret = {
@@ -135,6 +136,7 @@ private _proccesTurret = {
 		_dummyObj = _turretObj;
 	};
 	_lastPos = +_pos;
+	_lastDirUp = +_vDirUp;
 	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom]];
 	_turrParams pushBack _turrArgs;
 };
@@ -144,10 +146,11 @@ private _proccesTurret = {
 if !(IS_OBJ(_dummyObj)) then {
 	_dummyObj = ["createDummyForStaticCam"] CALL_CLASS("DbHandler");
 	_dummyObj setPosASL _lastPos;
+	_dummyObj setVectorDirAndUp _lastDirUp;
 };
 
 if ((isNil "_dummyObj") || {!IS_OBJ(_dummyObj)}) exitWith {
-	"CFM_fnc_setStaticCamera ERROR: can't create dummyObj" WARN;
+	format["CFM_fnc_setStaticCamera ERROR: can't create dummyObj for this params: '%1'", _this] WARN;
 	false
 };
 
