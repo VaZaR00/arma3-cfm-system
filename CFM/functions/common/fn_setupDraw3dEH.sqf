@@ -7,9 +7,8 @@
 #include "defines.hpp" 
 
 if (isNil "CFM_UPD_CLIENT_EH_id") then {
-	if !(hasInterface) exitWith {};
-	private _func = {call CFM_fnc_onEachFrameClient};
-	if (true) then {
+	private _func = {[] call CFM_fnc_updateLocalOperators};
+	if (hasInterface) then {
 		_func = {call CFM_fnc_onEachFrameClient; [] call CFM_fnc_updateLocalOperators};
 	};
 	CFM_UPD_CLIENT_EH_id = addMissionEventHandler ["EachFrame", _func];

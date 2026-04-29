@@ -50,7 +50,7 @@ CLASS(DbHandler)
 		private _opIsObj = IS_VALID_OP(_operator);
 		private _opSet = if (_opIsObj) then {
 			_opClass = _operator call CFM_fnc_getOperatorClass;
-			[_operator, _mainArgs] NEW_OBJINSTANCE("Operator");
+			[_operator, _mainArgs] NEW_OBJINSTANCE_GLOBAL("Operator", true);
 		} else {true};
 
 		if ((isNil "_opSet") || {!(_opSet isEqualTo true)}) exitWith {["_opSet", _opSet]};

@@ -49,7 +49,7 @@ private _camSet = if (!_isStaticVeh ||
 	private _turretObj = _monitor getVariable ["CFM_connectedTurretObject", _operator];
 	private _turret = _monitor getVariable ["CFM_currentTurret", [-1]];
 	private _turLocal = _monitor getVariable ["CFM_turretLocal", false];
-	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {}];
+	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[]}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
 	if (_offsetReached) then {
