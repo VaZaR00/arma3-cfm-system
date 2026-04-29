@@ -26,24 +26,28 @@ _monitor setVariable ["CFM_waitingForStart", _start];
 if (_start) then {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
 	waitUntil {
-		_start = _monitor getVariable ["CFM_waitingForStart", true];
-		if !(_start) exitWith {true};
-		if !(isPipEnabled) exitWith {false};
-		if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
-		_operator = _monitor getVariable ["CFM_waitingForStartOperator", objNull];
-		if !(IS_OBJ(_operator)) exitWith {
-			_start = false;
-			true
+		private _cond = call {
+			_start = _monitor getVariable ["CFM_waitingForStart", true];
+			if !(_start) exitWith {true};
+			if !(isPipEnabled) exitWith {false};
+			if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
+			_operator = _monitor getVariable ["CFM_waitingForStartOperator", objNull];
+			if !(IS_OBJ(_operator)) exitWith {
+				_start = false;
+				true
+			};
+			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
+			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
+			_optimizeDistance = call compile _optimizeDistance;
+			if (_optimizeDistance <= 0) exitWith {true};
+			private _dist = _monitor distance PLAYER_;
+			private _isClose = _dist < _optimizeDistance;
+			if (_isClose) exitWith {true};
+			_isClose
 		};
-		if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
-		private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
-		_optimizeDistance = call compile _optimizeDistance;
-		if (_optimizeDistance <= 0) exitWith {true};
-		private _dist = _monitor distance PLAYER_;
-		private _isClose = _dist < _optimizeDistance;
-		if (_isClose) exitWith {true};
+		if (_cond) exitWith {true};
 		sleep 1;
-		_isClose
+		_cond
 	};
 };
 if (_start && {IS_OBJ(_operator)}) then {
