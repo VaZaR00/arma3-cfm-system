@@ -199,3 +199,100 @@ CFM_fnc_setupLocalActiveOperators = {
 	CFM_LocalActiveOperators = _activeOperators select {local _x};
 	CFM_LocalActiveOperators
 };
+
+CFM_fnc_validateSetPointParams = {
+	params["_turretParams", "_pointParams", ["_func", -1]];
+
+	_func = if (_func isEqualType {}) then {_func} else {
+		_turretParams getOrDefault ["camPosFunc", {}];
+	};
+
+	private _checkedPointParams = +_pointParams;
+	switch (_func) do {
+		case CFM_fnc_camPosVehStatic: {
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				if ((count _pointParams) != 2) exitWith {false};
+				_pointParams params [["_m", ""], ["_offsets", []]];
+				if !(_offsets isEqualType []) exitWith {false};
+				_offsets params [["_pos", []], ["_vdup", []]];
+				if !(_pos isEqualType []) exitWith {false};
+				if (count _pos != 3) exitWith {false};
+				if !(_vdup isEqualType []) exitWith {
+					_checkedPointParams = [_m, [_pos, [NULL_VECTOR, NULL_VECTOR]]];
+					true
+				};
+				_vdup params [["_dir", []], ["_up", []]];
+				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
+					_dir = NULL_VECTOR;
+				};
+				if (!(_up isEqualType []) || {(count _up != 3)}) then {
+					_up = NULL_VECTOR;
+				};
+				_checkedPointParams = [_m, [_pos, [_dir, _up]]];
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = ["", [NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]];
+			} else {
+				_pointParams = +_checkedPointParams;
+			};
+		};
+		case CFM_fnc_camPosVehTurret: {
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				_pointParams params [["_memPoint", []], ["_align", []]];
+				if !(_memPoint isEqualType "") then {
+					_memPoint = "";
+				};
+				private _defAdd = [0,0,0];
+				private _defSet = [-1,-1,-1];
+				private _defAddSet = [+_defAdd, +_defSet];
+				if (!(_align isEqualType []) || {(_align isEqualTo [])}) exitWith {
+					_checkedPointParams = [_memPoint, +_defAddSet];
+					true
+				};
+				_align params [["_add", []], ["_set", []]];
+				if (!(_add isEqualType []) || {(count _add != 3)}) then {
+					_add = +_defAdd;
+				};
+				if (!(_set isEqualType []) || {(count _set != 3)}) then {
+					_set = +_defSet;
+				};
+				_checkedPointParams = [_memPoint, [_add, _set]];
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = ["", [NULL_VECTOR, NULL_VECTOR]];
+			} else {
+				_pointParams = +_checkedPointParams;
+			};
+		};
+		case CFM_fnc_camPosStatic: {
+			private _checkPointParams = call {
+				if !(_pointParams isEqualType []) exitWith {false};
+				_pointParams params [["_pos", []], ["_dir", []], ["_up", []]];
+				if (!(_pos isEqualType []) || {(count _pos != 3)}) then {
+					_pos = NULL_VECTOR;
+				};
+				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
+					_dir = NULL_VECTOR;
+				};
+				if (!(_up isEqualType []) || {(count _up != 3)}) then {
+					_up = NULL_VECTOR;
+				};
+				_checkedPointParams = [_pos, _dir, _up];
+				true
+			};
+			if !(_checkPointParams) then {
+				_pointParams = [NULL_VECTOR, NULL_VECTOR, NULL_VECTOR];
+			} else {
+				_pointParams = +_checkedPointParams;
+			};
+		};
+	};
+
+	_turretParams set ["pointParams", _pointParams];
+
+	_pointParams
+};

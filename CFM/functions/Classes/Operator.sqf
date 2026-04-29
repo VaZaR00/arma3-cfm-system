@@ -307,7 +307,7 @@ OBJCLASS(Operator)
 			if !(_pointParams isEqualType []) then {
 				_pointParams = [getPosASL _turretObject, vectorDir _turretObject, vectorUp _turretObject];
 			};
-			_turretParams set ["pointParams", _pointParams];
+			[_turretParams, _pointParams, CFM_fnc_camPosStatic] call CFM_fnc_validateSetPointParams;
 		};
 		private _initialDir = if (_isDroneFeed) then {
 			[0,1,0]
@@ -529,7 +529,7 @@ OBJCLASS(Operator)
 		};
 
 		private _res = [_memPoint, [_addArr, _setArr]];
-		_turretParams set ["pointParams", _res];
+		[_turretParams, _res] call CFM_fnc_validateSetPointParams;
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams, true];
 
@@ -654,95 +654,11 @@ OBJCLASS(Operator)
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
-		if (_camPosFunc isEqualTo CFM_fnc_camPosVehStatic) then {
-			private _checkedPointParams = +_pointParams;
-			private _checkPointParams = call {
-				if !(_pointParams isEqualType []) exitWith {false};
-				if ((count _pointParams) != 2) exitWith {false};
-				_pointParams params [["_m", ""], ["_offsets", []]];
-				if !(_offsets isEqualType []) exitWith {false};
-				_offsets params [["_pos", []], ["_vdup", []]];
-				if !(_pos isEqualType []) exitWith {false};
-				if (count _pos != 3) exitWith {false};
-				if !(_vdup isEqualType []) exitWith {
-					_checkedPointParams = [_m, [_pos, [NULL_VECTOR, NULL_VECTOR]]];
-					true
-				};
-				_vdup params [["_dir", []], ["_up", []]];
-				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
-					_dir = NULL_VECTOR;
-				};
-				if (!(_up isEqualType []) || {(count _up != 3)}) then {
-					_up = NULL_VECTOR;
-				};
-				_checkedPointParams = [_m, [_pos, [_dir, _up]]];
-				true
-			};
-			if !(_checkPointParams) then {
-				_pointParams = ["", [NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]];
-			} else {
-				_pointParams = +_checkedPointParams;
-			};
-		};
-		if (_camPosFunc isEqualTo CFM_fnc_camPosVehTurret) then {
-			private _checkedPointParams = +_pointParams;
-			private _checkPointParams = call {
-				if !(_pointParams isEqualType []) exitWith {false};
-				_pointParams params [["_memPoint", []], ["_align", []]];
-				if !(_memPoint isEqualType "") then {
-					_memPoint = "";
-				};
-				private _defAdd = [0,0,0];
-				private _defSet = [-1,-1,-1];
-				private _defAddSet = [+_defAdd, +_defSet];
-				if (!(_align isEqualType []) || {(_align isEqualTo [])}) exitWith {
-					_checkedPointParams = [_memPoint, +_defAddSet];
-					true
-				};
-				_align params [["_add", []], ["_set", []]];
-				if (!(_add isEqualType []) || {(count _add != 3)}) then {
-					_add = +_defAdd;
-				};
-				if (!(_set isEqualType []) || {(count _set != 3)}) then {
-					_set = +_defSet;
-				};
-				_checkedPointParams = [_memPoint, [_add, _set]];
-				true
-			};
-			if !(_checkPointParams) then {
-				_pointParams = ["", [NULL_VECTOR, NULL_VECTOR]];
-			} else {
-				_pointParams = +_checkedPointParams;
-			};
-		};
-		if (_camPosFunc isEqualTo CFM_fnc_camPosStatic) then {
-			private _checkedPointParams = +_pointParams;
-			private _checkPointParams = call {
-				if !(_pointParams isEqualType []) exitWith {false};
-				_pointParams params [["_pos", []], ["_dir", []], ["_up", []]];
-				if (!(_pos isEqualType []) || {(count _pos != 3)}) then {
-					_pos = NULL_VECTOR;
-				};
-				if (!(_dir isEqualType []) || {(count _dir != 3)}) then {
-					_dir = NULL_VECTOR;
-				};
-				if (!(_up isEqualType []) || {(count _up != 3)}) then {
-					_up = NULL_VECTOR;
-				};
-				_checkedPointParams = [_pos, _dir, _up];
-				true
-			};
-			if !(_checkPointParams) then {
-				_pointParams = [NULL_VECTOR, NULL_VECTOR, NULL_VECTOR];
-			} else {
-				_pointParams = +_checkedPointParams;
-			};
-		};
 		if !(IS_OBJ(_turretObj)) then {
 			_turretObj = _self;
 		};
 		_cameraMoveRestrictions resize [4, 180];
-		_turretData set ["pointParams", _pointParams]; 
+		_pointParams = +([_turretData, _pointParams] call CFM_fnc_validateSetPointParams);
 		_turretsParams set [_turretIndex, _turretData];
 		_self setVariable ["CFM_turretsParams", _turretsParams];
 
@@ -899,7 +815,7 @@ OBJCLASS(Operator)
 		_turretData set ["currentCamMove", +_currentMove];
 
 		_pointParams = [_pos, _newDir, _newUp];
-		_turretData set ["pointParams", +_pointParams];
+		[_turretData, _pointParams] call CFM_fnc_validateSetPointParams;
 		_turretsParams set [_turretIndex, _turretData];
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);

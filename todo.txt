@@ -1,4 +1,7 @@
 
+set point params validate func
+fix point params MP
+optimise eachframe and loop
 
 LONG mb:
 continuous ca move
