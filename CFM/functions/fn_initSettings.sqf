@@ -1,21 +1,22 @@
 #include "defines.hpp"
 #define CFM_CATEGORY "CFM Camera System Settings"
+#define OPTIMIZE_MONITOR_FEED_DIST "20"
 
 // CBA settings
-["CFM_allUavsAreFeedingByDefault",  "CHECKBOX",  ["All UAVs feed by default", "All UAVs feed by default"], CFM_CATEGORY, true, 0] call CBA_fnc_addSetting;
+["CFM_allUavsAreFeedingByDefault",  "CHECKBOX",  ["All UAVs feed by default", "All UAVs feed by default"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], CFM_CATEGORY, DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 ["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], CFM_CATEGORY, true] call CBA_fnc_addSetting;
 ["CFM_canFullscreen",  "CHECKBOX",  ["Can fullscreen", "Viewers can enter fullscreen"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_optimizeByDistance",  "EDITBOX",  ["Optimize by Distance", "Distance to monitor threshold for optimizing PIP settings. -1 for unlimited"], CFM_CATEGORY, OPTIMIZE_MONITOR_FEED_DIST] call CBA_fnc_addSetting;
 ["CFM_menuShowOperatorGrid",  "CHECKBOX",  ["Show operator map grid position", "Show operator map grid position"], CFM_CATEGORY, false] call CBA_fnc_addSetting;
 ["CFM_menuShowOperatorDistance",  "CHECKBOX",  ["Show operator distance to monitor", "Show operator distance to monitor"], CFM_CATEGORY, false] call CBA_fnc_addSetting;
-["CFM_allHandMonitorsAreDisplays",  "CHECKBOX",  ["All hand monitors are fullscreen displays", "All hand monitors are fullscreen displays"], CFM_CATEGORY, false] call CBA_fnc_addSetting;
+["CFM_allHandMonitorsAreDisplays",  "CHECKBOX",  ["All hand monitors are fullscreen displays", "All hand monitors are fullscreen displays"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_fullscreenIsPip",  "CHECKBOX",  ["Fullscreen is PIP", "Fullscreen is Picture In Picture window"], CFM_CATEGORY, true] call CBA_fnc_addSetting;
 ["CFM_cameraMoveSensitivity",  "SLIDER",  ["Camera Move Sensitivity", "Sensitivity of camera movement"], CFM_CATEGORY, [0, 50, 5, 1, false]] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessOffset",  "EDITBOX",  ["Camera Rotation Tightness", "Tightness of camera rotation interpolation. Lower is more smooth"], CFM_CATEGORY, "5", 1] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessZoom",  "EDITBOX",  ["Camera Zoom Tightness", "Tightness of camera zoom interpolation. Lower is more smooth"], CFM_CATEGORY, "10", 1] call CBA_fnc_addSetting;
 ["CFM_canInterceptUAVcontrol",  "CHECKBOX",  ["Can intercept UAV control", "Can intercept UAV control so if someone already controlling drone then he will be disconnected"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
-["CFM_canMoveDroneCameras",  "CHECKBOX",  ["Can move UAV cameras", "Can move UAV cameras via monitor"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
+["CFM_canMoveDroneCameras",  "CHECKBOX",  ["Can move UAV cameras", "Can move UAV cameras via monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_canMoveDroneCameraIfUavControlled",  "CHECKBOX",  ["Can intercept move UAV cameras", "Can move UAV cameras via monitor even if drone turret is controlled by other player"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_canHackDrone",  "CHECKBOX",  ["Can hack UAV", "Can hack UAV if using other side monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 
