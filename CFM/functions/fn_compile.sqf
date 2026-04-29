@@ -196,7 +196,19 @@ CFM_fnc_checkIfOperatorFeedsToAnyMonitor = {
 
 CFM_fnc_setupLocalActiveOperators = {
 	private _activeOperators = missionNamespace getVariable ["CFM_ActiveOperators", []];
-	CFM_LocalActiveOperators = _activeOperators select {local _x};
+	CFM_LocalActiveOperators = _activeOperators select {
+		(local _x) && {
+			private _hasTurrLocal = false;
+			private _turretsParams = _operator getVariable "CFM_turretsParams";
+			if (isNil "_turretsParams" || {!(_turretsParams isEqualType createHashMap)}) exitWith {false};
+			{
+				if (_x getOrDefault ["IsTurretLocal", false]) exitWith {
+					_hasTurrLocal = true;
+				};
+			} forEach _turretsParams;
+			_hasTurrLocal
+		}
+	};
 	CFM_LocalActiveOperators
 };
 
