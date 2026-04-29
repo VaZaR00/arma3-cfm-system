@@ -7,7 +7,7 @@
 	if !(_classFuncExists select 0) exitWith {objNull}; \
 	private _classFunc = _classFuncExists select 1; \
 	private _ooClassname = _CLASSNAMESTR(name); \
-	SET_THIS_OBJINSTANCE(name, _self, _classFunc) \
+	SET_THIS_OBJINSTANCE_GLOBAL(name, _self, _classFunc, global) \
 	private _objClasses = _self getVariable ["OOP_this_classes", []];\
 	_objClasses pushBackUnique _ooClassname; \
 	_self setVariable ["OOP_this_classes", _objClasses, global]; \

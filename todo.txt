@@ -1,10 +1,9 @@
 
-set point params validate func
-fix point params MP
+CFM_LocalActiveOperators select turr local
 optimise eachframe and loop
 
 LONG mb:
-continuous ca move
+continuous cam move
 shortcuts for operators switch
 анимация просмотра в диалоге
 

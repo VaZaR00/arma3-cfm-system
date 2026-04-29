@@ -95,6 +95,7 @@ CLASS(DbHandler)
 		if (_global && _viaPubVar) then {
 			missionNamespace setVariable [_listName, _list];
 			publicVariable _listName;
+			call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
 		} else {
 			missionNamespace setVariable [_listName, _list, _global];
 		};

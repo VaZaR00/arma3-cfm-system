@@ -15,7 +15,8 @@ if (isServer) then {
 		publicVariableServer "CFM_makeCamDataSync";
 	};
 };
-"CFM_ActiveOperators" addPublicVariableEventHandler {call CFM_fnc_setupLocalActiveOperators};
+CFM_ActiveOperators_PublicEH = {call CFM_fnc_setupLocalActiveOperators};
+"CFM_ActiveOperators" addPublicVariableEventHandler {call CFM_ActiveOperators_PublicEH};
 
 // default point alignments
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
