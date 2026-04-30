@@ -56,7 +56,7 @@ if (is3DEN) exitWith {};
 
 			private _memPointLodStr = _logic getVariable ["cameraMemoryPoint", ""];
 
-			private _memPointLod = _memPointLodStr splitString SPLIT_CHARACTERS;
+			private _memPointLod = _memPointLodStr splitString (trim SPLIT_CHARACTERS);
 			_memPointLod params [
 				["_memPoint", ""],
 				["_lod", "memory"]
@@ -183,12 +183,13 @@ if (is3DEN) exitWith {};
 		private _syncedTurretModules = _syncedObjs select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
 		private _memPointLodStr = _logic getVariable ["cameraMemoryPoint", ""];
 
-		private _memPointLod = _memPointLodStr splitString SPLIT_CHARACTERS;
+		private _memPointLod = _memPointLodStr splitString (trim SPLIT_CHARACTERS);
 		_memPointLod params [
 			["_memPoint", ""],
 			["_lod", "memory"]
 		];
 		private _mainObject = _operators param [0, objNull];
+		// get the offset of main module
 		private _turretsCustom = [[_logic, _mainObject] call _proccessTurretModule];
 		{
 			private _turretModuleParams = [_x, _mainObject] call _proccessTurretModule;

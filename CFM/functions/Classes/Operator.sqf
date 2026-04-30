@@ -431,6 +431,7 @@ OBJCLASS(Operator)
 							false
 						} else {
 							private _memPoint = _pointParams param [0,""];
+							if (_memPoint isEqualType []) then {_memPoint = _memPoint param [0,""]};
 							if (!(_memPoint isEqualType '') || {_memPoint isEqualTo ""}) then {
 								true
 							} else {
