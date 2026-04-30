@@ -446,11 +446,12 @@ OBJCLASS(Operator)
 		// POINT ALIGNMENT
 		_turretParams set ["ppType", _ppType];
 		if (_ppType != PP_NONE) then {
-			[_self, _turretIndex, _pointParams, _ppType] call CFM_fnc_setPointAlignment;
+			_pointParams = [_self, _turretIndex, _pointParams, _ppType, false] call CFM_fnc_setPointAlignment;
 		};
 		if !(_pointParams isEqualType []) then {
 			_pointParams = [];
 		};
+		_turretParams set ["pointParams", _pointParams];
 
 
 		// CAN MOVE CAMERA
@@ -485,7 +486,7 @@ OBJCLASS(Operator)
 		_turretParams
 	};
 	METHOD("setPointParams") {
-		params[["_turretIndex", -1], ["_params", []], ["_ppType", -2]];
+		params[["_turretIndex", -1], ["_params", []], ["_ppType", -2], ["_setVar", true]];
 
 		if (_turretIndex isEqualType []) then {
 			_turretIndex = _turretIndex#0;
@@ -497,16 +498,19 @@ OBJCLASS(Operator)
 		private _prevParams = _turretParams getOrDefault ["pointParams", []];
 		_ppType = if (_ppType isEqualTo -2) then {_turretParams getOrDefault ["ppType", -1]} else {_ppType};
 
-		if !(_params isEqualType []) then {
+		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
 			_params = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
 		};
 
 		private _pointParams = [_ppType, _prevParams, _params] call CFM_fnc_validatePointParams;
-		_turretParams set ["pointParams", _pointParams];
-		_turretsParams set [_turretIndex, _turretParams];
-		_self setVariable ["CFM_turretsParams", _turretsParams, true];
 
-		_turretParams
+		if (_setVar) then {
+			_turretParams set ["pointParams", _pointParams];
+			_turretsParams set [_turretIndex, _turretParams];
+			_self setVariable ["CFM_turretsParams", _turretsParams, true];
+		};
+
+		_pointParams
 	};
 	METHOD("setDefaultPointAlignment") {
 		{
