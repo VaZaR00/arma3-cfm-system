@@ -6,11 +6,11 @@
 
 #include "defines.hpp" 
 
-params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]]];
+params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]], ["_lod", "Memory"]];
 
 _pointParams params [["_addArr", [0,0,0]], ["_dirUp", []], ["_setArr", [-1,-1,-1]]];
 
-private _offset = [_obj, [_memPoint, "Memory"], _addArr, _dirUp] call CFM_fnc_getMemPointOffsetInModelSpace;
+private _offset = [_obj, [_memPoint, _lod], _addArr, _dirUp] call CFM_fnc_getMemPointOffsetInModelSpace;
 
 private _selPos = _offset param [0, [0,0,0]];
 

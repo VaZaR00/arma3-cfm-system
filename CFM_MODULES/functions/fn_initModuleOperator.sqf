@@ -17,157 +17,197 @@ if (is3DEN) exitWith {};
 
 	sleep 0.1;	
 
-	private _syncedObjs = (synchronizedObjects _logic);
+	// if just turret dont proccess
+	private _isJustTurret = BOOL("isCameraTurret", 0);
+	if (_isJustTurret) exitWith {};
 
-	private _mainObject = missionNamespace getVariable [(LGVAR ["operatorObject", ""]), objNull];
+	// ------------- FUNCTIONS -------------
+		private _proccessArrayString = {
+			params["_l", "_offsetsStr", ["_mainObject", objNull]];
+			private _res = [];
+			private _isThis = ((tolower _offsetsStr) isEqualTo "this");
+			if (_isThis && {(IS_OBJ(_mainObject))}) then {
+				private _relPosModule = _mainObject worldToModelVisual (getPos _l);
+				private _relDirModule = _mainObject vectorWorldToModelVisual (vectorDir _l);
+				private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
+				private _memPointPos = _mainObject selectionPosition [_memPoint, _lod];
+				private _memPointDirUp = _mainObject selectionVectorDirAndUp [_memPoint, _lod];
+				_res = [
+					_memPoint, [
+						_relPosModule vectorDiff _memPointPos, 
+						[
+							_relDirModule vectorDiff (_memPointDirUp#0), 
+							_relUpModule vectorDiff (_memPointDirUp#1)
+						]
+					], _lod
+				];
+			};
+			if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
+				_res = call compile _offsetsStr;
+			};
+			if (isNil "_res") then {
+				_res = [];
+			};
+			if (_res isEqualTo []) exitWith {[]};
+			+_res
+		};
+		private _proccessTurretModule = {
+			params["_logic", ["_mainObj", objNull]];
 
-	if !(isNil "_mainObject") then {
-		if (_mainObject isEqualType objNull) then {
-			if !(_mainObject isEqualTo objNull) then {
-				_syncedObjs = [_mainObject] + _syncedObjs;
+			// skip if its not set as turret
+			if !(BOOL("isCameraTurret", 0)) then {continue};
+
+			private _memPointLodStr = _logic getVariable ["cameraMemoryPoint", ""];
+
+			private _memPointLod = _memPointLodStr splitString SPLIT_CHARACTERS;
+			_memPointLod params [
+				["_memPoint", ""],
+				["_lod", "memory"]
+			];
+
+			private _turrOffsetsStr = _logic getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
+			private _turrOffsets = [_logic, _turrOffsetsStr, _mainObj] call _proccessArrayString;
+			if (isNil "_turrOffsets") then {
+				_turrOffsets = [];
+			};
+			private _turrParams = [
+				MGVAR [LGVAR ["cameraObject", ""], objNull],
+				BOOL("cameraCanMoveCamera", 1),
+				[_logic, (LGVAR ["zoomParams", ""]), objNull] call _proccessArrayString,
+				[BOOL("cameraHasNvg", 1), BOOL("cameraHasTI", 1)],
+				_turrOffsets,
+				true,
+				LGVAR ["cameraName", ""],
+				BOOL("cameraSmoothZoom", 1)
+			];
+			private _turretIndexStr = trim (LGVAR ["turretIndex", ""]);
+			private _turretIndex = parseNumber _turretIndexStr;
+			if (
+				!(_turretIndexStr isEqualTo "") && {
+					((_turretIndex == 0) && (_turretIndexStr isEqualTo "0")) ||
+					(_turretIndex != 0)
+				}
+			) then {
+				_turrParams = [_turretIndex, _turrParams];
+			};
+			_turrParams
+		};
+	// ---------------------------------------
+
+	// ------- OPERATOR OBJECTS AND CLASSES PARAMS ---------
+		private _syncedObjs = (synchronizedObjects _logic);
+		private _operatorsStr = LGVAR ["cameraObject", ""];
+		private _operatorClasses = [];
+		private _argumentsNotProccessed = [];
+		private ["_class", "_op"];
+		private _objectCondition = {(_this isKindOf "Land") || (_this isKindOf "Air")};
+		private _operators = (_syncedObjs + (_operatorsStr splitString SPLIT_CHARACTERS)) select {
+			call {
+				if (_x isEqualType objNull) exitWith {
+					_x call _objectCondition;
+				};
+				if (("""" in _x) || ("'" in _x)) then {
+					comment "Classnames (strings)";
+					_class = call compile _x;
+					if (isNil "_class") exitWith {
+						_argumentsNotProccessed pushBack _x;
+						false; 
+					};
+					_operatorClasses pushBackUnique _class;
+					false; 
+				} else {
+					_op = missionNamespace getVariable _x;
+					if ((isNil "_op") || {!(IS_OBJ(_op))}) then {
+						_argumentsNotProccessed pushBack _x;
+						false;
+					} else {
+						_op call _objectCondition;
+					};
+				};
 			};
 		};
-	};
-	
-	private _operators = _syncedObjs select {
-		private _obj = _x;
+		private _hasNoOperatorObjs = _operators isEqualTo [];
+	// ---------------------------------------
 
-		if (isNil "_obj") exitWith {false};
-		if !(_obj isEqualType objNull) exitWith {false};
-		if (isNull _obj) exitWith {false};
-
-		true
-	};
-
-	if (_operators isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: ZERO OPERATORS. Synced objects given: %1", _syncedObjs] DLOG
-	};
-
-	_mainObject = _operators param [0, objNull];
-
-	private _sidesStr = LGVAR ["operatorSides", ""];
-	private _sides = (_sidesStr splitString " ,.;:[](){}") apply {
-		private _compile = call compile _x;
-		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
-			false
-		} else {
-			_compile
+	// ----------- MAIN PARAMS -------------
+		// SIDES
+		private _sidesStr = LGVAR ["cameraSides", ""];
+		private _sides = (_sidesStr splitString SPLIT_CHARACTERS) apply {
+			private _compile = call compile _x;
+			if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
+				false
+			} else {
+				_compile
+			};
 		};
-	};
-	_sides = _sides select {_x isEqualType west};
+		_sides = _sides select {_x isEqualType west};
+		if (!_hasNoOperatorObjs && {(_sides isEqualTo [])}) then {
+			_sides = [side (_operators#0)];
+		};
 
-	if (_sides isEqualTo []) then {
-		_sides = [side (_operators#0)];
-	};
+		if (_hasNoOperatorObjs && {(_sides isEqualTo [])}) exitWith {
+			format["Module '%1'. CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %2", _logic, _sidesStr] WARN
+		};
 
-	if (_sides isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
-	};
+		// _pointParams: [_memPoint, ["_addArr", ["_dir", "_up"], "_setArr"]]
+		// _turretsCustom: [[turrIndex, [_turretObject, _canMoveCamera, _setZoomTable, _setNvgAndTi, _pointParams, _doInterpolationSet, _turretName, _smoothZoomSetTurr]]]
 
-	private _turretsCustom = LGVAR ["operatorTurretsCustom", ""];
-	if !(_turretsCustom isEqualTo "") then {
-		_turretsCustom = call compile _turretsCustom;
-	};
-	if (isNil "_turretsCustom") then {
-		_turretsCustom = [];
-	};
-	if !(_turretsCustom isEqualType []) then {
-		_turretsCustom = [];
-	};
+		private _nvgTi = [SELECT_DEF("cameraHasNvg", 1), SELECT_DEF("cameraHasTI", 1)];
 
-	private _staticCamModuleClass = (tolower "CFM_Module_Camera");
-	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
+		private _name = LGVAR ["cameraName", ""];
+		private _canMoveCam = SELECT_DEF("cameraCanMoveCamera", 1);
+		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
+	// ---------------------------------------
 
-	private _proccessArrayString = {
-		params["_l", "_offsetsStr", ['_isOffset', true]];
-		private _res = [];
-		private _isThis = ((tolower _offsetsStr) isEqualTo "this");
-		if (_isOffset && {_isThis}) then {
-			private _relPosModule = _mainObject worldToModelVisual (getPos _l);
-			private _relDirModule = _mainObject vectorWorldToModelVisual (vectorDir _l);
-			private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
-			private _memPointPos = _mainObject selectionPosition [_memPoint, _lod];
-			private _memPointDirUp = _mainObject selectionVectorDirAndUp [_memPoint, _lod];
-			_res = [
-				_memPoint, [
-					_relPosModule vectorDiff _memPointPos, 
-					[
-						_relDirModule vectorDiff (_memPointDirUp#0), 
-						_relUpModule vectorDiff (_memPointDirUp#1)
-					]
+	// -------- PROCCESS OPERATOR CLASSES --------
+		if !(_operatorClasses isEqualTo []) then {
+			private _turretsCustom = [_logic, LGVAR ["cameraTurretsCustom", "this"]] call _proccessArrayString;
+			(_operatorClasses + [
+				_sides,
+				_turretsCustom,
+				_nvgTi,
+				_name,
+				[
+					_canMoveCam,
+					_smoothZoom
 				]
-			];
+			]) call CFM_fnc_setOperator;
 		};
-		if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
-			_res = call compile _offsetsStr;
-		};
-		if (isNil "_res") then {
-			_res = [];
-		};
-		if (_res isEqualTo []) exitWith {[]};
-		+_res
+	// ---------------------------------------
+	[_logic, _operators, _syncedObjs, _syncedObjs apply {_x call _objectCondition}] RLOG
+	// ------ PROCCESS IF STATIC CAMERA --------
+	if (_operators isEqualTo []) exitWith {
+		[_logic] call CFM_fnc_initModuleStaticCamera;
 	};
-	{
-		private _logic = _x;
+	// ---------------------------------------
 
-		// skip if its not set as turret
-		if !(BOOL("isCameraTurret", 0)) then {continue};
+	// --- PROCCESS OPERATORS OBJECTS AND TURRET MODULES ---
+		private _staticCamModuleClass = (tolower "CFM_Module_Camera");
+		private _syncedTurretModules = _syncedObjs select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
+		private _memPointLodStr = _logic getVariable ["cameraMemoryPoint", ""];
 
-		private _memPointLodStr = _x getVariable ["cameraMemoryPoint", ""];
-
-		private _memPointLod = _memPointLodStr splitString " ,.;:[()]";
+		private _memPointLod = _memPointLodStr splitString SPLIT_CHARACTERS;
 		_memPointLod params [
 			["_memPoint", ""],
 			["_lod", "memory"]
 		];
-
-		private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
-		private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
-		if (isNil "_turrOffsets") then {
-			_turrOffsets = [];
-		};
-		private _turrParams = [
-			MGVAR [LGVAR ["cameraObject", ""], objNull],
-			BOOL("cameraCanMoveCamera", 1),
-			[_logic, (LGVAR ["zoomParams", ""]), false] call _proccessArrayString,
-			[BOOL("cameraHasNvg", 1), BOOL("cameraHasTI", 1)],
-			_turrOffsets,
-			true,
-			LGVAR ["cameraName", ""],
-			BOOL("cameraSmoothZoom", 1)
-		];
-		private _turretIndexStr = trim (LGVAR ["turretIndex", ""]);
-		private _turretIndex = parseNumber _turretIndexStr;
-		if (
-			!(_turretIndexStr isEqualTo "") && {
-				((_turretIndex == 0) && (_turretIndexStr isEqualTo "0")) ||
-				(_turretIndex != 0)
-			}
-		) then {
-			_turrParams = [_turretIndex, _turrParams];
-		};
-		_turretsCustom pushBack _turrParams;
-	} forEach _syncedModules;
-
-	// _pointParams: [_memPoint, ["_addArr", ["_dir", "_up"], "_setArr"]]
-	// _turretsCustom: [[turrIndex, [_turretObject, _canMoveCamera, _setZoomTable, _setNvgAndTi, _pointParams, _doInterpolationSet, _turretName, _smoothZoomSetTurr]]]
-
-	private _nvgTi = [SELECT_DEF("operatorHasNvg", 1), SELECT_DEF("operatorHasTI", 1)];
-
-	private _name = LGVAR ["operatorName", ""];
-	private _canMoveCam = SELECT_DEF("operatorCanMoveCamera", 1);
-	private _smoothZoom = BOOL("operatorSmoothZoom", 1);
-
-	[
-		_operators,
-		_sides,
-		_turretsCustom,
-		_nvgTi,
-		_name,
+		private _mainObject = _operators param [0, objNull];
+		private _turretsCustom = [_logic, LGVAR ["cameraTurretsCustom", "this"], _mainObject] call _proccessArrayString;
+		{
+			private _turretModuleParams = [_x, _mainObject] call _proccessTurretModule;
+			_turretsCustom pushBack _turretModuleParams;
+		} forEach _syncedTurretModules;
 		[
-			_canMoveCam,
-			_smoothZoom
-		]
-	] call CFM_fnc_setOperator;
+			_operators,
+			_sides,
+			_turretsCustom,
+			_nvgTi,
+			_name,
+			[
+				_canMoveCam,
+				_smoothZoom
+			]
+		] call CFM_fnc_setOperator;
+	// ---------------------------------------
 };
 

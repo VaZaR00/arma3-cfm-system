@@ -258,11 +258,17 @@ CFM_fnc_validatePointParams = {
 			[_pos, [_dir, _up]]
 		};
 		case PP_VEH_TURRET: {
-			_prevParams params [['_prevMemPoint', ""], ['_prevAlignment', []]];
+			_prevParams params [['_prevMemPoint', ""], ['_prevAlignment', []], ['_prevlod', "Memory"]];
 			_prevAlignment params [["_prevAddArr", []], ["_prevDirUp", []], ["_prevSetArr", []]];
 			_prevDirUp params [["_prevDir", []], ["_prevUp", []]];
 
 			_params params[["_memPoint", ""], ["_addArr", []], ["_dir", []], ["_up", []], ["_setArr", []]];
+			private _lod = "";
+
+			if (_memPoint isEqualType []) then {
+				_lod = _memPoint param [1,"memory"];
+				_memPoint = _memPoint param [0,""];
+			};
 
 			if !(VALID_VECTOR(_prevSetArr)) then {_prevSetArr = [-1,-1,-1]};
 			if !((_memPoint isEqualType "") && !(_memPoint isEqualTo "")) then {_prevMemPoint = ""};
@@ -285,7 +291,10 @@ CFM_fnc_validatePointParams = {
 			if !((_memPoint isEqualType "") && !(_memPoint isEqualTo "")) then {
 				_memPoint = _prevMemPoint;
 			};
-			[_memPoint, [_addArr, [_dir, _up], _setArr]]
+			if !((_lod isEqualType "") && !(_lod isEqualTo "")) then {
+				_lod = _prevlod;
+			};
+			[_memPoint, [_addArr, [_dir, _up], _setArr], _lod]
 		};
 		default {[]};
 	};

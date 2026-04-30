@@ -21,7 +21,7 @@ if (is3DEN) exitWith {};
 	sleep 0.1;	
 
 	private _sidesStr = LGVAR ["cameraSides", ""];
-	private _sides = (_sidesStr splitString " ,.;:[](){}") apply {
+	private _sides = (_sidesStr splitString SPLIT_CHARACTERS) apply {
 		private _compile = call compile _x;
 		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
 			false
@@ -32,7 +32,7 @@ if (is3DEN) exitWith {};
 	_sides = _sides select {_x isEqualType west};
 
 	if (_sides isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
+		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] WARN
 	};
 
 	private _proccessArrayString = {
@@ -76,7 +76,7 @@ if (is3DEN) exitWith {};
 		]
 	};
 
-	private _offsetsStr = LGVAR ["cameraPosAndOffsetsTurretsCustom", "this"];
+	private _offsetsStr = LGVAR ["cameraTurretsCustom", "this"];
 	private _offsets = [_logic, _offsetsStr] call _proccessArrayString;
 	if (isNil "_offsets") then {
 		_offsets = [];
@@ -90,7 +90,7 @@ if (is3DEN) exitWith {};
 		// skip if its not set as turret
 		if !(OBJ_BOOL(_x, "isCameraTurret", 0)) then {continue};
 
-		private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
+		private _turrOffsetsStr = _x getVariable ["cameraTurretsCustom", "this"];
 		private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
 		if (isNil "_turrOffsets") then {
 			_turrOffsets = [];
@@ -101,7 +101,7 @@ if (is3DEN) exitWith {};
 	} forEach _syncedModules;
 
 	if (_offsets isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] DLOG
+		format["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] WARN
 	};
 
 	private _params = _logic call _proccessCameraParams;

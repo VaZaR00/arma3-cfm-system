@@ -38,11 +38,11 @@ if (is3DEN) exitWith {};
 	};
 
 	if (_monitors isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleMonitor: ZERO MONITORS. Synced objects given: %1", _syncedObjs] DLOG
+		format["CFM_fnc_initModuleMonitor: ZERO MONITORS. Synced objects given: %1", _syncedObjs] WARN
 	};
 
 	private _sidesStr = LGVAR ["monitorSides", ""];
-	private _sides = (_sidesStr splitString " ,.;:[](){}") apply {
+	private _sides = (_sidesStr splitString SPLIT_CHARACTERS) apply {
 		private _compile = call compile _x;
 		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
 			false
@@ -53,7 +53,7 @@ if (is3DEN) exitWith {};
 	_sides = _sides select {_x isEqualType west};
 
 	if (_sides isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleMonitor: NO SIDES GIVEN. Side string: %1", _sidesStr] DLOG
+		format["CFM_fnc_initModuleMonitor: NO SIDES GIVEN. Side string: %1", _sidesStr] WARN
 	};
 
 	[

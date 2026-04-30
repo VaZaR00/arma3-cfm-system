@@ -13,11 +13,11 @@ class CfgPatches {
         skipWhenMissingDependencies = 1;
 	};
 };
-class CfgFunctions
-{
-	class CFM
-	{
-		#include "includes\CfgFunctions.hpp"
-	};
-};
+// class CfgFunctions
+// {
+// 	class CFM
+// 	{
+// 		#include "includes\CfgFunctions.hpp"
+// 	};
+// };
 #include "includes\CfgModules.hpp"
