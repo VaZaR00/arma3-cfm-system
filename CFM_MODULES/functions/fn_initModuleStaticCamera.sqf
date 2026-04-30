@@ -56,6 +56,16 @@ if (is3DEN) exitWith {};
 
 		private _name = LGVAR ["cameraName", ""];
 
+		if (_name isEqualTo "") then {
+			// generate ID
+			private _hash = hashValue _logic;
+			private _nums = toArray _hash;
+			private _num = 0;
+			_nums apply {_num = _num + _x};
+			_num = _num * (_nums#0);
+			_name = "Camera ID: " + str _num;
+		};
+
 		private _camObj = MGVAR [LGVAR ["cameraObject", ""], objNull];
 		private _hasNvg = BOOL("cameraHasNvg", 1);
 		private _hasTi = BOOL("cameraHasTI", 1);
