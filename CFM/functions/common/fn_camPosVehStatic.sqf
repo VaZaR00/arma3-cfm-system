@@ -13,10 +13,8 @@ params["_obj", ["_offsets", []]];
 _offsets params [["_offsetPos", NULL_VECTOR], ["_vdup", [NULL_VECTOR, NULL_VECTOR]]];
 _vdup params [["_odir", NULL_VECTOR], ["_oup", NULL_VECTOR]];
 
-private _dir = vectorDirVisual _obj;
-private _up = vectorUpVisual _obj;
+private _dir = _obj vectorModelToWorldVisual _odir;
+private _up = _obj vectorModelToWorldVisual _oup;
 private _pos = _obj modelToWorldVisualWorld _offsetPos;
-private _newdir = _dir vectorAdd _odir;
-private _newup = _up vectorAdd _oup;
 
-[_pos, _newdir, _newup]
+[_pos, _dir, _up]
