@@ -18,7 +18,7 @@ private _defaultPreset = createHashMap;
 
 private _pointSet = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", _defaultPreset];
 
-private _allVehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["Man", "Land", "Air"] findIf {_c isKindOf _x}) != -1});
+private _allVehConfigClasses = (("true" configClasses (configFile >> "CfgVehicles") apply {toLower (configName _x)}) select {_c = _x; (["LandVehicle", "Air"] findIf {_c isKindOf _x}) != -1});
 parsingNamespace setVariable ["CFM_allVehConfigClasses", _allVehConfigClasses];
 private _vehConfigClasses = _allVehConfigClasses select {!(_x in _pointSet)};
 
@@ -51,6 +51,27 @@ private _defaults = [
 	[["m1a2"], [[-1, [DEF_MEM_POINT, [[-0.8,-0.2,0.8]]]]]],
 	[["fpv", "crocus"], [[-1, [[0.0, 0.2, 0.1]]]]]
 ];
+
+private _defaultMemPointF = {
+	params["_p"];
+	if ((_p#0) isEqualTo DEF_MEM_POINT) then {
+		private _defPointParams = ([_cls, _x, _type] call CFM_fnc_getCameraPoints)#1;
+		if !(_defPointParams isEqualType []) then {_defPointParams = [_defPointParams]};
+		_defPointParams params [["_memPoint", ""], ["_offsetDef", []]];
+		_p set [0, _memPoint];
+		if ((_offsetDef isEqualType []) && {(count _offsetDef == 3)}) then {
+			private _alignment = _p param [1, [], [[]]];
+			private _offset = _alignment param [0, []];
+			if !((_offset isEqualType []) && {(count _offset == 3)}) then {
+				_alignment set [0, _offsetDef];
+			};
+			_p set [1, _alignment];
+		};
+	};
+	_p
+};
+
+private _proccessed = [];
 {
 	private _type = TYPE_VEH;
 	private _checkClasses = false;
@@ -67,21 +88,31 @@ private _defaults = [
 		{
 			private _cls = _x;
 			{
-				if ((_y#0) isEqualTo DEF_MEM_POINT) then {
-					_y set [0, ([_cls, _x, _type] call CFM_fnc_getCameraPoints)#1]
-				};
+				[_y] call _defaultMemPointF;
 			} forEach _params;
-			_pointSet set [_x, _params];
+			_proccessed pushBack _cls;
+			_pointSet set [_cls, _params];
 		} forEach _fitClasses;
 	} else {
 		{
-			if ((_y#0) isEqualTo DEF_MEM_POINT) then {
-				_y set [0, ([_cls, _x, _type] call CFM_fnc_getCameraPoints)#1]
-			};
+			[_y] call _defaultMemPointF;
 		} forEach _params;
+		_proccessed pushBack _cls;
 		_pointSet set [_cls, _params];
 	};
 } forEach _defaults;
+
+private _type = TYPE_VEH;
+{
+	private _cls = _x;
+
+	if (_cls in _proccessed) then {continue};
+
+	private _params = createHashMapFromArray [[-1, [[DEF_MEM_POINT]] call _defaultMemPointF]];
+
+	_pointSet set [_cls, _params];
+	_proccessed pushBack _cls;
+} forEach _vehConfigClasses;
 
 parsingNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSet];
 _pointSet
