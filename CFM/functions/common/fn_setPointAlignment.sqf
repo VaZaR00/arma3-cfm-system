@@ -6,5 +6,5 @@
 
 #include "defines.hpp" 
 
-params[["_operator", objNull], ["_args", []]];
-["setPointAlignment", _args] CALL_OBJCLASS("Operator", _operator);
+params[["_operator", objNull], ["_turretIndex", -1], ["_params", []], ["_ppType", -2]];
+["setPointParams", [_turretIndex, _params, _ppType]] CALL_OBJCLASS("Operator", _operator);

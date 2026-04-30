@@ -2,6 +2,7 @@
 
 #define LGVAR _logic GV 
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
+#define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 
 private _logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
 private _units = [_this,1,[],[[]]] call BIS_fnc_param;
@@ -13,7 +14,7 @@ if (is3DEN) exitWith {};
 [_logic] spawn {
 	params["_logic"];
 
-	private _isJustTurret = BOOL("isStaticCameraTurret", 0);
+	private _isJustTurret = BOOL("isCameraTurret", 0);
 
 	if (_isJustTurret) exitWith {};
 
@@ -82,24 +83,25 @@ if (is3DEN) exitWith {};
 	};
 	_offsets = [_offsets];
 
-	private _staticCamModuleClass = (tolower "CFM_Module_StaticCamera");
+	private _staticCamModuleClass = (tolower "CFM_Module_Camera");
 	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
 
-	if !(_syncedModules isEqualTo []) then {
-		{
-			private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
-			private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
-			if (isNil "_turrOffsets") then {
-				_turrOffsets = [];
-			};
-			private _turrParams = _x call _proccessCameraParams;
-			private _turrArgs = [_turrOffsets] + _turrParams;
-			_offsets pushBack _turrArgs;
-		} forEach _syncedModules;
-	};
+	{
+		// skip if its not set as turret
+		if !(OBJ_BOOL(_x, "isCameraTurret", 0)) then {continue};
+
+		private _turrOffsetsStr = _x getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
+		private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
+		if (isNil "_turrOffsets") then {
+			_turrOffsets = [];
+		};
+		private _turrParams = _x call _proccessCameraParams;
+		private _turrArgs = [_turrOffsets] + _turrParams;
+		_offsets pushBack _turrArgs;
+	} forEach _syncedModules;
 
 	if (_offsets isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleStaticCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] DLOG
+		format["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] DLOG
 	};
 
 	private _params = _logic call _proccessCameraParams;

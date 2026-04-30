@@ -109,13 +109,13 @@ class CfgVehicles
             PARAMETER_SELECT(operatorSmoothZoom, 1)
         };
     };
-    class CFM_Module_StaticCamera: Module_F
+    class CFM_Module_Camera: Module_F
     {
         scope = 2;
         author = "Vazar";
-        displayName = "Static Camera";
+        displayName = "Camera";
         category = "CFM";
-        function = "CFM_fnc_initModuleStaticCamera";
+        function = "CFM_fnc_initModuleCamera";
         icon = "IconCamera";
         portrait = "IconCamera";
         functionPriority = 2;
@@ -124,10 +124,11 @@ class CfgVehicles
 
         class Arguments: ArgumentsBaseUnits
         {
-            PARAMETER_SELECT(isStaticCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
+            PARAMETER_SELECT(isCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
             PARAMETER(cameraName, "STRING", "Camera 1")
             PARAMETER(cameraSides, "STRING", "west")
             PARAMETER(cameraPosAndOffsetsTurretsCustom, "STRING", "this")
+            PARAMETER(cameraMemoryPoint, "STRING", "")
             PARAMETER(cameraObject, "STRING", "")
             PARAMETER_SELECT(cameraHasTI, 1)
             PARAMETER_SELECT(cameraHasNvg, 1)

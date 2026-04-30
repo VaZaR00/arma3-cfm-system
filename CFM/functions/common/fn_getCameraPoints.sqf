@@ -9,7 +9,7 @@
 
 params ["_vehicle", ["_turretPath", DRIVER_TURRET_PATH], ["_camType", ""]];
 
-private _vehType = toLower (typeOf _vehicle);
+private _vehType = if (_vehicle isEqualType objNull) then {toLower (typeOf _vehicle)} else {_vehicle};
 _turretPath = TURRET_INDEX(_turretPath);
 
 if ("mavik" in _vehType) exitWith {
@@ -37,6 +37,7 @@ private _camTypeRes = switch (_camType) do {
 	default { };
 };
 if !(isNil "_camTypeRes") exitWith {_camTypeRes};
+if !(IS_OBJ(_vehicle)) exitWith {[]};
 
 private _camPos = "uavCameraGunnerPos";
 private _camDir = "uavCameraGunnerDir";
@@ -47,7 +48,7 @@ if (_turretPath isEqualTo -1) then {
     _camDir = "uavCameraDriverDir";
 };
 
-private _config = configFile >> "CfgVehicles" >> typeOf _vehicle;
+private _config = configFile >> "CfgVehicles" >> _vehType;
 private _posPoint = getText (_config >> _camPos);
 private _dirPoint = getText (_config >> _camDir);
 if (_posPoint == "") then {

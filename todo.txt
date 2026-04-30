@@ -1,10 +1,11 @@
 
-CFM_LocalActiveOperators select turr local
-optimise eachframe and loop
+point params args better
+module stat cam as turr for operator module
 
 LONG mb:
 continuous cam move
 shortcuts for operators switch
 анимация просмотра в диалоге
+optimise eachframe and loop
 
 turret cam move fix (via lock turret)

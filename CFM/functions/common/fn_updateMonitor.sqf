@@ -9,13 +9,13 @@
 params["_monitor"];
 
 // upd cam pos
-private _isStaticVeh = _monitor getVariable ["CFM_currentCameraIsStatic", false];
+private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
 private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 private _smoothZoom = _monitor getVariable ["CFM_currentCameraSmoothZoom", true];
 private _offsetReached = true;
 
-private _camSet = if (!_isStaticVeh ||
+private _camSet = if (!_isStatic ||
 	{
 		(_smoothZoom && {
 			// zoom interpolation

@@ -6,5 +6,5 @@
             file = STR(MAIN_PATH_MODULES);
 			class initModuleOperator {};
 			class initModuleMonitor {};
-			class initModuleStaticCamera {};
+			class initModuleCamera {};
 		};

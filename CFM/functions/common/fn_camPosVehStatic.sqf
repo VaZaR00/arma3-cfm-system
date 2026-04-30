@@ -6,12 +6,10 @@
 
 #include "defines.hpp" 
 
-params["_obj", ["_offsetMS", []]];
+params["_obj", ["_offsets", []]];
 
-if !(_offsetMS isEqualType []) then {
-	_offsetMS = call CAM_POS_FUNC_DEF;
-};
-_offsetMS params [["_", ""], ["_offsets", []]];
+// _offsets: [_pos, [_dir, _up]]
+
 _offsets params [["_offsetPos", NULL_VECTOR], ["_vdup", [NULL_VECTOR, NULL_VECTOR]]];
 _vdup params [["_odir", NULL_VECTOR], ["_oup", NULL_VECTOR]];
 

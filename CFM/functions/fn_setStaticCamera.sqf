@@ -137,7 +137,7 @@ private _proccesTurret = {
 	};
 	_lastPos = +_pos;
 	_lastDirUp = +_vDirUp;
-	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], false, DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom]];
+	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom]];
 	_turrParams pushBack _turrArgs;
 };
 

@@ -7,4 +7,7 @@
 #include "defines.hpp" 
 
 params["_obj", ["_offset", []]];
+
+// offset [_pos, _dir, _up]
+
 _offset

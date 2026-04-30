@@ -38,6 +38,10 @@
 #define TYPE_HELM "helm"
 #define TYPE_UNIT "unit"
 #define TYPE_STATIC "static"
+#define PP_NONE -1
+#define PP_STATIC 0
+#define PP_VEH_STATIC 1
+#define PP_VEH_TURRET 2
 #define MGVAR missionNamespace getVariable
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
 #define CHECK_EX(c) if (c) exitWith {false};
