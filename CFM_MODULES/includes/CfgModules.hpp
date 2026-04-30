@@ -84,11 +84,11 @@ class CfgVehicles
             PARAMETER_SELECT(monitorCanConnectDrone, 1)
         };
     };
-    class CFM_Module_Operator: Module_F
+    class CFM_Module_Camera: Module_F
     {
         scope = 2;
         author = "Vazar";
-        displayName = "Operator";
+        displayName = "Camera";
         category = "CFM";
         function = "CFM_fnc_initModuleOperator";
         icon = "IconCamera";
@@ -99,35 +99,10 @@ class CfgVehicles
 
         class Arguments: ArgumentsBaseUnits
         {
-            PARAMETER(operatorObject, "STRING", "")
-            PARAMETER(operatorName, "STRING", "")
-            PARAMETER(operatorSides, "STRING", "")
-            PARAMETER_SELECT_DEFAULT(operatorCanMoveCamera, -1)
-            PARAMETER(operatorTurretsCustom, "STRING", "")
-            PARAMETER_SELECT_DEFAULT(operatorHasTI, -1)
-            PARAMETER_SELECT_DEFAULT(operatorHasNvg, -1)
-            PARAMETER_SELECT(operatorSmoothZoom, 1)
-        };
-    };
-    class CFM_Module_Camera: Module_F
-    {
-        scope = 2;
-        author = "Vazar";
-        displayName = "Camera";
-        category = "CFM";
-        function = "CFM_fnc_initModuleCamera";
-        icon = "IconCamera";
-        portrait = "IconCamera";
-        functionPriority = 2;
-        isGlobal = 0;
-        isTriggerActivated = 0;
-
-        class Arguments: ArgumentsBaseUnits
-        {
             PARAMETER_SELECT(isCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
-            PARAMETER(cameraName, "STRING", "Camera 1")
+            PARAMETER(cameraName, "STRING", "")
             PARAMETER(cameraSides, "STRING", "west")
-            PARAMETER(cameraPosAndOffsetsTurretsCustom, "STRING", "this")
+            PARAMETER(cameraTurretsCustom, "STRING", "this")
             PARAMETER(cameraMemoryPoint, "STRING", "")
             PARAMETER(cameraObject, "STRING", "")
             PARAMETER_SELECT(cameraHasTI, 1)
