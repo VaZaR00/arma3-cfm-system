@@ -38,7 +38,7 @@ private _pointParams = _turretData getOrDefault ["pointParams", []];
 private _turretObj = _turretData getOrDefault ["turretObject", _operator];
 private _posVDUp = [objNull, [_operator, _turretObj, [_turretIndex], true, _pointParams, nil, objNull, false, false, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 _posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
-_vdup params [["_dir", NULL_VECTOR], ["_up", NULL_VECTOR]];
+_vdup params [["_dir", DEF_DIR], ["_up", DEF_UP]];
 private _prevDir = _operator getVariable [_dirVarName, []];
 private _prevUp = _operator getVariable [_upVarName, []];
 // private _prevPos = _operator getVariable [_posVarName, []];

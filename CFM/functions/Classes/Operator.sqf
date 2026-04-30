@@ -731,7 +731,7 @@ OBJCLASS(Operator)
 			
 		private _done = switch (_ppType) do {
 			case PP_STATIC: {
-				_pointParams params [["_pos", [], [[]], 3], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+				_pointParams params [["_pos", [], [[]], 3], ["_dir", DEF_DIR, [[]], 3], ["_up", DEF_UP, [[]], 3]];
 
 				// global rotation
 				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
@@ -746,7 +746,7 @@ OBJCLASS(Operator)
 			};
 			case PP_VEH_STATIC: {
 				_pointParams params [["_pos", [], [[]], 3], ["_dirUp", [], [[]]]];
-				_dirUp params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+				_dirUp params [["_dir", DEF_DIR, [[]], 3], ["_up", DEF_UP, [[]], 3]];
 
 				// global rotation
 				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
@@ -765,11 +765,17 @@ OBJCLASS(Operator)
 				_dirUp params [["_dirMS", []], ["_upMS", []]];
 
 				// mem point space rotation
+				private _memPointDirUp = _self selectionVectorDirAndUp [_memPoint, _lod];
+				_memPointDirUp params [["_mdir", DEF_DIR], ["_mup", DEF_UP]];
+				_dirMS = _dirMS vectorAdd _mdir;
+				_upMS = _upMS vectorAdd _mup;
 				private _dir = _self vectorModelToWorldVisual _dirMS;
 				private _up = _self vectorModelToWorldVisual _upMS;
 				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
+				_newDir = _newDir vectorDiff _mdir;
+				_newUp = _newUp vectorDiff _mup;
 				private _newDirMS = _self vectorWorldToModelVisual _newDir;
 				private _newUpMS = _self vectorWorldToModelVisual _newUp;
 

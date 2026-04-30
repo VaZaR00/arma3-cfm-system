@@ -90,14 +90,14 @@ private _proccessed = [];
 		{
 			private _cls = _x;
 			{
-				[_y] call _defaultMemPointF;
+				_params set [_x, ([_y] call _defaultMemPointF)];
 			} forEach _params;
 			_proccessed pushBack _cls;
 			_pointSet set [_cls, _params];
 		} forEach _fitClasses;
 	} else {
 		{
-			[_y] call _defaultMemPointF;
+			_params set [_x, ([_y] call _defaultMemPointF)];
 		} forEach _params;
 		_proccessed pushBack _cls;
 		_pointSet set [_cls, _params];
@@ -111,7 +111,7 @@ private _type = TYPE_VEH;
 	if (_cls in _proccessed) then {continue};
 
 	private _paramsArr = ([-1, 0] apply {[_x, [[DEF_MEM_POINT], _x] call _defaultMemPointF]});
-	private _params = createHashMapFromArray (_paramsArr select {!((_x#1) isEqualTo [])});
+	private _params = createHashMapFromArray (_paramsArr select {!((_x#1) isEqualTo []) && {!((_x#1) isEqualTo [DEF_MEM_POINT])}});
 
 	_pointSet set [_cls, _params];
 	_proccessed pushBack _cls;

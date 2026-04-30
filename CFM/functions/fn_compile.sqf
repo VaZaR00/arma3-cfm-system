@@ -14,7 +14,7 @@ CFM_fnc_isUAVControlled = {
 CFM_fnc_getPositionByVectors = {
     params [
 		["_startPos", [0,0,0], [[]], [3]],
-		["_vectorDir", [0,1,0], [[]], [3]],
+		["_vectorDir", DEF_DIR, [[]], [3]],
 		["_distance", 0, [0]]
 	];
 
@@ -217,6 +217,8 @@ CFM_fnc_validatePointParams = {
 
 	#define VALID_VECTOR(vec) ((vec isEqualType []) && {(count vec) == 3})
 	#define VALIDATE_VECTOR_SET_DEF(vec) if !(VALID_VECTOR(vec)) then {vec = [0,0,0]};
+	#define VALIDATE_VECTOR_SET_DEF_DIR(vec) if !(VALID_VECTOR(vec)) then {vec = DEF_DIR};
+	#define VALIDATE_VECTOR_SET_DEF_UP(vec) if !(VALID_VECTOR(vec)) then {vec = DEF_UP};
 
 	switch (_ppType) do {
 		case PP_STATIC: {
@@ -224,8 +226,8 @@ CFM_fnc_validatePointParams = {
 			_params params [['_pos', []], ['_dir', []], ['_up', []]];
 
 			VALIDATE_VECTOR_SET_DEF(_prevpos)
-			VALIDATE_VECTOR_SET_DEF(_prevdir)
-			VALIDATE_VECTOR_SET_DEF(_prevup)
+			VALIDATE_VECTOR_SET_DEF_DIR(_prevdir)
+			VALIDATE_VECTOR_SET_DEF_UP(_prevup)
 
 			if !(VALID_VECTOR(_pos)) then {
 				_pos = +_prevpos;
@@ -251,8 +253,8 @@ CFM_fnc_validatePointParams = {
 			};
 
 			VALIDATE_VECTOR_SET_DEF(_prevpos)
-			VALIDATE_VECTOR_SET_DEF(_prevdir)
-			VALIDATE_VECTOR_SET_DEF(_prevup)
+			VALIDATE_VECTOR_SET_DEF_DIR(_prevdir)
+			VALIDATE_VECTOR_SET_DEF_UP(_prevup)
 
 			if !(VALID_VECTOR(_pos)) then {
 				_pos = +_prevpos;
@@ -281,8 +283,8 @@ CFM_fnc_validatePointParams = {
 			if !(VALID_VECTOR(_prevSetArr)) then {_prevSetArr = [-1,-1,-1]};
 			if !((_memPoint isEqualType "") && !(_memPoint isEqualTo "")) then {_prevMemPoint = ""};
 			VALIDATE_VECTOR_SET_DEF(_prevAddArr)
-			VALIDATE_VECTOR_SET_DEF(_prevDir)
-			VALIDATE_VECTOR_SET_DEF(_prevUp)
+			VALIDATE_VECTOR_SET_DEF_DIR(_prevDir)
+			VALIDATE_VECTOR_SET_DEF_UP(_prevUp)
 
 			if !(VALID_VECTOR(_addArr)) then {
 				_addArr = +_prevAddArr;
@@ -328,4 +330,37 @@ CFM_fnc_getDefaultPointAlignment = {
 	private _predefinedAlignmentTurr = _predefinedAlignment getOrDefault [_turrIndex, []];
 
 	if (_predefinedAlignmentTurr isEqualType []) then {_predefinedAlignmentTurr} else {[]};
+};
+
+CFM_fnc_translateLocalVectors = {
+	params ["_dirUp1", "_dirUp2"];
+	_dirUp1 params ["_dir1", "_up1"];
+	_dirUp2 params ["_dir2", "_up2"];
+
+	// 1. Вычисляем базисные векторы первой системы (DirUp1)
+	private _yAxis = _dir1;
+	private _zAxis = _up1;
+	private _xAxis = _yAxis vectorCrossProduct _zAxis; // Ось X (право)
+
+	// 2. Функция для перевода вектора из локала DirUp1 в Model Space
+	// Формула: V_world = (X * V_local.x) + (Y * V_local.y) + (Z * V_local.z)
+	private _transformVector = {
+		params ["_v", "_x", "_y", "_z"];
+		private _res = [0,0,0];
+		_res = _res vectorAdd (_x vectorMultiply (_v select 0));
+		_res = _res vectorAdd (_y vectorMultiply (_v select 1));
+		_res = _res vectorAdd (_z vectorMultiply (_v select 2));
+		_res
+	};
+
+	// 3. Применяем трансформацию для Dir2 и Up2
+	private _finalDir = [_dir2, _xAxis, _yAxis, _zAxis] call _transformVector;
+	private _finalUp = [_up2, _xAxis, _yAxis, _zAxis] call _transformVector;
+
+	// Нормализуем для порядка (хотя векторные команды часто делают это сами)
+	_finalDir = vectorNormalized _finalDir;
+	_finalUp = vectorNormalized _finalUp;
+
+	// Результат: [_finalDir, _finalUp]
+	[_finalDir, _finalUp]
 };

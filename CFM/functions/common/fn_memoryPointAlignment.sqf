@@ -9,12 +9,13 @@
 params["_obj", ["_memPoint", ""], ["_pointParams", "", [[], ""]], ["_lod", "Memory"]];
 
 _pointParams params [["_addArr", [0,0,0]], ["_dirUp", []], ["_setArr", [-1,-1,-1]]];
-_dirUp params [["_dir", [0,0,0]], ["_up", [0,0,0]]];
+_dirUp params [["_dir", DEF_DIR], ["_up", DEF_UP]];
 
 private _memPointDirUp = _obj selectionVectorDirAndUp [_memPoint, _lod];
-_memPointDirUp params [["_mdir", [0,0,0]], ["_mup", [0,0,0]]];
+_memPointDirUp params [["_mdir", DEF_DIR], ["_mup", DEF_UP]];
 
 private _newdirUp = [_mdir vectorAdd _dir, _mup vectorAdd _up];
+private _newDirUp = [_memPointDirUp, _dirUp] call CFM_fnc_translateLocalVectors;
 
 private _selPos = [_obj, [_memPoint, _lod], _addArr] call CFM_fnc_getMemPointOffsetInModelSpace;
 

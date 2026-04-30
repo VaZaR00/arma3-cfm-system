@@ -23,6 +23,8 @@
 #define GUNNER_TURRET_PATH [0]
 #define ACTION_RADIUS 5
 #define NULL_VECTOR [0,0,0]
+#define DEF_DIR [0,1,0]
+#define DEF_UP [0,0,1]
 #define MONITOR_ACTION_RADIUS(mon) (mon getVariable ["CFM_actionsRadius", ACTION_RADIUS]) 
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_feedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
@@ -46,7 +48,7 @@
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
 #define CHECK_EX(c) if (c) exitWith {false};
 #define IS_VALID_R2T(s) ((IS_STR(s) && {!(s isEqualTo "") && {(RENDER_TARGET_STR in s)}}))
-#define CAM_POS_FUNC_DEF {[NULL_VECTOR, [NULL_VECTOR, NULL_VECTOR]]}
+#define CAM_POS_FUNC_DEF {[NULL_VECTOR, [DEF_DIR, DEF_UP]]}
 #define TURRET_INDEX(t) (if (t isEqualType []) then {t select 0} else {t})
 #define HAND_MON_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
 #define IS_MONITOR_ON ;

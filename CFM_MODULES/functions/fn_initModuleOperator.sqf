@@ -35,11 +35,12 @@ if (is3DEN) exitWith {};
 				private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
 				private _memPointPos = _mainObject selectionPosition [_memPoint, _lod];
 				private _memPointDirUp = _mainObject selectionVectorDirAndUp [_memPoint, _lod];
+				private _translatedDirUp = [_memPointDirUp, [_relDirModule, _relUpModule]] call CFM_fnc_translateLocalVectors;
 				_res = [
 					[_memPoint, _lod],
 					_relPosModule vectorDiff _memPointPos, 
-					_relDirModule vectorDiff (_memPointDirUp#0), 
-					_relUpModule vectorDiff (_memPointDirUp#1)
+					_translatedDirUp#0, 
+					_translatedDirUp#1
 				];
 			};
 			if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {

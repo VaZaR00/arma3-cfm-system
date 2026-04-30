@@ -127,7 +127,7 @@ private _proccesTurret = {
 		} forEach _offset;
 	};
 	_offset params [["_pos", [0,0,0], [[]], 3], ["_vDirUp", [], [[]], 2]];
-	_vDirUp params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+	_vDirUp params [["_dir", DEF_DIR, [[]], 3], ["_up", DEF_UP, [[]], 3]];
 	if (_turretIndex in _turrs) then {
 		_turretIndex = (_turrs select -1) + 1;
 	};
