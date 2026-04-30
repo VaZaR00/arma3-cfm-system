@@ -53,9 +53,11 @@ private _defaults = [
 ];
 
 private _defaultMemPointF = {
-	params["_p"];
+	params["_p", ["_index", _x]];
 	if ((_p#0) isEqualTo DEF_MEM_POINT) then {
-		private _defPointParams = ([_cls, _x, _type] call CFM_fnc_getCameraPoints)#1;
+		private _defCamPoints = [_cls, _index, _type] call CFM_fnc_getCameraPoints;
+		if (_defCamPoints isEqualTo []) exitWith {[]};
+		private _defPointParams = (_defCamPoints)#1;
 		if !(_defPointParams isEqualType []) then {_defPointParams = [_defPointParams]};
 		_defPointParams params [["_memPoint", ""], ["_offsetDef", []]];
 		_p set [0, _memPoint];
@@ -108,7 +110,8 @@ private _type = TYPE_VEH;
 
 	if (_cls in _proccessed) then {continue};
 
-	private _params = createHashMapFromArray [[-1, [[DEF_MEM_POINT]] call _defaultMemPointF]];
+	private _paramsArr = ([-1, 0] apply {[_x, [[DEF_MEM_POINT], _x] call _defaultMemPointF]});
+	private _params = createHashMapFromArray (_paramsArr select {!((_x#1) isEqualTo [])});
 
 	_pointSet set [_cls, _params];
 	_proccessed pushBack _cls;

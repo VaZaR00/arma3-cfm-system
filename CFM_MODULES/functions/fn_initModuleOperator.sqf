@@ -52,7 +52,7 @@ if (is3DEN) exitWith {};
 			+_res
 		};
 		private _proccessTurretModule = {
-			params["_logic", ["_mainObj", objNull]];
+			params["_logic", ["_mainObj", objNull], ["_checkPointParams", false]];
 
 			// skip if its not set as turret
 			if !(BOOL("isCameraTurret", 0)) then {continue};
@@ -70,6 +70,7 @@ if (is3DEN) exitWith {};
 			if (isNil "_turrOffsets") then {
 				_turrOffsets = [];
 			};
+			if (_checkPointParams && {_turrOffsets isEqualTo []}) exitWith {[]};
 			private _turrParams = [
 				MGVAR [LGVAR ["cameraObject", ""], objNull],
 				BOOL("cameraCanMoveCamera", 1),
@@ -192,10 +193,15 @@ if (is3DEN) exitWith {};
 			["_lod", "memory"]
 		];
 		private _mainObject = _operators param [0, objNull];
+		private _turretsCustom = [];
 		// get the offset of main module
-		private _turretsCustom = [[_logic, _mainObject] call _proccessTurretModule];
+		private _turretParamsMain = [_logic, _mainObject, true] call _proccessTurretModule;
+		if !(_turretParamsMain isEqualTo []) then {
+			_turretsCustom pushBack _turretParamsMain;
+		};
 		{
-			private _turretModuleParams = [_x, _mainObject] call _proccessTurretModule;
+			private _turretModuleParams = [_x, _mainObject, true] call _proccessTurretModule;
+			if (_turretModuleParams isEqualTo []) then {continue};
 			_turretsCustom pushBack _turretModuleParams;
 		} forEach _syncedTurretModules;
 		private _args = [

@@ -24,6 +24,7 @@ if ("uav_01" in _vehType) exitWith {
 
 private _camTypeRes = switch (_camType) do {
 	case TYPE_VEH: {
+		if (_turretPath != -1) exitWith {[]};
 		// private _name = "gunnerview";
 		// private _name = "zamerny";
 		private _name = "konec hlavne";
