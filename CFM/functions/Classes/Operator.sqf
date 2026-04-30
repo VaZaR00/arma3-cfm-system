@@ -450,7 +450,7 @@ OBJCLASS(Operator)
 				};
 			};
 		};
-		private _doInterpolation = _doInterpolationSet && (isMultiplayer || _isStaticCam) && {!_hasGoPro && {!(_camPosFunc isEqualTo CFM_fnc_camPosVehStatic)}};
+		private _doInterpolation = !_hasGoPro && {_doInterpolationSet && (isMultiplayer || (_isStaticCam || {_ppType > -1}))};
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
@@ -748,7 +748,7 @@ OBJCLASS(Operator)
 				_pointParams params [["_pos", [], [[]], 3], ["_dirUp", [], [[]]]];
 				_dirUp params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
 
-				// model space rotation
+				// global rotation
 				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
@@ -760,16 +760,20 @@ OBJCLASS(Operator)
 				true
 			};
 			case PP_VEH_TURRET: {
-				_prevParams params [['_prevMemPoint', ""], ['_prevAlignment', []], ['_prevlod', "Memory"]];
-				_prevAlignment params [["_prevAddArr", []], ["_prevDirUp", []], ["_prevSetArr", []]];
-				_prevDirUp params [["_prevDir", []], ["_prevUp", []]];
+				_pointParams params [['_memPoint', ""], ['_alignment', []], ['_lod', "Memory"]];
+				_alignment params [["_addArr", []], ["_dirUp", []], ["_setArr", []]];
+				_dirUp params [["_dirMS", []], ["_upMS", []]];
 
-				// model space rotation
+				// mem point space rotation
+				private _dir = _self vectorModelToWorldVisual _dirMS;
+				private _up = _self vectorModelToWorldVisual _upMS;
 				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
+				private _newDirMS = _self vectorWorldToModelVisual _newDir;
+				private _newUpMS = _self vectorWorldToModelVisual _newUp;
 
-				_pointParams = [_ppType, _pointParams, [[_prevMemPoint, _prevlod], _pos, _newDir, _newUp, _prevSetArr]] call CFM_fnc_validatePointParams;
+				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _newDirMS, _newUpMS, _setArr]] call CFM_fnc_validatePointParams;
 				_turretData set ["pointParams", _pointParams];
 				_turretsParams set [_turretIndex, _turretData];
 
