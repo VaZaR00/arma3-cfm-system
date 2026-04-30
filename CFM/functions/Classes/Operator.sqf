@@ -389,8 +389,6 @@ OBJCLASS(Operator)
 		private _isLocal = [_operator] call CFM_fnc_doCheckTurretLocality;
 		_turretParams set ["IsTurretLocal", _isLocal];
 
-		[_self, _this] RLOG
-
 		// CAM POS FUNC
 		private _ppType = PP_NONE;
 		private _fullCrew = fullCrew [_self, "", true];

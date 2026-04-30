@@ -171,7 +171,7 @@ if (is3DEN) exitWith {};
 			]) call CFM_fnc_setOperator;
 		};
 	// ---------------------------------------
-	[_logic, _operators, _operatorClasses] RLOG
+
 	// ------ PROCCESS IF STATIC CAMERA --------
 	if (_operators isEqualTo []) exitWith {
 		[_logic] call CFM_fnc_initModuleStaticCamera;
@@ -206,7 +206,6 @@ if (is3DEN) exitWith {};
 				_smoothZoom
 			]
 		];
-		["init op m", _args] RLOG 
 		_args call CFM_fnc_setOperator;
 	// ---------------------------------------
 };
