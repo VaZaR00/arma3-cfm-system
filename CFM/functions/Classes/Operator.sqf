@@ -240,6 +240,7 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_opHasTurrets", _opHasTurrets, SET_VARS_INIT_GLOBAL]; 
 
 		private _turrets = [];
+		private _validTurretInitParams = [];
 		{
 			private _turret = _x;
 			if !(_turret isEqualType []) then {
@@ -250,6 +251,7 @@ OBJCLASS(Operator)
 				_turret = [_nextTurret, _turret];
 			};
 			_turret params [["_turretIndex", -1], ["_params", []]];
+			_validTurretInitParams pushBack _turret;
 			_turretIndex = TURRET_INDEX(_turretIndex);
 			_turrets pushBackUnique _turretIndex;
 		} forEach _turretsParamsInit;
@@ -257,15 +259,11 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_turrets", _turrets, SET_VARS_INIT_GLOBAL]; 
 
 		{
-			private _turret = _x;
-			if !(_turret isEqualType []) then {
-				_turret = [_turret];
-			};
-			_turret params [["_turretIndex", -1], ["_params", []]];
+			_x params [["_turretIndex", -1], ["_params", []]];
 			private _turretArgs = [_turretIndex] + _params;
 			private _args = [_operator] + _turretArgs;
 			_args call CFM_fnc_setTurretParams;
-		} forEach _turretsParamsInit;
+		} forEach _validTurretInitParams;
 
 		if (isServer) then {
 			_self call CFM_fnc_checkOperatorTurrets;
