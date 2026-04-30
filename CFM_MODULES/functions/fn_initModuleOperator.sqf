@@ -25,8 +25,11 @@ if (is3DEN) exitWith {};
 		private _proccessArrayString = {
 			params["_l", "_offsetsStr", ["_mainObject", objNull]];
 			private _res = [];
-			private _isThis = ((tolower _offsetsStr) isEqualTo "this");
-			if (_isThis && {(IS_OBJ(_mainObject))}) then {
+			_offsetsStr = trim (tolower _offsetsStr);
+			private _forObj = IS_OBJ(_mainObject);
+			if (_forObj && {(_offsetsStr isEqualTo "default")}) exitWith {[]};;
+			private _isThis = (_offsetsStr isEqualTo "this");
+			if (_isThis && _forObj) then {
 				private _relPosModule = _mainObject worldToModelVisual (getPos _l);
 				private _relDirModule = _mainObject vectorWorldToModelVisual (vectorDir _l);
 				private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
@@ -62,7 +65,7 @@ if (is3DEN) exitWith {};
 				["_lod", "memory"]
 			];
 
-			private _turrOffsetsStr = _logic getVariable ["cameraPosAndOffsetsTurretsCustom", "this"];
+			private _turrOffsetsStr = _logic getVariable ["cameraTurretsCustom", "this"];
 			private _turrOffsets = [_logic, _turrOffsetsStr, _mainObj] call _proccessArrayString;
 			if (isNil "_turrOffsets") then {
 				_turrOffsets = [];
