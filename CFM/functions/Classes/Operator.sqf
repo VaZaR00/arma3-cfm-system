@@ -389,6 +389,8 @@ OBJCLASS(Operator)
 		private _isLocal = [_operator] call CFM_fnc_doCheckTurretLocality;
 		_turretParams set ["IsTurretLocal", _isLocal];
 
+		[_self, _this] RLOG
+
 		// CAM POS FUNC
 		private _ppType = PP_NONE;
 		private _fullCrew = fullCrew [_self, "", true];
@@ -423,12 +425,24 @@ OBJCLASS(Operator)
 					CFM_fnc_camPosStatic
 				};
 				case TYPE_VEH: {
-					if (_isVehWithTurrets) then {
-						_ppType = PP_VEH_TURRET;
-						CFM_fnc_camPosVehTurret
-					} else {
+					if (call {
+						if !(_pointParams isEqualType []) then {
+							// will get default point params
+							false
+						} else {
+							private _memPoint = _pointParams param [0,""];
+							if (!(_memPoint isEqualType '') || {_memPoint isEqualTo ""}) then {
+								true
+							} else {
+								false
+							};
+						}
+					}) then {
 						_ppType = PP_VEH_STATIC;
 						CFM_fnc_camPosVehStatic
+					} else {
+						_ppType = PP_VEH_TURRET;
+						CFM_fnc_camPosVehTurret
 					};
 				};
 				default {

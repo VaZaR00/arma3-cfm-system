@@ -242,6 +242,14 @@ CFM_fnc_validatePointParams = {
 			_prevParams params [['_prevpos', []], ['_prevdir', []], ['_prevup', []]];
 			_params params [['_pos', []], ['_dir', []], ['_up', []]];
 
+			if ((_pos isEqualType "") || {(_pos#0) isEqualType ""}) then {
+				// case if we need to convert params for PP_VEH_TURRET into PP_VEH_STATIC
+				_params params[["_memPoint", ""], ["_addArr", []], ["_sdir", []], ["_sup", []], ["_setArr", []]];
+				_pos = _addArr;
+				_dir = _sdir;
+				_up = _sup;
+			};
+
 			VALIDATE_VECTOR_SET_DEF(_prevpos)
 			VALIDATE_VECTOR_SET_DEF(_prevdir)
 			VALIDATE_VECTOR_SET_DEF(_prevup)

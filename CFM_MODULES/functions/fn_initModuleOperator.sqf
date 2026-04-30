@@ -33,13 +33,10 @@ if (is3DEN) exitWith {};
 				private _memPointPos = _mainObject selectionPosition [_memPoint, _lod];
 				private _memPointDirUp = _mainObject selectionVectorDirAndUp [_memPoint, _lod];
 				_res = [
-					_memPoint, [
-						_relPosModule vectorDiff _memPointPos, 
-						[
-							_relDirModule vectorDiff (_memPointDirUp#0), 
-							_relUpModule vectorDiff (_memPointDirUp#1)
-						]
-					], _lod
+					[_memPoint, _lod],
+					_relPosModule vectorDiff _memPointPos, 
+					_relDirModule vectorDiff (_memPointDirUp#0), 
+					_relUpModule vectorDiff (_memPointDirUp#1)
 				];
 			};
 			if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
@@ -161,7 +158,7 @@ if (is3DEN) exitWith {};
 
 	// -------- PROCCESS OPERATOR CLASSES --------
 		if !(_operatorClasses isEqualTo []) then {
-			private _turretsCustom = [_logic, LGVAR ["cameraTurretsCustom", "this"]] call _proccessArrayString;
+			private _turretsCustom = [[_logic, LGVAR ["cameraTurretsCustom", "this"]] call _proccessArrayString];
 			(_operatorClasses + [
 				_sides,
 				_turretsCustom,
@@ -174,7 +171,7 @@ if (is3DEN) exitWith {};
 			]) call CFM_fnc_setOperator;
 		};
 	// ---------------------------------------
-	[_logic, _operators, _syncedObjs, _syncedObjs apply {_x call _objectCondition}] RLOG
+	[_logic, _operators, _operatorClasses] RLOG
 	// ------ PROCCESS IF STATIC CAMERA --------
 	if (_operators isEqualTo []) exitWith {
 		[_logic] call CFM_fnc_initModuleStaticCamera;
@@ -192,12 +189,12 @@ if (is3DEN) exitWith {};
 			["_lod", "memory"]
 		];
 		private _mainObject = _operators param [0, objNull];
-		private _turretsCustom = [_logic, LGVAR ["cameraTurretsCustom", "this"], _mainObject] call _proccessArrayString;
+		private _turretsCustom = [[_logic, _mainObject] call _proccessTurretModule];
 		{
 			private _turretModuleParams = [_x, _mainObject] call _proccessTurretModule;
 			_turretsCustom pushBack _turretModuleParams;
 		} forEach _syncedTurretModules;
-		[
+		private _args = [
 			_operators,
 			_sides,
 			_turretsCustom,
@@ -207,7 +204,9 @@ if (is3DEN) exitWith {};
 				_canMoveCam,
 				_smoothZoom
 			]
-		] call CFM_fnc_setOperator;
+		];
+		["init op m", _args] RLOG 
+		_args call CFM_fnc_setOperator;
 	// ---------------------------------------
 };
 

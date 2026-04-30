@@ -1,6 +1,5 @@
 
-point params args better
-module stat cam as turr for operator module
+move cam for different point params types
 
 LONG mb:
 continuous cam move
