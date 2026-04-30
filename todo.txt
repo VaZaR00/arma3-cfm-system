@@ -1,8 +1,6 @@
 
 move cam for different point params types
 point params get mem point for setting
-fix fpv offset
-gunner turr for uavs
 
 
 LONG mb:

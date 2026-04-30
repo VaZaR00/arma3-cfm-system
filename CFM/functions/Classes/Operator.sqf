@@ -715,6 +715,10 @@ OBJCLASS(Operator)
 
 		private _turretIndex = TURRET_INDEX(_turret);
 		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+
+		private _ppType = _turretData getOrDefault ["ppType", PP_NONE];
+		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
+
 		private _pointParams = _turretData get "pointParams";
 
 		if (isNil "_pointParams") exitWith {false};
@@ -723,22 +727,63 @@ OBJCLASS(Operator)
 
 		if (_monitorsOnTurret isEqualTo []) exitWith {false};
 
-		_pointParams params [["_pos", [], [[]], 3], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
-
 		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+			
+		private _done = switch (_ppType) do {
+			case PP_STATIC: {
+				_pointParams params [["_pos", [], [[]], 3], ["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
 
-		private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
-		private _newDir = _newDirUp param [0, _dir];
-		private _newUp = _newDirUp param [1, _up];
+				// global rotation
+				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _dir];
+				private _newUp = _newDirUp param [1, _up];
+
+				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				_turretData set ["pointParams", _pointParams];
+				_turretsParams set [_turretIndex, _turretData];
+				
+				true
+			};
+			case PP_VEH_STATIC: {
+				_pointParams params [["_pos", [], [[]], 3], ["_dirUp", [], [[]]]];
+				_dirUp params [["_dir", [0,0,0], [[]], 3], ["_up", [0,0,0], [[]], 3]];
+
+				// model space rotation
+				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _dir];
+				private _newUp = _newDirUp param [1, _up];
+
+				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				_turretData set ["pointParams", _pointParams];
+				_turretsParams set [_turretIndex, _turretData];
+				
+				true
+			};
+			case PP_VEH_TURRET: {
+				_prevParams params [['_prevMemPoint', ""], ['_prevAlignment', []], ['_prevlod', "Memory"]];
+				_prevAlignment params [["_prevAddArr", []], ["_prevDirUp", []], ["_prevSetArr", []]];
+				_prevDirUp params [["_prevDir", []], ["_prevUp", []]];
+
+				// model space rotation
+				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _dir];
+				private _newUp = _newDirUp param [1, _up];
+
+				_pointParams = [_ppType, _pointParams, [[_prevMemPoint, _prevlod], _pos, _newDir, _newUp, _prevSetArr]] call CFM_fnc_validatePointParams;
+				_turretData set ["pointParams", _pointParams];
+				_turretsParams set [_turretIndex, _turretData];
+
+				true
+			};
+			default {false};
+		};
+
+		if !(_done) exitWith {false};
 
 		private _restrictions = _turretData getOrDefault ["cameraMoveRestrictions", [0,0,0,0]];
 		private _currentMove = _turretData getOrDefault ["currentCamMove", [0,0,0,0]];
 		_currentMove = [_currentMove, _axisAngles, _restrictions] call CFM_fnc_calculateCameraMoves;
 		_turretData set ["currentCamMove", +_currentMove];
-
-		_pointParams = [_pos, _newDir, _newUp];
-		_turretData set ["pointParams", _pointParams];
-		_turretsParams set [_turretIndex, _turretData];
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);
 		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
