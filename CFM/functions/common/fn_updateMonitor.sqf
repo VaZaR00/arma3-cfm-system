@@ -62,7 +62,6 @@ private _camSet = if (!_isStatic ||
 if (_doUpdateCamera isEqualTo 0) then {
 	// case for moving camera do interpolation toggle
 	private _prevCamPos = _monitor getVariable ["CFM_cam_prevSetPos", []];
-	LOGH [time, _monitor, _prevCamPos];
 	if (_prevCamPos isEqualTo []) then {
 		// initial set
 		_monitor setVariable ["CFM_cam_prevSetPos", +_camSet]

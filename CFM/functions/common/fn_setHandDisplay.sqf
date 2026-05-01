@@ -15,7 +15,7 @@ private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_player getVariabl
 if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 	private _settings = if (_isDialog) then {
 		disableSerialization;
-		private _disp = (findDisplay 46) createDisplay "RscDisplayCFM";
+		private _disp = (findDisplay 46) createDisplay "RscDisplayCFMEmpty";
 		uiNamespace setVariable ["CFM_tabletDisplay", _disp];
 		PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", true];
 		PLAYER_ setVariable ["CFM_turnedOffLocal", false];

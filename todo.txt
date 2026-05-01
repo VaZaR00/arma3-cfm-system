@@ -1,5 +1,7 @@
 
- interpolate veh cam snapping: cuz of set after sec
+try ui texture
+
+
 point params get mem point for setting
 
 

@@ -711,7 +711,7 @@ OBJCLASS(Monitor)
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
 		if (_onTempCam) then {
-			createDialog "RscDisplayCFM";
+			createDialog "RscDisplayCFMEmpty";
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
 			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
