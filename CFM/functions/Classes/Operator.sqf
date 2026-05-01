@@ -450,7 +450,7 @@ OBJCLASS(Operator)
 				};
 			};
 		};
-		private _doInterpolation = !_hasGoPro && {_doInterpolationSet && (isMultiplayer || (_isStaticCam || {_ppType > -1}))};
+		private _doInterpolation = !_hasGoPro && {!(_ppType > 0) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
 		_turretParams set ["camPosFunc", _camPosFunc];
 		_turretParams set ["doInterpolation", _doInterpolation];
 
@@ -780,7 +780,7 @@ OBJCLASS(Operator)
 				private _newDirMS = _self vectorWorldToModelVisual _tarnsDir;
 				private _newUpMS = _self vectorWorldToModelVisual _tarnsUp;
 				// transformed dirup model space to mem point offset
-				
+
 				// Рассчитываем оси базиса мем-поинта
 				private _mX = _mdir vectorCrossProduct _mup;
 
