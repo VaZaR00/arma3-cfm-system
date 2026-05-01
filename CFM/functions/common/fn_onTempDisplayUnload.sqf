@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_onDisplayUnload
+    Function: CFM_fnc_onTempDisplayUnload
     Author: Vazar
     Description: Automatically generated SQF file.
 */

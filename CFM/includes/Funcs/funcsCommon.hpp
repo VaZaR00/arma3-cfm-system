@@ -185,8 +185,8 @@
                 file = FUNC_PATH(common\fn_monitorToggleNVG.sqf);
                 DO_FUNC_RECOMPILE
             };
-            class onDisplayUnload {
-                file = FUNC_PATH(common\fn_onDisplayUnload.sqf);
+            class onTempDisplayUnload {
+                file = FUNC_PATH(common\fn_onTempDisplayUnload.sqf);
                 DO_FUNC_RECOMPILE
             };
             class onEachFrameClient {
