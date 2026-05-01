@@ -55,6 +55,7 @@
 #define IS_MONITOR_ON if ((_target getVariable ["CFM_isHandMonitor", false]) && {_target getVariable ['CFM_turnedOffLocal', false]}) exitWith {false};
 #define CAMERA_MOVE_DIRECTIONS ["up", "down", "left", "right"]
 #define CAMERA_MOVE_STEP 5
+#define VALIDATE_NUM_VAR(var, def) (call {private _val = (MGVAR [var, "5"]); if (_val isEqualType "") then {parseNumber _val} else {_val}})
 
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 #define MONITOR_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers})

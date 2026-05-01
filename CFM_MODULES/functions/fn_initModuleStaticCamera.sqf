@@ -69,7 +69,14 @@ if (is3DEN) exitWith {};
 		private _camObj = MGVAR [LGVAR ["cameraObject", ""], objNull];
 		private _hasNvg = BOOL("cameraHasNvg", 1);
 		private _hasTi = BOOL("cameraHasTI", 1);
-		private _canMoveCam = BOOL("cameraCanMoveCamera", 1);
+		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
+			if (_canMoveCam isEqualTo "true") exitWith {true};
+			private _canMoveCamArr = _canMoveCam splitString SPLIT_CHARACTERS;
+			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
+			if (_canMoveCamArr isEqualTo []) exitWith {false};
+			_canMoveCamArr resize [4, 0];
+			_canMoveCamArr
+		};
 		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
 		private _turretIndex = parseNumber (LGVAR ["turretIndex", ""]);
 		private _zoomParamsStr = (LGVAR ["zoomParams", ""]);

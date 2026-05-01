@@ -72,9 +72,17 @@ if (is3DEN) exitWith {};
 				_turrOffsets = [];
 			};
 			if (_checkPointParams && {_turrOffsets isEqualTo []}) exitWith {[]};
+			private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
+				if (_canMoveCam isEqualTo "true") exitWith {true};
+				private _canMoveCamArr = _canMoveCam splitString SPLIT_CHARACTERS;
+				_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
+				if (_canMoveCamArr isEqualTo []) exitWith {false};
+				_canMoveCamArr resize [4, 0];
+				_canMoveCamArr
+			};
 			private _turrParams = [
 				MGVAR [LGVAR ["cameraObject", ""], objNull],
-				BOOL("cameraCanMoveCamera", 1),
+				_canMoveCam,
 				[_logic, (LGVAR ["zoomParams", ""]), objNull] call _proccessArrayString,
 				[BOOL("cameraHasNvg", 1), BOOL("cameraHasTI", 1)],
 				_turrOffsets,
@@ -157,7 +165,14 @@ if (is3DEN) exitWith {};
 		private _nvgTi = [SELECT_DEF("cameraHasNvg", 1), SELECT_DEF("cameraHasTI", 1)];
 
 		private _name = LGVAR ["cameraName", ""];
-		private _canMoveCam = SELECT_DEF("cameraCanMoveCamera", 1);
+		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
+			if (_canMoveCam isEqualTo "true") exitWith {true};
+			private _canMoveCamArr = _canMoveCam splitString SPLIT_CHARACTERS;
+			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
+			if (_canMoveCamArr isEqualTo []) exitWith {false};
+			_canMoveCamArr resize [4, 0];
+			_canMoveCamArr
+		};
 		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
 	// ---------------------------------------
 

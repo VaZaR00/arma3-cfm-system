@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-params ["_prevValue", "_targetValue", ["_tightness", 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightness", "5"]))], ["_dt", diag_deltaTime]];
+params ["_prevValue", "_targetValue", ["_tightness", 0.01 max VALIDATE_NUM_VAR("CFM_camInterpolation_tightness", "5")], ["_dt", diag_deltaTime]];
 
 // Формула затухания, независимая от FPS:
 // Эффект = 1 - e^(-tightness * dt)

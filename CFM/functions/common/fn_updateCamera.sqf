@@ -91,7 +91,7 @@ if (_doInterpolation) then {
 	_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
 };
 if (_smoothZoom) then {
-	private _interpTightnessZoomVal = 0.01 max (parseNumber (MGVAR ["CFM_camInterpolation_tightnessZoom", "10"]));
+	private _interpTightnessZoomVal = 0.01 max VALIDATE_NUM_VAR("CFM_camInterpolation_tightnessZoom", "10");
 	if !(_interpTightnessZoomVal isEqualType "") then {
 		_interpTightnessZoomVal = str _interpTightnessZoomVal;
 		missionNamespace setVariable ["CFM_optimizeByDistance", _interpTightnessZoomVal];
