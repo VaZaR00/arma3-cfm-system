@@ -107,7 +107,7 @@ class CfgVehicles
             PARAMETER(cameraObject, "STRING", "")
             PARAMETER_SELECT(cameraHasTI, 1)
             PARAMETER_SELECT(cameraHasNvg, 1)
-            PARAMETER(cameraCanMoveCamera, "STRING", "")
+            PARAMETER(cameraCanMoveCamera, "STRING", "true")
             PARAMETER_SELECT(cameraSmoothZoom, 1)
             PARAMETER(turretIndex, "STRING", "")
             PARAMETER(zoomParams, "STRING", "")

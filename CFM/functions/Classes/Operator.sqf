@@ -818,25 +818,13 @@ OBJCLASS(Operator)
 		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
 
 		private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
-
+		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 		{
 			if !(_doInterpolation) then {
 				_x setVariable ["CFM_camDoInterpolation", true, _targets];
-				private _prevMoveHndl = _x getVariable ["CFM_moveCam_newMoveHndl", scriptNull];
-				terminate _prevMoveHndl;
-				private _newMoveHndl = [_x, _self] spawn {
-					params['_monitor', '_self'];
-					private _smoothTightness = 0.01 max VALIDATE_NUM_VAR("CFM_camInterpolation_tightness", "5");
-					private _timeToMoveSmooth = _smoothTightness * TimeToMoveSmoothCoef;
-					sleep _timeToMoveSmooth;
-					if !((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _self) exitWith {};
-					private _targets = MONITOR_VIEWERS_AND_SELF(false);
-					_monitor setVariable ["CFM_camDoInterpolation", false, _targets];
-				};
-				_x setVariable ["CFM_moveCam_newMoveHndl", _newMoveHndl];
 			};
 			_x setVariable ["CFM_currentCamPointParams", _pointParams, _targets];
-			_x setVariable ["CFM_doUpdateCamera", _pointParams, _targets];
+			_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
 			_x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
 		} forEach _monitorsOnTurret;
 

@@ -1,5 +1,5 @@
 
-dont interpolate veh cam pos by def, only on move
+ interpolate veh cam snapping: cuz of set after sec
 point params get mem point for setting
 
 

@@ -73,8 +73,8 @@ if (is3DEN) exitWith {};
 			};
 			if (_checkPointParams && {_turrOffsets isEqualTo []}) exitWith {[]};
 			private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
-				if (_canMoveCam isEqualTo "true") exitWith {true};
-				private _canMoveCamArr = _canMoveCam splitString SPLIT_CHARACTERS;
+				if (_this isEqualTo "true") exitWith {true};
+				private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
 				_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
 				if (_canMoveCamArr isEqualTo []) exitWith {false};
 				_canMoveCamArr resize [4, 0];
@@ -166,8 +166,8 @@ if (is3DEN) exitWith {};
 
 		private _name = LGVAR ["cameraName", ""];
 		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
-			if (_canMoveCam isEqualTo "true") exitWith {true};
-			private _canMoveCamArr = _canMoveCam splitString SPLIT_CHARACTERS;
+			if (_this isEqualTo "true") exitWith {true};
+			private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
 			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
 			if (_canMoveCamArr isEqualTo []) exitWith {false};
 			_canMoveCamArr resize [4, 0];

@@ -275,6 +275,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", nil];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
+		_monitor setVariable ["CFM_doUpdateCamera", nil];
+		_monitor setVariable ["CFM_cam_prevSetPos", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];

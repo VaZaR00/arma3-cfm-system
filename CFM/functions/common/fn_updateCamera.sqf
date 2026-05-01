@@ -77,7 +77,7 @@ if (_doInterpolation) then {
 	private _interpTightnessOffsetVal = MGVAR ["CFM_camInterpolation_tightnessOffset", "5"];
 	if !(_interpTightnessOffsetVal isEqualType "") then {
 		_interpTightnessOffsetVal = str _interpTightnessOffsetVal;
-		missionNamespace setVariable ["CFM_optimizeByDistance", _interpTightnessOffsetVal];
+		missionNamespace setVariable ["CFM_camInterpolation_tightnessOffset", _interpTightnessOffsetVal];
 	};
 	private _interpTightnessOffset = 0.01 max (parseNumber (_interpTightnessOffsetVal));
 	// private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
@@ -94,7 +94,7 @@ if (_smoothZoom) then {
 	private _interpTightnessZoomVal = 0.01 max VALIDATE_NUM_VAR("CFM_camInterpolation_tightnessZoom", "10");
 	if !(_interpTightnessZoomVal isEqualType "") then {
 		_interpTightnessZoomVal = str _interpTightnessZoomVal;
-		missionNamespace setVariable ["CFM_optimizeByDistance", _interpTightnessZoomVal];
+		missionNamespace setVariable ["CFM_camInterpolation_tightnessZoom", _interpTightnessZoomVal];
 	};
 	private _interpTightnessZoom = 0.01 max (parseNumber (_interpTightnessZoomVal));
 	private _lastFov = _monitor getVariable ["CFM_camInterp_lastFov", _fov];

@@ -13,9 +13,11 @@ private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
 private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
 private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
 private _smoothZoom = _monitor getVariable ["CFM_currentCameraSmoothZoom", true];
+private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
 private _offsetReached = true;
 
 private _camSet = if (!_isStatic ||
+	// smooth movement mechanic for static cameras
 	{
 		(_smoothZoom && {
 			// zoom interpolation
@@ -26,7 +28,6 @@ private _camSet = if (!_isStatic ||
 		}) ||
 		{
 			// offset interpolation
-			private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
 			if (_doUpdateCamera isEqualType true) exitWith {_doUpdateCamera};
 			if !(_doUpdateCamera isEqualType []) exitWith {false};
 			private _currPos = getPosASL _camera;
@@ -52,11 +53,30 @@ private _camSet = if (!_isStatic ||
 	private _camPosFunc = _monitor getVariable ["CFM_cameraPosFunc", {[]}];
 	private _pointParams = _monitor getVariable ["CFM_currentCamPointParams", []];
 	private _doInterpolation = _monitor getVariable ["CFM_camDoInterpolation", false];
-	if (_offsetReached) then {
+	if (_offsetReached && {!(_doUpdateCamera isEqualTo 0)}) then {
 		_monitor setVariable ["CFM_doUpdateCamera", false];
 	};
 	[_camera, [_operator, _turretObj, _turret, _turLocal, _pointParams, _zoomFov, _monitor, _doInterpolation, _smoothZoom], _camPosFunc] call CFM_fnc_updateCamera;
 } else {false};
+
+if (_doUpdateCamera isEqualTo 0) then {
+	// case for moving camera do interpolation toggle
+	private _prevCamPos = _monitor getVariable ["CFM_cam_prevSetPos", []];
+	LOGH [time, _monitor, _prevCamPos];
+	if (_prevCamPos isEqualTo []) then {
+		// initial set
+		_monitor setVariable ["CFM_cam_prevSetPos", +_camSet]
+	} else {
+		if (_prevCamPos isEqualTo _camSet) exitWith {
+			// camera stopped moving
+			_monitor setVariable ["CFM_camDoInterpolation", false];
+			_monitor setVariable ["CFM_doUpdateCamera", nil];
+			_monitor setVariable ["CFM_cam_prevSetPos", nil];
+		};
+		// still moving
+		_monitor setVariable ["CFM_cam_prevSetPos", +_camSet];
+	};
+};
 
 // upd pip
 private _updatePip = _monitor getVariable ["CFM_doUpdatePip", false];
