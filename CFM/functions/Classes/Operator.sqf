@@ -762,24 +762,42 @@ OBJCLASS(Operator)
 			case PP_VEH_TURRET: {
 				_pointParams params [['_memPoint', ""], ['_alignment', []], ['_lod', "Memory"]];
 				_alignment params [["_addArr", []], ["_dirUp", []], ["_setArr", []]];
-				_dirUp params [["_dirMS", []], ["_upMS", []]];
 
-				// mem point space rotation
+				// mem point model space rotation
 				private _memPointDirUp = _self selectionVectorDirAndUp [_memPoint, _lod];
 				_memPointDirUp params [["_mdir", DEF_DIR], ["_mup", DEF_UP]];
-				_dirMS = _dirMS vectorAdd _mdir;
-				_upMS = _upMS vectorAdd _mup;
-				private _dir = _self vectorModelToWorldVisual _dirMS;
-				private _up = _self vectorModelToWorldVisual _upMS;
-				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
-				private _newDir = _newDirUp param [0, _dir];
-				private _newUp = _newDirUp param [1, _up];
-				_newDir = _newDir vectorDiff _mdir;
-				_newUp = _newUp vectorDiff _mup;
-				private _newDirMS = _self vectorWorldToModelVisual _newDir;
-				private _newUpMS = _self vectorWorldToModelVisual _newUp;
+				// translate local mem point vector to model space
+				private _dirUpMS = [_memPointDirUp, _dirUp] call CFM_fnc_translateLocalVectors;
+				_dirUpMS params [["_dirMS", []], ["_upMS", []]];
+				// model space translated vector to world space
+				private _dirW = _self vectorModelToWorldVisual _dirMS;
+				private _upW = _self vectorModelToWorldVisual _upMS;
+				// transform dirup world
+				private _tarnsDirUp = [_dirW, _upW, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _tarnsDir = _tarnsDirUp param [0, _dir];
+				private _tarnsUp = _tarnsDirUp param [1, _up];
+				// transformed dirup in model space
+				private _newDirMS = _self vectorWorldToModelVisual _tarnsDir;
+				private _newUpMS = _self vectorWorldToModelVisual _tarnsUp;
+				// transformed dirup model space to mem point offset
+				
+				// Рассчитываем оси базиса мем-поинта
+				private _mX = _mdir vectorCrossProduct _mup;
 
-				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _newDirMS, _newUpMS, _setArr]] call CFM_fnc_validatePointParams;
+				// Обратная проекция (Model Space -> Local Space)
+				private _dir = [
+					_newDirMS vectorDotProduct _mX,
+					_newDirMS vectorDotProduct _mdir,
+					_newDirMS vectorDotProduct _mup
+				];
+
+				private _up = [
+					_newUpMS vectorDotProduct _mX,
+					_newUpMS vectorDotProduct _mdir,
+					_newUpMS vectorDotProduct _mup
+				];
+
+				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _dir, _up, _setArr]] call CFM_fnc_validatePointParams;
 				_turretData set ["pointParams", _pointParams];
 				_turretsParams set [_turretIndex, _turretData];
 

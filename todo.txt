@@ -1,5 +1,5 @@
 
-move cam for different point params types
+dont interpolate veh cam pos by def, only on move
 point params get mem point for setting
 
 
