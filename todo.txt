@@ -1,6 +1,12 @@
 
 try ui texture
-
+UI Texture:
+    - Main display
+        - Control layer 1: render picture
+        - Control layer 2: image effects
+        - Control layer 3: drone UI
+    
+    
 
 point params get mem point for setting
 
