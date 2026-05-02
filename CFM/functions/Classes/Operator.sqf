@@ -5,37 +5,37 @@
 
 OBJCLASS(Operator)
 
-	SET_SELF_VAR(_operator);
+	SET_SELF_VAR("_operator");
 
-	OBJ_VARIABLE(_canSwitchTi, false);
-	OBJ_VARIABLE(_canSwitchNvg, false);
-	OBJ_VARIABLE(_opHasTurrets, false);
-	OBJ_VARIABLE(_turrets, [DRIVER_TURRET_PATH]);
-	OBJ_VARIABLE(_cameraType, "");
-	OBJ_VARIABLE(_operatorName, "");
-	OBJ_VARIABLE(_operatorId, -1);
-	OBJ_VARIABLE(_hasGoPro, false);
-	OBJ_VARIABLE(_canFeed, false);
-	OBJ_VARIABLE(_canMoveCameraByDefault, false);
-	OBJ_VARIABLE(_cameraMoveRestrictionsByDefault, []); // [degrees up, degrees down, degrees left, degrees right]
-	OBJ_VARIABLE(_cameraZoomSmoothDefault, false); 
-	OBJ_VARIABLE(_classType, "");
-	OBJ_VARIABLE(_objClass, "");
-	OBJ_VARIABLE(_monitorsSet, createHashMap);
-	OBJ_VARIABLE(_tiTable, createHashMap);
-	OBJ_VARIABLE(_nvgTable, createHashMap);
-	OBJ_VARIABLE(_operatorSet, false);
-	OBJ_VARIABLE(_isFeeding, false);
-	OBJ_VARIABLE(_isDroneFeed, false);	
-	OBJ_VARIABLE(_isMavic, false);	
-	OBJ_VARIABLE(_isFPV, false);	
-	OBJ_VARIABLE(_staticCamOffset, NULL_VECTOR);	
-	OBJ_VARIABLE(_isStaticCam, false);	
-	OBJ_VARIABLE(_opSides, []);	
-	OBJ_VARIABLE(_turretsParams, createHashMap);	
-	OBJ_VARIABLE(_opCameraPosFunc, CAM_POS_FUNC_DEF);
-	OBJ_VARIABLE(_hasActiveTurretsObjects, -1);
-	OBJ_VARIABLE(_activeTurretsObjects, createHashMap);
+	FIELD ["_canSwitchTi", false];
+	FIELD ["_canSwitchNvg", false];
+	FIELD ["_opHasTurrets", false];
+	FIELD ["_turrets", [DRIVER_TURRET_PATH]];
+	FIELD ["_cameraType", ""];
+	FIELD ["_operatorName", ""];
+	FIELD ["_operatorId", -1];
+	FIELD ["_hasGoPro", false];
+	FIELD ["_canFeed", false];
+	FIELD ["_canMoveCameraByDefault", false];
+	FIELD ["_cameraMoveRestrictionsByDefault", []]; // [degrees up, degrees down, degrees left, degrees right]
+	FIELD ["_cameraZoomSmoothDefault", false]; 
+	FIELD ["_classType", ""];
+	FIELD ["_objClass", ""];
+	FIELD ["_monitorsSet", createHashMap];
+	FIELD ["_tiTable", createHashMap];
+	FIELD ["_nvgTable", createHashMap];
+	FIELD ["_operatorSet", false];
+	FIELD ["_isFeeding", false];
+	FIELD ["_isDroneFeed", false];	
+	FIELD ["_isMavic", false];	
+	FIELD ["_isFPV", false];	
+	FIELD ["_staticCamOffset", NULL_VECTOR];	
+	FIELD ["_isStaticCam", false];	
+	FIELD ["_opSides", []];	
+	FIELD ["_turretsParams", createHashMap];	
+	FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
+	FIELD ["_hasActiveTurretsObjects", -1];
+	FIELD ["_activeTurretsObjects", createHashMap];
 
 	/*
 		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isGopro, camPosFunc, doInterpolation, currentCamMove, ppType, cameraMoveRestrictions]]]
@@ -987,4 +987,4 @@ OBJCLASS(Operator)
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName
 	};
-CLASS_END
+OBJCLASS_END

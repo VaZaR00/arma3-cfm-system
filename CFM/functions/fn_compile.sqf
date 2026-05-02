@@ -88,17 +88,17 @@ CFM_fnc_getVectorUpFromDir = {
 
 CFM_fnc_getOperatorName = {
 	params["_operator", ["_turret", -1]];
-	["getOperatorName", [_turret], _operator, ""] CALL_OBJCLASS("Operator", _operator);
+	["getOperatorName", [_turret], ""] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_getOperatorInfo = {
 	params["_monitor"];
-	["getOperatorInfo", [], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
+	["getOperatorInfo", [], []] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_setOperatorInfo = {
 	params["_monitor", ["_set", false]];
-	["setOperatorInfo", [_set], _monitor, []] CALL_OBJCLASS("Monitor", _monitor);
+	["setOperatorInfo", [_set], []] CALL_OBJCLASS("Monitor", _monitor);
 };
 
 CFM_fnc_switchUAV = {
@@ -191,7 +191,7 @@ CFM_fnc_calculateCameraMoves = {
 
 CFM_fnc_checkIfOperatorFeedsToAnyMonitor = {
 	params["_operator"];
-	["checkIfFeedsToAnyMonitor", [], _operator, false] CALL_OBJCLASS("Operator", _operator);
+	["checkIfFeedsToAnyMonitor", [], false] CALL_OBJCLASS("Operator", _operator);
 };
 
 CFM_fnc_setupLocalActiveOperators = {

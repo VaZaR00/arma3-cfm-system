@@ -26,4 +26,4 @@ private _axisAngles = switch (_direction) do {
 
 if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
-["moveCamera", [_turretIndex, _axisAngles], _operator, false] CALL_OBJCLASS("Operator", _operator);
+["moveCamera", [_turretIndex, _axisAngles], false] CALL_OBJCLASS("Operator", _operator);

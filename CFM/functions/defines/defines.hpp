@@ -34,6 +34,7 @@
 #define IS_FUNC(f) ((f isEqualType {}) && !(f isEqualTo {}))
 #define IS_LOC(l) ((typeName l) isEqualTo "LOCATION")
 #define IS_VALID_OP(op) (IS_OBJ(op))
+#define NIL_DEF _NIL(_def)
 #define TYPE_VEH "veh"
 #define TYPE_UAV "uav"
 #define TYPE_WEAP "weap"

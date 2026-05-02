@@ -8,4 +8,4 @@
 
 
 params ["_monitor", ["_reset", false]];
-["stopFeed", [_reset], _monitor] CALL_OBJCLASS("Monitor", _monitor);
+["stopFeed", [_reset]] CALL_OBJCLASS("Monitor", _monitor);

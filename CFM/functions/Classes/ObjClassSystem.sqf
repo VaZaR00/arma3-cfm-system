@@ -121,7 +121,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	private _self = _obj;
 	call compile (format["%1 = _obj", _selfVar]);
 
-	_this call _method
+	_args call _method
 };
 
 OOP_OBJ_CLASS_fnc_validateFieldType = {

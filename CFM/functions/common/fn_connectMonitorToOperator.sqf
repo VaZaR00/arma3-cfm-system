@@ -8,4 +8,4 @@
 
 
 params ["_monitor", "_operator", ["_caller", objNull]];
-["connect", [_operator, _caller], _monitor, 0] CALL_OBJCLASS("Monitor", _monitor);
+["connect", [_operator, _caller], 0] CALL_OBJCLASS("Monitor", _monitor);

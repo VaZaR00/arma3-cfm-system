@@ -4,52 +4,52 @@
 
 OBJCLASS(Monitor)
 
-	SET_SELF_VAR(_monitor);
+	SET_SELF_VAR("_monitor");
 
-	OBJ_VARIABLE(_radius, ACTION_RADIUS);
-	OBJ_VARIABLE(_monitorSides, [side PLAYER_]);
-	OBJ_VARIABLE(_turnedOffLocal, false);
-	OBJ_VARIABLE(_originalTexture, "");
-	OBJ_VARIABLE(_menuActive, false);
-	OBJ_VARIABLE(_isHandMonitor, false);
-	OBJ_VARIABLE(_isHandMonitorDisplay, false);
-	OBJ_VARIABLE(_isLocal, false);
-	OBJ_VARIABLE(_actionCaller, objNull);
-	OBJ_VARIABLE(_mainActions, objNull);
-	OBJ_VARIABLE(_operatorInfoActionId, -1);
-	OBJ_VARIABLE(_currentMenuObj, _self);
-	OBJ_VARIABLE(_targetInActionsConditions, "_target");
+	FIELD ["_radius", ACTION_RADIUS];
+	FIELD ["_monitorSides", [side PLAYER_]];
+	FIELD ["_turnedOffLocal", false];
+	FIELD ["_originalTexture", ""];
+	FIELD ["_menuActive", false];
+	FIELD ["_isHandMonitor", false];
+	FIELD ["_isHandMonitorDisplay", false];
+	FIELD ["_isLocal", false];
+	FIELD ["_actionCaller", objNull];
+	FIELD ["_mainActions", objNull];
+	FIELD ["_operatorInfoActionId", -1];
+	FIELD ["_currentMenuObj", _self];
+	FIELD ["_targetInActionsConditions", "_target"];
 
-	OBJ_VARIABLE(_currentTurret, DRIVER_TURRET_PATH);
-	OBJ_VARIABLE(_connectedOperator, objNull);
-	OBJ_VARIABLE(_connectedTurretObject, _connectedOperator);
-	OBJ_VARIABLE(_feedActive, false);
-	OBJ_VARIABLE(_currentCameraType, "");
-	OBJ_VARIABLE(_currentFeedCam, objNull);
-	OBJ_VARIABLE(_currentR2T, "");
-	OBJ_VARIABLE(_currentOpHasTurrets, false);
-	OBJ_VARIABLE(_currentCameraSmoothZoom, true);
-	OBJ_VARIABLE(_currentCameraIsStatic, false);
-	OBJ_VARIABLE(_currentCameraCanMove, false);
-	OBJ_VARIABLE(_currentCameraMoves, [0 I 0 I 0 I 0]);
-	OBJ_VARIABLE(_currentCameraMoveRestrictions, []);
-	OBJ_VARIABLE(_monitorCanSwitchNvg, false);
-	OBJ_VARIABLE(_monitorCanSwitchTi, false);
-	OBJ_VARIABLE(_currentPiPEffect, 0);
-	OBJ_VARIABLE(_isInNvg, false);
-	OBJ_VARIABLE(_currentTiTable, createHashMap);
-	OBJ_VARIABLE(_currentNvgTable, createHashMap);
-	TYPE_OBJ_VARIABLE(_zoom, 1, ["" I 1]);
-	TYPE_OBJ_VARIABLE(_zoomFov, 1, ["" I 1]);
-	OBJ_VARIABLE(_zoomMax, 1);
-	OBJ_VARIABLE(_zoomTable, createHashMap);
-	OBJ_VARIABLE(_turretLocal, false);
-	OBJ_VARIABLE(_maxZoomed, false);
-	OBJ_VARIABLE(_currentOperatorIsDrone, false);
-	OBJ_VARIABLE(_canFullScreen, false);
-	OBJ_VARIABLE(_cameraPosFunc, {});
-	OBJ_VARIABLE(_currentCamPointParams, []);
-	OBJ_VARIABLE(_camDoInterpolation, false);
+	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	FIELD ["_connectedOperator", objNull];
+	FIELD ["_connectedTurretObject", _connectedOperator];
+	FIELD ["_feedActive", false];
+	FIELD ["_currentCameraType", ""];
+	FIELD ["_currentFeedCam", objNull];
+	FIELD ["_currentR2T", ""];
+	FIELD ["_currentOpHasTurrets", false];
+	FIELD ["_currentCameraSmoothZoom", true];
+	FIELD ["_currentCameraIsStatic", false];
+	FIELD ["_currentCameraCanMove", false];
+	FIELD ["_currentCameraMoves", [0 I 0 I 0 I 0]];
+	FIELD ["_currentCameraMoveRestrictions", []];
+	FIELD ["_monitorCanSwitchNvg", false];
+	FIELD ["_monitorCanSwitchTi", false];
+	FIELD ["_currentPiPEffect", 0];
+	FIELD ["_isInNvg", false];
+	FIELD ["_currentTiTable", createHashMap];
+	FIELD ["_currentNvgTable", createHashMap];
+	FIELD ["_zoom", 1, ["", 1]];
+	FIELD ["_zoomFov", 1, ["", 1]];
+	FIELD ["_zoomMax", 1];
+	FIELD ["_zoomTable", createHashMap];
+	FIELD ["_turretLocal", false];
+	FIELD ["_maxZoomed", false];
+	FIELD ["_currentOperatorIsDrone", false];
+	FIELD ["_canFullScreen", false];
+	FIELD ["_cameraPosFunc", {}];
+	FIELD ["_currentCamPointParams", []];
+	FIELD ["_camDoInterpolation", false];
 
 	METHODS
 
@@ -214,7 +214,7 @@ OBJCLASS(Monitor)
 
 		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
-		["monitorConnected", [_monitor, _turret, _actionCaller], _operator, "NULL"] CALL_OBJCLASS("Operator", _operator);
+		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
@@ -888,4 +888,4 @@ OBJCLASS(Monitor)
 
 		true
 	};
-CLASS_END
+OBJCLASS_END
