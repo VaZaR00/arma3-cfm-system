@@ -1,3 +1,5 @@
+#include "defines\classDefinesVer1.hpp" 
+
 CLASS(CameraManager)
 
 	/*

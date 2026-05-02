@@ -32,10 +32,7 @@ CFM_max_zoom_gopro = 2;
 CFM_max_zoom_drone = 5;
 
 // Classes
-#include "Classes\DbHandler.sqf"
-#include "Classes\Monitor.sqf"
-#include "Classes\Operator.sqf"
-#include "Classes\CameraManager.sqf"
+call CFM_fnc_compileClasses;
 
 NEW_INSTANCE("DbHandler");
 NEW_INSTANCE("CameraManager");

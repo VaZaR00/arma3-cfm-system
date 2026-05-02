@@ -1,3 +1,5 @@
+#include "defines\objClassDefines.hpp" 
+
 #define OPERATOR_INFO_TEXT_DEF "<t color='#0d6aff'>Operator Info</t>"
 
 OBJCLASS(Monitor)

@@ -1,3 +1,5 @@
+#include "defines\objClassDefines.hpp" 
+
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
 

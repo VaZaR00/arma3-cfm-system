@@ -1,3 +1,5 @@
+#include "defines\classDefinesVer1.hpp" 
+
 #define NEXT_OPERATOR_ID_FIND_TRIES 30
 
 CLASS(DbHandler)
