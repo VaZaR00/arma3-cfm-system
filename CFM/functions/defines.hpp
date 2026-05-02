@@ -1,4 +1,7 @@
 #include "defines\defines.hpp"
+#include "..\includes\main.hpp"
+#include "Classes\defines\classDefinesVer1.hpp"
+#include "Classes\defines\objClassDefines.hpp"
 
 #define RENDER_TARGET_STR "cfmrendertarget"
 #define ACTIONS_PRIORITY 956

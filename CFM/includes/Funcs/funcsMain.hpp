@@ -32,3 +32,15 @@ class Main
         DO_FUNC_RECOMPILE
     };
 };
+class Classes
+{
+    class compileClasses {
+        file = FUNC_PATH(Classes\fn_compileClasses.sqf);
+        DO_FUNC_RECOMPILE
+    };
+    class objClassSystemCompile {
+        file = FUNC_PATH(Classes\fn_objClassSystemCompile.sqf);
+        postInit = 1;
+        DO_FUNC_RECOMPILE
+    };
+};

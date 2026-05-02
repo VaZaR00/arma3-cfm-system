@@ -8,9 +8,9 @@ CLASS(CameraManager)
 
 	METHODS
 
-	METHOD("Init") {
+	CLASS_METHOD("Init") {
 	};
-	METHOD("CreateCamera") {
+	CLASS_METHOD("CreateCamera") {
 		params[["_monitor", objNull]];
 		
 		if !(IS_OBJ(_monitor)) exitWith {[objNull, ""]};
@@ -27,22 +27,22 @@ CLASS(CameraManager)
 
 		[_cam, _renderTarget]
 	};
-	METHOD("addCameraToPool") {
+	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
 		["addCameraToPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	METHOD("removeCameraFromPool") {
+	CLASS_METHOD("removeCameraFromPool") {
 		params[["_cam", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	METHOD("destroyCamera") {
+	CLASS_METHOD("destroyCamera") {
 		params[["_cam", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
 		if !(IS_OBJ(_cam)) exitWith {false};
 		camDestroy _cam;
 		true
 	};
-	METHOD("spawnCamera") {
+	CLASS_METHOD("spawnCamera") {
 		params[["_monitor", objNull]];
 
 		private _camData = ["CreateCamera", [_monitor], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);

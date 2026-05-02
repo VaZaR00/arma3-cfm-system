@@ -1,5 +1,5 @@
+#include "defines.hpp" 
 
-call FUNC_PATH(Classes\ObjClassSystem.sqf);
 
 call FUNC_PATH(Classes\DbHandler.sqf);
 call FUNC_PATH(Classes\Monitor.sqf);

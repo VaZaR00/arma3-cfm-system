@@ -101,7 +101,7 @@ if !(_types isEqualType []) then {_types = [_types]}; \
 if ((_types findIf {name isEqualType _x}) == -1) then {name = def};
 
 
-#define METHOD(name) case name: 
+#define CLASS_METHOD(name) case name: 
 
 #define _NIL(var) (if !(isNil STR(var)) then {var})
 #define NILDEF(var, def) (if !(isNil STR(var)) then {var} else {def})

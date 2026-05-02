@@ -6,7 +6,7 @@ CLASS(DbHandler)
 
 	METHODS
 
-	METHOD("Init") {
+	CLASS_METHOD("Init") {
 		if !(isNil "CFM_inited") exitWith {};
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.08], [5, 0.04]];
@@ -22,7 +22,7 @@ CLASS(DbHandler)
 			missionNamespace setVariable ["CFM_OperatorsIds", createHashMap];
 		};
 	};
-	METHOD("setOperator") {
+	CLASS_METHOD("setOperator") {
 		// should be only server
 		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
@@ -76,7 +76,7 @@ CLASS(DbHandler)
 
 		true
 	};
-	METHOD("addToList") {
+	CLASS_METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
 		
 		if (isNil "_obj") exitWith {-1};
@@ -103,7 +103,7 @@ CLASS(DbHandler)
 		};
 		_i
 	};
-	METHOD("removeFromList") {
+	CLASS_METHOD("removeFromList") {
 		params["_obj", ["_listName", ""], ["_global", false]];
 		
 		if (isNil "_obj") exitWith {false};
@@ -117,7 +117,7 @@ CLASS(DbHandler)
 			true
 		} else {false};
 	};
-	METHOD("addToHashMap") {
+	CLASS_METHOD("addToHashMap") {
 		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
 		
 		if (isNil "_key") exitWith {false};
@@ -132,31 +132,31 @@ CLASS(DbHandler)
 		missionNamespace setVariable [_varName, _hash, _global];
 		true
 	};
-	METHOD("addCameraToPool") {
+	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
 		if !(IS_OBJ(_cam)) exitWith {-1};
 		["addToList", [_cam, "CFM_CameraPool"]] CALL_CLASS(_self);
 	};
-	METHOD("removeCameraFromPool") {
+	CLASS_METHOD("removeCameraFromPool") {
 		params["_cam"];
 		["removeFromList", [_cam, "CFM_CameraPool"]] CALL_CLASS(_self);
 	};
-	METHOD("addMonitor") {
+	CLASS_METHOD("addMonitor") {
 		params["_monitor", ["_global", true]];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_Monitors", _global]] CALL_CLASS(_self);
 	};
-	METHOD("addOperator") {
+	CLASS_METHOD("addOperator") {
 		params["_operator", ["_global", true]];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["setOperatorId", [_operator]] CALL_CLASS(_self);
 		["addToList", [_operator, "CFM_Operators", _global]] CALL_CLASS(_self);
 	};
-	METHOD("removeOperator") {
+	CLASS_METHOD("removeOperator") {
 		params["_operator", ["_global", false]];
 		["removeFromList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
 	};
-	METHOD("setOperatorId") {
+	CLASS_METHOD("setOperatorId") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		private _id = _operator getVariable ["CFM_operatorId", -1];
@@ -178,7 +178,7 @@ CLASS(DbHandler)
 		};
 		_res
 	};
-	METHOD("nextOperatorId") {
+	CLASS_METHOD("nextOperatorId") {
 		// safe id generation
 		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
 		if !(_opsIdsHash isEqualType createHashMap) then {
@@ -204,17 +204,17 @@ CLASS(DbHandler)
 		if (_id in _opsIds) exitWith {-1};
 		_id
 	};
-	METHOD("addActiveMonitor") {
+	CLASS_METHOD("addActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
-	METHOD("removeActiveMonitor") {
+	CLASS_METHOD("removeActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_CLASS(_self);
 	};
-	METHOD("addActiveOperator") {
+	CLASS_METHOD("addActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
@@ -222,7 +222,7 @@ CLASS(DbHandler)
 			CFM_LocalActiveOperators = CFM_ActiveOperators;
 		};
 	};
-	METHOD("removeActiveOperator") {
+	CLASS_METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["removeFromList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
@@ -230,7 +230,7 @@ CLASS(DbHandler)
 			CFM_LocalActiveOperators = CFM_ActiveOperators;
 		};
 	};
-	METHOD("addActiveViewer") {
+	CLASS_METHOD("addActiveViewer") {
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {-1};
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
@@ -244,7 +244,7 @@ CLASS(DbHandler)
 		CFM_makeCamDataSync = true;
 		publicVariableServer "CFM_makeCamDataSync";
 	};
-	METHOD("deepCopy") {
+	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];
 		if !(IS_OBJ(_copyFrom)) exitWith {false};
 		if !(IS_OBJ(_copyTo)) exitWith {false};
@@ -268,13 +268,13 @@ CLASS(DbHandler)
 		};
 		true
 	};
-	METHOD("nextR2Tindex") {
+	CLASS_METHOD("nextR2Tindex") {
 		private _current = missionNamespace getVariable ["CFM_R2T_index", 0];
 		private _next = _current + 1;
 		missionNamespace setVariable ["CFM_R2T_index", _next];
 		_next
 	};
-	METHOD("updateActionPriority") {
+	CLASS_METHOD("updateActionPriority") {
 		private _currentPriority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _next = _currentPriority - 0.1;
 		if (_next < 10) then {
@@ -283,13 +283,13 @@ CLASS(DbHandler)
 		PLAYER_ setVariable ["CFM_currentActionsPriority", _next];
 		_next
 	};
-	METHOD("createDummyForStaticCam") {
+	CLASS_METHOD("createDummyForStaticCam") {
 		// execute only on server, because of JIP sync and to avoid creating multiple dummies on different machines
 		private _dummyObj = createVehicle [DUMMY_CLASSNAME, [0,0,0]];
 		["addDummy", [_dummyObj]] CALL_CLASS(_self);
 		_dummyObj
 	};
-	METHOD("addDummy") {
+	CLASS_METHOD("addDummy") {
 		params["_dummyObj"];
 		["addToList", [_dummyObj, "CFM_DummyObjs"]] CALL_CLASS(_self);
 	};
