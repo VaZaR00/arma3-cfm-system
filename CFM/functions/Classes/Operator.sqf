@@ -1,4 +1,3 @@
-#include "defines\objClassDefines.hpp" 
 
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
@@ -51,8 +50,6 @@ OBJCLASS(Operator)
 	#define PP_VEH_STATIC 1
 	#define PP_VEH_TURRET 2
 	#define TimeToMoveSmoothCoef 0.2
-
-	METHODS
 
 	METHOD("Init") {
 		// should be executed globaly
@@ -543,7 +540,7 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
 		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
-		_monitor setVariable ["CFM_currentCameraType", _currentCameraType];
+		_monitor setVariable ["CFM_currentCameraType", _cameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
 		if (local _operator) then {

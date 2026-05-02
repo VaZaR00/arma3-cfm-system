@@ -8,7 +8,7 @@
 #define FIELD _fields pushBack
 
 
-#define VOLATILE FIELD
+#define VOLATILE _fields pushBack true; FIELD
 
 
 #define SET_SELF_VAR(name) _selfVar = name;
@@ -19,7 +19,7 @@
 
 
 #define OBJCLASS_END \
-    [_classname, _fields, _methods] call OOP_OBJ_CLASS_fnc_class }; \
+    [_classname, _fields, _methods, _selfVar] call OOP_OBJ_CLASS_fnc_class }; \
 
 
 #define CALL_OBJCLASS(name, obj) call { \

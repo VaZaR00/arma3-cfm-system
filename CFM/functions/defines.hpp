@@ -1,5 +1,6 @@
 #include "defines\defines.hpp"
-#include "..\includes\main.hpp"
+// #include "..\includes\main.hpp"
+#include "..\..\..\main_mission.hpp"
 #include "Classes\defines\classDefinesVer1.hpp"
 #include "Classes\defines\objClassDefines.hpp"
 

@@ -1,4 +1,3 @@
-#include "defines\objClassDefines.hpp" 
 
 #define OPERATOR_INFO_TEXT_DEF "<t color='#0d6aff'>Operator Info</t>"
 
@@ -15,14 +14,14 @@ OBJCLASS(Monitor)
 	FIELD ["_isHandMonitorDisplay", false];
 	FIELD ["_isLocal", false];
 	FIELD ["_actionCaller", objNull];
-	FIELD ["_mainActions", objNull];
+	FIELD ["_mainActions", []];
 	FIELD ["_operatorInfoActionId", -1];
-	FIELD ["_currentMenuObj", _self];
+	FIELD ["_currentMenuObj", objNull];
 	FIELD ["_targetInActionsConditions", "_target"];
 
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
-	FIELD ["_connectedTurretObject", _connectedOperator];
+	FIELD ["_connectedTurretObject", objNull];
 	FIELD ["_feedActive", false];
 	FIELD ["_currentCameraType", ""];
 	FIELD ["_currentFeedCam", objNull];
@@ -31,7 +30,7 @@ OBJCLASS(Monitor)
 	FIELD ["_currentCameraSmoothZoom", true];
 	FIELD ["_currentCameraIsStatic", false];
 	FIELD ["_currentCameraCanMove", false];
-	FIELD ["_currentCameraMoves", [0 I 0 I 0 I 0]];
+	FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
 	FIELD ["_currentCameraMoveRestrictions", []];
 	FIELD ["_monitorCanSwitchNvg", false];
 	FIELD ["_monitorCanSwitchTi", false];
@@ -50,8 +49,6 @@ OBJCLASS(Monitor)
 	FIELD ["_cameraPosFunc", {}];
 	FIELD ["_currentCamPointParams", []];
 	FIELD ["_camDoInterpolation", false];
-
-	METHODS
 
 	METHOD("Init") { 
 		// should be executed globaly

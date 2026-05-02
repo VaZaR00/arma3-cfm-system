@@ -1,7 +1,6 @@
 #include "defines.hpp" 
 
-
-call FUNC_PATH(Classes\DbHandler.sqf);
-call FUNC_PATH(Classes\Monitor.sqf);
-call FUNC_PATH(Classes\Operator.sqf);
-call FUNC_PATH(Classes\CameraManager.sqf);
+#include "DbHandler.sqf" 
+#include "CameraManager.sqf" 
+#include "Monitor.sqf" 
+#include "Operator.sqf" 

@@ -40,7 +40,7 @@ class Classes
     };
     class objClassSystemCompile {
         file = FUNC_PATH(Classes\fn_objClassSystemCompile.sqf);
-        postInit = 1;
+        preInit = 1;
         DO_FUNC_RECOMPILE
     };
 };
