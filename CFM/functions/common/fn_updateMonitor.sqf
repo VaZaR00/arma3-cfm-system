@@ -7,18 +7,6 @@
 #include "defines.hpp" 
 
 params[["_monitor", objNull]];
-// params[["_monitorParams", []]];
-
-// _monitorParams params [
-// 	["_isStatic", false],
-// 	["_camera", objNull],
-// 	["_zoomFov", 1],
-// 	["_smoothZoom", true],
-// 	["_doUpdateCamera", false],
-// 	["_var", false],
-// 	["_var", false],
-// 	["_var", false],
-// ];
 
 // private _monitorDisplayId = _monitor getVariable ["CFM_monitorUid", ""];
 // private _monitorDisplay = findDisplay _monitorDisplayId;

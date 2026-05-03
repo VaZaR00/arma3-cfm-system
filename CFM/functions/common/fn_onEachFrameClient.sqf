@@ -16,16 +16,14 @@ if !(_optimizeDistance isEqualType "") then {
 };
 _optimizeDistance = parseNumber _optimizeDistance;
 private _doOptimize = _optimizeDistance > 0;
-private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_monitorParams"];
+private _player = PLAYER_;
+private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
 {
-	// _monitor = _x param [0, objNull];
-	// _monitorParams = _x param [1, []];
 	_monitor = _x;
-	_monitorParams = _x;
 	_condition = _monitor call CFM_fnc_monitorFeedActive;
 	_isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
 	if (!(_isHandMonitor) && {_doOptimize}) then {
-		_dist = PLAYER_ distance _monitor;
+		_dist = _player distance _monitor;
 		if (_dist > _optimizeDistance) then {
 			_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 			[_monitor] call CFM_fnc_stopOperatorFeed;
@@ -34,7 +32,7 @@ private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_mon
 		};
 	};
 	if (_condition) then {
-		_condition = _monitorParams call CFM_fnc_updateMonitor;
+		_condition = _monitor call CFM_fnc_updateMonitor;
 	};
 	if (_condition isEqualTo false) then {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
