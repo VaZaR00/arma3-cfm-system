@@ -19,7 +19,7 @@
 
 
 #define OBJCLASS_END \
-    [_classname, _fields, _methods, _selfVar] call OOP_OBJ_CLASS_fnc_class }; \
+    [_classname, _fields, _methods, _selfVar] call OOP_fnc_class }; \
 
 
 #define CALL_OBJCLASS(name, obj) call { \

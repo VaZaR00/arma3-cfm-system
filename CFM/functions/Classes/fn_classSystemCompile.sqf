@@ -7,7 +7,7 @@
 
 
 // EXCEPTIONS
-#define EXCEPTION(code) ([code, _NIL(_this), _NIL(_className), _NIL(_class), NIL_DEF] call OOP_OBJ_CLASS_fnc_raiseException)
+#define EXCEPTION(code) ([code, _NIL(_this), _NIL(_className), _NIL(_class), NIL_DEF] call OOP_fnc_raiseException)
 
 #define EXCEPTION_CLASS_DONT_EXISTS 0
 #define EXCEPTION_NON_OBJ 1
@@ -20,11 +20,11 @@
 
 #define NIL_DEF _NIL(_def)
 
-OOP_OBJ_CLASS_fnc_class = {
+OOP_fnc_class = {
     params ["_className", "_fields", "_methods", ["_selfVar", ""]];
 
     private _prefix = if (isNil "_ADDON_PREFX") then {SPREFX} else {_ADDON_PREFX};
-    private _classRegistryName = [_className] call OOP_OBJ_CLASS_fnc_classRegistryName;
+    private _classRegistryName = [_className] call OOP_fnc_classRegistryName;
 
     private _fieldsCompiled = [];
     private _isVolatile = false;
@@ -82,7 +82,7 @@ OOP_OBJ_CLASS_fnc_newInstance = {
 
     if !(IS_OBJ(_obj)) exitWith {EXCEPTION(EXCEPTION_NON_OBJ)};
 
-    private _class = [_className] call OOP_OBJ_CLASS_fnc_classExists;
+    private _class = [_className] call OOP_fnc_classExists;
 
 	if (_class isEqualTo false) exitWith {EXCEPTION(EXCEPTION_CLASS_DONT_EXISTS)};
 
@@ -117,7 +117,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 
     if !(IS_OBJ(_obj)) exitWith {EXCEPTION(EXCEPTION_NON_OBJ)};
 
-    private _classRegistryName = [_className] call OOP_OBJ_CLASS_fnc_classRegistryName;
+    private _classRegistryName = [_className] call OOP_fnc_classRegistryName;
 	private _methodParams = _obj getVariable format["%1_%2", _classRegistryName, _methodName];
 	if (isNil "_methodParams") exitWith {
 		EXCEPTION(EXCEPTION_METHOD_DONT_EXISTS)
@@ -134,7 +134,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 		_x params ["_fieldName", ["_fieldParams", []]];
 		if (_fieldName isEqualTo "") then {continue};
 		_fieldParams params ["_fieldNameFull", ["_fieldDef", nil], ["_fieldType", []]];
-		call compile (format["%1 = _obj getVariable ['%2', _fieldDef]; %1 = [if (isNil '%1') then {nil} else {%1}, _fieldType, _fieldDef] call OOP_OBJ_CLASS_fnc_validateFieldType", _fieldName, _fieldNameFull])
+		call compile (format["%1 = _obj getVariable ['%2', _fieldDef]; %1 = [if (isNil '%1') then {nil} else {%1}, _fieldType, _fieldDef] call OOP_fnc_validateFieldType", _fieldName, _fieldNameFull])
 	} forEach _methodSelfFields;
 
 	private _selfVar = _obj getVariable [format["%1_selfVar", _classRegistryName], "_self"];
@@ -150,7 +150,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	_this call _method
 };
 
-OOP_OBJ_CLASS_fnc_validateFieldType = {
+OOP_fnc_validateFieldType = {
 	params["_var", ["_types", []], ["_def", nil]];
 	if (isNil "_var") exitWith {nil};
 	if (_types isEqualTo []) exitWith {_var};
@@ -163,16 +163,16 @@ OOP_OBJ_CLASS_fnc_validateFieldType = {
 	_var
 };
 
-OOP_OBJ_CLASS_fnc_classRegistryName = {
+OOP_fnc_classRegistryName = {
 	params["_className"];
     private _prefix = if (isNil "_ADDON_PREFX") then {SPREFX} else {_ADDON_PREFX};
 	_prefix = if (_prefix == "") then {_prefix} else {_prefix + "_"};
     format["OOP_OBJ_CLASS_%1%2", _prefix, _className];
 };
 
-OOP_OBJ_CLASS_fnc_classExists = {
+OOP_fnc_classExists = {
 	params["_classname"];
-    private _classRegistryName = [_className] call OOP_OBJ_CLASS_fnc_classRegistryName;
+    private _classRegistryName = [_className] call OOP_fnc_classRegistryName;
 	private _class = missionNamespace getVariable _classRegistryName;
 	if (isNil "_class") exitWith {false};
 	if !(_class isEqualType createHashMap) exitWith {false};
@@ -181,7 +181,7 @@ OOP_OBJ_CLASS_fnc_classExists = {
 	_class
 };
 
-OOP_OBJ_CLASS_fnc_raiseException = {
+OOP_fnc_raiseException = {
 	_this DLOG;
 	_this param [2, nil];
 };
