@@ -63,7 +63,9 @@ OOP_fnc_class = {
         _skipI pushBack (_i + 1);
 		private _methodStr = str _method;
         private _methodSelfFields = _fieldsCompiled select {(_x#0) in _methodStr};
-        _methodsCompiled pushBack [_methodName, [_method, _methodSelfFields]];
+		private _methodNameFull = format["%1_%2", _classRegistryName, _methodName];
+        missionNamespace setVariable [_methodNameFull, _method];
+        _methodsCompiled pushBack [_methodName, [_methodNameFull, _method, _methodSelfFields]];
     };
 
     private _methodsMap = createHashMapFromArray _methodsCompiled;
@@ -98,7 +100,9 @@ OOP_OBJ_CLASS_fnc_newInstance = {
 
     private _methods = _class getOrDefaultCall ["methods", {EXCEPTION(EXCEPTION_NO_METHODS); createHashMap}];
     {
-        _obj setVariable [format["%1_%2", _classRegistryName, _x], _y, _global];
+        // _y = [_methodVarNameFull, _methodScript, _methodSelfFields]
+        // for network optimisation we set only method variable name (_y select 2) not full script
+        _obj setVariable [format["%1_%2", _classRegistryName, _x], [_y select 0, _y select 2], _global];
     } forEach _methods;
 
     private _selfVar = _class getOrDefault ["selfvar", "_self"];
@@ -125,8 +129,9 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	if (isNil "_methodParams") exitWith {
 		EXCEPTION(EXCEPTION_METHOD_DONT_EXISTS)
 	};
-	private _method = _methodParams param [0, {EXCEPTION(EXCEPTION_METHOD_FUNC_DONT_EXISTS)}];
-	private _methodSelfFields = _methodParams param [1, []];
+	private _methodVarName = _methodParams param [0, "", [""]];
+	private _method = missionNamespace getVariable [_methodVarName, {EXCEPTION(EXCEPTION_METHOD_FUNC_DONT_EXISTS)}];
+	private _methodSelfFields = _methodParams param [1, [], [[], ""]];
 	if !(_methodSelfFields isEqualType []) then {_methodSelfFields = []};
 	_methodSelfFields = _methodSelfFields select {(_x#0) isEqualType ""};
 
