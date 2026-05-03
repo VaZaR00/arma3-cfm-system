@@ -59,7 +59,9 @@ if !(_currUpMS isEqualTo _prevUp) then {
 // 	_updated = true;
 // 	_operator setVariable [_posVarName, _currPosMS, MONITOR_VIEWERS_AND_SELF(false)];
 // };
-[_operator] call CFM_fnc_updateOperatorZoom;
+if (cameraOn isEqualTo _operator) then {
+	[_operator] call CFM_fnc_updateOperatorZoom;
+};
 _operator setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
 
 _updated
