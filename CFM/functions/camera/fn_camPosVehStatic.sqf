@@ -17,6 +17,4 @@ private _dir = _obj vectorModelToWorldVisual _odir;
 private _up = _obj vectorModelToWorldVisual _oup;
 private _pos = _obj modelToWorldVisualWorld _offsetPos;
 
-LOGH [_obj, _dir, _odir];
-
 [_pos, _dir, _up]

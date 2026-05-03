@@ -7,5 +7,5 @@
 #include "defines.hpp" 
 
 params["_monitor"];
-[_monitor] call CFM_fnc_setR2TTexture;
-_monitor setVariable ["CFM_turnedOffLocal", false];
+
+["toggleMonitorLocal", true] CALL_OBJCLASS("DisplayHandler", _monitor);
