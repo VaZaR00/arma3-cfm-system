@@ -79,6 +79,13 @@ CLASS(DbHandler)
 
 		true
 	};
+	CLASS_METHOD("setupMonitorDisplay") {
+		params["_monitor"];
+
+		if !(IS_OBJ(_monitor)) exitWith {};
+
+		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
+	};
 	CLASS_METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
 		

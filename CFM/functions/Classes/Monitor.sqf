@@ -108,7 +108,8 @@ OBJCLASS(Monitor)
 			};
 		};
 
-		private _hasTextureSelection = count (getObjectTextures _monitor) > 0;
+		private _monitorTextures = getObjectTextures _monitor;
+		private _hasTextureSelection = count (_monitorTextures) > 0;
 		if (!_isHandMonitor && !(_hasTextureSelection)) exitWith {
 			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
 			false
@@ -120,7 +121,7 @@ OBJCLASS(Monitor)
 		
 		if (_local) then {
 			_isLocal = _isHandMonitor;
-			private _originalTexture = (getObjectTextures _monitor) select 0;
+			private _originalTexture = (_monitorTextures) select 0;
 			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 			_monitor setVariable ["CFM_originalTexture", _originalTexture, !_isLocal]; 
 
@@ -151,34 +152,11 @@ OBJCLASS(Monitor)
 		["addMenuActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["addOptionalActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["updateActionPriority"] CALL_CLASS("DbHandler");
-
-		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
-		_monitor setVariable ["CFM_monitorUid", _monitorUid];
-		_monitorR2Tid = ["createMonitorR2TId", _monitor] CALL_CLASS("DbHandler");
-		_monitor setVariable ["CFM_monitorR2Tid", _monitorR2Tid];
+		["setupMonitorDisplay", _monitor] CALL_CLASS("DbHandler");
 
 		_monitor setVariable ["CFM_isMonitorSet", true];
 
 		true
-	};
-	METHOD("setR2TTexture") {
-		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
-
-		// if !(hasInterface) exitWith {};
-
-		if (_render && {_r2t isEqualTo ""}) then {
-			_r2t = _monitorR2Tid;
-		};
-		_render = _render && !(_r2t isEqualTo "");
-		if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
-			[_monitor, _render] call CFM_fnc_setHandDisplay;
-		};
-
-		if (_render) then {
-			_monitor setObjectTexture [0, "#(argb,512,512,1)r2t(" + _r2t + ",1.0)"];  
-		} else {
-			_monitor setObjectTexture [0, _originalTexture];
-		};
 	};
 	METHOD("startFeed") {  
 		params [["_operator", objNull], ["_turret", []], ["_reset", false]];
@@ -210,7 +188,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("Monitor", _monitor);
+		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("DisplayHandler", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
@@ -239,7 +217,7 @@ OBJCLASS(Monitor)
 		} else {
 			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		};
-		["setR2TTexture", [false]] CALL_OBJCLASS("Monitor", _monitor);
+		["setR2TTexture", [false]] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("clearVariables") {
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
