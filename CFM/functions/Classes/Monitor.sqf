@@ -188,15 +188,12 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["startRendering", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
-		if (_reset) then {
-			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
-		};
 		{ _currentMenuObj removeAction _x } forEach (_currentMenuObj getVariable ["CFM_tempActions", []]); 
 
 		true
@@ -217,7 +214,7 @@ OBJCLASS(Monitor)
 		} else {
 			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		};
-		["setR2TTexture", [false]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["stopRendering"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("clearVariables") {
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];

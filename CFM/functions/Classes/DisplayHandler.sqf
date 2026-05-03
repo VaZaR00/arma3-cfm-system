@@ -5,14 +5,28 @@ OBJCLASS(DisplayHandler)
 
 	FIELD ["_monitorUid", ""];
 	FIELD ["_monitorR2Tid", ""];
-	FIELD ["_connectedOperator", ""];
 	FIELD ["_originalTexture", ""];
+	
+	FIELD ["_connectedOperator", objNull];
+	FIELD ["_currentPiPEffect", 0];
 
 	METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
 		_monitor setVariable ["CFM_monitorUid", _monitorUid];
 		_monitorR2Tid = ["createMonitorR2TId", _monitor] CALL_CLASS("DbHandler");
 		_monitor setVariable ["CFM_monitorR2Tid", _monitorR2Tid];
+	};
+	METHOD("startRendering") {
+		params[["_reset", false]];
+
+		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		
+		if (_reset) then {
+			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
+		};
+	};
+	METHOD("stopRendering") {
+		["setR2TTexture", [false]] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("setR2TTexture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];

@@ -95,7 +95,18 @@ OOP_OBJ_CLASS_fnc_newInstance = {
 
     private _fields = _class getOrDefaultCall ["fields", {EXCEPTION(EXCEPTION_NO_FIELDS); createHashMap}];
     {
-        _obj setVariable [_y select 0, _y select 1, _global];
+        _y params ["_varname", "_def", ["_type", []]];
+        if (call {
+            private _prevVal = _obj getVariable _varname;
+            if (isNil "_prevVal") exitWith {true};
+            private _prevValValid = [_prevVal, _type, _NIL(_def)] call OOP_fnc_validateFieldType;
+            if (isNil "_prevValValid") exitWith {true};
+            if (_prevValValid isEqualTo _def) exitWith {true};
+            // variable already set and is valid then dont set
+            false
+        }) then {
+            _obj setVariable [_varname, _def, _global];
+        };
     } forEach _fields;
 
     private _methods = _class getOrDefaultCall ["methods", {EXCEPTION(EXCEPTION_NO_METHODS); createHashMap}];
