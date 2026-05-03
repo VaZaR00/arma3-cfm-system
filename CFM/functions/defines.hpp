@@ -2,7 +2,7 @@
 // #include "..\includes\main.hpp"
 #include "..\..\..\main_mission.hpp"
 #include "Classes\defines\classDefinesVer1.hpp"
-#include "Classes\defines\objClassDefines.hpp"
+#include "Classes\defines\classDefines.hpp"
 
 #define RENDER_TARGET_STR "cfmrendertarget"
 #define ACTIONS_PRIORITY 956
