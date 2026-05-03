@@ -132,8 +132,8 @@
                 file = FUNC_PATH(monitor\fn_setMonitorPiPEffect.sqf);
                 DO_FUNC_RECOMPILE
             };
-            class setMonitorTexture {
-                file = FUNC_PATH(monitor\fn_setMonitorTexture.sqf);
+            class setR2TTexture {
+                file = FUNC_PATH(monitor\fn_setR2TTexture.sqf);
                 DO_FUNC_RECOMPILE
             };
             class turnOffMonitorLocal {

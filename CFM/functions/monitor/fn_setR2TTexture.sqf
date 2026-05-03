@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_setMonitorTexture
+    Function: CFM_fnc_setR2TTexture
     Author: Vazar
     Description: Automatically generated SQF file.
 */
@@ -8,4 +8,4 @@
 
 params["_monitor", ["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
-["setRenderPicture", [_render, _r2t, _turnOff]] CALL_OBJCLASS("Monitor", _monitor);
+["setR2TTexture", [_render, _r2t, _turnOff]] CALL_OBJCLASS("Monitor", _monitor);

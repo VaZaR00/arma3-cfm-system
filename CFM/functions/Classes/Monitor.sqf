@@ -161,7 +161,7 @@ OBJCLASS(Monitor)
 
 		true
 	};
-	METHOD("setRenderPicture") {
+	METHOD("setR2TTexture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
 		// if !(hasInterface) exitWith {};
@@ -210,7 +210,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["setRenderPicture", [true, _monitorR2Tid]] CALL_OBJCLASS("Monitor", _monitor);
+		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("Monitor", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
@@ -239,7 +239,7 @@ OBJCLASS(Monitor)
 		} else {
 			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
 		};
-		["setRenderPicture", [false]] CALL_OBJCLASS("Monitor", _monitor);
+		["setR2TTexture", [false]] CALL_OBJCLASS("Monitor", _monitor);
 	};
 	METHOD("clearVariables") {
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
