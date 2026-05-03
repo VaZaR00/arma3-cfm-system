@@ -1,5 +1,5 @@
 
-#define NEXT_OPERATOR_ID_FIND_TRIES 30
+#define NEXT_ID_FIND_TRIES 30
 
 CLASS(DbHandler)
 
@@ -7,6 +7,7 @@ CLASS(DbHandler)
 
 	CLASS_METHOD("Init") {
 		if !(isNil "CFM_inited") exitWith {};
+		// local variables
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
 		CFM_drone_zoomTable = createHashMapFromArray [[2, 0.5], [3, 0.2], [4, 0.08], [5, 0.04]];
 		CFM_defaultZoomTable = createHashMapFromArray [[-1, createHashMapFromArray [[1, 1]]]];
@@ -15,7 +16,10 @@ CLASS(DbHandler)
 		CFM_tiModesTable = createHashMapFromArray CFM_tiModesTableArray;
 		CFM_tiModesTableReverse = createHashMapFromArray CFM_tiModesTableArrayReverse;
 		CFM_R2T_index = 0;
+		CFM_MonitorsUIds = createHashMap;
+		CFM_MonitorsR2Ts = createHashMap;
 		if (isServer) then {
+			// global variables
 			missionNamespace setVariable ["CFM_ActiveMonitors", []];
 			missionNamespace setVariable ["CFM_ActiveMonitorViewers", [2], true];
 			missionNamespace setVariable ["CFM_OperatorsIds", createHashMap];
@@ -161,7 +165,7 @@ CLASS(DbHandler)
 		private _id = _operator getVariable ["CFM_operatorId", -1];
 		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
 		private _res = if (_id isEqualTo -1) then {
-			private _nextId = ["nextOperatorId"] CALL_CLASS(_self);
+			private _nextId = ["safeGenerateId", [_opsIdsHash]] CALL_CLASS(_self);
 			if (_nextId < 0) exitWith {-1};
 			_opsIdsHash set [_nextId, _operator];
 			_operator setVariable ["CFM_operatorId", _nextId, true];
@@ -177,31 +181,37 @@ CLASS(DbHandler)
 		};
 		_res
 	};
-	CLASS_METHOD("nextOperatorId") {
-		// safe id generation
-		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
-		if !(_opsIdsHash isEqualType createHashMap) then {
-			_opsIdsHash = createHashMap;
-			missionNamespace setVariable ["CFM_OperatorsIds", _opsIdsHash];
+	CLASS_METHOD("createMonitorUId") {
+		params["_monitor"];
+		if !(IS_OBJ(_monitor)) exitWith {""};
+		private _idsHash = missionNamespace getVariable ["CFM_MonitorsUIds", createHashMap];
+		private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
+		if (_nextId < 0) exitWith {
+			format["DbHandler.createMonitorUId: problem occured when trying generate UI for monitor. Id returned: '%1'. Current existing ids: '%2'", 
+			_nextId, keys _idsHash
+			] WARN;
+			""
 		};
-		private _opsIds = keys _opsIdsHash;
-		if (count _opsIds == 0) exitWith {0};
-		_opsIds sort true;
-		private _idRight = false;
-		private _id = -1;
-		private _tryCount = 0;
-		private _lastId = _opsIds select -1;
-		while {!_idRight && {_tryCount < NEXT_OPERATOR_ID_FIND_TRIES}} do {
-			_tryCount = _tryCount + 1;
-			_id = _lastId + 1;
-			if (_id in _opsIds) then {
-				_lastId = _id;
-			} else {
-				_idRight = true;
-			};
+		private _uidStr = UI_RENDER_ID_STR + str _nextId;
+		_idsHash set [_uidStr, _monitor];
+		missionNamespace setVariable ["CFM_MonitorsUIds", _idsHash];
+		_uidStr
+	};
+	CLASS_METHOD("createMonitorR2TId") {
+		params["_monitor"];
+		if !(IS_OBJ(_monitor)) exitWith {""};
+		private _idsHash = missionNamespace getVariable ["CFM_MonitorsR2Ts", createHashMap];
+		private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
+		if (_nextId < 0) exitWith {
+			format["DbHandler.createMonitorR2TId: problem occured when trying generate R2T id for monitor. Id returned: '%1'. Current existing ids: '%2'", 
+			_nextId, keys _idsHash
+			] WARN; 
+			""
 		};
-		if (_id in _opsIds) exitWith {-1};
-		_id
+		private _r2tStr = RENDER_TARGET_STR + str _nextId;
+		_idsHash set [_r2tStr, _monitor];
+		missionNamespace setVariable ["CFM_MonitorsR2Ts", _idsHash];
+		_r2tStr
 	};
 	CLASS_METHOD("addActiveMonitor") {
 		params["_monitor"];
@@ -272,6 +282,28 @@ CLASS(DbHandler)
 		private _next = _current + 1;
 		missionNamespace setVariable ["CFM_R2T_index", _next];
 		_next
+	};
+	CLASS_METHOD("safeGenerateId") {
+		// safe id generation
+		params["_idsHash"];
+		private _ids = keys _idsHash;
+		if (count _ids == 0) exitWith {0};
+		_ids sort true;
+		private _idRight = false;
+		private _id = -1;
+		private _tryCount = 0;
+		private _lastId = _ids select -1;
+		while {!_idRight && {_tryCount < NEXT_ID_FIND_TRIES}} do {
+			_tryCount = _tryCount + 1;
+			_id = _lastId + 1;
+			if (_id in _ids) then {
+				_lastId = _id;
+			} else {
+				_idRight = true;
+			};
+		};
+		if (_id in _ids) exitWith {-1};
+		_id
 	};
 	CLASS_METHOD("updateActionPriority") {
 		private _currentPriority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];

@@ -10,7 +10,7 @@ CLASS(CameraManager)
 	CLASS_METHOD("Init") {
 	};
 	CLASS_METHOD("CreateCamera") {
-		params[["_monitor", objNull]];
+		params[["_monitor", objNull], ["_renderTarget", ""]];
 		
 		if !(IS_OBJ(_monitor)) exitWith {[objNull, ""]};
 
@@ -18,13 +18,12 @@ CLASS(CameraManager)
 		
 		if !(IS_OBJ(_cam)) exitWith {[objNull, ""]};
 
-		private _renderTarget = [] call CFM_fnc_getNextRenderTarget;
 		_cam cameraEffect ["internal", "back", _renderTarget];
 		
 		["setMonitorCamera", [_self]] CALL_CLASS(_self);
 		["addCameraToPool", [_self]] CALL_CLASS(_self);
 
-		[_cam, _renderTarget]
+		_cam
 	};
 	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
@@ -42,14 +41,12 @@ CLASS(CameraManager)
 		true
 	};
 	CLASS_METHOD("spawnCamera") {
-		params[["_monitor", objNull]];
+		params[["_monitor", objNull], ["_renderTarget", ""]];
 
-		private _camData = ["CreateCamera", [_monitor], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);
-		private _cam = _camData#0;
-		private _r2t = _camData#1;
+		if !(IS_VALID_R2T(_renderTarget)) exitWith {objNull};
 
-		if !(IS_OBJ(_cam)) exitWith {["", objNull]};
-		if !(IS_VALID_R2T(_r2t)) exitWith {["", _cam]};
-		[_r2t, _cam]
+		private _cam = ["CreateCamera", [_monitor, _renderTarget], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);
+
+		_cam
 	};
 CLASS_END

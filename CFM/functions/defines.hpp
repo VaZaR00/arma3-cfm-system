@@ -5,6 +5,7 @@
 #include "Classes\defines\classDefines.hpp"
 
 #define RENDER_TARGET_STR "cfmrendertarget"
+#define UI_RENDER_ID_STR "cfmrenderuiid"
 #define ACTIONS_PRIORITY 956
 
 #define FULLSCREEN_HINT_NL(nl) (format["TO EXIT FULLSCREEN MOVE BY MOUSE OR KEYBOARD! %1 АБИ ВИЙТИ З ПОВНОЕКРАННОГО РЕЖИМУ ПОВОРУХНІТСЯ (МИШКОЮ АБО КЛАВІШАМИ)!", nl])

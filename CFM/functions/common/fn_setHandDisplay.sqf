@@ -8,7 +8,7 @@
 
 params[["_player", PLAYER_], ["_render", true], ["_fullscreen", false]];
 
-private _renderTarget = _player getVariable ["CFM_currentR2T", ""];
+private _renderTarget = _player getVariable ["CFM_monitorR2Tid", ""];
 private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
 private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
 

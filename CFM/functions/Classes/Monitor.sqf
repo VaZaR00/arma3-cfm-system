@@ -18,6 +18,8 @@ OBJCLASS(Monitor)
 	FIELD ["_operatorInfoActionId", -1];
 	FIELD ["_currentMenuObj", objNull];
 	FIELD ["_targetInActionsConditions", "_target"];
+	FIELD ["_monitorUid", ""];
+	FIELD ["_monitorR2Tid", ""];
 
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
@@ -25,7 +27,6 @@ OBJCLASS(Monitor)
 	FIELD ["_feedActive", false];
 	FIELD ["_currentCameraType", ""];
 	FIELD ["_currentFeedCam", objNull];
-	FIELD ["_currentR2T", ""];
 	FIELD ["_currentOpHasTurrets", false];
 	FIELD ["_currentCameraSmoothZoom", true];
 	FIELD ["_currentCameraIsStatic", false];
@@ -151,6 +152,11 @@ OBJCLASS(Monitor)
 		["addOptionalActions", [_radius]] CALL_OBJCLASS("Monitor", _self);
 		["updateActionPriority"] CALL_CLASS("DbHandler");
 
+		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
+		_monitor setVariable ["CFM_monitorUid", _monitorUid];
+		_monitorR2Tid = ["createMonitorR2TId", _monitor] CALL_CLASS("DbHandler");
+		_monitor setVariable ["CFM_monitorR2Tid", _monitorR2Tid];
+
 		_monitor setVariable ["CFM_isMonitorSet", true];
 
 		true
@@ -161,12 +167,9 @@ OBJCLASS(Monitor)
 		// if !(hasInterface) exitWith {};
 
 		if (_render && {_r2t isEqualTo ""}) then {
-			_r2t = _currentR2T;
+			_r2t = _monitorR2Tid;
 		};
 		_render = _render && !(_r2t isEqualTo "");
-		if !(_turnOff) then {
-			_monitor setVariable ["CFM_currentR2T", _r2t];
-		};
 		if ((_monitor getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {
 			[_monitor, _render] call CFM_fnc_setHandDisplay;
 		};
@@ -194,14 +197,12 @@ OBJCLASS(Monitor)
 		
 		_self setVariable ['CFM_actionCaller', nil];
 
-		private _renderTargetAndCamera = ["spawnCamera", [_monitor], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
-		private _renderTarget = _renderTargetAndCamera#0;
-		private _camera = _renderTargetAndCamera#1;
+		private _camera = ["spawnCamera", [_monitor, _monitorR2Tid], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
 
-		if !(IS_VALID_R2T(_renderTarget)) exitWith {
+		if !(IS_OBJ(_camera)) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_self setVariable ["CFM_menuActive", false];
-			"ERROR: CAN'T CONNECT TO OPERATOR: NO RENDER TARGET" WARN;
+			format["ERROR: CAN'T CONNECT TO OPERATOR: CAN'T CREATE CAMERA. Monitor: %1 . RenderTarget: %2", _monitor, _monitorR2Tid] WARN;
 			false
 		};
 
@@ -209,7 +210,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["setRenderPicture", [true, _renderTarget]] CALL_OBJCLASS("Monitor", _monitor);
+		["setRenderPicture", [true, _monitorR2Tid]] CALL_OBJCLASS("Monitor", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
@@ -249,7 +250,6 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentNvgTable", nil];
 		_monitor setVariable ["CFM_currentTurret", nil];
 		_monitor setVariable ["CFM_currentPiPEffect", nil];
-		_monitor setVariable ["CFM_currentR2T", nil];
 		_monitor setVariable ["CFM_currentFeedCam", nil];
 		_monitor setVariable ["CFM_connectedOperator", nil];
 		_monitor setVariable ["CFM_feedActive", nil];
@@ -712,7 +712,7 @@ OBJCLASS(Monitor)
 		if (_onTempCam) then {
 			createDialog "RscDisplayCFMEmpty";
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
-			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _currentR2T];
+			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _monitorR2Tid];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
 			_unitCam cameraEffect ["internal", "BACK"];
 			showCinemaBorder false;
@@ -763,8 +763,8 @@ OBJCLASS(Monitor)
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
 		if (_onTempCam) then {
-			if (IS_VALID_R2T(_currentR2T)) then {
-				_currentFeedCam cameraEffect ["internal", "back", _currentR2T];
+			if (IS_VALID_R2T(_monitorR2Tid)) then {
+				_currentFeedCam cameraEffect ["internal", "back", _monitorR2Tid];
 			} else {
 				_currentFeedCam cameraEffect ["Terminate", "back"];
 				PLAYER_ switchCamera "INTERNAL";
