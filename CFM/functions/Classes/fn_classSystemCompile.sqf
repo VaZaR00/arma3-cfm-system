@@ -55,9 +55,12 @@ OOP_fnc_class = {
     private _fieldsMap = createHashMapFromArray _fieldsCompiled;
 
     private _methodsCompiled = [];
-    for "_i" from 0 to ((count _methods) - 1) step 2 do {
+    private _skipI = [];
+    for "_i" from 0 to ((count _methods) - 1) do {
+        if (_i in _skipI) then {continue};
         private _methodName = _methods select _i;
         private _method = _methods select (_i + 1);
+        _skipI pushBack (_i + 1);
 		private _methodStr = str _method;
         private _methodSelfFields = _fieldsCompiled select {(_x#0) in _methodStr};
         _methodsCompiled pushBack [_methodName, [_method, _methodSelfFields]];
