@@ -278,6 +278,10 @@
                 file = FUNC_PATH(updates\fn_updateMonitor.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class updateMonitorCamera {
+                file = FUNC_PATH(updates\fn_updateMonitorCamera.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class updateOperator {
                 file = FUNC_PATH(updates\fn_updateOperator.sqf);
                 DO_FUNC_RECOMPILE

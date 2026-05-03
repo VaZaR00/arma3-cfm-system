@@ -32,7 +32,11 @@ private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
 		};
 	};
 	if (_condition) then {
-		_condition = _monitor call CFM_fnc_updateMonitor;
+		_condition = if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
+			_monitor call CFM_fnc_updateMonitorCamera;
+		} else {
+			_monitor call CFM_fnc_updateMonitor;
+		};
 	};
 	if (_condition isEqualTo false) then {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
