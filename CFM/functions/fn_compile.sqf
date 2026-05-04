@@ -366,7 +366,7 @@ CFM_fnc_translateLocalVectors = {
 };
 
 CFM_fnc_defineInterfaceData = {
-	// returns [_interfaceClass, _interfaceFuncNameDef]
+	// returns [_interfaceClass, _interfaceFuncNameDef, _interfaceInitFuncNameDef]
 	params["_operator", ["_opClass", ""]];
 
 	if !(IS_STR(_opClass)) then {
@@ -374,18 +374,18 @@ CFM_fnc_defineInterfaceData = {
 	};
 
 	if ("mavik" in _opClass) exitWith {
-		["Mavic_Interface", "CFM_fnc_updateMavicInterface"]
+		["Mavic_Interface", "CFM_fnc_updateMavicInterface", "CFM_fnc_initMavicInterface"]
 	};
 
-	["", ""]
+	[]
 };
 
 CFM_fnc_defineSignalEffectFunc = {
-	["", ""]
+	[]
 };
 
 CFM_fnc_updateMavicInterface = {
-	params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull]];
+	params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_monitorUid", ""]];
 
 	private _pilot = _monitor;
 	private _uav = _operator;
@@ -516,4 +516,29 @@ CFM_fnc_updateMavicInterface = {
 	// 		DB_PP_dynamic ppEffectCommit 0; 
 	// 	};
 	// }; 
+};
+
+#define WAIT_FOR_DISPLAY_TIME 10
+
+CFM_fnc_initMavicInterface = {
+	params[["_displayName", ""]];
+
+	if !(IS_STR(_displayName)) exitWith {};
+	
+	private _waitStart = time;
+	waitUntil {
+		!(isNull (findDisplay _displayName)) ||
+		{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
+	};
+	private _display = findDisplay _displayName;
+
+	if (isNull _display) exitWith {};
+
+	private _allControls = (allControls _display);
+	private _allControlsGroups = _allControls;
+
+	private _setControlVar = {
+		params["_ctrlName"];
+
+	};
 };

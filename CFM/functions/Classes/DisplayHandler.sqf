@@ -89,7 +89,6 @@ OBJCLASS(DisplayHandler)
 
 		private _waitStart = time;
 		waitUntil {
-			displayUpdate _mainDisplay;
 			!(isNull (findDisplay _r2tDisplayName)) ||
 			{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
 		};
@@ -234,7 +233,20 @@ OBJCLASS(DisplayHandler)
 		if (_currentUIDisplayRenderClassInit isEqualType {}) then {
 			_uiCtrlUIDisplayName spawn _currentUIDisplayRenderClassInit;
 		};
-		
+
+		[_self, _uiCtrlUIDisplayName] spawn {
+			params["_self", "_uiCtrlUIDisplayName"];
+
+			private _waitStart = time;
+			waitUntil {
+				!(isNull (findDisplay _uiCtrlUIDisplayName)) ||
+				{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
+			};
+			private _display = findDisplay _uiCtrlUIDisplayName;
+
+			_self setVariable ["CFM_uiCtrlCurrentUIDisplay", _display];
+		};
+
 		_displayUiCtrl ctrlCommit 0;
 	};
 	METHOD("resetRenderEffects") {

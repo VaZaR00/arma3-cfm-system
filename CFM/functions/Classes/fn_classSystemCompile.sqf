@@ -165,6 +165,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	private _self = _obj;
 	call compile (format["%1 = _obj", _selfVar]);
 
+    _thisMethod = _method;
     _this = _args;
     _this call _method;
 };
