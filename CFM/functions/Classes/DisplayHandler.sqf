@@ -214,7 +214,7 @@ OBJCLASS(DisplayHandler)
 		_r2tDisplayR2TCtrl ctrlCommit 0;
 	};
 	METHOD("setRenderInterfaceDisplay") {
-		params[["_set", false], ["_currentUIDisplayRenderClass", ""]];
+		params[["_set", false], ["_currentUIDisplayRenderClass", ""], ["_currentUIDisplayRenderClassInit", ""]];
 		_set = _set && {!(_currentUIDisplayRenderClass isEqualTo "")};
 		if (_set) then {
 			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
@@ -225,6 +225,16 @@ OBJCLASS(DisplayHandler)
 		};
 		_self setVariable ["CFM_currentOperatorInterfaceClass", _currentUIDisplayRenderClass];
 		_self setVariable ["CFM_currentUIDisplayRenderClass", _currentUIDisplayRenderClass];
+
+		// init display func
+		_currentUIDisplayRenderClassInit = if !(_currentUIDisplayRenderClassInit isEqualType {}) then {
+			if !(IS_STR(_currentUIDisplayRenderClassInit)) exitWith {{}};
+			missionNamespace getVariable [_currentUIDisplayRenderClassInit, {}]; 
+		} else {_currentUIDisplayRenderClassInit};
+		if (_currentUIDisplayRenderClassInit isEqualType {}) then {
+			_uiCtrlUIDisplayName spawn _currentUIDisplayRenderClassInit;
+		};
+		
 		_displayUiCtrl ctrlCommit 0;
 	};
 	METHOD("resetRenderEffects") {

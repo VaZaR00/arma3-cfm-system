@@ -284,6 +284,7 @@ OBJCLASS(Operator)
 			["_smoothZoomSetTurr", -1],
 			["_interfaceClass", -1],
 			["_interfaceFuncName", -1],
+			["_initInterfaceFuncName", -1],
 			["_signalFuncName", -1],
 			["_effectFuncName", -1]
 		];
@@ -498,12 +499,15 @@ OBJCLASS(Operator)
 
 		// interface
 		private _interfaceData = [_operator, _objClass] call CFM_fnc_defineInterfaceData;
-		_interfaceData params [["_interfaceClassDef", ""], ["_interfaceFuncNameDef", ""]];
+		_interfaceData params [["_interfaceClassDef", ""], ["_interfaceFuncNameDef", ""], ["_initInterfaceFuncNameDef", ""]];
 		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
 			_interfaceClass = _interfaceClassDef;
 		};
 		if ((_interfaceFuncName isEqualTo -1) || {!IS_STR(_interfaceFuncName)}) then {
 			_interfaceFuncName = _interfaceFuncNameDef;
+		};
+		if ((_initInterfaceFuncName isEqualTo -1) || {!IS_STR(_initInterfaceFuncName)}) then {
+			_initInterfaceFuncName = _initInterfaceFuncNameDef;
 		};
 		// signal func
 		private _effectAndSignalFuncsDef = [_operator, _objClass] call CFM_fnc_defineSignalEffectFunc;
@@ -532,10 +536,14 @@ OBJCLASS(Operator)
 		if !(IS_STR(_interfaceFuncName)) then {
 			_interfaceFuncName = "";
 		};
+		if !(IS_STR(_initInterfaceFuncName)) then {
+			_initInterfaceFuncName = "";
+		};
 		_turretParams set ["signalFuncName", _signalFuncName];
 		_turretParams set ["effectFuncName", _effectFuncName];
 		_turretParams set ["interfaceFuncName", _interfaceFuncName];
 		_turretParams set ["interfaceClass", _interfaceClass];
+		_turretParams set ["initInterfaceFuncName", _initInterfaceFuncName];
 
 		// set
 		_turretsParams set [_turretIndex, _turretParams];
@@ -629,6 +637,7 @@ OBJCLASS(Operator)
 		private _effectFuncName = _turretData getOrDefault ["effectFuncName", ""];
 		private _interfaceFuncName = _turretData getOrDefault ["interfaceFuncName", ""];
 		private _interfaceClass = _turretData getOrDefault ["interfaceClass", ""];
+		private _initInterfaceFuncName = _turretData getOrDefault ["initInterfaceFuncName", ""];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -662,12 +671,12 @@ OBJCLASS(Operator)
 			if (_doSetFuncs) then {
 				["setSignalInterfaceEffectFuncs", [_signalFuncName, _effectFuncName, _interfaceFuncName], true] REMOTE_EXEC_OBJCLASS("DisplayHandler", _monitor);
 			};
-			["setRenderInterfaceDisplay", [true, _interfaceClass], true] REMOTE_EXEC_OBJCLASS("DisplayHandler", _monitor);
+			["setRenderInterfaceDisplay", [true, _interfaceClass, _initInterfaceFuncName], true] REMOTE_EXEC_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			if (_doSetFuncs) then {
 				["setSignalInterfaceEffectFuncs", [_signalFuncName, _effectFuncName, _interfaceFuncName], true] CALL_OBJCLASS("DisplayHandler", _monitor);
 			};
-			["setRenderInterfaceDisplay", [true, _interfaceClass]] CALL_OBJCLASS("DisplayHandler", _monitor);
+			["setRenderInterfaceDisplay", [true, _interfaceClass, _initInterfaceFuncName]] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
 		[_monitor, true] call CFM_fnc_setOperatorInfo;
 
