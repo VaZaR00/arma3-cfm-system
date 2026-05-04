@@ -281,7 +281,11 @@ OBJCLASS(Operator)
 			["_pointParams", -1],  
 			["_doInterpolationSet", true], 
 			["_turretName", ""],
-			["_smoothZoomSetTurr", -1]
+			["_smoothZoomSetTurr", -1],
+			["_interfaceClass", -1],
+			["_interfaceFuncName", -1],
+			["_signalFuncName", -1],
+			["_effectFuncName", -1]
 		];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
@@ -489,8 +493,51 @@ OBJCLASS(Operator)
 		};
 		_turretParams set ["initialDirUp", [_initialDir, [0,0,1]]];
 
+		// turret name
 		_turretParams set ["turretName", _turretName];
 
+		// interface
+		if ((_interfaceClass isEqualTo -1) || {(_interfaceClass isEqualTo "") || {!(_interfaceClass isEqualType "")}}) then {
+			private _interfaceData = [] call CFM_fnc_defineInterfaceData;
+			_interfaceData params [["_interfaceClass", ""], ["_interfaceFuncNameDef", ""]];
+			if ((_interfaceFuncName isEqualTo -1) || {(_interfaceFuncName isEqualTo "") || {!(_interfaceFuncName isEqualType "")}}) then {
+				_interfaceFuncName = _interfaceFuncNameDef;
+			};
+		};
+		// signal func
+		if ((_signalFuncName isEqualTo -1) || {(_signalFuncName isEqualTo "") || {!(call {
+			if !(_signalFuncName isEqualType "") exitWith {false};
+			private _signalFunc = missionNamespace getVariable [_signalFuncName, {}];
+			private _testFuncRes = [player, _operator] call _signalFunc;
+			if (isNil "_testFuncRes") exitWith {false};
+			_testFuncRes isEqualType 1
+		})}}) then {
+			_effectAndSignalFuncs = _operator call CFM_fnc_defineSignalEffectFunc;
+			_effectAndSignalFuncs params [["_signalFuncNameDef", ""], ["_effectFuncNameDef", ""]];
+			_signalFuncName = _signalFuncNameDef;
+			// effect func
+			if ((_effectFuncName isEqualTo -1) || {!IS_STR(_effectFuncName)}) then {
+				_effectFuncName = _effectFuncNameDef;
+			};
+		};
+		if !(IS_STR(_signalFuncName)) then {
+			_signalFuncName = "";
+		};
+		if !(IS_STR(_effectFuncName)) then {
+			_effectFuncName = "";
+		};
+		if !(IS_STR(_interfaceClass)) then {
+			_interfaceClass = "";
+		};
+		if !(IS_STR(_interfaceFuncName)) then {
+			_interfaceFuncName = "";
+		};
+		_turretParams set ["signalFuncName", _signalFuncName];
+		_turretParams set ["effectFuncName", _effectFuncName];
+		_turretParams set ["interfaceFuncName", _interfaceFuncName];
+		_turretParams set ["interfaceClass", _interfaceClass];
+
+		// set
 		_turretsParams set [_turretIndex, _turretParams];
 		_self setVariable ["CFM_turretsParams", _turretsParams, SET_VARS_INIT_GLOBAL];
 
@@ -578,6 +625,10 @@ OBJCLASS(Operator)
 		private _cameraMoveRestrictions = _turretData getOrDefault ["cameraMoveRestrictions", []];
 		private _smoothZoom = _turretData getOrDefault ["smoothZoom", true];
 		private _zoomTable = _turretData getOrDefault ["zoomTable", createHashMap];
+		private _signalFuncName = _turretData getOrDefault ["signalFuncName", ""];
+		private _effectFuncName = _turretData getOrDefault ["effectFuncName", ""];
+		private _interfaceFuncName = _turretData getOrDefault ["interfaceFuncName", ""];
+		private _interfaceClass = _turretData getOrDefault ["interfaceClass", ""];
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -606,6 +657,18 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
+		private _doSetFuncs = IS_STR(_signalFuncName) || {IS_STR(_interfaceFuncName)};
+		if (_global) then {
+			if (_doSetFuncs) then {
+				["setSignalInterfaceEffectFuncs", [_signalFuncName, _effectFuncName, _interfaceFuncName], true] REMOTE_EXEC_OBJCLASS("DisplayHandler", _monitor);
+			};
+			["setRenderInterfaceDisplay", [true, _interfaceClass], true] REMOTE_EXEC_OBJCLASS("DisplayHandler", _monitor);
+		} else {
+			if (_doSetFuncs) then {
+				["setSignalInterfaceEffectFuncs", [_signalFuncName, _effectFuncName, _interfaceFuncName], true] CALL_OBJCLASS("DisplayHandler", _monitor);
+			};
+			["setRenderInterfaceDisplay", [true, _interfaceClass]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		};
 		[_monitor, true] call CFM_fnc_setOperatorInfo;
 
 		// small delay before enabling interpolation so there is no camera movement on spawn

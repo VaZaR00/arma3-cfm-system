@@ -30,7 +30,7 @@
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
 #define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
-#define IS_STR(s) (s isEqualType "")
+#define IS_STR(s) ((s isEqualType "") && {!(s isEqualTo "")})
 #define IS_FUNC(f) ((f isEqualType {}) && !(f isEqualTo {}))
 #define IS_LOC(l) ((typeName l) isEqualTo "LOCATION")
 #define IS_VALID_OP(op) (IS_OBJ(op))

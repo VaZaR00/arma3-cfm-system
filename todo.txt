@@ -3,6 +3,10 @@ update mon func
 dont sync if player is dead
 fix display brightness
 
+rework fullscreen to apply effects
+
+how to render RscInGameUI rscs?
+
 point params get mem point for setting
 
 

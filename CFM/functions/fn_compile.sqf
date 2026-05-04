@@ -364,3 +364,11 @@ CFM_fnc_translateLocalVectors = {
 	// Результат: [_finalDir, _finalUp]
 	[_finalDir, _finalUp]
 };
+
+CFM_fnc_defineInterfaceData = {
+	["", ""]
+};
+
+CFM_fnc_defineSignalEffectFunc = {
+	["", ""]
+};

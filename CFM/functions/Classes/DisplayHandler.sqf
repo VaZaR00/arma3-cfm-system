@@ -32,6 +32,8 @@ OBJCLASS(DisplayHandler)
 	FIELD ["_currentPiPEffect", 0];
 	FIELD ["_currentOperatorSignalFunction", {1}];
 	FIELD ["_currentOperatorInterfaceFunction", {}];
+	FIELD ["_currentOperatorInterfaceClass", {}];
+	FIELD ["_currentOperatorEffectsFunction", {}];
 
 	METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
@@ -170,6 +172,36 @@ OBJCLASS(DisplayHandler)
 
 	};
 	// set renders
+	METHOD("setSignalInterfaceEffectFuncs") {
+		params[["_signalFuncName", ""], ["_effectFuncName", ""], ["_interfaceFuncName", ""]];
+
+		private _set = false;
+		if (IS_STR(_signalFuncName)) then {
+			private _signalFunc = missionNamespace getVariable _signalFuncName;
+			if (isNil "_signalFunc") exitWith {};
+			if !(_signalFunc isEqualType {}) exitWith {};
+			private _testFuncRes = [_self, player] call _signalFunc;
+			if (isNil "_testFuncRes") exitWith {false};
+			if !(_testFuncRes isEqualType 1) exitWith {false};
+			_self setVariable ["CFM_currentOperatorSignalFunction", _signalFunc];
+			_set = true;
+		};
+		if (IS_STR(_interfaceFuncName)) then {
+			private _interfaceFunc = missionNamespace getVariable _interfaceFuncName;
+			if (isNil "_interfaceFunc") exitWith {};
+			if !(_interfaceFunc isEqualType {}) exitWith {};
+			_self setVariable ["CFM_currentOperatorInterfaceFunction", _interfaceFunc];
+			_set = true;
+		};
+		if (IS_STR(_effectFuncName)) then {
+			private _effectFunc = missionNamespace getVariable _effectFuncName;
+			if (isNil "_effectFunc") exitWith {};
+			if !(_effectFunc isEqualType {}) exitWith {};
+			_self setVariable ["_currentOperatorEffectsFunction", _effectFunc];
+			_set = true;
+		};
+		_set
+	};
 	METHOD("setRenderR2TDisplay") {
 		params[["_set", false]];
 		if (_set) then {
@@ -185,10 +217,12 @@ OBJCLASS(DisplayHandler)
 		_set = _set && {!(_displayClass isEqualTo "")};
 		if (_set) then {
 			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
-			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(RscDisplayCFMEmpty,%2)", _size, _displayClass]);
+			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiCtrlUIDisplayName]);
 		} else {
+			_displayClass = "";
 			_displayUiCtrl ctrlSetText ("");
 		};
+		_self setVariable ["CFM_currentOperatorInterfaceClass", _displayClass];
 		_displayUiCtrl ctrlCommit 0;
 	};
 	METHOD("resetRenderEffects") {

@@ -13,6 +13,9 @@ private _signalFunc = _monitor getVariable ["CFM_currentOperatorSignalFunction",
 
 //--------------------- SIGNAL -----------------------
 private _signal = [_monitor, _operator] call _signalFunc;
+if ((isNil "_signal") || {!(_signal isEqualType 1)}) then {
+    _signal = 1;
+};
 
 if (_signal < SIGNAL_WEAK_CONNECTION_THREASHOLD) exitWith {
 	_monitor call CFM_fnc_monitorWeakConnection;
@@ -25,7 +28,12 @@ if (_signal isEqualTo SIGNAL_LOST) exitWith {false};
 private _uiCtrlCurrentUIDisplay = _monitor getVariable ["CFM_uiCtrlCurrentUIDisplay", displayNull];
 private _interfaceFunc = _monitor getVariable ["CFM_currentOperatorInterfaceFunction", {}];
 
-[_monitor, _operator, _uiCtrlCurrentUIDisplay] call _interfaceFunc;
+[_monitor, _operator, _signal, _uiCtrlCurrentUIDisplay] call _interfaceFunc;
+
+private _effectsLayersControls = _monitor getVariable ["CFM_effectsLayersControls", []];
+private _effectsFunc = _monitor getVariable ["CFM_currentOperatorEffectsFunction", {}];
+
+[_signal, _effectsLayersControls] call _effectsFunc;
 //-------------------------------------------------------
 
 //----------------- UPDATE CAMERA -----------------------

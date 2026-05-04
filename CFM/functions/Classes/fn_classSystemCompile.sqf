@@ -166,7 +166,27 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	call compile (format["%1 = _obj", _selfVar]);
 
     _this = _args;
-	_this call _method
+    _this call _method;
+};
+
+OOP_OBJ_CLASS_fnc_remoteExecClassInstance = {
+	params[["_callArgs", []], ["_remoteExecParams", false]];
+
+    if (_remoteExecParams isEqualTo false) exitWith {
+        _callArgs call OOP_OBJ_CLASS_fnc_callClassInstance;
+    };
+
+    private _jip = false;
+    if (_remoteExecParams isEqualTo true) then {
+        _jip = true;
+    };
+    if !(_remoteExecParams isEqualType []) then {
+        _remoteExecParams = [_remoteExecParams];
+    };
+    _remoteExecParams params [["_targets", 0], ["_jip", _jip], ["_call", false, [false]]];
+    [_this, {
+        _this call OOP_OBJ_CLASS_fnc_callClassInstance;
+    }, _targets, _jip, _call] call OOP_fnc_remoteExec;
 };
 
 OOP_fnc_validateFieldType = {
@@ -203,4 +223,55 @@ OOP_fnc_classExists = {
 OOP_fnc_raiseException = {
 	_this DLOG;
 	_this param [2, nil];
+};
+
+OOP_fnc_remoteExec = {
+    params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", true], ["_call", false, [false]]];
+
+    if (_func isEqualType {}) then {
+        _args = [_args, _func];
+        _func = if (_call) then {"call"} else {"spawn"};
+    };
+    if !(_func isEqualType "") exitWith {format["OOP_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func] WARN};
+
+    if (_targets isEqualType true) then {
+        if (_targets isEqualTo true) then {
+            _targets = 0;
+        } else {
+            _targets = false;
+        };
+    };
+    if (_jip isEqualType objNull) then {
+        private _netid = netId _jip;
+        private _idArr = (_netid splitString ":");
+        private _id = "0";
+        if (count _idArr > 1) then {
+            _id = trim (_idArr#1);
+            if !(_id isEqualType "") then {
+                _id = str _id;
+            };
+        };
+        _jip = "CFM_jip_remote_exec_id_" + _id;
+    };
+
+    if (!isMultiplayer || {(_targets in [PLAYER_, false, clientOwner])}) exitWith {
+        if (_func isEqualTo "call") exitWith {
+            (_args#0) call (_args#1)
+        };
+        if (_func isEqualTo "spawn") exitWith {
+            (_args#0) spawn (_args#1)
+        };
+        private _func = missionNamespace getVariable [_func, {format["OOP_fnc_remoteExec ERROR: func '%1' not found!", _func] WARN}];
+        if (_call) then {
+            _args call _func
+        } else {
+            _args spawn _func
+        };
+    };
+    if (_call isEqualTo true) then {
+        _args remoteExecCall [_func, _targets, _jip];
+    } else {
+        _args remoteExec [_func, _targets, _jip];
+    };
+
 };

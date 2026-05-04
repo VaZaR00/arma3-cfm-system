@@ -34,6 +34,12 @@
 } \
 
 
+#define REMOTE_EXEC_OBJCLASS(name, obj) call { \
+    _this params ["_method", ["_args", []], ["_def", nil], ["_remoteExecParams", false]]; \
+    [[name, obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
+} \
+
+
 #define NEW_OBJINSTANCE_GLOBAL(name, global) call { \
 	if (isNil "_this") exitWith {objNull}; \
 	if !(_this isEqualType []) then {_this = [_this]}; \
