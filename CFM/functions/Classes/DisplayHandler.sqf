@@ -30,6 +30,8 @@ OBJCLASS(DisplayHandler)
 	
 	FIELD ["_connectedOperator", objNull];
 	FIELD ["_currentPiPEffect", 0];
+	FIELD ["_currentOperatorSignalFunction", {1}];
+	FIELD ["_currentOperatorInterfaceFunction", {}];
 
 	METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");

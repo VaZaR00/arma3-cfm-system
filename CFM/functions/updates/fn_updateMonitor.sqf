@@ -8,24 +8,34 @@
 
 params[["_monitor", objNull]];
 
-// private _monitorDisplayId = _monitor getVariable ["CFM_monitorUid", ""];
-// private _monitorDisplay = findDisplay _monitorDisplayId;
-// private _monitorUIdisplay = findDisplay (_monitorDisplayId + "_ui");
-// private _monitorEffectsDisplay = findDisplay (_monitorDisplayId + "_effects");
-// private _monitorRenderDisplay = findDisplay (_monitorDisplayId + "_render");
+private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+private _signalFunc = _monitor getVariable ["CFM_currentOperatorSignalFunction", {1}];
 
-// //----------------- UPDATE SIGNAL -----------------------
-// //-------------------------------------------------------
+//--------------------- SIGNAL -----------------------
+private _signal = [_monitor, _operator] call _signalFunc;
 
-// if (_weakConnection) exitWith {
-// 	[] call CFM_fnc_monitorWeakConnection;
-// 	0
-// };
-// if (_signalLost) exitWith {false};
+if (_signal < SIGNAL_WEAK_CONNECTION_THREASHOLD) exitWith {
+	_monitor call CFM_fnc_monitorWeakConnection;
+	0
+};
+if (_signal isEqualTo SIGNAL_LOST) exitWith {false};
+//-------------------------------------------------------
 
 //----------------- UPDATE EFFECTS -----------------------
+private _uiCtrlCurrentUIDisplay = _monitor getVariable ["CFM_uiCtrlCurrentUIDisplay", displayNull];
+private _interfaceFunc = _monitor getVariable ["CFM_currentOperatorInterfaceFunction", {}];
+
+[_monitor, _operator, _uiCtrlCurrentUIDisplay] call _interfaceFunc;
 //-------------------------------------------------------
 
 //----------------- UPDATE CAMERA -----------------------
 _monitor call CFM_fnc_updateMonitorCamera;
+//-------------------------------------------------------
+
+//----------------- UPDATE DISPLAYS -----------------------
+private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
+private _r2tDisplay = _monitor getVariable ["CFM_r2tDisplay", displayNull];
+displayUpdate _r2tDisplay;
+displayUpdate _mainDisplay;
+displayUpdate _uiCtrlCurrentUIDisplay;
 //-------------------------------------------------------

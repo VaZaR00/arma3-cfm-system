@@ -124,6 +124,10 @@
                 file = FUNC_PATH(monitor\fn_monitorToggleNVG.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class monitorWeakConnection {
+                file = FUNC_PATH(monitor\fn_monitorWeakConnection.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class setHandDisplay {
                 file = FUNC_PATH(monitor\fn_setHandDisplay.sqf);
                 DO_FUNC_RECOMPILE
