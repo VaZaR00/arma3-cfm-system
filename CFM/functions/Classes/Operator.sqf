@@ -497,28 +497,28 @@ OBJCLASS(Operator)
 		_turretParams set ["turretName", _turretName];
 
 		// interface
-		if ((_interfaceClass isEqualTo -1) || {(_interfaceClass isEqualTo "") || {!(_interfaceClass isEqualType "")}}) then {
-			private _interfaceData = [] call CFM_fnc_defineInterfaceData;
-			_interfaceData params [["_interfaceClass", ""], ["_interfaceFuncNameDef", ""]];
-			if ((_interfaceFuncName isEqualTo -1) || {(_interfaceFuncName isEqualTo "") || {!(_interfaceFuncName isEqualType "")}}) then {
-				_interfaceFuncName = _interfaceFuncNameDef;
-			};
+		private _interfaceData = [_operator, _objClass] call CFM_fnc_defineInterfaceData;
+		_interfaceData params [["_interfaceClassDef", ""], ["_interfaceFuncNameDef", ""]];
+		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
+			_interfaceClass = _interfaceClassDef;
+		};
+		if ((_interfaceFuncName isEqualTo -1) || {!IS_STR(_interfaceFuncName)}) then {
+			_interfaceFuncName = _interfaceFuncNameDef;
 		};
 		// signal func
-		if ((_signalFuncName isEqualTo -1) || {(_signalFuncName isEqualTo "") || {!(call {
-			if !(_signalFuncName isEqualType "") exitWith {false};
+		private _effectAndSignalFuncsDef = [_operator, _objClass] call CFM_fnc_defineSignalEffectFunc;
+		_effectAndSignalFuncsDef params [["_signalFuncNameDef", ""], ["_effectFuncNameDef", ""]];
+		if ((_signalFuncName isEqualTo -1) || {!(IS_STR(_signalFuncName)) || {!(call {
 			private _signalFunc = missionNamespace getVariable [_signalFuncName, {}];
 			private _testFuncRes = [player, _operator] call _signalFunc;
 			if (isNil "_testFuncRes") exitWith {false};
 			_testFuncRes isEqualType 1
 		})}}) then {
-			_effectAndSignalFuncs = _operator call CFM_fnc_defineSignalEffectFunc;
-			_effectAndSignalFuncs params [["_signalFuncNameDef", ""], ["_effectFuncNameDef", ""]];
 			_signalFuncName = _signalFuncNameDef;
-			// effect func
-			if ((_effectFuncName isEqualTo -1) || {!IS_STR(_effectFuncName)}) then {
-				_effectFuncName = _effectFuncNameDef;
-			};
+		};
+		// effect func
+		if ((_effectFuncName isEqualTo -1) || {!IS_STR(_effectFuncName)}) then {
+			_effectFuncName = _effectFuncNameDef;
 		};
 		if !(IS_STR(_signalFuncName)) then {
 			_signalFuncName = "";

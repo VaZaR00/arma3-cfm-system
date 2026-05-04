@@ -34,6 +34,7 @@ OBJCLASS(DisplayHandler)
 	FIELD ["_currentOperatorInterfaceFunction", {}];
 	FIELD ["_currentOperatorInterfaceClass", {}];
 	FIELD ["_currentOperatorEffectsFunction", {}];
+	FIELD ["_currentUIDisplayRenderClass", ""];
 
 	METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
@@ -213,16 +214,17 @@ OBJCLASS(DisplayHandler)
 		_r2tDisplayR2TCtrl ctrlCommit 0;
 	};
 	METHOD("setRenderInterfaceDisplay") {
-		params[["_set", false], ["_displayClass", ""]];
-		_set = _set && {!(_displayClass isEqualTo "")};
+		params[["_set", false], ["_currentUIDisplayRenderClass", ""]];
+		_set = _set && {!(_currentUIDisplayRenderClass isEqualTo "")};
 		if (_set) then {
 			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
-			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiCtrlUIDisplayName]);
+			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(%2,%3)", _size, _currentUIDisplayRenderClass, _uiCtrlUIDisplayName]);
 		} else {
-			_displayClass = "";
+			_currentUIDisplayRenderClass = "";
 			_displayUiCtrl ctrlSetText ("");
 		};
-		_self setVariable ["CFM_currentOperatorInterfaceClass", _displayClass];
+		_self setVariable ["CFM_currentOperatorInterfaceClass", _currentUIDisplayRenderClass];
+		_self setVariable ["CFM_currentUIDisplayRenderClass", _currentUIDisplayRenderClass];
 		_displayUiCtrl ctrlCommit 0;
 	};
 	METHOD("resetRenderEffects") {
