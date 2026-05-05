@@ -188,9 +188,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["startRendering", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
-		["monitorConnected", [_monitor, _turret, _actionCaller], "NULL"] CALL_OBJCLASS("Operator", _operator);
+		["monitorConnected", [_monitor, _turret, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
@@ -415,7 +414,7 @@ OBJCLASS(Monitor)
 		// _self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
-		["TurretChanged", [_monitor, _turret, true, true]] CALL_OBJCLASS("Operator", _connectedOperator);
+		["TurretChanged", [_monitor, _turret, false, true], true] REMOTE_EXEC_OBJCLASS("Operator", _connectedOperator);
 	};
 	METHOD("switchNvg") { 
 		private _newEffect = 0;

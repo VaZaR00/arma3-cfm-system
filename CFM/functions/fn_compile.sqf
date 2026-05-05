@@ -367,20 +367,25 @@ CFM_fnc_translateLocalVectors = {
 
 CFM_fnc_defineInterfaceData = {
 	// returns [_interfaceClass, _interfaceFuncNameDef, _interfaceInitFuncNameDef]
-	params["_operator", ["_opClass", ""]];
+	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
 
 	if !(IS_STR(_opClass)) then {
 		_opClass = toLower typeOf _operator;
 	};
 
-	if ("mavik" in _opClass) exitWith {
-		["Mavic_Interface", "CFM_fnc_updateMavicInterface", "CFM_fnc_initMavicInterface"]
+	if (_isMavic) exitWith {
+		["RscCFM_Mavic_Interface", MGVAR ["CFM_fnc_updateMavicInterface", {}], MGVAR ["CFM_fnc_initMavicInterface", {}]]
+	};
+	if (_isFPV) exitWith {
+		["RscCFM_Mavic_Interface", "CFM_fnc_updateMavicInterface", "CFM_fnc_initMavicInterface"]
 	};
 
 	[]
 };
 
 CFM_fnc_defineSignalEffectFunc = {
+	// returns signalFunc
+	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
 	[]
 };
 
@@ -390,8 +395,8 @@ CFM_fnc_updateMavicInterface = {
 	private _pilot = _monitor;
 	private _uav = _operator;
 
-	private _batteryPicture = uiNameSpace getVariable ["DB_mavic_batteryPicture", controlNull];
-	private _batteryText = uiNameSpace getVariable ["DB_mavic_batteryText", controlNull];
+	private _batteryPicture = uiNameSpace getVariable ["DB_mavic_batteryPicture" + _monitorUid, controlNull];
+	private _batteryText = uiNameSpace getVariable ["DB_mavic_batteryText" + _monitorUid, controlNull];
 
 	private _currentBattery = fuel _uav;
 	private _batteryPictureSet = "\mavik\interface\bat\25.paa";
@@ -421,7 +426,7 @@ CFM_fnc_updateMavicInterface = {
 	_batteryText ctrlSetTextColor _textColor;
 
 
-	private _remainingTimeText = uiNameSpace getVariable ["DB_mavic_RemainingTimeText", controlNull];
+	private _remainingTimeText = uiNameSpace getVariable ["DB_mavic_RemainingTimeText" + _monitorUid, controlNull];
 	private _maxFlightTime = 30; 
 
 	private _remainingFlightTimeMinutes = _maxFlightTime * _currentBattery;
@@ -435,7 +440,7 @@ CFM_fnc_updateMavicInterface = {
 
 
 	private _signal = [_pilot, _uav] call mavic_fnc_getSignal;
-	private _signalControl = uiNameSpace getVariable ["DB_mavic_SignalText", controlNull];
+	private _signalControl = uiNameSpace getVariable ["DB_mavic_SignalText" + _monitorUid, controlNull];
 	private _signalPictureSet = "\mavik\interface\signal\0.paa";
 
 	switch (true) do {
@@ -462,30 +467,30 @@ CFM_fnc_updateMavicInterface = {
 	_signalControl ctrlSetText _signalPictureSet;
 
 
-	private _satelitePicture = uiNameSpace getVariable ["DB_mavic_SatellitePicture", controlNull];
+	private _satelitePicture = uiNameSpace getVariable ["DB_mavic_SatellitePicture" + _monitorUid, controlNull];
 
 	_satelitePicture ctrlSetText (["\mavik\interface\main\sat100.paa", "\mavik\interface\main\sat0.paa"] select (_signal < 0.6));
 
 
-	private _statusText = uiNameSpace getVariable ["DB_mavic_FlightStatus_Text", controlNull];
+	private _statusText = uiNameSpace getVariable ["DB_mavic_FlightStatus_Text" + _monitorUid, controlNull];
 
 	_statusText ctrlSetText ([localize "STR_mavic_flightStatus_Flight", localize "STR_mavic_flightStatus_Ground"] select (isTouchingGround _uav));
 
 
-	private _vSpeedText = uiNameSpace getVariable ["DB_mavic_VSpeed_control", controlNull];
-	private _hSpeedText = uiNameSpace getVariable ["DB_mavic_HSpeed_control", controlNull];
+	private _vSpeedText = uiNameSpace getVariable ["DB_mavic_VSpeed_control" + _monitorUid, controlNull];
+	private _hSpeedText = uiNameSpace getVariable ["DB_mavic_HSpeed_control" + _monitorUid, controlNull];
 
 	_vSpeedText ctrlSetText format ["%1 %2", floor((speed _uav) / 3.6), localize "STR_mavic_metersSeconds"];
 	_hSpeedText ctrlSetText format ["%1 %2", floor((velocityModelSpace _uav) # 2), localize "STR_mavic_metersSeconds"];
 
-	private _heightText = uiNameSpace getVariable ["DB_mavic_Height_control", controlNull];
+	private _heightText = uiNameSpace getVariable ["DB_mavic_Height_control" + _monitorUid, controlNull];
 	_heightText ctrlSetText format["%1 %2", floor(_uav call CBA_fnc_realHeight), localize "STR_mavic_meters"];
 
-	private _distanceText = uiNameSpace getVariable ["DB_mavic_Distance_control", controlNull];
+	private _distanceText = uiNameSpace getVariable ["DB_mavic_Distance_control" + _monitorUid, controlNull];
 	_distanceText ctrlSetText format["%1 %2", floor(_pilot distance _uav), localize "STR_mavic_meters"];
 
 
-	private _zoomText = uiNameSpace getVariable ["DB_mavic_Zoom_Text", controlNull];
+	private _zoomText = uiNameSpace getVariable ["DB_mavic_Zoom_Text" + _monitorUid, controlNull];
 	private _maxFov = getNumber (configFile >> "CfgVehicles" >> (typeOf _uav) >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "maxFov");
 	private _currentFov = getObjectFov _uav;
 	if (_currentFov == 0) then {_currentFov == 1};
@@ -521,24 +526,22 @@ CFM_fnc_updateMavicInterface = {
 #define WAIT_FOR_DISPLAY_TIME 10
 
 CFM_fnc_initMavicInterface = {
-	params[["_displayName", ""]];
+	params[["_monitor", displayNull], ["_display", displayNull], ["_monitorUid", ""]];
 
-	if !(IS_STR(_displayName)) exitWith {};
-	
-	private _waitStart = time;
-	waitUntil {
-		!(isNull (findDisplay _displayName)) ||
-		{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
-	};
-	private _display = findDisplay _displayName;
+	#define GET_CTRL(name, id) uiNamespace setVariable [name + _monitorUid, _display displayCtrl id];
+	GET_CTRL("DB_mavic_batteryPicture", 689)
+	GET_CTRL("DB_mavic_batteryText", 635)
+	GET_CTRL("DB_mavic_RemainingTimeText", 653)
+	GET_CTRL("DB_mavic_SignalText", 624)
+	GET_CTRL("DB_mavic_SatellitePicture", 385)
+	GET_CTRL("DB_mavic_FlightStatus_Text", 824)
+	GET_CTRL("DB_mavic_VSpeed_control", 375)
+	GET_CTRL("DB_mavic_HSpeed_control", 952)
+	GET_CTRL("DB_mavic_Height_control", 214)
+	GET_CTRL("DB_mavic_Distance_control", 458)
+	GET_CTRL("DB_mavic_Zoom_Text", 278)
+	GET_CTRL("DB_mavic_R2TPicture", 1488)
+	GET_CTRL("DB_mavic_EffectPicture", 1489)
 
-	if (isNull _display) exitWith {};
-
-	private _allControls = (allControls _display);
-	private _allControlsGroups = _allControls;
-
-	private _setControlVar = {
-		params["_ctrlName"];
-
-	};
+	[_display displayCtrl 1488]
 };

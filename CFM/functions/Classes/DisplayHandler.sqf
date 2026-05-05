@@ -29,6 +29,7 @@ OBJCLASS(DisplayHandler)
 	FIELD ["_turnedOffLocal", false];
 	
 	FIELD ["_connectedOperator", objNull];
+	FIELD ["_uiParams", []];
 	FIELD ["_currentPiPEffect", 0];
 	FIELD ["_currentOperatorSignalFunction", {1}];
 	FIELD ["_currentOperatorInterfaceFunction", {}];
@@ -41,26 +42,22 @@ OBJCLASS(DisplayHandler)
 		_monitor setVariable ["CFM_monitorUid", _monitorUid];
 		_monitorR2Tid = ["createMonitorR2TId", _monitor] CALL_CLASS("DbHandler");
 		_monitor setVariable ["CFM_monitorR2Tid", _monitorR2Tid];
-
-		if !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
-			["setupDisplay"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
-		};
 	};
 	METHOD("startRendering") {
-		params[["_reset", false]];
+		params[["_reset", false], ["_uiParams", []]];
 
-		if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
-			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
+		if (!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}) then {
+			["startRenderingUI", [_reset, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
-			["startRenderingUI", _reset] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
 	};
 	METHOD("stopRendering") {
-		if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
-			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		} else {
-			["stopRenderingUI"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		};
+		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		_monitor setVariable ["CFM_mainDisplay", nil];
+		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
 	};
 	//----------- UI render version -----------
 	METHOD("setupDisplay") {
@@ -138,19 +135,40 @@ OBJCLASS(DisplayHandler)
 		["stopRenderingUI"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("startRenderingUI") {
-		params[["_reset", false]];
+		params[["_reset", false], ["_uiParams", []]];
 
-		["setRenderR2TDisplay", true] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["setRenderUpLayer", false] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["renderInterface", _connectedOperator] CALL_OBJCLASS("DisplayHandler", _monitor);
+		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
+		_monitor setVariable ["CFM_uiParams", _uiParams];
+
+		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
+		_monitor setObjectTexture [0, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _monitorUid]]; 
+
+		private _waitStart = time;
+		waitUntil {
+			!(isNull (findDisplay _monitorUid)) ||
+			{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
+		};
+		_mainDisplay = findDisplay _monitorUid;
+
+		if (isNull _mainDisplay) exitWith {
+			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _self] WARN
+		};
+		_monitor setVariable ["CFM_mainDisplay", _mainDisplay];
+
+		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", _interfaceFunc];
+		_monitor setVariable ["CFM_currentOperatorSignalFunction", _signalFunc];
+		_monitor setVariable ["CFM_currentOperatorEffectsFunction", _effectFunc];
+		([_monitor, _mainDisplay, _monitorUid] call _interfaceInitFunc) params [["_r2tDisplayCtrl", controlNull], ["_effectsLayersControls", []]];
+
+		_monitor setVariable ["CFM_r2tDisplayCtrl", _r2tDisplayCtrl];
+		_monitor setVariable ["CFM_effectsLayersControls", _effectsLayersControls];
+
+		_r2tDisplayCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
+		_r2tDisplayCtrl ctrlCommit 0;
 		
 		if (_reset) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		};
-
-		uiSleep WAIT_BEFORE_DISPLAY_UPD;
-
-		["updateDisplays"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("stopRenderingUI") {
 		["setRenderR2TDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);

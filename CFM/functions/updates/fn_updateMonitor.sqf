@@ -25,11 +25,11 @@ if (_signal isEqualTo SIGNAL_LOST) exitWith {false};
 //-------------------------------------------------------
 
 //----------------- UPDATE EFFECTS -----------------------
-private _uiCtrlCurrentUIDisplay = _monitor getVariable ["CFM_uiCtrlCurrentUIDisplay", displayNull];
+private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
 private _interfaceFunc = _monitor getVariable ["CFM_currentOperatorInterfaceFunction", {}];
 private _monitorUid = _monitor getVariable ["CFM_monitorUid", ""];
 
-[_monitor, _operator, _signal, _uiCtrlCurrentUIDisplay, _monitorUid] call _interfaceFunc;
+[_monitor, _operator, _signal, _mainDisplay, _monitorUid] call _interfaceFunc;
 
 private _effectsLayersControls = _monitor getVariable ["CFM_effectsLayersControls", []];
 private _effectsFunc = _monitor getVariable ["CFM_currentOperatorEffectsFunction", {}];
@@ -42,9 +42,5 @@ _monitor call CFM_fnc_updateMonitorCamera;
 //-------------------------------------------------------
 
 //----------------- UPDATE DISPLAYS -----------------------
-private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
-private _r2tDisplay = _monitor getVariable ["CFM_r2tDisplay", displayNull];
-displayUpdate _r2tDisplay;
 displayUpdate _mainDisplay;
-displayUpdate _uiCtrlCurrentUIDisplay;
 //-------------------------------------------------------
