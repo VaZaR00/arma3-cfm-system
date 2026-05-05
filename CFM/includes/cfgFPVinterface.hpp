@@ -31,7 +31,7 @@ class RscCFM_ArmaFPV_Dialog
             {
                 class CommunicationPicture: ctrlStaticPicture
                 {
-                    idc=-1;
+                    idc=825;
                     text="\fpv_ua\pictures\100.paa";
                     onLoad="uiNameSpace setVariable [""ArmaFPV_SignalPicture"", _this # 0];";
                     x=0;
@@ -41,7 +41,7 @@ class RscCFM_ArmaFPV_Dialog
                 };
                 class CommunicationText: ctrlStructuredText
                 {
-                    idc=-1;
+                    idc=836;
                     onLoad="uiNameSpace setVariable [""ArmaFPV_SignalText"", _this # 0];";
                     class Attributes
                     {
@@ -70,7 +70,7 @@ class RscCFM_ArmaFPV_Dialog
             {
                 class BatteryPicture: ctrlStaticPicture
                 {
-                    idc=-1;
+                    idc=241;
                     onLoad="uiNameSpace setVariable [""ArmaFPV_BatteryPicture"", _this # 0];";
                     text="\fpv_ua\pictures\A100.paa";
                     x=0;
@@ -80,7 +80,7 @@ class RscCFM_ArmaFPV_Dialog
                 };
                 class BatteryText: ctrlStructuredText
                 {
-                    idc=-1;
+                    idc=369;
                     onLoad="uiNameSpace setVariable [""ArmaFPV_BatteryText"", _this # 0];";
                     class Attributes
                     {
@@ -118,7 +118,7 @@ class RscCFM_ArmaFPV_Dialog
                 };
                 class OnTime_Text: ctrlStructuredText
                 {
-                    idc=-1;
+                    idc=237;
                     onLoad="uiNameSpace setVariable [""ArmaFPV_OnTimeText"", _this # 0];";
                     class Attributes
                     {
@@ -203,13 +203,13 @@ class RscCFM_ArmaFPV_Dialog
 			{
 				idc = 1489;
 				onLoad = "uiNamespace setVariable [""DB_fpv_effectsPicture1"", _this # 0];";
-				show = 0;
+				show = 1;
 			};
 			class EffectPicture2: R2TPicture
 			{
 				idc = 1490;
 				onLoad = "uiNamespace setVariable [""DB_fpv_effectsPicture2"", _this # 0];";
-				show = 0;
+				show = 1;
 			};
 		};
 };

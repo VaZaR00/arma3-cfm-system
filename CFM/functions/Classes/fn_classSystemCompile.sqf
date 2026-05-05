@@ -37,6 +37,9 @@ OOP_fnc_class = {
         if !(_x isEqualType []) then {continue};
         private _fieldName = _x select 0;
         private _fieldDef = _x select 1;
+        if ((_fieldDef isEqualType []) || {(_fieldDef isEqualType createHashMap)}) then {
+            _fieldDef = +_fieldDef;
+        };
         private _fieldType = _x select 2;
         _fieldType = if (isNil "_fieldType") then {
             if (_isVolatile) then {[]} else {
@@ -105,6 +108,12 @@ OOP_OBJ_CLASS_fnc_newInstance = {
             // variable already set and is valid then dont set
             false
         }) then {
+            if (_def isEqualType []) then {
+                _def = +_def;
+            };
+            if (_def isEqualType createHashMap) then {
+                _def = +_def;
+            };
             _obj setVariable [_varname, _def, _global];
         };
     } forEach _fields;

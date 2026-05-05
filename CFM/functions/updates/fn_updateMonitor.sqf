@@ -27,9 +27,9 @@ if (_signal isEqualTo SIGNAL_LOST) exitWith {false};
 //----------------- UPDATE EFFECTS -----------------------
 private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
 private _interfaceFunc = _monitor getVariable ["CFM_currentOperatorInterfaceFunction", {}];
-private _monitorUid = _monitor getVariable ["CFM_monitorUid", ""];
+private _uiDisplayUniqueName = _monitor getVariable ["CFM_uiDisplayUniqueName", ""];
 
-[_monitor, _operator, _signal, _mainDisplay, _monitorUid] call _interfaceFunc;
+[_monitor, _operator, _signal, _mainDisplay, _uiDisplayUniqueName] call _interfaceFunc;
 
 private _effectsLayersControls = _monitor getVariable ["CFM_effectsLayersControls", []];
 private _effectsFunc = _monitor getVariable ["CFM_currentOperatorEffectsFunction", {}];

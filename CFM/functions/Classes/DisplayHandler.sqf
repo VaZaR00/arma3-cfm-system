@@ -28,9 +28,14 @@ OBJCLASS(DisplayHandler)
 	FIELD ["_effectsLayersCount", 0];
 	FIELD ["_turnedOffLocal", false];
 	
+	FIELD ["_uiIndex", 0];
+	FIELD ["_uiDisplayUniqueName", ""];
+
 	FIELD ["_connectedOperator", objNull];
+	FIELD ["_currentUiClasname", ""];
 	FIELD ["_uiParams", []];
 	FIELD ["_currentPiPEffect", 0];
+	FIELD ["_currentFeedIsDisplay", false];
 	FIELD ["_currentOperatorSignalFunction", {1}];
 	FIELD ["_currentOperatorInterfaceFunction", {}];
 	FIELD ["_currentOperatorInterfaceClass", {}];
@@ -47,6 +52,7 @@ OBJCLASS(DisplayHandler)
 		params[["_reset", false], ["_uiParams", []]];
 
 		if (!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}) then {
+			_monitor setVariable ["CFM_currentFeedIsDisplay", true];
 			["startRenderingUI", [_reset, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
@@ -58,6 +64,11 @@ OBJCLASS(DisplayHandler)
 		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
 		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
 		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
+		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
+		_monitor setVariable ["CFM_effectsLayersControls", nil];
+		_monitor setVariable ["CFM_uiParams", nil];
+		_monitor setVariable ["CFM_currentUiClasname", nil];
+		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
 	};
 	//----------- UI render version -----------
 	METHOD("setupDisplay") {
@@ -135,34 +146,39 @@ OBJCLASS(DisplayHandler)
 		["stopRenderingUI"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("startRenderingUI") {
-		params[["_reset", false], ["_uiParams", []]];
+		params[["_reset", false], ["_uiParamsSet", []]];
 
-		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
-		_monitor setVariable ["CFM_uiParams", _uiParams];
+		_uiParamsSet params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
+		_monitor setVariable ["CFM_uiParams", +_uiParamsSet];
 
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
-		_monitor setObjectTexture [0, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _monitorUid]]; 
+		_uiDisplayUniqueName = _monitorUid + str _uiIndex;
+		_monitor setObjectTexture [0, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]]; 
 
 		private _waitStart = time;
 		waitUntil {
-			!(isNull (findDisplay _monitorUid)) ||
+			!(isNull (findDisplay _uiDisplayUniqueName)) ||
 			{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
 		};
-		_mainDisplay = findDisplay _monitorUid;
+		_mainDisplay = findDisplay _uiDisplayUniqueName;
 
 		if (isNull _mainDisplay) exitWith {
 			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _self] WARN
 		};
+		_monitor setVariable ["CFM_uiDisplayUniqueName", _uiDisplayUniqueName];
+		_monitor setVariable ["CFM_uiIndex", _uiIndex + 1];
 		_monitor setVariable ["CFM_mainDisplay", _mainDisplay];
+		_monitor setVariable ["CFM_currentUiClasname", _displayClass];
 
 		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", _interfaceFunc];
 		_monitor setVariable ["CFM_currentOperatorSignalFunction", _signalFunc];
 		_monitor setVariable ["CFM_currentOperatorEffectsFunction", _effectFunc];
-		([_monitor, _mainDisplay, _monitorUid] call _interfaceInitFunc) params [["_r2tDisplayCtrl", controlNull], ["_effectsLayersControls", []]];
+		([_monitor, _mainDisplay, _uiDisplayUniqueName] call _interfaceInitFunc) params [["_r2tDisplayCtrl", controlNull], ["_effectsLayersControls", []]];
 
 		_monitor setVariable ["CFM_r2tDisplayCtrl", _r2tDisplayCtrl];
 		_monitor setVariable ["CFM_effectsLayersControls", _effectsLayersControls];
 
+		private _size = missionNamespace getVariable ["CFM_r2tSize", 512];
 		_r2tDisplayCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
 		_r2tDisplayCtrl ctrlCommit 0;
 		
@@ -223,7 +239,7 @@ OBJCLASS(DisplayHandler)
 	METHOD("setRenderR2TDisplay") {
 		params[["_set", false]];
 		if (_set) then {
-			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
+			private _size = missionNamespace getVariable ["CFM_r2tSize", 512];
 			_r2tDisplayR2TCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
 		} else {
 			_r2tDisplayR2TCtrl ctrlSetText ("");
@@ -313,7 +329,7 @@ OBJCLASS(DisplayHandler)
 		};
 
 		if (_render) then {
-			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
+			private _size = missionNamespace getVariable ["CFM_r2tSize", 512];
 			_monitor setObjectTexture [0, format["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _r2t]];  
 		} else {
 			_monitor setObjectTexture [0, _originalTexture];

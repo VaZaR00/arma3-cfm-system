@@ -3,7 +3,7 @@
 class RscCFM_Mavic_Interface
 {
 	idd = 1589;
-	duration = 1e+10;
+	duration = 2;
 	class controls
 	{
 		class Camera_Button: ctrlStaticPicture

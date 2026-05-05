@@ -32,10 +32,10 @@ private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
 		};
 	};
 	if (_condition) then {
-		_condition = if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
-			_monitor call CFM_fnc_updateMonitorCamera;
-		} else {
+		_condition = if (_monitor getVariable ["CFM_currentFeedIsDisplay", false]) then {
 			_monitor call CFM_fnc_updateMonitor;
+		} else {
+			_monitor call CFM_fnc_updateMonitorCamera;
 		};
 	};
 	if (_condition isEqualTo false) then {

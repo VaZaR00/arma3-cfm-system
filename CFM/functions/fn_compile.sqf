@@ -365,6 +365,15 @@ CFM_fnc_translateLocalVectors = {
 	[_finalDir, _finalUp]
 };
 
+CFM_fnc_randInt = {
+    params ["_x", "_y", "_r", "_M"];
+    // Добавляем больше "перемешивания" бит через циклическое умножение
+    private _val = sin (_x * 2.9898 + _y * 1.223 + _r * 0.123);
+    _val = _val * 558.5453;
+    private _frac = _val - floor _val;
+    _M * _frac
+};
+
 CFM_fnc_defineInterfaceData = {
 	// returns [_interfaceClass, _interfaceFuncNameDef, _interfaceInitFuncNameDef]
 	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
@@ -377,26 +386,32 @@ CFM_fnc_defineInterfaceData = {
 		["RscCFM_Mavic_Interface", MGVAR ["CFM_fnc_updateMavicInterface", {}], MGVAR ["CFM_fnc_initMavicInterface", {}]]
 	};
 	if (_isFPV) exitWith {
-		["RscCFM_Mavic_Interface", "CFM_fnc_updateMavicInterface", "CFM_fnc_initMavicInterface"]
+		["RscCFM_ArmaFPV_Dialog", MGVAR ["CFM_fnc_updateFPVInterface", {}], MGVAR ["CFM_fnc_initFPVInterface", {}]]
 	};
 
 	[]
 };
 
 CFM_fnc_defineSignalEffectFunc = {
-	// returns signalFunc
+	// returns [signalFunc, effectFunc]
 	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
+
+	if (_isFPV) exitWith {
+		[MGVAR ["CFM_fnc_fpv_getSignal", {1}], MGVAR ["CFM_fnc_fpv_effects", {}]]
+	};
+
 	[]
 };
 
+// Mavic
 CFM_fnc_updateMavicInterface = {
-	params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_monitorUid", ""]];
+	params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_uiDisplayUniqueName", ""]];
 
 	private _pilot = _monitor;
 	private _uav = _operator;
 
-	private _batteryPicture = uiNameSpace getVariable ["DB_mavic_batteryPicture" + _monitorUid, controlNull];
-	private _batteryText = uiNameSpace getVariable ["DB_mavic_batteryText" + _monitorUid, controlNull];
+	private _batteryPicture = uiNameSpace getVariable ["DB_mavic_batteryPicture" + _uiDisplayUniqueName, controlNull];
+	private _batteryText = uiNameSpace getVariable ["DB_mavic_batteryText" + _uiDisplayUniqueName, controlNull];
 
 	private _currentBattery = fuel _uav;
 	private _batteryPictureSet = "\mavik\interface\bat\25.paa";
@@ -426,7 +441,7 @@ CFM_fnc_updateMavicInterface = {
 	_batteryText ctrlSetTextColor _textColor;
 
 
-	private _remainingTimeText = uiNameSpace getVariable ["DB_mavic_RemainingTimeText" + _monitorUid, controlNull];
+	private _remainingTimeText = uiNameSpace getVariable ["DB_mavic_RemainingTimeText" + _uiDisplayUniqueName, controlNull];
 	private _maxFlightTime = 30; 
 
 	private _remainingFlightTimeMinutes = _maxFlightTime * _currentBattery;
@@ -438,9 +453,7 @@ CFM_fnc_updateMavicInterface = {
 
 	_remainingTimeText ctrlSetText format ["%1'%2""", _minutes, _formattedSeconds];
 
-
-	private _signal = [_pilot, _uav] call mavic_fnc_getSignal;
-	private _signalControl = uiNameSpace getVariable ["DB_mavic_SignalText" + _monitorUid, controlNull];
+	private _signalControl = uiNameSpace getVariable ["DB_mavic_SignalText" + _uiDisplayUniqueName, controlNull];
 	private _signalPictureSet = "\mavik\interface\signal\0.paa";
 
 	switch (true) do {
@@ -467,30 +480,30 @@ CFM_fnc_updateMavicInterface = {
 	_signalControl ctrlSetText _signalPictureSet;
 
 
-	private _satelitePicture = uiNameSpace getVariable ["DB_mavic_SatellitePicture" + _monitorUid, controlNull];
+	private _satelitePicture = uiNameSpace getVariable ["DB_mavic_SatellitePicture" + _uiDisplayUniqueName, controlNull];
 
 	_satelitePicture ctrlSetText (["\mavik\interface\main\sat100.paa", "\mavik\interface\main\sat0.paa"] select (_signal < 0.6));
 
 
-	private _statusText = uiNameSpace getVariable ["DB_mavic_FlightStatus_Text" + _monitorUid, controlNull];
+	private _statusText = uiNameSpace getVariable ["DB_mavic_FlightStatus_Text" + _uiDisplayUniqueName, controlNull];
 
 	_statusText ctrlSetText ([localize "STR_mavic_flightStatus_Flight", localize "STR_mavic_flightStatus_Ground"] select (isTouchingGround _uav));
 
 
-	private _vSpeedText = uiNameSpace getVariable ["DB_mavic_VSpeed_control" + _monitorUid, controlNull];
-	private _hSpeedText = uiNameSpace getVariable ["DB_mavic_HSpeed_control" + _monitorUid, controlNull];
+	private _vSpeedText = uiNameSpace getVariable ["DB_mavic_VSpeed_control" + _uiDisplayUniqueName, controlNull];
+	private _hSpeedText = uiNameSpace getVariable ["DB_mavic_HSpeed_control" + _uiDisplayUniqueName, controlNull];
 
 	_vSpeedText ctrlSetText format ["%1 %2", floor((speed _uav) / 3.6), localize "STR_mavic_metersSeconds"];
 	_hSpeedText ctrlSetText format ["%1 %2", floor((velocityModelSpace _uav) # 2), localize "STR_mavic_metersSeconds"];
 
-	private _heightText = uiNameSpace getVariable ["DB_mavic_Height_control" + _monitorUid, controlNull];
+	private _heightText = uiNameSpace getVariable ["DB_mavic_Height_control" + _uiDisplayUniqueName, controlNull];
 	_heightText ctrlSetText format["%1 %2", floor(_uav call CBA_fnc_realHeight), localize "STR_mavic_meters"];
 
-	private _distanceText = uiNameSpace getVariable ["DB_mavic_Distance_control" + _monitorUid, controlNull];
+	private _distanceText = uiNameSpace getVariable ["DB_mavic_Distance_control" + _uiDisplayUniqueName, controlNull];
 	_distanceText ctrlSetText format["%1 %2", floor(_pilot distance _uav), localize "STR_mavic_meters"];
 
 
-	private _zoomText = uiNameSpace getVariable ["DB_mavic_Zoom_Text" + _monitorUid, controlNull];
+	private _zoomText = uiNameSpace getVariable ["DB_mavic_Zoom_Text" + _uiDisplayUniqueName, controlNull];
 	private _maxFov = getNumber (configFile >> "CfgVehicles" >> (typeOf _uav) >> "PilotCamera" >> "OpticsIn" >> "Wide" >> "maxFov");
 	private _currentFov = getObjectFov _uav;
 	if (_currentFov == 0) then {_currentFov == 1};
@@ -524,11 +537,11 @@ CFM_fnc_updateMavicInterface = {
 };
 
 #define WAIT_FOR_DISPLAY_TIME 10
+#define GET_CTRL(name, id) uiNamespace setVariable [name + _uiDisplayUniqueName, _display displayCtrl id];
 
 CFM_fnc_initMavicInterface = {
-	params[["_monitor", displayNull], ["_display", displayNull], ["_monitorUid", ""]];
+	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
 
-	#define GET_CTRL(name, id) uiNamespace setVariable [name + _monitorUid, _display displayCtrl id];
 	GET_CTRL("DB_mavic_batteryPicture", 689)
 	GET_CTRL("DB_mavic_batteryText", 635)
 	GET_CTRL("DB_mavic_RemainingTimeText", 653)
@@ -544,4 +557,102 @@ CFM_fnc_initMavicInterface = {
 	GET_CTRL("DB_mavic_EffectPicture", 1489)
 
 	[_display displayCtrl 1488]
+};
+
+// FPV
+CFM_fnc_updateFPVInterface = {
+	params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	private _OnTimeTextCtrl = uiNameSpace getVariable ["ArmaFPV_OnTimeText" + _uiDisplayUniqueName, controlNull];
+	private _SignalPictureCtrl = uiNameSpace getVariable ["ArmaFPV_SignalPicture" + _uiDisplayUniqueName, controlNull];
+	private _SignalTextCtrl = uiNameSpace getVariable ["ArmaFPV_SignalText" + _uiDisplayUniqueName, controlNull];
+	private _BatteryPictureCtrl = uiNameSpace getVariable ["ArmaFPV_BatteryPicture" + _uiDisplayUniqueName, controlNull];
+	private _BatteryTextCtrl = uiNameSpace getVariable ["ArmaFPV_BatteryText" + _uiDisplayUniqueName, controlNull];
+
+	[_operator, _BatteryPictureCtrl, _BatteryTextCtrl] call CFM_fnc_fpv_handleBattery;
+	[_operator, _signal, _SignalPictureCtrl, _SignalTextCtrl] call CFM_fnc_fpv_handleSignal;
+};
+
+CFM_fnc_initFPVInterface = {
+	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	GET_CTRL("ArmaFPV_OnTimeText", 237)
+	GET_CTRL("ArmaFPV_SignalPicture", 825)
+	GET_CTRL("ArmaFPV_SignalText", 836)
+	GET_CTRL("ArmaFPV_BatteryPicture", 241)
+	GET_CTRL("ArmaFPV_BatteryText", 369)
+
+	[_display displayCtrl 1488, [_display displayCtrl 1489, _display displayCtrl 1490]]
+};
+
+CFM_fnc_fpv_getSignal = {
+	params["_monitor", "_operator"];
+	[_monitor, _operator] call DB_fnc_fpv_getSignal;
+};
+
+CFM_fnc_fpv_effects = {
+	params[["_signal", 1], ["_ctrlsLayers", []]];
+
+	private _effectLayer1Ctrl = _ctrlsLayers param [0, controlNull];
+	private _effectLayer2Ctrl = _ctrlsLayers param [1, controlNull];
+
+	private _randInt1 = [_signal - 0.1, (-serverTime - 1), -_signal, 220] call CFM_fnc_randInt;
+	private _randInt2 = [-_signal + 1, serverTime, _signal + 2, 220] call CFM_fnc_randInt;
+	private _effectStrenght = ((1 - _signal) max 0) * 2;
+
+	_effectLayer1Ctrl ctrlSetText (format["#(ai,128,128,1)perlinNoise(%2,%3,0,%1)", _effectStrenght, _randInt1, _randInt2]);
+	_effectLayer2Ctrl ctrlSetText (format["#(rgb,8,8,3)color(1,0.4,0.1,%1)", (_randInt1 / 220) * 0.1]);
+};
+
+CFM_fnc_fpv_handleTime = {
+	_thisArgs params ["_startTime", "_uav"];
+	private _timeElapsed = time - _startTime;
+	
+	private _controlText = uiNameSpace getVariable ["ArmaFPV_OnTimeText", controlNull];
+	_controlText ctrlSetText ([_timeElapsed, "MM:SS"] call BIS_fnc_secondsToString);
+
+	// Обновляем сохраненное время
+	_uav setVariable ["DB_fpv_savedTime", _timeElapsed, true];
+
+	if !(missionNamespace getVariable ["ArmaFPV_isControl", false]) exitWith {
+		removeMissionEventHandler ["EachFrame", _thisEventHandler];
+	};
+};
+
+CFM_fnc_fpv_handleBattery = {
+	params["_uav", "_controlPicture", "_controlText"];
+
+	private _currentBattery = fuel _uav;
+
+	private _picture = "";
+
+	switch (true) do {
+		case (_currentBattery > 0.75): { _picture = "\fpv_ua\pictures\A100.paa" };
+		case (_currentBattery > 0.5): { _picture = "\fpv_ua\pictures\A75.paa" };
+		case (_currentBattery > 0.25): { _picture = "\fpv_ua\pictures\A50.paa" };
+		case (_currentBattery > 0): { _picture = "\fpv_ua\pictures\A25.paa" };
+		case (_currentBattery <= 0): { _picture = "\fpv_ua\pictures\A0.paa" };
+		default { _picture = "\fpv_ua\pictures\A75.paa" };
+	};
+
+	_controlPicture ctrlSetText _picture;
+	_controlText ctrlSetText str(round(_currentBattery * 100));
+};
+
+CFM_fnc_fpv_handleSignal = {
+	params["_uav", "_signal", "_controlPicture", "_controlText"];
+
+	private _picture = "";
+
+	switch (true) do {
+		case (_signal > 0.75): { _picture = "\fpv_ua\pictures\100.paa"; };
+		case (_signal > 0.5): { _picture = "\fpv_ua\pictures\75.paa" };
+		case (_signal > 0.25): { _picture = "\fpv_ua\pictures\50.paa" };
+		case (_signal > 0): { _picture = "\fpv_ua\pictures\25.paa" };
+		case (_signal <= 0): { _picture = "\fpv_ua\pictures\0.paa" };
+		default { _picture = "\fpv_ua\pictures\100.paa" };
+	};
+
+	_controlPicture ctrlSetText _picture;
+	_controlText ctrlSetText str(round(_signal * 100));
 };
