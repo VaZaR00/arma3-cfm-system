@@ -8,6 +8,7 @@
 
 params[["_player", PLAYER_], ["_render", true], ["_fullscreen", false]];
 
+private _isUI = _player getVariable ["CFM_currentFeedIsDisplay", false];
 private _renderTarget = _player getVariable ["CFM_monitorR2Tid", ""];
 private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
 private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
@@ -29,7 +30,7 @@ if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 	} else {
 		""
 	};
-	[_player, _renderTarget, _settings] spawn CFM_fnc_createPIPwindow;
+	[_player, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
 } else {
 	if (_isDialog) then {
 		private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];

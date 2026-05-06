@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-params [["_player", objNull], ["_renderTarget", "rendertarget0"], ["_settings", ""]];
+params [["_player", objNull], ["_renderTarget", "rendertarget0"], ["_settings", ""], ["_isUI", false]];
 
 disableSerialization;
 
@@ -77,8 +77,14 @@ private _picW = _totalW - (_borderSize * 2);
 private _picH = _totalH - _headerHeight - _borderSize;
 
 _pictureCtrl ctrlSetPosition [_picX, _picY, _picW, _picH];
-_pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
 _pictureCtrl ctrlCommit 0;
+
+if (_isUI) then {
+    ["startRenderingUI", [false, _pictureCtrl]] SPAWN_OBJCLASS("DisplayHandler", _player);
+} else {
+    _pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
+    _pictureCtrl ctrlCommit 0;
+};
 
 _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
 

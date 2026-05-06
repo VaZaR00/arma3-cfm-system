@@ -27,6 +27,7 @@ OBJCLASS(DisplayHandler)
 	FIELD ["_effectsLayersControls", []];
 	FIELD ["_effectsLayersCount", 0];
 	FIELD ["_turnedOffLocal", false];
+	FIELD ["_isHandMonitor", false];
 	
 	FIELD ["_uiIndex", 0];
 	FIELD ["_uiDisplayUniqueName", ""];
@@ -51,24 +52,17 @@ OBJCLASS(DisplayHandler)
 	METHOD("startRendering") {
 		params[["_reset", false], ["_uiParams", []]];
 
-		if (!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}) then {
-			_monitor setVariable ["CFM_currentFeedIsDisplay", true];
-			["startRenderingUI", [_reset, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+		_monitor setVariable ["CFM_uiParams", +_uiParams];
+		private _doUiParams = !(_uiParams isEqualTo []) && {(_uiParams isEqualType [])};
+		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
+		if (!_isHandMonitor && {_doUiParams}) then {
+			["startRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
 	};
 	METHOD("stopRendering") {
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		_monitor setVariable ["CFM_mainDisplay", nil];
-		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
-		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
-		_monitor setVariable ["CFM_effectsLayersControls", nil];
-		_monitor setVariable ["CFM_uiParams", nil];
-		_monitor setVariable ["CFM_currentUiClasname", nil];
-		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
 	};
 	//----------- UI render version -----------
 	METHOD("setupDisplay") {
@@ -146,14 +140,17 @@ OBJCLASS(DisplayHandler)
 		["stopRenderingUI"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("startRenderingUI") {
-		params[["_reset", false], ["_uiParamsSet", []]];
+		params[["_reset", false], ["_ctrl", controlNull], ["_uiParamsSet", []]];
 
-		_uiParamsSet params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
-		_monitor setVariable ["CFM_uiParams", +_uiParamsSet];
+		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
 
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 		_uiDisplayUniqueName = _monitorUid + str _uiIndex;
-		_monitor setObjectTexture [0, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]]; 
+		if !(isNull _ctrl) then {
+			_ctrl ctrlSetText (format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]);
+		} else {
+			_monitor setObjectTexture [0, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]]; 
+		};
 
 		private _waitStart = time;
 		waitUntil {
@@ -347,9 +344,9 @@ OBJCLASS(DisplayHandler)
 			};
 		} else {
 			if (_on) then {
-				["startRenderingUI", false] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["startRendering", [false, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			} else {
-				["stopRenderingUI"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["stopRendering"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			};
 		};
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];

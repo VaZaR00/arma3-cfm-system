@@ -250,6 +250,15 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
 		_monitor setVariable ["CFM_doUpdateCamera", nil];
 		_monitor setVariable ["CFM_cam_prevSetPos", nil];
+		_monitor setVariable ["CFM_mainDisplay", nil];
+		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
+		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
+		_monitor setVariable ["CFM_effectsLayersControls", nil];
+		_monitor setVariable ["CFM_uiParams", nil];
+		_monitor setVariable ["CFM_currentUiClasname", nil];
+		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];

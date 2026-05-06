@@ -681,7 +681,10 @@ OBJCLASS(Operator)
 			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
 		};
 
-		["startRendering", [_reset, [_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		private _uiParams = if (IS_STR(_interfaceClass)) then {
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+		} else {[]};
+		["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
 
 		true
 	};
