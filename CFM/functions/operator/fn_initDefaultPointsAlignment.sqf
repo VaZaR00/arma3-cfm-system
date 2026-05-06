@@ -49,7 +49,8 @@ private _defaults = [
 	[["t80", "t90"], [[-1, [DEF_MEM_POINT, [[-0.5,-0.6,0.3]]]]]],
 	[["btr", "brdm"], [[-1, [DEF_MEM_POINT, [[-0.2,0.1,0.1]]]]]],
 	[["m1a2"], [[-1, [DEF_MEM_POINT, [[-0.8,-0.2,0.8]]]]]],
-	[["fpv", "crocus"], [[-1, [[0.0, 0.2, 0.1]]]]]
+	[["fpv", "crocus"], [[-1, [[0.0, 0.2, 0.1]]]]],
+	[(toLower "B_UAFPV_OG7V_AP"), [[-1, [[0,0.17,0.18]]]]]
 ];
 
 private _defaultMemPointF = {
