@@ -17,10 +17,10 @@ if ((isNil "_signal") || {!(_signal isEqualType 1)}) then {
     _signal = 1;
 };
 
-if (_signal < SIGNAL_WEAK_CONNECTION_THREASHOLD) exitWith {
-	_monitor call CFM_fnc_monitorWeakConnection;
-	0
-};
+// if (_signal < SIGNAL_WEAK_CONNECTION_THREASHOLD) exitWith {
+// 	_monitor call CFM_fnc_monitorWeakConnection;
+// 	0
+// };
 if (_signal isEqualTo SIGNAL_LOST) exitWith {false};
 //-------------------------------------------------------
 
