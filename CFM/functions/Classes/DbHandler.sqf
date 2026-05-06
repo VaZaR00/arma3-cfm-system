@@ -200,7 +200,7 @@ CLASS(DbHandler)
 			""
 		};
 		private _uidStr = UI_RENDER_ID_STR + str _nextId;
-		_idsHash set [_uidStr, _monitor];
+		_idsHash set [_nextId, _monitor];
 		missionNamespace setVariable ["CFM_MonitorsUIds", _idsHash];
 		_uidStr
 	};
@@ -216,7 +216,7 @@ CLASS(DbHandler)
 			""
 		};
 		private _r2tStr = RENDER_TARGET_STR + str _nextId;
-		_idsHash set [_r2tStr, _monitor];
+		_idsHash set [_nextId, _monitor];
 		missionNamespace setVariable ["CFM_MonitorsR2Ts", _idsHash];
 		_r2tStr
 	};

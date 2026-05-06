@@ -207,7 +207,7 @@ OBJCLASS(Monitor)
 			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
 			_self setVariable ['CFM_actionCaller', nil];
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-			["destroyCamera", [_currentFeedCam]] CALL_CLASS("CameraManager");
+			["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
 			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 			["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
 		} else {

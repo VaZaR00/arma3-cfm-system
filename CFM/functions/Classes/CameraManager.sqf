@@ -34,9 +34,10 @@ CLASS(CameraManager)
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
 	CLASS_METHOD("destroyCamera") {
-		params[["_cam", objNull]];
+		params[["_cam", objNull], ["_renderTarget", ""]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
 		if !(IS_OBJ(_cam)) exitWith {false};
+		_cam cameraEffect ["terminate", "back", _renderTarget];
 		camDestroy _cam;
 		true
 	};
