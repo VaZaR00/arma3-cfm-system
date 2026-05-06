@@ -587,11 +587,14 @@ CFM_fnc_initFPVInterface = {
 
 CFM_fnc_fpv_getSignal = {
 	params["_monitor", "_operator"];
+	if (_operator getVariable ["ArmaFPV_simulateSignal", true]) exitWith {1};
 	[_monitor, _operator] call DB_fnc_fpv_getSignal;
 };
 
 CFM_fnc_fpv_effects = {
-	params[["_signal", 1], ["_ctrlsLayers", []]];
+	params[["_uav", objNull], ["_signal", 1], ["_ctrlsLayers", []]];
+
+	if (_operator getVariable ["ArmaFPV_effectOff", false]) exitWith {};
 
 	private _effectLayer1Ctrl = _ctrlsLayers param [0, controlNull];
 	private _effectLayer2Ctrl = _ctrlsLayers param [1, controlNull];

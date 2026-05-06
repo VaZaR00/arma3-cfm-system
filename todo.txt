@@ -10,6 +10,11 @@ how to render RscInGameUI rscs?
 point params get mem point for setting
 
 
+MP TEST:
+- update operator not working: CFM_LocalActiveOperators doesnt set
+- local operator not working?
+
+
 LONG mb:
 camera module object
 continuous cam move

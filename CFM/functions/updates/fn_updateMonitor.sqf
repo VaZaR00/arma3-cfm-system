@@ -34,7 +34,7 @@ private _uiDisplayUniqueName = _monitor getVariable ["CFM_uiDisplayUniqueName", 
 private _effectsLayersControls = _monitor getVariable ["CFM_effectsLayersControls", []];
 private _effectsFunc = _monitor getVariable ["CFM_currentOperatorEffectsFunction", {}];
 
-[_signal, _effectsLayersControls] call _effectsFunc;
+[_operator, _signal, _effectsLayersControls] call _effectsFunc;
 //-------------------------------------------------------
 
 //----------------- UPDATE CAMERA -----------------------
