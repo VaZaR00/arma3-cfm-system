@@ -598,21 +598,24 @@ OBJCLASS(Operator)
 		_monitor setVariable ["CFM_currentCameraType", _cameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
-		if (local _operator) then {
-			["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
-		};
-
 		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_OBJCLASS("Operator", _self);
+	};
+	METHOD("monitorConnectedLocalOperator") {
+		params[["_monitor", objNull], ["_turret", [-1]]];
+
+		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
+		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
 	};
 	METHOD("monitorDisconnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
+	};
+	METHOD("monitorDisconnectedLocalOperator") {
+		params[["_monitor", objNull], ["_turret", [-1]]];
 
-		if (IS_OBJ(_caller) && {(local _caller)}) then {
-			["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
-			if !([_self] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
-				["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
-			};
+		["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+		if !([_self] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
+			["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		};
 	};
 	METHOD("TurretChanged") {
@@ -648,7 +651,6 @@ OBJCLASS(Operator)
 		_turretsParams set [_turretIndex, _turretData];
 		_self setVariable ["CFM_turretsParams", _turretsParams];
 
-		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
@@ -670,21 +672,30 @@ OBJCLASS(Operator)
 
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 
-		if (_globalUpdOp) then {
-			["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _self);
-			["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
-		};
-
-		if (_globalUpdOp && {!(_turretObj isEqualTo _self)}) then {
-			CFM_operatorsToUpdate = _self;
-			publicVariableServer "CFM_operatorsToUpdate";
-			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
-		};
-
 		private _uiParams = if (IS_STR(_interfaceClass)) then {
 			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
 		} else {[]};
 		["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
+
+		true
+	};
+	METHOD("TurretChangedLocalOperator") {
+		params["_monitor", ["_turret", [-1]]];
+
+		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
+
+		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
+
+		["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _self);
+		["addMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+
+		private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+		private _turretObj = _turretData getOrDefault ["turretObject", _self];
+		if (!(_turretObj isEqualTo _self)) then {
+			CFM_operatorsToUpdate = _self;
+			publicVariableServer "CFM_operatorsToUpdate";
+			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
+		};
 
 		true
 	};
@@ -704,7 +715,7 @@ OBJCLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
-		["TurretChanged", [_monitor, [_nextTurretIndex], false, true], true] REMOTE_EXEC_OBJCLASS("Operator", _self);
+		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], true] REMOTE_EXEC_OBJCLASS("Operator", _self);
 
 		true
 	};

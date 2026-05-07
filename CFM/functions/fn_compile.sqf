@@ -199,7 +199,7 @@ CFM_fnc_setupLocalActiveOperators = {
 	CFM_LocalActiveOperators = _activeOperators select {
 		(local _x) && {
 			private _hasTurrLocal = false;
-			private _turretsParams = _operator getVariable "CFM_turretsParams";
+			private _turretsParams = _x getVariable "CFM_turretsParams";
 			if (isNil "_turretsParams" || {!(_turretsParams isEqualType createHashMap)}) exitWith {false};
 			{
 				if (_y getOrDefault ["IsTurretLocal", false]) exitWith {
@@ -210,6 +210,26 @@ CFM_fnc_setupLocalActiveOperators = {
 		}
 	};
 	CFM_LocalActiveOperators
+};
+
+CFM_fnc_turretChangedLocalOperator = {
+	params["_operator", "_monitor", ["_turret", -1]];
+	["TurretChangedLocalOperator", [_monitor, _turret]] CALL_OBJCLASS("Operator", _operator);
+};
+
+CFM_fnc_operatorMonitorConnectedEvent = {
+	params["_operator", "_monitor", ["_turret", -1]];
+	["monitorConnectedLocalOperator", [_monitor, _turret]] CALL_OBJCLASS("Operator", _operator);
+};
+
+CFM_fnc_operatorMonitorDisconnectedEvent = {
+	params["_operator", "_monitor", ["_turret", -1]];
+	["monitorDisconnectedLocalOperator", [_monitor, _turret]] CALL_OBJCLASS("Operator", _operator);
+};
+
+CFM_fnc_operatorsLocalityChangedEvent = {
+    publicVariable "CFM_ActiveOperators";
+    call CFM_ActiveOperators_PublicEH;
 };
 
 CFM_fnc_validatePointParams = {
@@ -587,14 +607,14 @@ CFM_fnc_initFPVInterface = {
 
 CFM_fnc_fpv_getSignal = {
 	params["_monitor", "_operator"];
-	if (_operator getVariable ["ArmaFPV_simulateSignal", true]) exitWith {1};
+	if !(_operator getVariable ["ArmaFPV_simulateSignal", missionNamespace getVariable ["ArmaFPV_simulateSignal", true]]) exitWith {1};
 	[_monitor, _operator] call DB_fnc_fpv_getSignal;
 };
 
 CFM_fnc_fpv_effects = {
 	params[["_uav", objNull], ["_signal", 1], ["_ctrlsLayers", []]];
 
-	if (_operator getVariable ["ArmaFPV_effectOff", false]) exitWith {};
+	if (_uav getVariable ["ArmaFPV_effectOff", missionNamespace getVariable ["ArmaFPV_effectOff", false]]) exitWith {};
 
 	private _effectLayer1Ctrl = _ctrlsLayers param [0, controlNull];
 	private _effectLayer2Ctrl = _ctrlsLayers param [1, controlNull];

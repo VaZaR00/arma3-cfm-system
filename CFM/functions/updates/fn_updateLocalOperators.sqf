@@ -18,6 +18,5 @@ private _localityChanged = false;
 } forEach _localOps;
 
 if (_localityChanged) then {
-    publicVariable "CFM_ActiveOperators";
-    call CFM_ActiveOperators_PublicEH;
+    call CFM_fnc_operatorsLocalityChangedEvent;
 };

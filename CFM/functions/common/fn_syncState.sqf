@@ -15,6 +15,18 @@ private _operator = if (_oNetId isEqualType "") then {objectFromNetId _oNetId} e
 if !(IS_OBJ(_monitor)) exitWith {};
 if (_start && {!(IS_OBJ(_operator))}) exitWith {};
 
+if (isServer) then {
+	if (_start) then {
+		[[_operator, _monitor], {
+			_this call CFM_fnc_operatorMonitorConnectedEvent;
+		}, _operator, false] call CFM_fnc_remoteExec;
+	} else {
+		[[_operator, _monitor], {
+			_this call CFM_fnc_operatorMonitorDisconnectedEvent;
+		}, _operator, false] call CFM_fnc_remoteExec;
+	};
+};
+
 private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false];
 
 if (_isWaiting && _start) exitWith {
