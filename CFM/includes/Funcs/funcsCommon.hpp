@@ -45,10 +45,6 @@
                 file = FUNC_PATH(common\fn_remoteExec.sqf);
                 DO_FUNC_RECOMPILE
             };
-            class resetFeed {
-                file = FUNC_PATH(common\fn_resetFeed.sqf);
-                DO_FUNC_RECOMPILE
-            };
             class syncState {
                 file = FUNC_PATH(common\fn_syncState.sqf);
                 DO_FUNC_RECOMPILE
@@ -98,6 +94,10 @@
             };
             class fixFeedKeybind {
                 file = FUNC_PATH(monitor\fn_fixFeedKeybind.sqf);
+                DO_FUNC_RECOMPILE
+            };
+            class resetFeed {
+                file = FUNC_PATH(common\fn_resetFeed.sqf);
                 DO_FUNC_RECOMPILE
             };
             class getTargetMonitor {
