@@ -19,6 +19,7 @@
 ["CFM_canMoveDroneCameras",  "CHECKBOX",  ["Can move UAV cameras", "Can move UAV cameras via monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_canMoveDroneCameraIfUavControlled",  "CHECKBOX",  ["Can intercept move UAV cameras", "Can move UAV cameras via monitor even if drone turret is controlled by other player"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_canHackDrone",  "CHECKBOX",  ["Can hack UAV", "Can hack UAV if using other side monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
+["CFM_canChangeZoomOnDrones",  "CHECKBOX",  ["Can change zoom on UAV", "Can change zoom on UAV"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 
 [CFM_CATEGORY, "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_onTempDisplayUnload}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[(call CFM_fnc_getTargetMonitor), +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
