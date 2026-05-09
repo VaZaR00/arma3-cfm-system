@@ -616,6 +616,10 @@ CFM_fnc_fpv_effects = {
 
 	if (_uav getVariable ["ArmaFPV_effectOff", missionNamespace getVariable ["ArmaFPV_effectOff", false]]) exitWith {};
 
+	private _effectAdjust = _uav getVariable ["ArmaFPV_effectAdjust", missionNamespace getVariable ["ArmaFPV_effectAdjust", 1]];
+
+	if (_effectAdjust <= 0) exitWith {};
+
 	private _effectLayer1Ctrl = _ctrlsLayers param [0, controlNull];
 	private _effectLayer2Ctrl = _ctrlsLayers param [1, controlNull];
 
@@ -623,7 +627,7 @@ CFM_fnc_fpv_effects = {
 	private _intX = _serverTime - (_serverTime - ((_serverTime mod 20)));
 	private _randInt1 = [_signal - 0.1, (-_intX - 1), -_signal, 220] call CFM_fnc_randInt;
 	private _randInt2 = [-_signal + 1, _intX, _signal + 2, 220] call CFM_fnc_randInt;
-	private _effectStrenght = ((1 - _signal) max 0) * 2;
+	private _effectStrenght = (((1 - _signal) max 0) * 2) * _effectAdjust;
 
 	_effectLayer1Ctrl ctrlSetText (format["#(ai,128,128,1)perlinNoise(%2,%3,0,%1)", _effectStrenght, _randInt1, _randInt2]);
 	_effectLayer2Ctrl ctrlSetText (format["#(rgb,8,8,3)color(1,0.4,0.1,%1)", (_randInt1 / 220) * 0.05]);
