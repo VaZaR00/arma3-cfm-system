@@ -97,7 +97,7 @@
                 DO_FUNC_RECOMPILE
             };
             class resetFeed {
-                file = FUNC_PATH(common\fn_resetFeed.sqf);
+                file = FUNC_PATH(monitor\fn_resetFeed.sqf);
                 DO_FUNC_RECOMPILE
             };
             class getTargetMonitor {
