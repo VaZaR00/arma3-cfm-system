@@ -18,22 +18,32 @@ if !(IS_VALID_OP(_op)) then {
 	continue
 };
 private _cls = _op call CFM_fnc_getOperatorClass;
-private _monitorSides = _monitor getVariable ["CFM_monitorSides", [side _monitor]];
-private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
-private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
-if !(_sidesOp isEqualType []) then {
-	_sidesOp = [_sidesOp];
-};
-if !(_monitorSides isEqualType []) then {
-	_monitorSides = [_monitorSides];
-};
-private _bySide = (_monitorSides findIf {_x in _sidesOp}) != -1;
-private _bySideCiv = (_monitorSides findIf {_x in _sidesUseCiv}) != -1;
-if (!_bySide && {!(_bySideCiv && {civilian in _sidesOp})}) exitWith {false};
+private _type = [_op] call CFM_fnc_cameraType;
+if !(call {
+	private _monitorAllowedOperator = _monitor getVariable ["CFM_allowedOperators", []];
+	private _monitorAllowedOperatorTypes = _monitor getVariable ["CFM_allowedOperatorsTypes", []];
+	if (IS_ARRAY(_monitorAllowedOperator) || {IS_ARRAY(_monitorAllowedOperatorTypes)}) exitWith {
+		if (_op in _monitorAllowedOperator) exitWith {true};
+		if (_cls in _monitorAllowedOperatorTypes) exitWith {true};
+		if (_type in _monitorAllowedOperatorTypes) exitWith {true};
+		false
+	};
+	private _monitorSides = _monitor getVariable ["CFM_monitorSides", [side _monitor]];
+	private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
+	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
+	if !(_sidesOp isEqualType []) then {
+		_sidesOp = [_sidesOp];
+	};
+	if !(_monitorSides isEqualType []) then {
+		_monitorSides = [_monitorSides];
+	};
+	private _bySide = (_monitorSides findIf {_x in _sidesOp}) != -1;
+	private _bySideCiv = (_monitorSides findIf {_x in _sidesUseCiv}) != -1;
+	if (!_bySide && {!(_bySideCiv && {civilian in _sidesOp})}) exitWith {false};
+	true
+}) exitWith {false};
 
 if (_checkFeeding && {!(_op getVariable ["CFM_isFeeding", false])}) exitWith {false};
-
-private _type = [_op] call CFM_fnc_cameraType;
 
 switch (_type) do {
 	case GOPRO: {

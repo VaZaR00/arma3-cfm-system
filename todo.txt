@@ -1,6 +1,11 @@
 
 camera module -attach- mem point arg for getting mempoint via intersect
 
+define list of connections to monitor
+camera freezes sometimes - dont update or pip freeze?
+fix feed - make non reset
+use op zoom 
+
 MP TEST:
 - update operator not working: CFM_LocalActiveOperators doesnt set
 - local operator not working?
