@@ -4,10 +4,20 @@
 
 #define PREFX CFM
 #define SPREFX STR(CFM)
+#define PREF_ PREFX##_
+#define SPREF_ STR(PREF_)
+#define PREF_FNC PREFX##_fnc_
+#define PREFVAR PREF_
+#define SPREFVAR(var) STR(DOUBLE(PREF_, var))
+#define FUNC(f) PREF_FNC##f
+#define QFUNC(f) (MGVAR [STR(PREF_FNC) + f, {}])
+#define PREF_QVAR(s) (PREF_VAR + s)
+#define RC_PREF(s) (PREF_CLAS + s)
 
 #define I ,
 #define SET_LOCAL_CAM_VECTORS_TIMEOUT 0.05
 #define STR(s) #s
+#define DOUBLE(a, b) a##b
 #define DEFAULT_PIP_SETTINGS [0.3, 1, 0.8]
 #define DEFAULT_PIP_SETTINGS_STR STR(DEFAULT_PIP_SETTINGS)
 #define GOPRO "gopro"
@@ -25,6 +35,7 @@
 #define NULL_VECTOR [0,0,0]
 #define DEF_DIR [0,1,0]
 #define DEF_UP [0,0,1]
+#define DEF_CAM_MOVE_RESTR [85,85,180,180]
 #define MONITOR_ACTION_RADIUS(mon) (mon getVariable ["CFM_actionsRadius", ACTION_RADIUS]) 
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_feedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"

@@ -58,3 +58,33 @@
 
 #define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
 #define SPAWN_NEW_OBJINSTANCE(name) SPAWN_NEW_OBJINSTANCE_GLOBAL(name, false)
+
+
+#define GLOBAL_SETTER _oopSetVarGlobal = true;
+#define LOCAL_SETTER _oopSetVarGlobal = false;
+#define SET_SELFVART(name, target) _self setVariable [STR(DOUBLE(PREFX,name)), name, target];
+#define SET_SELFVAR(name) SET_SELFVART(name, _oopSetVarGlobal)
+#define SET_SELFVARG(name) SET_SELFVART(name, true)
+#define SET_SELFSVART(name, target) _self setVariable [SPREFX + name, call compile name, target];
+#define SET_SELFSVAR(name) SET_SELFSVART(name, _oopSetVarGlobal)
+#define SET_SELFSVARG(name) SET_SELFVART(name, true)
+
+#define GET_SELFVAR(name) (_self getVariable [STR(DOUBLE(PREFX,name)), name])
+#define SELFVAR(name) name = GET_SELFVAR(name); name
+
+#define IVAR(instance, name, def) private name = instance getVariable [STR(DOUBLE(PREFX,name)), def];
+
+
+#define SAVE_VARS _oopSaveVars = true;
+#define DONT_SAVE_VARS _oopSaveVars = false;
+#define SAVE_VARS_DEF _oopSaveVars = 0;
+
+#define SAVE_VAR(name) _oopToSaveVars set [STR(name), true];
+#define DONT_SAVE_VAR(name) _oopToSaveVars set [STR(name), nil];
+#define SAVE_VAR_TARGET(name, target) _oopToSaveVarsParams set [STR(name), target];
+#define SAVE_VAR_GLOBAL(name) SAVE_VAR_TARGET(name, true)
+#define SAVE_VAR_LOCAL(name) SAVE_VAR_TARGET(name, false)
+#define SAVE_VAR_DEF(name) SAVE_VAR_TARGET(name, nil)
+
+
+#define NP_PARAMS call OOP_fnc_nonPrivateParams;

@@ -140,7 +140,7 @@ OOP_OBJ_CLASS_fnc_newInstance = {
 };
 
 OOP_OBJ_CLASS_fnc_callClassInstance = {
-	params["_classname", "_obj", ["_methodName", INIT], ["_args", []], ["_def", nil]];
+	params["_classname", "_obj", ["_methodName", INIT], ["_thisArgs", []], ["_def", nil]];
 
     if !(IS_OBJ(_obj)) exitWith {EXCEPTION(EXCEPTION_NON_OBJ)};
 
@@ -174,9 +174,30 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	private _self = _obj;
 	call compile (format["%1 = _obj", _selfVar]);
 
-    _thisMethod = _method;
-    _this = _args;
-    _this call _method;
+    // class middleware variables
+    private _thisMethod = _method;
+    private _oopSetVarGlobal = false;
+    private _oopSaveVars = false; // dont save vars by def
+    private _oopToSaveVars = createHashMap;
+    private _oopToSaveVarsParams = createHashMap;
+
+    // call method
+    _this = _thisArgs;
+    private _result = _this call _method;
+
+    // class middleware
+    // saving vars
+    if !(_oopSaveVars isEqualTo false) then {
+        if !(_methodSelfFields isEqualTo []) then {
+            private ["_target"];
+            {
+                _target = _oopToSaveVarsParams getOrDefault [_x, _oopSetVarGlobal];
+                SET_SELFSVART(_x, _target);
+            } forEach (if (_oopSaveVars isEqualTo true) then {_methodSelfFieldsVars} else {_oopToSaveVars});
+        };
+    };
+
+    _NIL(_result)
 };
 
 OOP_OBJ_CLASS_fnc_remoteExecClassInstance = {
@@ -284,4 +305,11 @@ OOP_fnc_remoteExec = {
         _args remoteExec [_func, _targets, _jip];
     };
 
+};
+
+OOP_fnc_nonPrivateParams = {
+    {
+        _x params ["_name", ["_def", nil]];
+        call compile (format["%1 = _thisArgs param [%2, if !(isNil '_def') then {_def}]", _name, _forEachIndex]);
+    } forEach _this;
 };

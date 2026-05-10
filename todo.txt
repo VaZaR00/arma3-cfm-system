@@ -2,12 +2,10 @@
 camera module -attach- mem point arg for getting mempoint via intersect
 
 define list of connections to monitor
-camera freezes sometimes - dont update or pip freeze?
+funcs to set parameters
 
-MP TEST:
-- update operator not working: CFM_LocalActiveOperators doesnt set
-- local operator not working?
-
+Turret class:
+- rework ti nvg tables
 
 LONG mb:
 camera module object

@@ -17,8 +17,8 @@ private _vehLimits = if (IS_OBJ(_veh)) then {
         _doSet = _optionDefault || _optionIsTrue;
         [40, 85, 30, 30]
     };
-    [30, 85, 180, 180] // 360 default
-} else {[85,85,180,180]};
+    DEF_CAM_MOVE_RESTR // 360 default
+} else {DEF_CAM_MOVE_RESTR};
 
 private _defFalse = [_doSet, _vehLimits];
 if (_optionDefault) exitWith {_defFalse};
