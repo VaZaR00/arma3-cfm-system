@@ -1,10 +1,6 @@
 
-checkup mon op for hand mon
 check for new ops action
 
-MP TEST: 
-- sync switch turret
-- opt by dist turret resets
 
 camera module -attach- mem point arg for getting mempoint via intersect
 

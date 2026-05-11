@@ -222,20 +222,18 @@ OBJCLASS(Monitor)
 	}; 
 	METHOD("stopFeed") {
 		params[["_reset", false]];
-		if !(_reset) then {
-			if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _self) then {
-				closeDialog 1;
-				call CFM_fnc_onTempDisplayUnload;
-			};
-			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
-			_self setVariable ['CFM_actionCaller', nil];
-			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-			["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
-			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
-			["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
-		} else {
-			_monitor setVariable ["CFM_turnedOffLocal", nil]; 
+		if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _self) then {
+			closeDialog 1;
+			call CFM_fnc_onTempDisplayUnload;
 		};
+		["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+		_self setVariable ['CFM_actionCaller', nil];
+		if !(_reset) then {
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		};
+		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
+		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+		["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
 		["stopRendering"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("clearVariables") {
