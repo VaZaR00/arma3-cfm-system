@@ -28,7 +28,6 @@ if (((["zala"] findIf {_x in _vehType}) != -1)) exitWith {
 	[["pip0_pos", [], [-1,0,-1]], "laserstart"]
 };
 if ((_vehicle isKindOf "Plane") && {(_vehicle isKindOf "UAV")}) exitWith {
-	_this RLOG
 	if (_turretPath in DRIVER_TURRET_PATH) exitWith {
 		[]
 	};
