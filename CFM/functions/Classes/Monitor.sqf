@@ -195,6 +195,29 @@ OBJCLASS(Monitor)
 
 		{ _currentMenuObj removeAction _x } forEach (_currentMenuObj getVariable ["CFM_tempActions", []]); 
 
+		if (_isHandMonitor) then {
+			private _prevHndl = _monitor getVariable ["CFM_opCheckHndl", scriptNull];
+			private _opCheckHndl = [_monitor, _operator, _prevHndl] spawn {
+				params["_monitor", "_operator", "_prevHndl"];
+				terminate _prevHndl;
+				waitUntil {scriptDone _prevHndl};
+				private _currentOperator = _operator;
+				private _signalLost = false;
+				while {_monitor getVariable ["CFM_feedActive", false]} do {
+					_currentOperator = _monitor getVariable ["CFM_connectedOperator", objNull];
+					if !(_currentOperator isEqualTo _operator) exitWith {break};
+					if !([_operator, _monitor] call CFM_fnc_operatorCondition) exitWith {
+						_signalLost = true;
+						break
+					};
+					sleep 1;
+				};
+				if !(_signalLost) exitWith {};
+				[_monitor, player] call CFM_fnc_disconnectMonitorFromOperator;
+			};
+			_monitor setVariable ["CFM_opCheckHndl", _opCheckHndl];
+		};
+
 		true
 	}; 
 	METHOD("stopFeed") {

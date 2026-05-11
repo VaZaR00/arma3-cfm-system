@@ -1,6 +1,5 @@
 
-reb
-def interface by turr index
+checkup mon op for hand mon
 check for new ops action
 
 camera module -attach- mem point arg for getting mempoint via intersect
