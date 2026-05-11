@@ -13,25 +13,26 @@ params[
 	["_useCooldown", true]
 ];
 
-if !((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith {false};
-
-if (isMultiplayer && {_useCooldown && {
-	private _prevTimeSet = _operator getVariable ["CFM_prevTimeSetLocalCamVector", 0];
-	(diag_tickTime - _prevTimeSet) < SET_LOCAL_CAM_VECTORS_TIMEOUT;
-}}) exitWith {false};
+if !((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith {1};
 
 private _turretIndex = TURRET_INDEX(_turret);
+private _turrIdxStr = TURR_INDX_STR(_turretIndex);
+
+if (isMultiplayer && {_useCooldown && {
+	private _prevTimeSet = _operator getVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, 0];
+	(diag_tickTime - _prevTimeSet) < SET_LOCAL_CAM_VECTORS_TIMEOUT;
+}}) exitWith {2};
 
 private _turretsParams = _operator getVariable ["CFM_turretsParams", createHashMap];
 
-if !(_turretIndex in _turretsParams) exitWith {false};
+if !(_turretIndex in _turretsParams) exitWith {3};
 
 private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
 
-if (_onlyIfTurrLocal && {!(_turretData getOrDefault ["IsTurretLocal", false])}) exitWith {false};
+if (_onlyIfTurrLocal && {!(_turretData getOrDefault ["IsTurretLocal", false])}) exitWith {4};
 
-private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
+private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
 // private _posVarName = "CFM_currentTurretPosMS" + str _turretIndex;
 private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
 private _pointParams = _turretData getOrDefault ["pointParams", []];
@@ -62,6 +63,6 @@ if !(_currUpMS isEqualTo _prevUp) then {
 if (cameraOn isEqualTo _operator) then {
 	[_operator] call CFM_fnc_updateOperatorZoom;
 };
-_operator setVariable ["CFM_prevTimeSetLocalCamVector", diag_tickTime];
+_operator setVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, diag_tickTime];
 
 _updated

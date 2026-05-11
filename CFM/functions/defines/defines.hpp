@@ -96,3 +96,7 @@
 #define DISP_CTRL _display displayCtrl
 #define GET_CTRL(name, id) uiNamespace setVariable [name + _uiDisplayUniqueName, _display displayCtrl id];
 #define GET_CTRL_GRP(name, grpid, ctrlid) uiNamespace setVariable [name + _uiDisplayUniqueName, (_display displayCtrl grpid) controlsGroupCtrl ctrlid];
+
+
+#define TURR_INDX_STR(idx) ((if (idx < 0) then {"n" + (str (abs idx))} else {str idx}))
+#define TURR_INDX_VAR(name, idx) (format["%1%2", name, TURR_INDX_STR(idx)])

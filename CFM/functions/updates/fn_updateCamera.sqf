@@ -52,8 +52,9 @@ if (count _up != 3) then {
 };
 
 if (_turretLocal && {_setLocalOpTurretDir}) then {
-	private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-	private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+	private _turrIdxStr = TURR_INDX_STR(_turretIndex);
+	private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
+	private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
 	// private _posVarName = "CFM_currentTurretPosMS" + str _turretIndex;
 	private _localDirMS = _operator getVariable [_dirVarName, []];
 	private _localUpMS = _operator getVariable [_upVarName, []];

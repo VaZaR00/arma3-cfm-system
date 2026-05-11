@@ -470,8 +470,9 @@ OBJCLASS(Turret)
 
         // calculate moves
         private _turretIndex = _self getVariable "_turretIndex";
-        private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-        private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+		private _turrIdxStr = TURR_INDX_STR(_turretIndex);
+        private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
+        private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
         private _dir = _self getVariable [_dirVarName, [0,1,0]];
         private _up = _self getVariable [_upVarName, [0,0,1]];
         private _newDir = [_dir, _vertical, _horizontal] call CFM_fnc_rotateVector;

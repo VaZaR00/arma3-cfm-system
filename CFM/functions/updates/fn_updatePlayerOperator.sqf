@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_updateOperator
+    Function: CFM_fnc_updatePlayerOperator
     Author: Vazar
     Description: Automatically generated SQF file.
 */

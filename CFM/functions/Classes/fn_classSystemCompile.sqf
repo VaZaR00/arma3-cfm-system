@@ -215,7 +215,7 @@ OOP_OBJ_CLASS_fnc_remoteExecClassInstance = {
         _remoteExecParams = [_remoteExecParams];
     };
     _remoteExecParams params [["_targets", 0], ["_jip", _jip], ["_call", false, [false]]];
-    [_this, {
+    [_callArgs, {
         _this call OOP_OBJ_CLASS_fnc_callClassInstance;
     }, _targets, _jip, _call] call OOP_fnc_remoteExec;
 };

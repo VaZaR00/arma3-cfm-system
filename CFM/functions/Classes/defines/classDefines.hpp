@@ -35,7 +35,7 @@
 
 
 #define REMOTE_EXEC_OBJCLASS(name, obj) call { \
-    _this params ["_method", ["_args", []], ["_def", nil], ["_remoteExecParams", false]]; \
+    _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
     [[name, obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
 

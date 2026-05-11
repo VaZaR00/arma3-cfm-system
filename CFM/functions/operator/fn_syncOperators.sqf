@@ -20,8 +20,9 @@ private _targets = MONITOR_VIEWERS_AND_SELF(false);
 	private _turrets = _operator getVariable ["CFM_turrets", [[-1]]];
 	{
 		private _turretIndex = TURRET_INDEX(_x);
-		private _dirVarName = "CFM_currentTurretDirMS" + str _turretIndex;
-		private _upVarName = "CFM_currentTurretUpMS" + str _turretIndex;
+		private _turrIdxStr = TURR_INDX_STR(_turretIndex);
+		private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
+		private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
 		private _currDir = _operator getVariable [_dirVarName, []];
 		private _currUp = _operator getVariable [_upVarName, []];
 		_operator setVariable [_dirVarName, _currDir, _targets];
