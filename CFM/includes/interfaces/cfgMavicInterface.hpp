@@ -395,7 +395,7 @@ class RscCFM_Mavic_Interface
 		{
 			idc = 1489;
 			onLoad = "uiNamespace setVariable [""DB_mvc_effectPicture"", _this # 0];";
-			show = 0;
+			show = 1;
 		};
 		class Gradient: ctrlStaticPicture
 		{

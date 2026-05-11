@@ -491,9 +491,18 @@ CFM_fnc_drone_effects = {
 CFM_fnc_drone_checkRebEffect = {
 	params[["_uav", objNull], ["_signal", 1], ["_ctrlsLayers", []]];
 
-	if !(_uav getVariable ["REB_uavIsSuppressed", false]) exitWith {false};
+	private _rebStrenght = _uav getVariable ["REB_uavActiveRebStrength", 0];
 
-	private _rebStrenght = _uav getVariable ["REB_uavActiveRebStrength", 0.5];
+	if !((_uav getVariable ["REB_uavIsSuppressed", false]) || {
+		private _lastTimeChecked = _uav getVariable ["CFM_REB_suppressedCheckLastTime", 0];
+		if ((diag_tickTime - _lastTimeChecked) > 1) then {
+			_uav setVariable ["CFM_REB_suppressedCheckLastTime", diag_tickTime];
+			_rebStrenght = _uav call REB_fnc_currentJammingRebStrength;
+		};
+		_uav setVariable ["REB_uavActiveRebStrength", _rebStrenght];
+		_rebStrenght > 0
+	}) exitWith {false};
+
 	private _signal = (1 - _rebStrenght) / 20;
 
 	[_signal, _ctrlsLayers param [0, controlNull], 1] call CFM_fnc_radioNoiseEffect;
@@ -650,7 +659,7 @@ CFM_fnc_initMavicInterface = {
 	GET_CTRL("DB_mavic_R2TPicture", 1488)
 	GET_CTRL("DB_mavic_EffectPicture", 1489)
 
-	[_display displayCtrl 1488]
+	[_display displayCtrl 1488, [DISP_CTRL 1489]]
 };
 
 // FPV
