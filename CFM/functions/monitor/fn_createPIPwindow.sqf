@@ -93,7 +93,8 @@ _player spawn {
     waitUntil {
         sleep 1;
         _isWatching = _this getVariable ["CFM_feedActive", false];
-        !_isWatching || {!(focusOn isEqualTo _this)}
+        !_isWatching 
+        // || {!(focusOn isEqualTo _this)}
     };
     if !(_isWatching) exitWith {};
     [_this, false] call CFM_fnc_setHandDisplay;
