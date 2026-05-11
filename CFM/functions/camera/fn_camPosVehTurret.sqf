@@ -21,7 +21,6 @@ private _pointOffset = if (_doAlign) then {
         _obj selectionVectorDirAndUp [_memPoint, "Memory"]
     ]
 };
-
 [
     _obj modelToWorldVisualWorld (_pointOffset#0), 
     _obj vectorModelToWorldVisual (_pointOffset#1#0), 

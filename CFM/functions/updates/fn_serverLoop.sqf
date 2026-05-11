@@ -13,6 +13,8 @@ if (isNil "CFM_SERVER_CHECK_FOR_NEW_OPERATORS_EC_EH_id") then {
 		params ["_entity"];
 		if !(MGVAR ["CFM_SERVER_DO_CHECK_FOR_NEW_OPERATORS", true]) exitWith {};
 
+		if !(_entity isKindOf "AllVehicles") exitWith {};
+
 		[_entity] call CFM_fnc_checkIfNewOperator;
 	}];
 };

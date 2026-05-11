@@ -10,7 +10,9 @@ params[["_monitor", objNull]];
 
 private _isStatic = _monitor getVariable ["CFM_currentCameraIsStatic", false];
 private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
-private _zoomFov = _monitor getVariable ["CFM_zoomFov", 1];
+private _zoomFov = if (MGVAR ["CFM_canChangeZoomOnDrones", false]) then {
+	_monitor getVariable ["CFM_zoomFov", 1];
+} else {"op"};
 private _smoothZoom = _monitor getVariable ["CFM_currentCameraSmoothZoom", true];
 private _doUpdateCamera = _monitor getVariable ["CFM_doUpdateCamera", false];
 private _offsetReached = true;

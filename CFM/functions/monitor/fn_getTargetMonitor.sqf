@@ -6,7 +6,9 @@
 
 #include "defines.hpp" 
 
-private _watchingAtMonitor = [PLAYER_] call CFM_fnc_isWatchingAtMonitor;
+private _plr = PLAYER_;
+private _watchingAtMonitor = [_plr] call CFM_fnc_isWatchingAtMonitor;
+if !(cameraOn isEqualTo _plr) exitWith {objNull};
 if (_watchingAtMonitor) exitWith {cursorObject};
-if ((PLAYER_ getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {PLAYER_};
+if ((_plr getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {_plr};
 objNull

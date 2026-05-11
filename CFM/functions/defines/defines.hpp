@@ -29,6 +29,8 @@
 #define OBJ_LOD_VAR(var, o) private var = OBJ_LOD(o); o setVariable ["CFM_lod", var];
 #define IS_FPV(cls) (("fpv" in cls) || {("crocus" in cls)})
 #define IS_MAVIC(cls) ("mavik_3" in cls)
+#define DRIVER_TURRET_IDX -1
+#define GUNNER_TURRET_IDX 0
 #define DRIVER_TURRET_PATH [-1]
 #define GUNNER_TURRET_PATH [0]
 #define ACTION_RADIUS 5
@@ -88,3 +90,9 @@
 #define _HINT call {hint _this};
 #define WARN DLOG
 #define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);
+
+
+#define WAIT_FOR_DISPLAY_TIME 10
+#define DISP_CTRL _display displayCtrl
+#define GET_CTRL(name, id) uiNamespace setVariable [name + _uiDisplayUniqueName, _display displayCtrl id];
+#define GET_CTRL_GRP(name, grpid, ctrlid) uiNamespace setVariable [name + _uiDisplayUniqueName, (_display displayCtrl grpid) controlsGroupCtrl ctrlid];

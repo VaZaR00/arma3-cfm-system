@@ -9,6 +9,7 @@
 params["_op", ["_monitor", objNull], ["_checkFeeding", false]];
 
 if !(IS_OBJ(_monitor)) exitWith {false};
+if ((_op getVariable ["REB_uavLostSignal", false]) isEqualTo true) exitWith {false};
 
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
 if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};

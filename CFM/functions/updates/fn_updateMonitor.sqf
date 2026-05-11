@@ -12,7 +12,7 @@ private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 private _signalFunc = _monitor getVariable ["CFM_currentOperatorSignalFunction", {1}];
 
 //--------------------- SIGNAL -----------------------
-private _signal = [_monitor, _operator] call _signalFunc;
+private _signal = [_monitor, _operator, _signalFunc] call CFM_fnc_signalFunc;
 if ((isNil "_signal") || {!(_signal isEqualType 1)}) then {
     _signal = 1;
 };
@@ -29,12 +29,12 @@ private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
 private _interfaceFunc = _monitor getVariable ["CFM_currentOperatorInterfaceFunction", {}];
 private _uiDisplayUniqueName = _monitor getVariable ["CFM_uiDisplayUniqueName", ""];
 
-[_monitor, _operator, _signal, _mainDisplay, _uiDisplayUniqueName] call _interfaceFunc;
+[_monitor, _operator, _signal, _mainDisplay, _uiDisplayUniqueName, _interfaceFunc] call CFM_fnc_interfaceFunc;
 
 private _effectsLayersControls = _monitor getVariable ["CFM_effectsLayersControls", []];
 private _effectsFunc = _monitor getVariable ["CFM_currentOperatorEffectsFunction", {}];
 
-[_operator, _signal, _effectsLayersControls] call _effectsFunc;
+[_operator, _signal, _effectsLayersControls, _effectsFunc] call CFM_fnc_effectsFunc;
 //-------------------------------------------------------
 
 //----------------- UPDATE CAMERA -----------------------

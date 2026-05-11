@@ -22,5 +22,5 @@ class CfgFunctions
 };
 #include "includes\CfgRemoteExec.hpp"
 
-#include "includes\cfgMavicInterface.hpp"
-#include "includes\cfgFPVinterface.hpp"
+#include "includes\interfaces\cfgMavicInterface.hpp"
+#include "includes\interfaces\cfgFPVinterface.hpp"

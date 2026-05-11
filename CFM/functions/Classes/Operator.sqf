@@ -35,8 +35,6 @@ OBJCLASS(Operator)
 	FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
 	FIELD ["_hasActiveTurretsObjects", -1];
 	FIELD ["_activeTurretsObjects", createHashMap];
-	FIELD ["_interfaceDataDef", []];
-	FIELD ["_effectAndSignalFuncsDef", []];
 
 	/*
 		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isGopro, camPosFunc, doInterpolation, currentCamMove, ppType, cameraMoveRestrictions]]]
@@ -136,12 +134,6 @@ OBJCLASS(Operator)
 		_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
-
-
-		_interfaceDataDef = [_operator, _objClass, _isMavic, _isFPV] call CFM_fnc_defineInterfaceData;
-		_effectAndSignalFuncsDef = [_operator, _objClass, _isMavic, _isFPV] call CFM_fnc_defineSignalEffectFunc;
-		SET_SELFVARG(_interfaceDataDef);
-		SET_SELFVARG(_effectAndSignalFuncsDef);
 
 
 		// TURRETS
@@ -420,8 +412,8 @@ OBJCLASS(Operator)
 						}) then {
 							CFM_fnc_camPosPilotTurret
 						} else {
-							_ppType = PP_VEH_TURRET;
-							CFM_fnc_camPosVehTurret
+							_ppType = PP_VEH_STATIC;
+							CFM_fnc_camPosVehStatic
 						};
 					} else {
 						_ppType = PP_VEH_TURRET;
@@ -506,7 +498,8 @@ OBJCLASS(Operator)
 		_turretParams set ["turretName", _turretName];
 
 		// interface
-		_interfaceDataDef params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
+
+		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData) params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
 		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
 			_interfaceClass = _interfaceClassDef;
 		};
@@ -517,7 +510,7 @@ OBJCLASS(Operator)
 			_initInterfaceFunc = _initInterfaceFuncDef;
 		};
 		// signal func
-		_effectAndSignalFuncsDef params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
+		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineSignalEffectFunc) params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
 		if ((_signalFunc isEqualTo -1) || {!IS_FUNC(_signalFunc) || {!(call {
 			private _signalFunc = missionspace getVariable [_signalFunc, {}];
 			private _testFuncRes = [player, _operator] call _signalFunc;

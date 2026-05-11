@@ -1,4 +1,8 @@
 
+reb
+def interface by turr index
+check for new ops action
+
 camera module -attach- mem point arg for getting mempoint via intersect
 
 define list of connections to monitor

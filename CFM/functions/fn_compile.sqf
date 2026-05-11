@@ -396,7 +396,7 @@ CFM_fnc_randInt = {
 
 CFM_fnc_defineInterfaceData = {
 	// returns [_interfaceClass, _interfaceFuncNameDef, _interfaceInitFuncNameDef]
-	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
+	params["_operator", ["_turret", -1], ["_opClass", ""], ["_isMavic", false], ["_isFPV", false], ["_isDrone", false]];
 
 	if !(IS_STR(_opClass)) then {
 		_opClass = toLower typeOf _operator;
@@ -408,19 +408,96 @@ CFM_fnc_defineInterfaceData = {
 	if (_isFPV) exitWith {
 		["RscCFM_ArmaFPV_Dialog", MGVAR ["CFM_fnc_updateFPVInterface", {}], MGVAR ["CFM_fnc_initFPVInterface", {}]]
 	};
+	if ("zala" in _opClass) exitWith {
+		switch (_turret) do {
+			// case DRIVER_TURRET_IDX: {
+			// 	['CFM_Zala421_Interface_Driver', MGVAR ["CFM_fnc_zala_drawHudDriver", {}], MGVAR ["CFM_fnc_initZalaInterfaceDriver", {}]]
+			// };
+			case GUNNER_TURRET_IDX: {
+				['CFM_Zala421_Interface_Gunner', MGVAR ["CFM_fnc_zala_drawHudGunner", {}], MGVAR ["CFM_fnc_initZalaInterfaceGunner", {}]]
+			};
+			default {[]};
+		};
+	};
+	if (_isDrone) exitWith {
+		["RscDisplayR2TDisplayCFM", MGVAR ["CFM_fnc_drone_updateInterface", {}], MGVAR ["CFM_fnc_drone_initInterface", {}]]
+	};
 
 	[]
 };
 
 CFM_fnc_defineSignalEffectFunc = {
 	// returns [signalFunc, effectFunc]
-	params["_operator", ["_opClass", ""], ["_isMavic", false], ["_isFPV", false]];
+	params["_operator", ["_turret", -1], ["_opClass", ""], ["_isMavic", false], ["_isFPV", false], ["_isDrone", false]];
 
 	if (_isFPV) exitWith {
 		[MGVAR ["CFM_fnc_fpv_getSignal", {1}], MGVAR ["CFM_fnc_fpv_effects", {}]]
 	};
+	if (_isDrone) exitWith {
+		[MGVAR ["CFM_fnc_drone_getSignal", {1}], MGVAR ["CFM_fnc_drone_effects", {}]]
+	};
 
 	[]
+};
+
+// effects
+CFM_fnc_signalFunc = {
+	params["_monitor", "_operator", ["_signalFunc", {}]];
+
+	_this call _signalFunc;
+};
+
+CFM_fnc_interfaceFunc = {
+	params["_monitor", "_operator", "_signal", "_mainDisplay", "_uiDisplayUniqueName", ["_interfaceFunc", {}]];
+	
+	_this call _interfaceFunc;
+};
+
+CFM_fnc_effectsFunc = {
+	params["_monitor", "_operator", "_effectsLayersControls", ["_effectsFunc", {}]];
+	
+	_this call _effectsFunc;
+};
+
+CFM_fnc_radioNoiseEffect = {
+	params[["_signal", 1], ["_effectLayerCtrl", controlNull], ["_effectAdjust", 1]];
+	
+	private _serverTime = serverTime;
+	private _intX = _serverTime - (_serverTime - ((_serverTime mod 20)));
+	private _randInt1 = [_signal - 0.1, (-_intX - 1), -_signal, 220] call CFM_fnc_randInt;
+	private _randInt2 = [-_signal + 1, _intX, _signal + 2, 220] call CFM_fnc_randInt;
+	private _effectStrenght = (((1 - _signal) max 0) * 2) * _effectAdjust;
+
+	_effectLayerCtrl ctrlSetText (format["#(ai,128,128,1)perlinNoise(%2,%3,0,%1)", _effectStrenght, _randInt1, _randInt2]);
+};
+
+
+// Drone
+CFM_fnc_drone_initInterface = {
+	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	[DISP_CTRL 1488, [DISP_CTRL 1489]]
+};
+
+CFM_fnc_drone_updateInterface = {
+	// params[["_monitor", objNull], ["_operator", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_uiDisplayUniqueName", ""]];
+
+};
+
+CFM_fnc_drone_effects = {
+	call CFM_fnc_drone_checkRebEffect
+};
+
+CFM_fnc_drone_checkRebEffect = {
+	params[["_uav", objNull], ["_signal", 1], ["_ctrlsLayers", []]];
+
+	if !(_uav getVariable ["REB_uavIsSuppressed", false]) exitWith {false};
+
+	private _rebStrenght = _uav getVariable ["REB_uavActiveRebStrength", 0.5];
+	private _signal = (1 - _rebStrenght) / 20;
+
+	[_signal, _ctrlsLayers param [0, controlNull], 1] call CFM_fnc_radioNoiseEffect;
+	true
 };
 
 // Mavic
@@ -556,9 +633,6 @@ CFM_fnc_updateMavicInterface = {
 	// }; 
 };
 
-#define WAIT_FOR_DISPLAY_TIME 10
-#define GET_CTRL(name, id) uiNamespace setVariable [name + _uiDisplayUniqueName, _display displayCtrl id];
-
 CFM_fnc_initMavicInterface = {
 	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
 
@@ -612,6 +686,8 @@ CFM_fnc_fpv_getSignal = {
 };
 
 CFM_fnc_fpv_effects = {
+	if (call CFM_fnc_drone_checkRebEffect) exitWith {};
+
 	params[["_uav", objNull], ["_signal", 1], ["_ctrlsLayers", []]];
 
 	if (_uav getVariable ["ArmaFPV_effectOff", missionNamespace getVariable ["ArmaFPV_effectOff", false]]) exitWith {};
@@ -620,17 +696,12 @@ CFM_fnc_fpv_effects = {
 
 	if (_effectAdjust <= 0) exitWith {};
 
-	private _effectLayer1Ctrl = _ctrlsLayers param [0, controlNull];
-	private _effectLayer2Ctrl = _ctrlsLayers param [1, controlNull];
+	[_signal, _ctrlsLayers param [0, controlNull], _effectAdjust] call CFM_fnc_radioNoiseEffect;
 
 	private _serverTime = serverTime;
 	private _intX = _serverTime - (_serverTime - ((_serverTime mod 20)));
 	private _randInt1 = [_signal - 0.1, (-_intX - 1), -_signal, 220] call CFM_fnc_randInt;
-	private _randInt2 = [-_signal + 1, _intX, _signal + 2, 220] call CFM_fnc_randInt;
-	private _effectStrenght = (((1 - _signal) max 0) * 2) * _effectAdjust;
-
-	_effectLayer1Ctrl ctrlSetText (format["#(ai,128,128,1)perlinNoise(%2,%3,0,%1)", _effectStrenght, _randInt1, _randInt2]);
-	_effectLayer2Ctrl ctrlSetText (format["#(rgb,8,8,3)color(1,0.4,0.1,%1)", (_randInt1 / 220) * 0.05]);
+	(_ctrlsLayers param [1, controlNull]) ctrlSetText (format["#(rgb,8,8,3)color(1,0.4,0.1,%1)", (_randInt1 / 220) * 0.05]);
 };
 
 CFM_fnc_fpv_handleTime = {
@@ -684,4 +755,206 @@ CFM_fnc_fpv_handleSignal = {
 
 	_controlPicture ctrlSetText _picture;
 	_controlText ctrlSetText str(round(_signal * 100));
+};
+
+// Zala
+CFM_fnc_initZalaInterfaceDriver = {
+	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	GET_CTRL_GRP("DB_zala421_HUD_alt_mainText", 956, 956)
+	GET_CTRL_GRP("DB_zala421_HUD_coord_mainText", 825, 825)
+	GET_CTRL_GRP("DB_zala421_HUD_fuel_mainText", 987, 987)
+	GET_CTRL_GRP("DB_zala421_HUD_status_mainText", 125, 125)
+	GET_CTRL_GRP("DB_zala421_HUD_droneSpeed_mainText", 127, 127)
+	GET_CTRL_GRP("DB_zala421_HUD_pitch_mainText", 121, 121)
+
+	[DISP_CTRL 1488, [DISP_CTRL 1489, DISP_CTRL 1490]]
+};
+
+CFM_fnc_initZalaInterfaceGunner = {
+	params[["_monitor", displayNull], ["_display", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	GET_CTRL("DB_zala421_squareX_HUD", 237)
+	GET_CTRL("DB_zala421_squareY_HUD", 825)
+	GET_CTRL("DB_zala421_laser_HUD", 836)
+	GET_CTRL("DB_zala421_height_HUD", 241)
+	GET_CTRL("DB_zala421_speed_HUD", 369)
+	GET_CTRL("DB_zala421_direction_HUD", 398)
+	GET_CTRL("DB_zala421_temperature_HUD", 375)
+	GET_CTRL("DB_zala421_date_HUD", 203)
+	GET_CTRL("DB_zala421_time_HUD", 265)
+
+	[DISP_CTRL 1488, [DISP_CTRL 1489, DISP_CTRL 1490]]
+};
+
+CFM_fnc_zala_drawHudDriver = {
+	params[["_monitor", objNull], ["_uav", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	private _positionATL = getPosATLVisual _uav;
+
+	// ALT
+	private _altMainText = uiNameSpace getVariable ["DB_zala421_HUD_alt_mainText" + _uiDisplayUniqueName, controlNull];
+	_altMainText ctrlSetText format ["%1: %2", localize "STR_zala421_altitude", floor(_uav call CBA_fnc_realHeight)];
+
+	// COORDINATES
+	private _coordMainText = uiNameSpace getVariable ["DB_zala421_HUD_coord_mainText" + _uiDisplayUniqueName, controlNull];
+	_coordMainText ctrlSetText format ["%1: %2 %3", localize "STR_zala421_square", floor((_positionATL # 0) / 100), floor((_positionATL # 1) / 100)];
+
+	// FUEL
+	private _fuelMainText = uiNameSpace getVariable ["DB_zala421_HUD_fuel_mainText" + _uiDisplayUniqueName, controlNull];
+	_fuelMainText ctrlSetText format ["%1: %2", localize "STR_zala421_fuel", floor (fuel _uav * 100)];
+
+	// STATUS
+	private _statusMainText = uiNameSpace getVariable ["DB_zala421_HUD_status_mainText" + _uiDisplayUniqueName, controlNull];
+	_statusMainText ctrlSetText format ["%1: %2", localize "STR_zala421_condition", [localize "STR_zala421_controllable", localize "STR_zala421_damaged"] select (damage _uav >= 0.33)];
+
+
+	// DRONE SPEED
+	private _droneSpeedMainText = uiNameSpace getVariable ["DB_zala421_HUD_droneSpeed_mainText" + _uiDisplayUniqueName, controlNull];
+	_droneSpeedMainText ctrlSetText format ["%1: %2 KM/H", localize "STR_zala421_speed", (floor speed _uav)];
+
+	// PITCH
+	private _pitchMainText = uiNameSpace getVariable ["DB_zala421_HUD_pitch_mainText" + _uiDisplayUniqueName, controlNull];
+	_pitchMainText ctrlSetText format ["%1: %2 °", localize "STR_zala421_pitch", floor((_uav call BIS_fnc_getPitchBank) # 0)];
+};
+
+CFM_fnc_zala_drawHudGunner = {
+	params[["_monitor", objNull], ["_uav", objNull], ["_signal", 1], ["_uiCtrlCurrentUIDisplay", displayNull], ["_uiDisplayUniqueName", ""]];
+
+	private _positionATL = getPosATLVisual _uav;
+
+	// SQUARE X
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_squareX_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_squareX", floor((_positionATL # 0) / 100)];
+
+	// SQUARE Y
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_squareY_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_squareY", floor((_positionATL # 1) / 100)];
+
+	// LASER
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_laser_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_laser", [localize "STR_zala421_off", localize "STR_zala421_on"] select (isLaserOn _uav)];
+
+	// HEIGHT
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_height_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_altitude", floor(_uav call CBA_fnc_realHeight)];
+
+	// SPEED
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_speed_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_speed", floor(speed _uav)];
+
+	// DIRECTION
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_direction_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+	private _direction = getDirVisual _uav;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2</t>", localize "STR_zala421_course", floor _direction];
+
+	// TEMPERATURE
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_temperature_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+
+	_text ctrlSetStructuredText parseText format ["%1: <t align='right'>%2°C</t>", localize "STR_zala421_t", floor(ambientTemperature # 0)];
+
+	// DATE
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_date_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+	private _date = date;
+
+	_text ctrlSetText format ["%1/%2/%3", _date # 2, _date # 1, _date # 0];
+
+	// TIME
+	private _controlsGroup = uiNameSpace getVariable ["DB_zala421_time_HUD" + _uiDisplayUniqueName, controlNull];
+	private _text = _controlsGroup controlsGroupCtrl 101;
+	private _time = [dayTime, "HH:MM:SS"] call BIS_fnc_timeToString;
+
+	_text ctrlSetText _time;
+};
+
+
+
+// TEMP REB RECOMPILE
+REB_fnc_disconectDrone = {
+	if ((("lancet_tripod_launcher" in (typeOf vehicle player)) && dialog)) exitWith {
+		closeDialog 1;
+	};
+
+	if !(_this getVariable ["REB_uavLostSignal", false]) then {
+		_this setVariable ["REB_uavLostSignal", true, true];
+	};
+
+	player connectTerminalToUAV objNull; //disconnect from players terminal
+	_noise ppEffectEnable false; //disable noise
+	//delete drone ai crew so drone will fall, otherwise ai will try to hover on 
+	_this remoteExec ["deleteVehicleCrew", 0];
+	_this spawn {
+		uiSleep REB_createUavCrewOnDisconectTime;
+		_this remoteExec ["createVehicleCrew", 0];
+		_this setVariable ["REB_uavLostSignal", false, true];
+	};
+};
+
+REB_fnc_main = {
+	params [["_freq", REB_freq], ["_random", REB_random], ["_noise", REB_noise], ["_uav", (vehicle (remoteControlled player))]];
+	if (isNil {
+		REB_isSuppressed = false;
+		_noise ppEffectEnable false; 
+		call REB_fnc_removeInputDelay;
+
+		if !(missionNamespace getVariable ["REB_systemIsOn", true]) exitWith {};
+		if (_uav getVariable ["REB_var_skipThis", false]) exitWith {};
+
+		if (_uav getVariable ['ArmaFPV_EnableTI', false]) then {
+			_uav disableTIEquipment false;
+		};
+
+		if (count REB_all_rebs == 0) exitWith {};
+
+		private _isLancet = (("lancet_tripod_launcher" in (typeOf vehicle player)) && dialog);
+
+		if !((_uav in allUnitsUAV) || _isLancet) exitWith {};
+
+		if (_isLancet) then {
+			_uav = uiNamespace getVariable ["lancet_currentProjectile", objNull];
+		};
+
+		if (_uav call REB_fnc_isInDeadzone) exitWith {
+			_uav call REB_fnc_disconectDrone;
+			false
+		};
+
+		private _activeRebStrength = _uav call REB_fnc_currentJammingRebStrength;
+
+		if !(_activeRebStrength > 0) exitWith {};
+
+		_uav disableTIEquipment true;
+
+		if (_isLancet) then {
+			false setCamUseTI 0;
+		};
+
+		_activeRebStrength call REB_fnc_suppress;
+		if !(_uav getVariable ["REB_uavIsSuppressed", false]) then {
+			_uav setVariable ["REB_uavIsSuppressed", true, true];
+			_uav setVariable ["REB_uavActiveRebStrength", _activeRebStrength, true];
+		};
+		true
+	}) then {
+		if ((_uav getVariable ["REB_uavIsSuppressed", false]) && {(cameraOn isEqualTo _uav)}) then {
+			_uav setVariable ["REB_uavIsSuppressed", false, true];
+			_uav setVariable ["REB_uavActiveRebStrength", nil, true];
+		};
+	} else {
+
+	};
 };
