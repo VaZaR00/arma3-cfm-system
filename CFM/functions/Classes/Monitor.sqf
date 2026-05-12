@@ -20,8 +20,8 @@ OBJCLASS(Monitor)
 	FIELD ["_targetInActionsConditions", "_target"];
 	FIELD ["_monitorUid", ""];
 	FIELD ["_monitorR2Tid", ""];
-	FIELD ["_allowedOperators", []];
-	FIELD ["_allowedOperatorsTypes", []];
+	FIELD ["_allowedOperators", [], [objNull, []]];
+	FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
 
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
@@ -56,7 +56,7 @@ OBJCLASS(Monitor)
 	METHOD("Init") { 
 		// should be executed globaly
 		params [
-			["_sides", [side PLAYER_]],
+			["_sides", []],
 			["_allowedOperatorsSet", []],
 			["_allowedOperatorsTypesSet", []],
 			["_isHandMonitorDisplay", false],
@@ -143,14 +143,12 @@ OBJCLASS(Monitor)
 			_monitor setVariable ["CFM_canFullScreen", _canFullScreen, !_isLocal];
 			_monitor setVariable ["CFM_isHandMonitorDisplay", _isHandMonitor && _isHandMonitorDisplay];
 
+			if !(_allowedOperatorsSet isEqualType []) then {_allowedOperatorsSet = [_allowedOperatorsSet]};
 			_allowedOperatorsSet = _allowedOperatorsSet select {_x isEqualType objNull};
-			if !(_allowedOperatorsSet isEqualTo []) then {
-				_monitor setVariable ["CFM_allowedOperators", _allowedOperatorsSet, !_isLocal];
-			};
+			_monitor setVariable ["CFM_allowedOperators", _allowedOperatorsSet, !_isLocal];
+			if !(_allowedOperatorsTypesSet isEqualType []) then {_allowedOperatorsTypesSet = [_allowedOperatorsTypesSet]};
 			_allowedOperatorsTypesSet = _allowedOperatorsTypesSet select {(_x isEqualType "") || {(_x isEqualType 1)}};
-			if !(_allowedOperatorsTypesSet isEqualTo []) then {
-				_monitor setVariable ["CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, !_isLocal];
-			};
+			_monitor setVariable ["CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, !_isLocal];
 		};
 
 		private _radius = ACTION_RADIUS;

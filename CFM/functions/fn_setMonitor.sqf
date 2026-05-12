@@ -11,15 +11,17 @@
 	Arguments:
 		1. _monitor [object]
 		2. _sides [Array[side], side] - defines which operators sides it have access to
-		3. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
-		4. _canSwitchNvg [bool]
-		5. _canSwitchTi [bool]
-		6. _canSwitchTurret [bool]
-		7. _canZoom [bool]
-		8. _canFullScreen [bool]
-		9. _canConnectDrone [bool] - if it can connect to currently feeding drone
-		10. _canFix [bool] - if has "fix feed" action
-		11. _canTurnOffLocal [bool] - if has "turn off/on local" action
+		3. _allowedOperators [Array[object], object] - defines which operators it have access to
+		4. _allowedOperatorsTypes [Array[string], string] - defines which operators it have access to
+		5. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
+		6. _canSwitchNvg [bool]
+		7. _canSwitchTi [bool]
+		8. _canSwitchTurret [bool]
+		9. _canZoom [bool]
+		10. _canFullScreen [bool]
+		11. _canConnectDrone [bool] - if it can connect to currently feeding drone
+		12. _canFix [bool] - if has "fix feed" action
+		13. _canTurnOffLocal [bool] - if has "turn off/on local" action
 */
 
 #include "defines.hpp"
@@ -63,10 +65,13 @@ if (_monitor isEqualType []) exitWith {
 if !(IS_OBJ(_monitor)) exitWith {false};
 
 private _isPlayer = (_monitor isEqualTo PLAYER_) || {(_monitor isKindOf "Man")};
-private _local = local _monitor;
+private _local = (_monitor isEqualTo PLAYER_);
 
 // Hand monitors are local
 if (_isPlayer && !_local) exitWith {};
+
+private _mainArgs = _this select [1, count _this];
+_this = [_monitor, _mainArgs];
 
 if (_isPlayer && _local) exitWith {
 	_this SPAWN_NEW_OBJINSTANCE("Monitor");
@@ -77,6 +82,7 @@ if (_isPlayer && _local) exitWith {
 if !(isServer) exitWith {false};
 #endif
 
+["SET", _this] RLOG
 #ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
 		waitUntil { sleep 1; !(isNil "CFM_inited") };

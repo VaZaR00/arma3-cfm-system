@@ -35,7 +35,7 @@ if !(call {
 		if (_type in _monitorAllowedOperatorTypes) exitWith {true};
 		false
 	};
-	private _monitorSides = _monitor getVariable ["CFM_monitorSides", [side _monitor]];
+	private _monitorSides = _monitor getVariable ["CFM_monitorSides", []];
 	private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
 	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 	if !(_sidesOp isEqualType []) then {
