@@ -29,18 +29,12 @@ if !(canSuspend) exitWith {
 };
 waitUntil { !(isNil "CFM_inited") };
 
+if !(_this isEqualType []) then {
+	_this = [_this];
+};
+
 params [
-	["_monitor", objNull], 
-	["_sides", [side PLAYER_]],
-	["_isHandMonitorDisplay", false],
-	["_canSwitchNvg", true],
-	["_canSwitchTi", true],
-	["_canSwitchTurret", true],
-	["_canZoom", true],
-	["_canFullScreen", true],
-	["_canConnectDrone", true],
-	["_canFix", true],
-	["_canTurnOffLocal", true]
+	["_monitor", objNull]
 ];
 
 if (isNil "_monitor") exitWith {false};
@@ -48,7 +42,7 @@ if (isNil "_monitor") exitWith {false};
 private _reset = if (isNil "_reset") then {false} else {_reset};
 
 if (_monitor isEqualType []) exitWith {
-	private _mainArgs = [_sides, _isHandMonitorDisplay, _canSwitchNvg, _canSwitchTi, _canSwitchTurret, _canZoom, _canFullScreen, _canConnectDrone, _canFix, _canTurnOffLocal];
+	private _mainArgs = _this select [1, count _this];
 	_monitor apply {
 		if (isNil "_x") then {continue};
 		if (_x isEqualType []) then {

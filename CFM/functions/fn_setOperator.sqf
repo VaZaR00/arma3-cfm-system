@@ -31,18 +31,17 @@ if !(canSuspend) exitWith {
 };
 waitUntil { !(isNil "CFM_inited") };
 
+if !(_this isEqualType []) then {
+	_this = [_this];
+};
+
 params [
-	["_operator", objNull], 
-	["_sides", []], 
-	["_turrets", []], 
-	["_hasTInNvg", [0, 0]], 
-	["_name", ""], 
-	["_params", []]
+	["_operator", objNull]
 ];
 if (isNil "_operator") exitWith {false};
 
 if (_operator isEqualType []) exitWith {
-	private _mainArgs = [_sides, _turrets, _hasTInNvg, _name, _params];
+	private _mainArgs = _this select [1, count _this];
 	_operator apply {
 		if (isNil "_x") then {continue};
 		if (_x isEqualType []) then {
