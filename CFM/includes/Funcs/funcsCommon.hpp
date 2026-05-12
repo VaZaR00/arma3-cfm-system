@@ -60,6 +60,10 @@
                 file = FUNC_PATH(monitor\fn_closePIPwindow.sqf);
                 DO_FUNC_RECOMPILE
             };
+            class monitorCloseMenu {
+                file = FUNC_PATH(monitor\fn_monitorCloseMenu.sqf);
+                DO_FUNC_RECOMPILE
+            };
             class connectMonitorToOperator {
                 file = FUNC_PATH(monitor\fn_connectMonitorToOperator.sqf);
                 DO_FUNC_RECOMPILE
@@ -161,6 +165,10 @@
         {
             class addActiveTurret {
                 file = FUNC_PATH(operator\fn_addActiveTurret.sqf);
+                DO_FUNC_RECOMPILE
+            };
+            class checkForNewOperators {
+                file = FUNC_PATH(operator\fn_checkForNewOperators.sqf);
                 DO_FUNC_RECOMPILE
             };
             class checkIfNewOperator {

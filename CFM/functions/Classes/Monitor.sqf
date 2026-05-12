@@ -193,7 +193,7 @@ OBJCLASS(Monitor)
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
-		{ _currentMenuObj removeAction _x } forEach (_currentMenuObj getVariable ["CFM_tempActions", []]); 
+		[_currentMenuObj] call CFM_fnc_monitorCloseMenu;
 
 		if (_isHandMonitor) then {
 			private _prevHndl = _monitor getVariable ["CFM_opCheckHndl", scriptNull];
@@ -285,14 +285,14 @@ OBJCLASS(Monitor)
 		params["_op", ["_caller", objNull]];
 		_self setVariable ['CFM_actionCaller', _caller];
 		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
-		_self setVariable ['CFM_menuActive', false, true];
+		[_self] call CFM_fnc_monitorCloseMenu;
 		true
 	};
 	METHOD("disconnect") {
 		params[["_caller", objNull]];
 		_self setVariable ['CFM_actionCaller', _caller];
 		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
-		_self setVariable ['CFM_menuActive', false, true];
+		[_self] call CFM_fnc_monitorCloseMenu;
 	};
 	METHOD("loadMenu") {
 		params[["_caller", objNull], ["_target", _self]];
@@ -321,9 +321,7 @@ OBJCLASS(Monitor)
 		private _closeID = _target addAction ["<t color='#ff6600'>   [Close Menu]</t>", { 
 			params ["_target", "_caller", "_", "_p"];
 			_p params ["_monitor"]; 
-			
-			{ _target removeAction _x } forEach (_target getVariable ["CFM_tempActions", []]); 
-			_monitor setVariable ['CFM_menuActive', false];
+			[_monitor] call CFM_fnc_monitorCloseMenu;
 		}, [_self], 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _targetStr], _radius]; 
 		_tempIDs pushBack _closeID; 
 
@@ -383,8 +381,7 @@ OBJCLASS(Monitor)
 		private _menuHndl = [_target, _self, _tempIDs] spawn { 
 			params["_target", "_self", "_tempIDs"];
 			waitUntil {sleep 1; !(_self getVariable ['CFM_menuActive', false]) || {(_self distance PLAYER_) > 5}};
-			{ _target removeAction _x } forEach _tempIDs; 
-			_self setVariable ['CFM_menuActive', false];
+			[_target] call CFM_fnc_monitorCloseMenu;
 		}; 
 		_target setVariable ['CFM_menuHndl', _menuHndl];
 		_menuHndl
@@ -501,6 +498,16 @@ OBJCLASS(Monitor)
 		} else {
 			""
 		};
+
+		private _actionCheckNewOps = _self addAction ["<t color='#45d9b9'>Check for new operators</t>", { 
+			params ["_target", "_caller", "_", "_p"];
+			_p params ["_monitor"]; 
+
+			[_monitor] call CFM_fnc_checkForNewOperators;
+		}, [_self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
+
+		_actions append [_actionCheckNewOps];
+
 		private _actionMenu = _self addAction [format["<t color='#00FF00'>%1</t>", format[_menuText, _name]], { 
 			params ["_target", "_caller", "_", "_p"];
 			_p params ["_monitor"]; 
@@ -541,7 +548,7 @@ OBJCLASS(Monitor)
 
 			_actions append [_actionWatch, _actionStopWatch, _actionSwitchDrones];
 		};
-
+	
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
 	};
 	METHOD("addOptionalActions") {
