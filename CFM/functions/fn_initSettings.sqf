@@ -21,20 +21,20 @@
 ["CFM_canHackDrone",  "CHECKBOX",  ["Can hack UAV", "Can hack UAV if using other side monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_canChangeZoomOnDrones",  "CHECKBOX",  ["Can change zoom on UAV", "Can change zoom on UAV"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 
-[CFM_CATEGORY, "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_onTempDisplayUnload}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_zoomInKey", ["Zoom In", "Zoom In"], {[(call CFM_fnc_getTargetMonitor), +1] call CFM_fnc_zoom}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_zoomOutKey", ["Zoom Out", "Zoom Out"], {[(call CFM_fnc_getTargetMonitor), -1] call CFM_fnc_zoom}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_resetZoomKey", ["Reset zoom", "Reset Zoom"], {[(call CFM_fnc_getTargetMonitor), "reset"] call CFM_fnc_zoom}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_operatorZoomKey", ["Use operator zoom", "Use operator zoom"], {[(call CFM_fnc_getTargetMonitor), "op"] call CFM_fnc_zoom}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_takeUavControlKey", ["Take UAV control", "Take UAV control"], {[(call CFM_fnc_getTargetMonitor)] spawn CFM_fnc_takeUAVcontorls}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_switchTurret", ["Switch Turrets", "Switch between turrets/cameras"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorNextTurretCamera}, "", [83, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorSwitchTi}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorToggleNVG}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {[(call CFM_fnc_getTargetMonitor), PLAYER_] call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_zoomInKey", ["Zoom In", "Zoom In"], {call CFM_fnc_zoomInKeybind}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_zoomOutKey", ["Zoom Out", "Zoom Out"], {call CFM_fnc_zoomOutKeybind}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_resetZoomKey", ["Reset zoom", "Reset Zoom"], {call CFM_fnc_zoomResetKeybind}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_operatorZoomKey", ["Use operator zoom", "Use operator zoom"], {call CFM_fnc_zoomOperatorKeybind}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_takeUavControlKey", ["Take UAV control", "Take UAV control"], {call CFM_fnc_takeUavCtrlKeybind}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_switchTurret", ["Switch Turrets", "Switch between turrets/cameras"], {call CFM_fnc_nextTurretKeybind}, "", [83, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {call CFM_fnc_monitorSwitchTIKeybind}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {call CFM_fnc_monitorSwitchNVGKeybind}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
 
-[CFM_CATEGORY, "CFM_cameraTurnUpKey", ["Turn Camera Up", "Turn Camera Up"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorCameraTurnUp}, "", [72, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnDownKey", ["Turn Camera Down", "Turn Camera Down"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorCameraTurnDown}, "", [80, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnRightKey", ["Turn Camera Right", "Turn Camera Right"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorCameraTurnRight}, "", [77, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnLeftKey", ["Turn Camera Left", "Turn Camera Left"], {[(call CFM_fnc_getTargetMonitor)] call CFM_fnc_monitorCameraTurnLeft}, "", [75, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnUpKey", ["Turn Camera Up", "Turn Camera Up"], {call CFM_fnc_cameraTurnUpKeybind}, "", [72, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnDownKey", ["Turn Camera Down", "Turn Camera Down"], {call CFM_fnc_cameraTurnDownKeybind}, "", [80, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnRightKey", ["Turn Camera Right", "Turn Camera Right"], {call CFM_fnc_cameraTurnRightKeybind}, "", [77, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnLeftKey", ["Turn Camera Left", "Turn Camera Left"], {call CFM_fnc_cameraTurnLeftKeybind}, "", [75, [false, false, true]]] call CBA_fnc_addKeybind;

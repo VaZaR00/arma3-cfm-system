@@ -385,6 +385,54 @@ CFM_fnc_translateLocalVectors = {
 	[_finalDir, _finalUp]
 };
 
+// Keybinds
+#define GET_MON (call CFM_fnc_getTargetMonitor)
+CFM_fnc_zoomInKeybind = {
+	[GET_MON, 1] call CFM_fnc_zoom;
+};
+CFM_fnc_zoomOutKeybind = {
+	[GET_MON, -1] call CFM_fnc_zoom;
+};
+CFM_fnc_zoomResetKeybind = {
+	[GET_MON, "reset"] call CFM_fnc_zoom;
+};
+CFM_fnc_zoomOperatorKeybind = {
+	[GET_MON, "op"] call CFM_fnc_zoom;
+};
+CFM_fnc_exitFullscreenKeybind = {
+	call CFM_fnc_onTempDisplayUnload;
+};
+CFM_fnc_takeUavCtrlKeybind = {
+	[GET_MON] spawn CFM_fnc_takeUAVcontorls;
+};
+CFM_fnc_nextTurretKeybind = {
+	private _monitor = GET_MON;
+	if !(_monitor call CFM_fnc_switchCameraTurretActionCondition) exitWith {};
+	[_monitor] call CFM_fnc_monitorNextTurretCamera;
+};
+CFM_fnc_monitorSwitchTIKeybind = {
+	private _monitor = GET_MON;
+	if !(_monitor call CFM_fnc_toggleTiActionCondition) exitWith {};
+	[_monitor] call CFM_fnc_monitorSwitchTi;
+};
+CFM_fnc_monitorSwitchNVGKeybind = {
+	private _monitor = GET_MON;
+	if !(_monitor call CFM_fnc_toggleNvgActionCondition) exitWith {};
+	[_monitor] call CFM_fnc_monitorToggleNVG;
+};
+CFM_fnc_cameraTurnUpKeybind = {
+	[GET_MON] call CFM_fnc_monitorCameraTurnUp;
+};
+CFM_fnc_cameraTurnDownKeybind = {
+	[GET_MON] call CFM_fnc_monitorCameraTurnDown;
+};
+CFM_fnc_cameraTurnRightKeybind = {
+	[GET_MON] call CFM_fnc_monitorCameraTurnRight;
+};
+CFM_fnc_cameraTurnLeftKeybind = {
+	[GET_MON] call CFM_fnc_monitorCameraTurnLeft;
+};
+
 CFM_fnc_randInt = {
     params ["_x", "_y", "_r", "_M"];
     // Добавляем больше "перемешивания" бит через циклическое умножение

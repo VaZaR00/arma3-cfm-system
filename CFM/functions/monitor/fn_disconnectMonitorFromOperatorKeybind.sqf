@@ -7,4 +7,4 @@
 #include "defines.hpp" 
 
 [] call CFM_fnc_exitFullScreen;
-_this call CFM_fnc_disconnectMonitorFromOperator;
+[(call CFM_fnc_getTargetMonitor), PLAYER_] call CFM_fnc_disconnectMonitorFromOperator;
