@@ -82,7 +82,6 @@ if (_isPlayer && _local) exitWith {
 if !(isServer) exitWith {false};
 #endif
 
-["SET", _this] RLOG
 #ifdef SET_MON_OP_REMOTE_EXEC
 	[_this, {
 		waitUntil { sleep 1; !(isNil "CFM_inited") };

@@ -13,8 +13,11 @@ if !(IS_OBJ(_monitor)) exitWith {false};
 // REB COMPAT
 if ((_op getVariable ["REB_uavLostSignal", false]) isEqualTo true) exitWith {false};
 if (!(isNil "REB_fnc_isInDeadzone") && {
-	((_op getVariable ["CFM_isDroneFeed", false]) isEqualTo true) && 
-	{(_op call REB_fnc_isInDeadzone) isEqualTo true}
+	!(isNil "REB_all_rebs") &&
+	{
+		((_op getVariable ["CFM_isDroneFeed", false]) isEqualTo true) && 
+		{(_op call REB_fnc_isInDeadzone) isEqualTo true}
+	}
 }) exitWith {false};
 
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
