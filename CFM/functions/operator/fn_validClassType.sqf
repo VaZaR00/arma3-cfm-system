@@ -9,6 +9,10 @@
 params["_cls"];
 
 if (_cls isEqualTo DUMMY_CLASSNAME) exitWith {TYPE_STATIC};
+if (_cls isEqualType objNull) then {
+    _cls = typeof _cls;
+};
+if !(_cls isEqualType "") exitWith {""};
 
 private _isVeh = isClass (configFile >> "CfgVehicles" >> _cls);
 if (_isVeh && {(getNumber (configFile >> "CfgVehicles" >> _cls >> "isUav")) isEqualTo 1}) exitWith {TYPE_UAV};
