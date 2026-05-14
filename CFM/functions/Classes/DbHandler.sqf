@@ -87,60 +87,70 @@ CLASS(DbHandler)
 		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
 	};
 	CLASS_METHOD("addToList") {
-		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
-		
-		if (isNil "_obj") exitWith {-1};
-		if (_listName isEqualTo "") exitWith {-1};
-
-		private _list = +(missionNamespace getVariable [_listName, []]);
 		private _i = -1;
-		if !(_list isEqualType []) then {
-			_list = +[_obj];
-			_i = 0;
-		} else {
-			_i = if (_unique) then {
-				_list pushBackUnique _obj;
+		isNil {
+			params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
+			
+			if (isNil "_obj") exitWith {-1};
+			if (_listName isEqualTo "") exitWith {-1};
+
+			private _list = +(missionNamespace getVariable [_listName, []]);
+			if !(_list isEqualType []) then {
+				_list = +[_obj];
+				_i = 0;
 			} else {
-				_list pushBack _obj;
+				_i = if (_unique) then {
+					_list pushBackUnique _obj;
+				} else {
+					_list pushBack _obj;
+				};
 			};
-		};
-		if (_global && _viaPubVar) then {
-			missionNamespace setVariable [_listName, _list];
-			publicVariable _listName;
-			call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
-		} else {
-			missionNamespace setVariable [_listName, _list, _global];
+			if (_global && _viaPubVar) then {
+				missionNamespace setVariable [_listName, _list];
+				publicVariable _listName;
+				call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
+			} else {
+				missionNamespace setVariable [_listName, _list, _global];
+			};
 		};
 		_i
 	};
 	CLASS_METHOD("removeFromList") {
-		params["_obj", ["_listName", ""], ["_global", false]];
-		
-		if (isNil "_obj") exitWith {false};
-		if (_listName isEqualTo "") exitWith {false};
+		private _res = false;
+		isNil {
+			params["_obj", ["_listName", ""], ["_global", false]];
+			
+			if (isNil "_obj") exitWith {false};
+			if (_listName isEqualTo "") exitWith {false};
 
-		private _list = missionNamespace getVariable [_listName, []];
-		private _index = _list findIf {_x isEqualTo _obj};
-		if (_index != -1) then {
-			_list deleteAt _index;
-			missionNamespace setVariable [_listName, _list, _global];
-			true
-		} else {false};
+			private _list = missionNamespace getVariable [_listName, []];
+			private _index = _list findIf {_x isEqualTo _obj};
+			if (_index != -1) then {
+				_list deleteAt _index;
+				missionNamespace setVariable [_listName, _list, _global];
+				_res = true;
+			};
+		};
+		_res
 	};
 	CLASS_METHOD("addToHashMap") {
-		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
-		
-		if (isNil "_key") exitWith {false};
-		if (_varName isEqualTo "") exitWith {false};
+		private _res = false;
+		isNil {
+			params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
+			
+			if (isNil "_key") exitWith {false};
+			if (_varName isEqualTo "") exitWith {false};
 
-		private _hash = (missionNamespace getVariable [_varName, createHashMap]);
-		if !(_hash isEqualType createHashMap) then {
-			_hash = createHashMap;
-		} else {
-			_hash set [_key, _val];
+			private _hash = (missionNamespace getVariable [_varName, createHashMap]);
+			if !(_hash isEqualType createHashMap) then {
+				_hash = createHashMap;
+			} else {
+				_hash set [_key, _val];
+			};
+			missionNamespace setVariable [_varName, _hash, _global];
+			_res = true;
 		};
-		missionNamespace setVariable [_varName, _hash, _global];
-		true
+		_res
 	};
 	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
