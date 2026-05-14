@@ -134,6 +134,12 @@ CLASS(DbHandler)
 			if (isNil "_obj") exitWith {-1};
 			if (_listName isEqualTo "") exitWith {-1};
 
+			if !(_global isEqualTo false) then {
+				[[_obj, _listName, false, _unique, false], {
+					["addToList", _this] CALL_CLASS(_self);
+				}, _global, false, true] call CFM_fnc_remoteExec;
+			};
+
 			private _list = +(missionNamespace getVariable [_listName, []]);
 			if !(_list isEqualType []) then {
 				_list = +[_obj];
@@ -145,7 +151,7 @@ CLASS(DbHandler)
 					_list pushBack _obj;
 				};
 			};
-			["updateIterVariable", [_listName, _list, _global, _viaPubVar]] CALL_CLASS(_self);
+			missionNamespace setVariable [_listName, _list];
 		};
 		_i
 	};
@@ -157,11 +163,17 @@ CLASS(DbHandler)
 			if (isNil "_obj") exitWith {false};
 			if (_listName isEqualTo "") exitWith {false};
 
+			if !(_global isEqualTo false) then {
+				[[_obj, _listName, false, false], {
+					["removeFromList", _this] CALL_CLASS(_self);
+				}, _global, false, true] call CFM_fnc_remoteExec;
+			};
+
 			private _list = missionNamespace getVariable [_listName, []];
 			private _index = _list findIf {_x isEqualTo _obj};
 			if (_index != -1) then {
 				_list deleteAt _index;
-				["updateIterVariable", [_listName, _list, _global, _viaPubVar]] CALL_CLASS(_self);
+				missionNamespace setVariable [_listName, _list];
 				_res = true;
 			};
 		};
@@ -175,13 +187,19 @@ CLASS(DbHandler)
 			if (isNil "_key") exitWith {false};
 			if (_varName isEqualTo "") exitWith {false};
 
+			if !(_global isEqualTo false) then {
+				[[_key, _val, _varName, false, _unique], {
+					["addToHashMap", _this] CALL_CLASS(_self);
+				}, _global, false, true] call CFM_fnc_remoteExec;
+			};
+
 			private _hash = (missionNamespace getVariable [_varName, createHashMap]);
 			if !(_hash isEqualType createHashMap) then {
 				_hash = createHashMap;
 			} else {
 				_hash set [_key, _val];
 			};
-			["updateIterVariable", [_varName, _hash, _global, false]] CALL_CLASS(_self);
+			missionNamespace setVariable [_varName, _hash];
 			_res = true;
 		};
 		_res
@@ -211,56 +229,65 @@ CLASS(DbHandler)
 		["removeFromList", [_operator, "CFM_Operators", _global, (_global isEqualTo true)]] CALL_CLASS(_self);
 	};
 	CLASS_METHOD("setOperatorId") {
-		params["_operator"];
-		if !(IS_OBJ(_operator)) exitWith {-1};
-		private _id = _operator getVariable ["CFM_operatorId", -1];
-		private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
-		private _res = if (_id isEqualTo -1) then {
-			private _nextId = ["safeGenerateId", [_opsIdsHash]] CALL_CLASS(_self);
-			if (_nextId < 0) exitWith {-1};
-			_operator setVariable ["CFM_operatorId", _nextId, true];
-			["addToHashMap", [_nextId, _operator, "CFM_OperatorsIds", true]] CALL_CLASS(_self);
-			_nextId
-		} else {
-			_id
-		};
-		if (_res < 0) then {
-			format["DbHandler.setOperatorId: problem occured when trying to set id for object: '%1'. Id returned: '%2'. Current existing ids: '%3'", 
-			_operator, _res, keys _opsIdsHash
-			] WARN
+		private _res = -1;
+		isNil {
+			params["_operator"];
+			if !(IS_OBJ(_operator)) exitWith {-1};
+			private _id = _operator getVariable ["CFM_operatorId", -1];
+			private _opsIdsHash = missionNamespace getVariable ["CFM_OperatorsIds", createHashMap];
+			_res = if (_id isEqualTo -1) then {
+				private _nextId = ["safeGenerateId", [_opsIdsHash]] CALL_CLASS(_self);
+				if (_nextId < 0) exitWith {-1};
+				_operator setVariable ["CFM_operatorId", _nextId, true];
+				["addToHashMap", [_nextId, _operator, "CFM_OperatorsIds", true]] CALL_CLASS(_self);
+				_nextId
+			} else {
+				_id
+			};
+			if (_res < 0) then {
+				format["DbHandler.setOperatorId: problem occured when trying to set id for object: '%1'. Id returned: '%2'. Current existing ids: '%3'", 
+				_operator, _res, keys _opsIdsHash
+				] WARN
+			};
 		};
 		_res
 	};
 	CLASS_METHOD("createMonitorUId") {
-		params["_monitor"];
-		if !(IS_OBJ(_monitor)) exitWith {""};
-		private _idsHash = missionNamespace getVariable ["CFM_MonitorsUIds", createHashMap];
-		private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
-		if (_nextId < 0) exitWith {
-			format["DbHandler.createMonitorUId: problem occured when trying generate UI for monitor. Id returned: '%1'. Current existing ids: '%2'", 
-			_nextId, keys _idsHash
-			] WARN;
-			""
+		private _uidStr = "";
+		isNil {
+			params["_monitor"];
+			if !(IS_OBJ(_monitor)) exitWith {""};
+			private _idsHash = missionNamespace getVariable ["CFM_MonitorsUIds", createHashMap];
+			private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
+			if (_nextId < 0) exitWith {
+				format["DbHandler.createMonitorUId: problem occured when trying generate UI for monitor. Id returned: '%1'. Current existing ids: '%2'", 
+				_nextId, keys _idsHash
+				] WARN;
+				""
+			};
+			_uidStr = UI_RENDER_ID_STR + str _nextId;
+			_idsHash set [_nextId, _monitor];
+			missionNamespace setVariable ["CFM_MonitorsUIds", _idsHash];
 		};
-		private _uidStr = UI_RENDER_ID_STR + str _nextId;
-		_idsHash set [_nextId, _monitor];
-		missionNamespace setVariable ["CFM_MonitorsUIds", _idsHash];
 		_uidStr
 	};
 	CLASS_METHOD("createMonitorR2TId") {
-		params["_monitor"];
-		if !(IS_OBJ(_monitor)) exitWith {""};
-		private _idsHash = missionNamespace getVariable ["CFM_MonitorsR2Ts", createHashMap];
-		private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
-		if (_nextId < 0) exitWith {
-			format["DbHandler.createMonitorR2TId: problem occured when trying generate R2T id for monitor. Id returned: '%1'. Current existing ids: '%2'", 
-			_nextId, keys _idsHash
-			] WARN; 
-			""
+		private _r2tStr = "";
+		isNil {
+			params["_monitor"];
+			if !(IS_OBJ(_monitor)) exitWith {""};
+			private _idsHash = missionNamespace getVariable ["CFM_MonitorsR2Ts", createHashMap];
+			private _nextId = ["safeGenerateId", [_idsHash]] CALL_CLASS(_self);
+			if (_nextId < 0) exitWith {
+				format["DbHandler.createMonitorR2TId: problem occured when trying generate R2T id for monitor. Id returned: '%1'. Current existing ids: '%2'", 
+				_nextId, keys _idsHash
+				] WARN; 
+				""
+			};
+			_r2tStr = RENDER_TARGET_STR + str _nextId;
+			_idsHash set [_nextId, _monitor];
+			missionNamespace setVariable ["CFM_MonitorsR2Ts", _idsHash];
 		};
-		private _r2tStr = RENDER_TARGET_STR + str _nextId;
-		_idsHash set [_nextId, _monitor];
-		missionNamespace setVariable ["CFM_MonitorsR2Ts", _idsHash];
 		_r2tStr
 	};
 	CLASS_METHOD("addActiveMonitor") {

@@ -14,6 +14,7 @@ if (isServer) then {
 	if (didJIP) then {
 		CFM_makeCamDataSync = true;
 		publicVariableServer "CFM_makeCamDataSync";
+		[clientOwner, {call CFM_fnc_serverSyncVariables}, 2, false, true] call CFM_fnc_remoteExec;
 	};
 };
 CFM_ActiveOperators_PublicEH = {call CFM_fnc_setupLocalActiveOperators};
