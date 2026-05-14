@@ -1,6 +1,5 @@
 
 
-N toggles nvg even if non
 zoom NW
 
 camera module -attach- mem point arg for getting mempoint via intersect

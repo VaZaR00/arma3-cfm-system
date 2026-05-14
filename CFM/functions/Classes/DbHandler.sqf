@@ -18,6 +18,9 @@ CLASS(DbHandler)
 		CFM_R2T_index = 0;
 		CFM_MonitorsUIds = createHashMap;
 		CFM_MonitorsR2Ts = createHashMap;
+		CFM_DO_UPD_VARS = true;
+		CFM_UPD_VARS_WAIT_TIME = 1;
+		CFM_DB_HANDLER_VARS_TO_UPDATE = createHashMap;
 		if (isServer) then {
 			// global variables
 			missionNamespace setVariable ["CFM_ActiveMonitors", []];
@@ -86,6 +89,43 @@ CLASS(DbHandler)
 
 		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
 	};
+	CLASS_METHOD("updateIterVariable") {
+		private _res = true;
+		isNil {
+			params["_varname", "_val", ["_global", true], ["_doPublic", false]];
+
+			missionNamespace setVariable [_varname, _NIL(_val)];
+
+			if ((_global isEqualTo false) && !_doPublic) exitWith {};
+
+			private _currentHandler = missionNamespace getVariable ["CFM_serverDbHandlerUpdateVarsHandler", scriptNull];
+
+			private _toUpd = missionNamespace getVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
+			_toUpd set [_varname, [_NIL(_val), _global, _doPublic]];
+			missionNamespace setVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", _toUpd];
+
+			if !(scriptDone _currentHandler) exitWith {};
+
+			CFM_serverDbHandlerUpdateVarsHandler = 0 spawn {
+				uiSleep (missionNamespace getVariable ["CFM_UPD_VARS_WAIT_TIME", 1]);
+				isNil {
+					private _toUpd = missionNamespace getVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
+					{
+						_y params ["_val", "_global", ["_doPublic", false]];
+						if (_doPublic) then {
+							missionNamespace setVariable [_x, _NIL(_val)];
+							publicVariable _x;
+							call (missionNamespace getVariable [_x + "_PublicEH", {}]);
+						} else {
+							missionNamespace setVariable [_x, _NIL(_val), _global];
+						};
+					} forEach _toUpd;
+					missionNamespace setVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
+				};
+			};
+		};
+		_res
+	};
 	CLASS_METHOD("addToList") {
 		private _i = -1;
 		isNil {
@@ -105,20 +145,14 @@ CLASS(DbHandler)
 					_list pushBack _obj;
 				};
 			};
-			if (_global && _viaPubVar) then {
-				missionNamespace setVariable [_listName, _list];
-				publicVariable _listName;
-				call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
-			} else {
-				missionNamespace setVariable [_listName, _list, _global];
-			};
+			["updateIterVariable", [_listName, _list, _global, _viaPubVar]] CALL_CLASS(_self);
 		};
 		_i
 	};
 	CLASS_METHOD("removeFromList") {
 		private _res = false;
 		isNil {
-			params["_obj", ["_listName", ""], ["_global", false]];
+			params["_obj", ["_listName", ""], ["_global", false], ["_viaPubVar", false]];
 			
 			if (isNil "_obj") exitWith {false};
 			if (_listName isEqualTo "") exitWith {false};
@@ -127,7 +161,7 @@ CLASS(DbHandler)
 			private _index = _list findIf {_x isEqualTo _obj};
 			if (_index != -1) then {
 				_list deleteAt _index;
-				missionNamespace setVariable [_listName, _list, _global];
+				["updateIterVariable", [_listName, _list, _global, _viaPubVar]] CALL_CLASS(_self);
 				_res = true;
 			};
 		};
@@ -147,7 +181,7 @@ CLASS(DbHandler)
 			} else {
 				_hash set [_key, _val];
 			};
-			missionNamespace setVariable [_varName, _hash, _global];
+			["updateIterVariable", [_varName, _hash, _global, false]] CALL_CLASS(_self);
 			_res = true;
 		};
 		_res
@@ -174,7 +208,7 @@ CLASS(DbHandler)
 	};
 	CLASS_METHOD("removeOperator") {
 		params["_operator", ["_global", false]];
-		["removeFromList", [_operator, "CFM_Operators"]] CALL_CLASS(_self);
+		["removeFromList", [_operator, "CFM_Operators", _global, (_global isEqualTo true)]] CALL_CLASS(_self);
 	};
 	CLASS_METHOD("setOperatorId") {
 		params["_operator"];
@@ -184,9 +218,8 @@ CLASS(DbHandler)
 		private _res = if (_id isEqualTo -1) then {
 			private _nextId = ["safeGenerateId", [_opsIdsHash]] CALL_CLASS(_self);
 			if (_nextId < 0) exitWith {-1};
-			_opsIdsHash set [_nextId, _operator];
 			_operator setVariable ["CFM_operatorId", _nextId, true];
-			missionNamespace setVariable ["CFM_OperatorsIds", _opsIdsHash, true];
+			["addToHashMap", [_nextId, _operator, "CFM_OperatorsIds", true]] CALL_CLASS(_self);
 			_nextId
 		} else {
 			_id
@@ -251,7 +284,7 @@ CLASS(DbHandler)
 	CLASS_METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["removeFromList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
+		["removeFromList", [_operator, "CFM_ActiveOperators", true, true]] CALL_CLASS(_self);
 		if !(isMultiplayer) then {
 			CFM_LocalActiveOperators = CFM_ActiveOperators;
 		};
