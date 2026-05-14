@@ -135,9 +135,11 @@ CLASS(DbHandler)
 			if (_listName isEqualTo "") exitWith {-1};
 
 			if !(_global isEqualTo false) then {
-				[[_obj, _listName, false, _unique, false], {
-					["addToList", _this] CALL_CLASS("DbHandler");
-				}, _global, false, true] call CFM_fnc_remoteExec;
+				[[[_obj, _listName, false, _unique, false], clientOwner], {
+					if ((_this#1) isEqualTo clientOwner) exitWith {};
+					waitUntil {!(isNil "CFM_inited")};
+					["addToList", (_this#0)] CALL_CLASS("DbHandler");
+				}, _global, false, false] call CFM_fnc_remoteExec;
 			};
 
 			private _list = +(missionNamespace getVariable [_listName, []]);
@@ -164,9 +166,11 @@ CLASS(DbHandler)
 			if (_listName isEqualTo "") exitWith {false};
 
 			if !(_global isEqualTo false) then {
-				[[_obj, _listName, false, false], {
-					["removeFromList", _this] CALL_CLASS("DbHandler");
-				}, _global, false, true] call CFM_fnc_remoteExec;
+				[[[_obj, _listName, false, false], clientOwner], {
+					if ((_this#1) isEqualTo clientOwner) exitWith {};
+					waitUntil {!(isNil "CFM_inited")};
+					["addToList", (_this#0)] CALL_CLASS("DbHandler");
+				}, _global, false, false] call CFM_fnc_remoteExec;
 			};
 
 			private _list = missionNamespace getVariable [_listName, []];
@@ -188,9 +192,11 @@ CLASS(DbHandler)
 			if (_varName isEqualTo "") exitWith {false};
 
 			if !(_global isEqualTo false) then {
-				[[_key, _val, _varName, false, _unique], {
-					["addToHashMap", _this] CALL_CLASS("DbHandler");
-				}, _global, false, true] call CFM_fnc_remoteExec;
+				[[[_key, _val, _varName, false, _unique], clientOwner], {
+					if ((_this#1) isEqualTo clientOwner) exitWith {};
+					waitUntil {!(isNil "CFM_inited")};
+					["addToList", (_this#0)] CALL_CLASS("DbHandler");
+				}, _global, false, false] call CFM_fnc_remoteExec;
 			};
 
 			private _hash = (missionNamespace getVariable [_varName, createHashMap]);

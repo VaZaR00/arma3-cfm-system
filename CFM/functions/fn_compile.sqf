@@ -1,10 +1,7 @@
 #include "defines.hpp" 
 
 CFM_fnc_serverSyncVariables = {
-	params["_clientId"];
-
-	if (isNil '_clientId') exitWith {};
-	if !(_clientId isEqualType 1) exitWith {};
+	params[["_clientId", true]];
 
 	[[
 		MGVAR ["CFM_Operators", []],
