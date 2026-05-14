@@ -136,7 +136,7 @@ CLASS(DbHandler)
 
 			if !(_global isEqualTo false) then {
 				[[_obj, _listName, false, _unique, false], {
-					["addToList", _this] CALL_CLASS(_self);
+					["addToList", _this] CALL_CLASS("DbHandler");
 				}, _global, false, true] call CFM_fnc_remoteExec;
 			};
 
@@ -165,7 +165,7 @@ CLASS(DbHandler)
 
 			if !(_global isEqualTo false) then {
 				[[_obj, _listName, false, false], {
-					["removeFromList", _this] CALL_CLASS(_self);
+					["removeFromList", _this] CALL_CLASS("DbHandler");
 				}, _global, false, true] call CFM_fnc_remoteExec;
 			};
 
@@ -189,7 +189,7 @@ CLASS(DbHandler)
 
 			if !(_global isEqualTo false) then {
 				[[_key, _val, _varName, false, _unique], {
-					["addToHashMap", _this] CALL_CLASS(_self);
+					["addToHashMap", _this] CALL_CLASS("DbHandler");
 				}, _global, false, true] call CFM_fnc_remoteExec;
 			};
 
