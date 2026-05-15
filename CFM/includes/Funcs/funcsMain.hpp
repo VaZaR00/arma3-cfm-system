@@ -1,46 +1,18 @@
 class Main
 {
-    class compile {
-        file = FUNC_PATH(fn_compile.sqf);
-        DO_FUNC_RECOMPILE
-        preInit = 1;
-    };
-    class getStaticCameraOffset {
-        file = FUNC_PATH(fn_getStaticCameraOffset.sqf);
-        DO_FUNC_RECOMPILE
-    };
-    class init {
-        file = FUNC_PATH(fn_init.sqf);
+    class XEH_postInit {
+        file = FUNC_PATH(XEH_postInit.sqf);
         DO_FUNC_RECOMPILE
         postInit = 1;
     };
-    class initSettings {
-        file = FUNC_PATH(fn_initSettings.sqf);
+    class XEH_preInit {
+        file = FUNC_PATH(XEH_preInit.sqf);
         DO_FUNC_RECOMPILE
-        postInit = 1;
-    };
-    class setMonitor {
-        file = FUNC_PATH(fn_setMonitor.sqf);
-        DO_FUNC_RECOMPILE
-    };
-    class setOperator {
-        file = FUNC_PATH(fn_setOperator.sqf);
-        DO_FUNC_RECOMPILE
-    };
-    class setStaticCamera {
-        file = FUNC_PATH(fn_setStaticCamera.sqf);
-        DO_FUNC_RECOMPILE
-    };
-};
-class Classes
-{
-    class compileClasses {
-        file = FUNC_PATH(Classes\fn_compileClasses.sqf);
-        DO_FUNC_RECOMPILE
-    };
-    class classSystemCompile {
-        file = FUNC_PATH(Classes\fn_classSystemCompile.sqf);
         preInit = 1;
+    };
+    class XEH_prep {
+        file = FUNC_PATH(XEH_prep.sqf);
         DO_FUNC_RECOMPILE
+        FUNC_PRE_START
     };
 };

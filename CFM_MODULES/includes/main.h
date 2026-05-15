@@ -16,5 +16,5 @@
 #define FUNC_PRE_START preStart = 1;
 #define STR(s) #s
 #define MAIN_PATH_MODULES CFM_MODULES\functions
-#define FUNC_PATH_JOIN(path) MAIN_PATH\##path
+#define FUNC_PATH_JOIN(path) ADDON_PATH\##path
 #define FUNC_PATH(path) STR(FUNC_PATH_JOIN(path))

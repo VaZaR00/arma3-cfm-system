@@ -10,6 +10,8 @@
 #define PREFVAR PREF_
 #define SPREFVAR(var) STR(DOUBLE(PREF_, var))
 #define FUNC(f) PREF_FNC##f
+#define SFUNC(f) STR(FUNC(f))
+#define SFUNC_NAME(name) (STR(PREF_FNC) + name)
 #define QFUNC(f) (MGVAR [STR(PREF_FNC) + f, {}])
 #define PREF_QVAR(s) (PREF_VAR + s)
 #define RC_PREF(s) (PREF_CLAS + s)
