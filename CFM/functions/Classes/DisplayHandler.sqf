@@ -53,7 +53,7 @@ OBJCLASS(DisplayHandler)
 		params[["_reset", false], ["_uiParams", []]];
 
 		_monitor setVariable ["CFM_uiParams", +_uiParams];
-		private _doUiParams = !(_uiParams isEqualTo []) && {(_uiParams isEqualType [])};
+		private _doUiParams = !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) && {!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}};
 		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
 		if (!_isHandMonitor && {_doUiParams}) then {
 			["startRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
