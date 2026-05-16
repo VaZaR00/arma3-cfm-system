@@ -17,6 +17,7 @@ if !((_uav getVariable ["REB_uavIsSuppressed", false]) || {
 		_rebStrenght = _uav call REB_fnc_currentJammingRebStrength;
 	};
 	_uav setVariable ["REB_uavActiveRebStrength", _rebStrenght];
+	_rebStrenght > 0
 }) exitWith {false};
 
 private _signal = (1 - _rebStrenght) / 20;
