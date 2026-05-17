@@ -1,7 +1,5 @@
 
 
-zoom NW
-
 camera module -attach- mem point arg for getting mempoint via intersect
 
 funcs to set parameters

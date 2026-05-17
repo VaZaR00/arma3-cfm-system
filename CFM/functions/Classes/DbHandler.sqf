@@ -1,5 +1,6 @@
 
 #define NEXT_ID_FIND_TRIES 30
+#define ITER_VAR_RMT_EXEC_DO_JIP false
 
 CLASS(DbHandler)
 
@@ -139,7 +140,7 @@ CLASS(DbHandler)
 					if ((_this#1) isEqualTo clientOwner) exitWith {};
 					waitUntil {!(isNil "CFM_inited")};
 					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, false, false] call CFM_fnc_remoteExec;
+				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
 			};
 
 			private _list = +(missionNamespace getVariable [_listName, []]);
@@ -154,6 +155,7 @@ CLASS(DbHandler)
 				};
 			};
 			missionNamespace setVariable [_listName, _list];
+			call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
 		};
 		_i
 	};
@@ -170,7 +172,7 @@ CLASS(DbHandler)
 					if ((_this#1) isEqualTo clientOwner) exitWith {};
 					waitUntil {!(isNil "CFM_inited")};
 					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, false, false] call CFM_fnc_remoteExec;
+				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
 			};
 
 			private _list = missionNamespace getVariable [_listName, []];
@@ -178,6 +180,7 @@ CLASS(DbHandler)
 			if (_index != -1) then {
 				_list deleteAt _index;
 				missionNamespace setVariable [_listName, _list];
+				call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
 				_res = true;
 			};
 		};
@@ -196,7 +199,7 @@ CLASS(DbHandler)
 					if ((_this#1) isEqualTo clientOwner) exitWith {};
 					waitUntil {!(isNil "CFM_inited")};
 					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, false, false] call CFM_fnc_remoteExec;
+				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
 			};
 
 			private _hash = (missionNamespace getVariable [_varName, createHashMap]);
@@ -206,6 +209,7 @@ CLASS(DbHandler)
 				_hash set [_key, _val];
 			};
 			missionNamespace setVariable [_varName, _hash];
+			call (missionNamespace getVariable [_varName + "_PublicEH", {}]);
 			_res = true;
 		};
 		_res
