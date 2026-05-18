@@ -1,6 +1,4 @@
 #include "defines.hpp" 
 
+#include "ESF_compile.sqf" 
 
-
-
-// TEMP REB RECOMPILE

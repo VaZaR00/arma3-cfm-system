@@ -3,12 +3,16 @@
     private _classname = STR(name); \
     private _methods = []; \
     private _selfVar = ""; \
+    private _isSignleton = false; \
 
 
 #define FIELD _fields pushBack
 
 
 #define VOLATILE _fields pushBack true; FIELD
+
+
+#define IS_SINGLETON _isSignleton = true;
 
 
 #define SET_SELF_VAR(name) _selfVar = name;
@@ -19,9 +23,10 @@
 
 
 #define OBJCLASS_END \
-    [_classname, _fields, _methods, _selfVar] call OOP_fnc_class }; \
+    [_classname, _fields, _methods, _selfVar, _isSignleton] call OOP_fnc_class }; \
 
 
+// Singleton calls
 #define CALL_OBJCLASS(name, obj) call { \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
     [name, obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
@@ -37,6 +42,25 @@
 #define REMOTE_EXEC_OBJCLASS(name, obj) call { \
     _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
     [[name, obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
+} \
+
+
+// non singleton calls
+#define CALL_OBJINSTANCE(name, index, obj) call { \
+    _this params ["_method", ["_args", []], ["_def", nil]]; \
+    [[name, index], obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
+} \
+
+
+#define SPAWN_OBJINSTANCE(name, index, obj) call { \
+    _this params ["_method", ["_args", []], ["_def", nil]]; \
+    [[name, index], obj, _method, _args, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
+} \
+
+
+#define REMOTE_EXEC_OBJINSTANCE(name, index, obj) call { \
+    _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
+    [[[name, index], obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
 
 
@@ -59,13 +83,15 @@
 #define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
 #define SPAWN_NEW_OBJINSTANCE(name) SPAWN_NEW_OBJINSTANCE_GLOBAL(name, false)
 
+#define SVAR_NAME(name) (if (_isSingleton) then {name} else {format["%1_%2", name, _instanceIndex]})
+#define VAR_NAME(name) SVAR_NAME(STR(name))
 
 #define GLOBAL_SETTER _oopSetVarGlobal = true;
 #define LOCAL_SETTER _oopSetVarGlobal = false;
-#define SET_SELFVART(name, target) _self setVariable [STR(DOUBLE(PREFX,name)), name, target];
+#define SET_SELFVART(name, target) _self setVariable [SPREFX + VAR_NAME(name), name, target];
 #define SET_SELFVAR(name) SET_SELFVART(name, _oopSetVarGlobal)
 #define SET_SELFVARG(name) SET_SELFVART(name, true)
-#define SET_SELFSVART(name, target) _self setVariable [SPREFX + name, call compile name, target];
+#define SET_SELFSVART(name, target) _self setVariable [SPREFX + SVAR_NAME(name), call compile name, target];
 #define SET_SELFSVAR(name) SET_SELFSVART(name, _oopSetVarGlobal)
 #define SET_SELFSVARG(name) SET_SELFVART(name, true)
 
@@ -87,4 +113,4 @@
 #define SAVE_VAR_DEF(name) SAVE_VAR_TARGET(name, nil)
 
 
-#define NP_PARAMS call OOP_fnc_nonPrivateParams;
+#define NP_PARAMS call {_paramsMap = _this}; private (_paramsMap apply {if (_x isEqualType []) then {_x#0} else {_x}}); _paramsMap call OOP_fnc_nonPrivateParams;

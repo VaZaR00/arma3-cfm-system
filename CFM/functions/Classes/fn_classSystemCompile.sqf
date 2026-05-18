@@ -277,74 +277,7 @@ OOP_fnc_raiseException = {
 };
 
 OOP_fnc_remoteExec = {
-    params[["_args", []], ["_func", "call"], ["_targets", 0], ["_jip", true], ["_call", false, [false]]];
-
-    if (_func isEqualType {}) then {
-        _args = [_args, _func];
-        _func = if (_call) then {"call"} else {"spawn"};
-    };
-    if !(_func isEqualType "") exitWith {format["OOP_fnc_remoteExec ERROR: func not str or code. Func type: %1. Func value: %2", typeName _func, _func] WARN};
-
-    if (_targets isEqualType true) then {
-        if (_targets isEqualTo true) then {
-            _targets = 0;
-        } else {
-            _targets = false;
-        };
-    };
-    if (_jip isEqualType objNull) then {
-        private _netid = netId _jip;
-        private _idArr = (_netid splitString ":");
-        private _id = "0";
-        if (count _idArr > 1) then {
-            _id = trim (_idArr#1);
-            if !(_id isEqualType "") then {
-                _id = str _id;
-            };
-        };
-        _jip = "CFM_jip_remote_exec_id_" + _id;
-    };
-
-    if (!isMultiplayer || {(_targets in [PLAYER_, false, clientOwner])}) exitWith {
-        if (_func isEqualTo "call") exitWith {
-            (_args#0) call (_args#1)
-        };
-        if (_func isEqualTo "spawn") exitWith {
-            (_args#0) spawn (_args#1)
-        };
-        private _func = missionNamespace getVariable [_func, {format["OOP_fnc_remoteExec ERROR: func '%1' not found!", _func] WARN}];
-        if (_call) then {
-            _args call _func
-        } else {
-            _args spawn _func
-        };
-    };
-    if (_call isEqualTo true) then {
-        _args remoteExecCall [_func, _targets, _jip];
-    } else {
-        _args remoteExec [_func, _targets, _jip];
-    };
-
-};
-
-OOP_fnc_pushBackGlobal = {
-    params["_namespace", "_varname", "_element", ["_unique", true]];
-
-    [_namespace, _varname, _element, _unique, true, true] call OOP_fnc_pushBackNet;
-};
-
-OOP_fnc_pushBackNet = {
-    params["_namespace", "_varname", "_element", ["_unique", true], ["_target", true], ["_jip", true]];
-
-    if (isNil '_element') exitWith {};
-
-    private _array = _namespace getVariable [_varname, []];
-    if (_unique) then {
-        _array pushBackUnique _element;
-    } else {
-        _array pushBack _element;
-    };
-    _namespace setVariable [_varname, _array, _target];
+    _this call ESF_fnc_remoteExec;
 };
 
 OOP_fnc_nonPrivateParams = {
@@ -352,4 +285,12 @@ OOP_fnc_nonPrivateParams = {
         _x params ["_name", ["_def", nil]];
         call compile (format["%1 = _thisArgs param [%2, if !(isNil '_def') then {_def}]", _name, _forEachIndex]);
     } forEach _this;
+};
+
+OOP_fnc_pushBackGlobal = {
+    _this call ESF_fnc_pushBackGlobal;
+};
+
+OOP_fnc_pushBackNet = {
+    _this call ESF_fnc_pushBackNet;
 };
