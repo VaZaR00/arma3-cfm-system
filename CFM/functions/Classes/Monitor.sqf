@@ -2,7 +2,9 @@
 #define OPERATOR_INFO_TEXT_DEF "<t color='#0d6aff'>Operator Info</t>"
 
 OBJCLASS(Monitor)
-
+	
+	IS_SINGLETON
+	
 	SET_SELF_VAR("_monitor");
 
 	FIELD ["_radius", ACTION_RADIUS];

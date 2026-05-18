@@ -21,7 +21,7 @@
 #define NIL_DEF _NIL(_def)
 
 OOP_fnc_class = {
-    params ["_className", "_fields", "_methods", ["_selfVar", ""]];
+    params ["_className", "_fields", "_methods", ["_selfVar", ""], ["_isSignleton", true]];
 
     private _prefix = if (isNil "_ADDON_PREFX") then {SPREFX} else {_ADDON_PREFX};
     private _classRegistryName = [_className] call OOP_fnc_classRegistryName;
@@ -81,6 +81,8 @@ OOP_fnc_class = {
 	private _selfVar = if (!(_selfVar isEqualType "") || {(_selfVar isEqualTo "")}) then {"_self"} else {_selfVar};
     _classMap set ["selfvar", _selfVar];
 
+    _classMap set ["isSignleton", _isSignleton];
+
     missionNamespace setVariable [_classRegistryName, _classMap];
     _classMap
 };
@@ -95,52 +97,68 @@ OOP_OBJ_CLASS_fnc_newInstance = {
 	if (_class isEqualTo false) exitWith {EXCEPTION(EXCEPTION_CLASS_DONT_EXISTS)};
 
     private _classRegistryName = _class getOrDefaultCall ["classname", {EXCEPTION(EXCEPTION_NO_CLASSNAME); ""}];
+    private _isSignleton = _class getOrDefault ["isSignleton", true];
+    
+    private _instanceName = _classRegistryName;
+    private _classSet = false;
+    private _instanceId = -1;
+    if !(_isSignleton) then {
+        private _classInstancesIdsVarName = format["OOP_OBJ_CLASS_%1_InstanceIds", _classRegistryName];
+        _classIds = +(_obj getVariable [_classInstancesIdsVarName, []]);
+        _classSet = _classIds isNotEqualTo [];
+        _instanceId = (_classIds param [((count _classIds) -1) max 0, 0]) + 1;
+        _instanceName = format["%1_instance_%2", _classRegistryName, _instanceId];
+        [_obj, _classInstancesIdsVarName, _instanceId, true, _global, _global] call OOP_fnc_pushBackNet;
+    };
+    [_obj, "OOP_OBJ_CLASS_objClassInstancesClasses", _instanceName, true, _global, _global] call OOP_fnc_pushBackNet;
 
-    private _fields = _class getOrDefaultCall ["fields", {EXCEPTION(EXCEPTION_NO_FIELDS); createHashMap}];
-    {
-        _y params ["_varname", "_def", ["_type", []]];
-        if (call {
-            private _prevVal = _obj getVariable _varname;
-            if (isNil "_prevVal") exitWith {true};
-            private _prevValValid = [_prevVal, _type, _NIL(_def)] call OOP_fnc_validateFieldType;
-            if (isNil "_prevValValid") exitWith {true};
-            if (_prevValValid isEqualTo _def) exitWith {true};
-            // variable already set and is valid then dont set
-            false
-        }) then {
-            if (_def isEqualType []) then {
-                _def = +_def;
+    if !(_classSet) then {
+        private _fields = _class getOrDefaultCall ["fields", {EXCEPTION(EXCEPTION_NO_FIELDS); createHashMap}];
+        {
+            _y params ["_varname", "_def", ["_type", []]];
+            if (call {
+                private _prevVal = _obj getVariable _varname;
+                if (isNil "_prevVal") exitWith {true};
+                private _prevValValid = [_prevVal, _type, _NIL(_def)] call OOP_fnc_validateFieldType;
+                if (isNil "_prevValValid") exitWith {true};
+                if (_prevValValid isEqualTo _def) exitWith {true};
+                // variable already set and is valid then dont set
+                false
+            }) then {
+                if (_def isEqualType []) then {
+                    _def = +_def;
+                };
+                if (_def isEqualType createHashMap) then {
+                    _def = +_def;
+                };
+                _obj setVariable [_varname, _def, _global];
             };
-            if (_def isEqualType createHashMap) then {
-                _def = +_def;
-            };
-            _obj setVariable [_varname, _def, _global];
-        };
-    } forEach _fields;
+        } forEach _fields;
 
-    private _methods = _class getOrDefaultCall ["methods", {EXCEPTION(EXCEPTION_NO_METHODS); createHashMap}];
-    {
-        // _y = [_methodVarNameFull, _methodScript, _methodSelfFields]
-        // for network optimisation we set only method variable name (_y select 2) not full script
-        _obj setVariable [format["%1_%2", _classRegistryName, _x], [_y select 0, _y select 2], _global];
-    } forEach _methods;
+        private _methods = _class getOrDefaultCall ["methods", {EXCEPTION(EXCEPTION_NO_METHODS); createHashMap}];
+        {
+            // _y = [_methodVarNameFull, _methodScript, _methodSelfFields]
+            // for network optimisation we set only method variable name (_y select 2) not full script
+            _obj setVariable [format["%1_%2", _classRegistryName, _x], [_y select 0, _y select 2], _global];
+        } forEach _methods;
 
-    private _selfVar = _class getOrDefault ["selfvar", "_self"];
-	_selfVar = if (!(_selfVar isEqualType "") || {(_selfVar isEqualTo "")}) then {"_self"} else {_selfVar};
-    _obj setVariable [format["%1_selfVar", _classRegistryName], _selfVar, _global];
+        private _selfVar = _class getOrDefault ["selfvar", "_self"];
+        _selfVar = if (!(_selfVar isEqualType "") || {(_selfVar isEqualTo "")}) then {"_self"} else {_selfVar};
+        _obj setVariable [format["%1_selfVar", _classRegistryName], _selfVar, _global];
 
-    _obj setVariable [format["%1_instance", _classRegistryName], _class, _global];
+        _obj setVariable [format["%1_classMap", _classRegistryName], _class, _global];
+    };
 
-    private _instances = _obj getVariable ["OOP_OBJ_CLASS_objClassInstances", []];
-    _instances pushBackUnique _classRegistryName;
-    _obj setVariable ["OOP_OBJ_CLASS_objClassInstances", _instances, _global];
-
-    private _initResult = [_className, _obj, INIT, _initArgs, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance;
+    private _initResult = [[_className, _instanceId], _obj, INIT, _initArgs, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance;
     if (isNil "_initResult") then {NIL_DEF} else {_initResult};
 };
 
 OOP_OBJ_CLASS_fnc_callClassInstance = {
-	params["_classname", "_obj", ["_methodName", INIT], ["_thisArgs", []], ["_def", nil]];
+	params["_instance", "_obj", ["_methodName", INIT], ["_thisArgs", []], ["_def", nil]];
+
+    _instance params ["_classname", ["_instanceIndex", -1]];
+
+    private _isSingleton = _instanceIndex < 0;
 
     if !(IS_OBJ(_obj)) exitWith {EXCEPTION(EXCEPTION_NON_OBJ)};
 
@@ -162,6 +180,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 		_x params ["_fieldName", ["_fieldParams", []]];
 		if (_fieldName isEqualTo "") then {continue};
 		_fieldParams params ["_fieldNameFull", ["_fieldDef", nil], ["_fieldType", []]];
+        _fieldNameFull = if (_isSingleton) then {_fieldNameFull} else {format["%1_%2", _fieldNameFull, _instanceIndex]};
 		call compile (format["%1 = _obj getVariable ['%2', _fieldDef]; %1 = [if (isNil '%1') then {nil} else {%1}, _fieldType, _fieldDef] call OOP_fnc_validateFieldType", _fieldName, _fieldNameFull])
 	} forEach _methodSelfFields;
 
@@ -175,6 +194,7 @@ OOP_OBJ_CLASS_fnc_callClassInstance = {
 	call compile (format["%1 = _obj", _selfVar]);
 
     // class middleware variables
+    private _paramsMap = [];
     private _thisMethod = _method;
     private _oopSetVarGlobal = false;
     private _oopSaveVars = false; // dont save vars by def
@@ -305,6 +325,26 @@ OOP_fnc_remoteExec = {
         _args remoteExec [_func, _targets, _jip];
     };
 
+};
+
+OOP_fnc_pushBackGlobal = {
+    params["_namespace", "_varname", "_element", ["_unique", true]];
+
+    [_namespace, _varname, _element, _unique, true, true] call OOP_fnc_pushBackNet;
+};
+
+OOP_fnc_pushBackNet = {
+    params["_namespace", "_varname", "_element", ["_unique", true], ["_target", true], ["_jip", true]];
+
+    if (isNil '_element') exitWith {};
+
+    private _array = _namespace getVariable [_varname, []];
+    if (_unique) then {
+        _array pushBackUnique _element;
+    } else {
+        _array pushBack _element;
+    };
+    _namespace setVariable [_varname, _array, _target];
 };
 
 OOP_fnc_nonPrivateParams = {

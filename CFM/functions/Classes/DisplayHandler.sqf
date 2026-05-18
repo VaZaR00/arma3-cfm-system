@@ -9,6 +9,8 @@
 
 OBJCLASS(DisplayHandler)
 
+	IS_SINGLETON
+	
 	SET_SELF_VAR("_monitor");
 
 	FIELD ["_monitorUid", ""];

@@ -4,6 +4,8 @@
 
 OBJCLASS(Operator)
 
+	IS_SINGLETON
+	
 	SET_SELF_VAR("_operator");
 
 	FIELD ["_canSwitchTi", false];
