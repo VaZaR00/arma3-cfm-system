@@ -128,91 +128,19 @@ CLASS(DbHandler)
 		_res
 	};
 	CLASS_METHOD("addToList") {
-		private _i = -1;
-		isNil {
-			params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
+		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
 			
-			if (isNil "_obj") exitWith {-1};
-			if (_listName isEqualTo "") exitWith {-1};
-
-			if !(_global isEqualTo false) then {
-				[[[_obj, _listName, false, _unique, false], clientOwner], {
-					if ((_this#1) isEqualTo clientOwner) exitWith {};
-					waitUntil {!(isNil "CFM_inited")};
-					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
-			};
-
-			private _list = +(missionNamespace getVariable [_listName, []]);
-			if !(_list isEqualType []) then {
-				_list = +[_obj];
-				_i = 0;
-			} else {
-				_i = if (_unique) then {
-					_list pushBackUnique _obj;
-				} else {
-					_list pushBack _obj;
-				};
-			};
-			missionNamespace setVariable [_listName, _list];
-			call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
-		};
-		_i
+		[nil, _listName, _obj, _unique, true, _global, _global isEqualTo true] call EFL_fnc_pushBackNet;
 	};
 	CLASS_METHOD("removeFromList") {
-		private _res = false;
-		isNil {
-			params["_obj", ["_listName", ""], ["_global", false], ["_viaPubVar", false]];
+		params["_obj", ["_listName", ""], ["_global", false], ["_viaPubVar", false]];
 			
-			if (isNil "_obj") exitWith {false};
-			if (_listName isEqualTo "") exitWith {false};
-
-			if !(_global isEqualTo false) then {
-				[[[_obj, _listName, false, false], clientOwner], {
-					if ((_this#1) isEqualTo clientOwner) exitWith {};
-					waitUntil {!(isNil "CFM_inited")};
-					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
-			};
-
-			private _list = missionNamespace getVariable [_listName, []];
-			private _index = _list findIf {_x isEqualTo _obj};
-			if (_index != -1) then {
-				_list deleteAt _index;
-				missionNamespace setVariable [_listName, _list];
-				call (missionNamespace getVariable [_listName + "_PublicEH", {}]);
-				_res = true;
-			};
-		};
-		_res
+		[nil, _listName, _obj, false, true, _global, _global isEqualTo true] call EFL_fnc_removeFromArrayNet;
 	};
 	CLASS_METHOD("addToHashMap") {
-		private _res = false;
-		isNil {
-			params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
-			
-			if (isNil "_key") exitWith {false};
-			if (_varName isEqualTo "") exitWith {false};
-
-			if !(_global isEqualTo false) then {
-				[[[_key, _val, _varName, false, _unique], clientOwner], {
-					if ((_this#1) isEqualTo clientOwner) exitWith {};
-					waitUntil {!(isNil "CFM_inited")};
-					["addToList", (_this#0)] CALL_CLASS("DbHandler");
-				}, _global, ITER_VAR_RMT_EXEC_DO_JIP, true] call CFM_fnc_remoteExec;
-			};
-
-			private _hash = (missionNamespace getVariable [_varName, createHashMap]);
-			if !(_hash isEqualType createHashMap) then {
-				_hash = createHashMap;
-			} else {
-				_hash set [_key, _val];
-			};
-			missionNamespace setVariable [_varName, _hash];
-			call (missionNamespace getVariable [_varName + "_PublicEH", {}]);
-			_res = true;
-		};
-		_res
+		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
+		
+		[nil, _varName, _key, _val, true, _global, _global isEqualTo true] call EFL_fnc_hashSetNet;
 	};
 	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
