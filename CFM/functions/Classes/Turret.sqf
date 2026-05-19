@@ -3,6 +3,12 @@ OBJCLASS(Turret)
     SET_SELF_VAR("_turret");
 
     FIELD ["_operator", objNull];
+    FIELD ["_objClass", ""];
+	FIELD ["_isDroneFeed", false];	
+	FIELD ["_isMavic", false];	
+	FIELD ["_isFPV", false];
+	FIELD ["_hasGoPro", false];
+	FIELD ["_classType", ""];
     FIELD ["_turretObject", objNull];
     FIELD ["_turretIndex", -1];
     FIELD ["_zoomTable", createHashMap];
@@ -15,6 +21,7 @@ OBJCLASS(Turret)
     FIELD ["_ppType", PP_NONE];
     FIELD ["_pointParams", []];
     FIELD ["_canMoveCamera", false];
+    FIELD ["_currentCameraMoves", [0,0,0,0]];
     FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
     FIELD ["_initialDirUp", [DEF_DIR, DEF_UP]];
     FIELD ["_turretName", ""];
@@ -52,14 +59,16 @@ OBJCLASS(Turret)
 			["_effectFunc", -1]
 		] NP_PARAMS;
 
+		SAVE_VARS
+
 		IVAR(_operator, _isFPV, false);
 		IVAR(_operator, _isMavic, false);
 		IVAR(_operator, _hasGoPro, false);
 		IVAR(_operator, _objClass, "");
 		IVAR(_operator, _classType, "");
-		IVAR(_operator, _cameraZoomSmoothDefault, true);
-		IVAR(_operator, _canMoveCameraByDefault, false);
-		IVAR(_operator, _cameraMoveRestrictionsByDefault, []);
+		PR_IVAR(_operator, _cameraZoomSmoothDefault, true);
+		PR_IVAR(_operator, _canMoveCameraByDefault, false);
+		PR_IVAR(_operator, _cameraMoveRestrictionsByDefault, []);
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -279,215 +288,299 @@ OBJCLASS(Turret)
 			_initInterfaceFunc = {};
 		};
 	};
-
     METHOD("setPointParams") {
-        params[["_params", []], ["_ppType", -2], ["_setVar", true]];
+		params[["_params", []]];
 
-        private _prevParams = _self getVariable ["_pointParams", []];
-        _ppType = if (_ppType isEqualTo -2) then {_self getVariable ["_ppType", -1]} else {_ppType};
+		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
+			_params = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
+		};
 
-        if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
-            // Handle empty params
-        };
+		_pointParams = [_ppType, _pointParams, _params] call CFM_fnc_validatePointParams;
 
-        private _pointParams = [_ppType, _prevParams, _params] call CFM_fnc_validatePointParams;
+		SAVE_VARS
 
-        if (_setVar) then {
-            _self setVariable ["_pointParams", _pointParams];
-            _self setVariable ["_ppType", _ppType];
-        };
-
-        _pointParams
+		_pointParams
     };
+	METHOD("setDefaultPointAlignment") {
+		[_self, _turretIndex, -1] call CFM_fnc_setPointAlignment;
+	};
+	METHOD("TurretChanged") {
+		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
-    METHOD("setDefaultPointAlignment") {
-        // This method might need to be adjusted based on context, as it was calling on _turrets in Operator
-        // For now, assuming it's for this turret
-        [_self, -1] call CFM_fnc_setPointAlignment;
-    };
+		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
 
-    METHOD("TurretChanged") {
-        params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
+		if !(_turretIndex isEqualType 1) exitWith {false};
 
-        private _turretObj = _self getVariable ["_turretObject", _self];
-        private _isLocal = _self getVariable ["_isLocal", false];
-        private _pointParams = _self getVariable ["_pointParams", []];
-        private _camPosFunc = _self getVariable ["_camPosFunc", CAM_POS_FUNC_DEF];
-        private _doInterpolation = _self getVariable ["_doInterpolation", false];
-        private _canMoveCamera = _self getVariable ["_canMoveCamera", false];
-        private _currentCameraMoves = _self getVariable ["_currentCamMove", [0,0,0,0]];
-        private _cameraMoveRestrictions = _self getVariable ["_cameraMoveRestrictions", []];
-        private _smoothZoom = _self getVariable ["_smoothZoom", true];
-        private _zoomTable = _self getVariable ["_zoomTable", createHashMap];
-        private _signalFunc = _self getVariable ["_signalFunc", {1}];
-        private _effectFunc = _self getVariable ["_effectFunc", {}];
-        private _interfaceFunc = _self getVariable ["_interfaceFunc", {}];
-        private _interfaceClass = _self getVariable ["_interfaceClass", ""];
-        private _initInterfaceFunc = _self getVariable ["_initInterfaceFunc", {}];
-        private _zoomMax = _zoomTable getOrDefault ["max", 1];
-        _zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
+		private _zoomMax = _zoomTable getOrDefault ["max", 1];
+		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
-        if !(IS_OBJ(_turretObj)) then {
-            // Handle invalid turret object
-        };
-        _cameraMoveRestrictions resize [4, 180];
+		_cameraMoveRestrictions resize [4, 180];
 
-        _monitor setVariable ["CFM_currentTurret", [_self getVariable "_turretIndex"], _global];
-        _monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
-        _monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
-        _monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
-        _monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
-        _monitor setVariable ["CFM_turretLocal", _isLocal, _global];
-        _monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
-        _monitor setVariable ["CFM_currentTiTable", _self getVariable "_tiTable", _global];
-        _monitor setVariable ["CFM_currentNvgTable", _self getVariable "_nvgTable", _global];
-        _monitor setVariable ["CFM_currentCameraIsStatic", _self getVariable "_isStaticCam", _global];
-        _monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
-        _monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
-        _monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
-        _monitor setVariable ["CFM_doUpdateCamera", [true, _pointParams] select (_self getVariable "_isStaticCam"), _global];
-        _monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
-        _monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
-        _monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
-        [_monitor, true] call CFM_fnc_setOperatorInfo;
+		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
+		_monitor setVariable ["CFM_connectedTurretObject", _turretObject, _global];
+		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
+		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
+		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
+		_monitor setVariable ["CFM_turretLocal", _isLocal, _global];
+		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
+		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
+		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
+		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
+		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
+		_monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
+		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
+		_monitor setVariable ["CFM_doUpdateCamera", [true, _pointParams] select _isStaticCam, _global];
+		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
+		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
+		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
+		[_monitor, true] call CFM_fnc_setOperatorInfo;
 
-        _monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 
-        private _uiParams = if (IS_STR(_interfaceClass)) then {
-            [_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
-        } else {[]};
-        ["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		private _uiParams = if (IS_STR(_interfaceClass)) then {
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+		} else {[]};
+		["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
 
-        true
-    };
+		true
+	};
+	METHOD("TurretChangedLocalOperator") {
+		params["_monitor"];
 
-    METHOD("TurretChangedLocalOperator") {
-        params["_monitor"];
+		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
 
-        private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
+		["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _operator);
+		["addMonitor", [_monitor, _turretIndex]] CALL_OBJCLASS("Operator", _operator);
 
-        ["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _self);
-        ["addMonitor", [_monitor, _self getVariable "_turretIndex"]] CALL_OBJCLASS("Operator", _self);
+		if (_self isNotEqualTo _operator) then {
+			CFM_operatorsToUpdate = _operator;
+			publicVariableServer "CFM_operatorsToUpdate";
+			[_operator, _turretIndex, _self] call CFM_fnc_addActiveTurret;
+		};
 
-        private _turretObj = _self getVariable ["_turretObject", _self];
-        if (!(_turretObj isEqualTo _self)) then {
-            // Additional logic
-        };
+		true
+	};
+	METHOD("moveCamera") {
+		params[["_axisAngles", [0,0], [[]], 2], ["_monitorsOnTurret", []]];
 
-        true
-    };
+		if (_isDroneFeed) exitWith {
+			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
+			["moveDroneCamera", [_axisAngles, _monitorsOnTurret]] SPAWN_OBJCLASS("Turret", _self);
+			true
+		};
 
-    METHOD("moveCamera") {
-        params[["_axisAngles", [0,0], [[]], 2]];
+		if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
-        if (_self getVariable ["_isDroneFeed", false]) exitWith {
-            // Handle drone feed
-        };
+		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
 
-        if (_axisAngles isEqualTo [0,0]) exitWith {false};
+		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+			
+		private _done = switch (_ppType) do {
+			case PP_STATIC: {
+				_pointParams params [["_pos", [], [[]], 3], ["_dir", DEF_DIR, [[]], 3], ["_up", DEF_UP, [[]], 3]];
 
-        private _ppType = _self getVariable ["_ppType", PP_NONE];
-        if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
+				// global rotation
+				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _dir];
+				private _newUp = _newDirUp param [1, _up];
 
-        private _pointParams = _self getVariable "_pointParams";
+				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				
+				true
+			};
+			case PP_VEH_STATIC: {
+				_pointParams params [["_pos", [], [[]], 3], ["_dirUp", [], [[]]]];
+				_dirUp params [["_dir", DEF_DIR, [[]], 3], ["_up", DEF_UP, [[]], 3]];
 
-        if (isNil "_pointParams") exitWith {false};
+				// global rotation
+				private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _dir];
+				private _newUp = _newDirUp param [1, _up];
 
-        private _monitorsOnTurret = _self getVariable "_monitorsSet";
+				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				
+				true
+			};
+			case PP_VEH_TURRET: {
+				_pointParams params [['_memPoint', ""], ['_alignment', []], ['_lod', "Memory"]];
+				_alignment params [["_addArr", []], ["_dirUp", []], ["_setArr", []]];
 
-        if (_monitorsOnTurret isEqualTo []) exitWith {false};
+				// mem point model space rotation
+				private _memPointDirUp = _self selectionVectorDirAndUp [_memPoint, _lod];
+				_memPointDirUp params [["_mdir", DEF_DIR], ["_mup", DEF_UP]];
+				// translate local mem point vector to model space
+				private _dirUpMS = [_memPointDirUp, _dirUp] call CFM_fnc_translateLocalVectors;
+				_dirUpMS params [["_dirMS", []], ["_upMS", []]];
+				// model space translated vector to world space
+				private _dirW = _self vectorModelToWorldVisual _dirMS;
+				private _upW = _self vectorModelToWorldVisual _upMS;
+				// transform dirup world
+				private _tarnsDirUp = [_dirW, _upW, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _tarnsDir = _tarnsDirUp param [0, _dir];
+				private _tarnsUp = _tarnsDirUp param [1, _up];
+				// transformed dirup in model space
+				private _newDirMS = _self vectorWorldToModelVisual _tarnsDir;
+				private _newUpMS = _self vectorWorldToModelVisual _tarnsUp;
+				// transformed dirup model space to mem point offset
 
-        _axisAngles params [["_horizontal", 0], ["_vertical", 0]];
-            
-        private _done = switch (_ppType) do {
-            case PP_STATIC: {
-                _pointParams params ["_pos", "_dir", "_up"];
-                private _turretObj = _self getVariable "_turretObject";
-                private _newDir = [_dir, _vertical, _horizontal] call CFM_fnc_rotateVector;
-                _newDir = [_newDir, _up] call CFM_fnc_ensureUpVector;
-                _pointParams set [1, _newDir];
-                true
-            };
-            case PP_VEH_STATIC: {
-                _pointParams params ["_pos", "_dir", "_up"];
-                private _turretObj = _self getVariable "_turretObject";
-                private _newDir = [_dir, _vertical, _horizontal] call CFM_fnc_rotateVector;
-                _newDir = [_newDir, _up] call CFM_fnc_ensureUpVector;
-                _pointParams set [1, _newDir];
-                true
-            };
-            case PP_VEH_TURRET: {
-                private _turretObj = _self getVariable "_turretObject";
-                private _turretIndex = _self getVariable "_turretIndex";
-                private _newDir = [_turretObj, _turretIndex, _vertical, _horizontal] call CFM_fnc_rotateTurretVector;
-                true
-            };
-            default {false};
-        };
+				// Рассчитываем оси базиса мем-поинта
+				private _mX = _mdir vectorCrossProduct _mup;
 
-        if !(_done) exitWith {false};
+				// Обратная проекция (Model Space -> Local Space)
+				private _dir = [
+					_newDirMS vectorDotProduct _mX,
+					_newDirMS vectorDotProduct _mdir,
+					_newDirMS vectorDotProduct _mup
+				];
 
-        private _restrictions = _self getVariable ["_cameraMoveRestrictions", [0,0,0,0]];
-        private _currentMove = _self getVariable ["_currentCamMove", [0,0,0,0]];
-        _currentMove = [_currentMove, _axisAngles, _restrictions] call CFM_fnc_calculateCameraMoves;
-        _self setVariable ["_currentCamMove", +_currentMove];
+				private _up = [
+					_newUpMS vectorDotProduct _mX,
+					_newUpMS vectorDotProduct _mdir,
+					_newUpMS vectorDotProduct _mup
+				];
 
-        private _targets = MONITOR_VIEWERS_AND_SELF(false);
-        // Since _turretsParams is now the turret object, adjust accordingly
-        _self setVariable ["CFM_turretsParams", _self, _targets];
+				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _dir, _up, _setArr]] call CFM_fnc_validatePointParams;
 
-        private _doInterpolation = _self getVariable ["_doInterpolation", false];
-        private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
-        {
-            _x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
-            _x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
-        } forEach _monitorsOnTurret;
+				true
+			};
+			default {false};
+		};
 
-        true
-    };
+		if !(_done) exitWith {false};
 
-    METHOD("moveDroneCamera") {
-        params[["_axisAngles", [0,0], [[]], 2]];
+		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
-        if (_axisAngles isEqualTo [0,0]) exitWith {false};
+		private _targets = MONITOR_VIEWERS_AND_SELF(false);
 
-        private _isGunnerTurret = _self getVariable ["_turretIndex", -1] isEqualTo 0;
-        private _isUAVcontrolled = _self getVariable ["_isDroneFeed", false] && {[_self, ["DRIVER", "GUNNER"] select (_isGunnerTurret)] call CFM_fnc_isUAVControlled};
+		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
+		{
+			if !(_doInterpolation) then {
+				_x setVariable ["CFM_camDoInterpolation", true, _targets];
+			};
+			_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
+			_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
+		} forEach _monitorsOnTurret;
 
-        if (_self getVariable ["_isDroneFeed", false] && {_isUAVcontrolled && {!(missionNamespace getVariable ["CFM_canMoveDroneCameraIfUavControlled", false])}}) exitWith {
-            // Handle UAV controlled
-        };
+		true
+	};
+	METHOD("moveDroneCamera") {
+		params[["_axisAngles", [0,0], [[]], 2], ["_monitorsOnTurret", []]];
 
-        private _monitorsOnTurret = _self getVariable "_monitorsSet";
+		if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
-        if (_monitorsOnTurret isEqualTo []) exitWith {false};
+		private _isGunnerTurret = _turretIndex isEqualTo 0;
+		private _isUAVcontrolled = _isDroneFeed && {[_self, ["DRIVER", "GUNNER"] select (_isGunnerTurret)] call CFM_fnc_isUAVControlled};
 
-        if !(local _self) exitWith {
-            // Handle not local
-        };
+		if (_isDroneFeed && {_isUAVcontrolled && {!(missionNamespace getVariable ["CFM_canMoveDroneCameraIfUavControlled", false])}}) exitWith {
+			false
+		};
 
-        _axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+		if !(local _operator) exitWith {
+			private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
+			if (isNull _target) then {
+				_target = _operator;
+			};
+			[[_self, [_turretIndex, _axisAngles, _monitorsOnTurret]], {
+				params["_turret", "_args"];
+				["moveDroneCamera", _args] SPAWN_OBJCLASS("Turret", _turret);
+			}, _target, false, true] call CFM_fnc_remoteExec;
+			true
+		};
 
-        // calculate moves
-        private _turretIndex = _self getVariable "_turretIndex";
+		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+
+		// calculate moves
 		private _turrIdxStr = TURR_INDX_STR(_turretIndex);
-        private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
-        private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
-        private _dir = _self getVariable [_dirVarName, [0,1,0]];
-        private _up = _self getVariable [_upVarName, [0,0,1]];
-        private _newDir = [_dir, _vertical, _horizontal] call CFM_fnc_rotateVector;
-        _newDir = [_newDir, _up] call CFM_fnc_ensureUpVector;
-        _self setVariable [_dirVarName, _newDir];
-        _self setVariable [_upVarName, _up];
+		private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
+		private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
+		private _dir = _self getVariable [_dirVarName, [0,1,0]];
+		private _up = _self getVariable [_upVarName, [0,0,1]];
+		_currentCameraMoves = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;
+		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
-        private _targets = MONITOR_VIEWERS_AND_SELF(false);
-        _self setVariable ["CFM_turretsParams", _self, _targets];
+		private _hasPrevMove = !(_self getVariable ["CFM_moveDone", true]);
+		private _exit = if (_hasPrevMove) then {
+			if !(DO_OVERWRITE_CURRENT_MOVE) exitWith {true};
+			_self setVariable ["CFM_newMove", true];
+			waitUntil { sleep 0.01; _self getVariable ["CFM_moveDone", true] };
+			false
+		} else {false};
+		if (_exit) exitWith {false};
+		_self setVariable ["CFM_moveDone", false];
 
-        {
-            _x setVariable ["CFM_doUpdateCamera", _newDir, _targets];
-        } forEach _monitorsOnTurret;
+		private _havingNewMove = false;
 
-        true
-    };
+		private _done = if (_isGunnerTurret) then {
+			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
+			private _newDir = _newDirUp param [0, _dir];
+			private _newUp = _newDirUp param [0, _up];
+			private _lockPos = (_self modelToWorldVisualWorld (vectorNormalized _newDir));
+			private _prevCamLook = [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
+			_self lockCameraTo [_lockPos, [_turretIndex]];
+
+			private _waitStart = time;
+			waitUntil {
+				sleep 0.01;
+				[_self, _turretIndex, false] call CFM_fnc_updateTurretCamera;
+				_havingNewMove = _self getVariable ["CFM_newMove", false];
+				_havingNewMove ||
+				{((time - _waitStart) > 2) || {
+					[
+						[_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock, 
+						_lockPos,
+						0.01
+					] call CFM_fnc_compareVectors
+				}}
+			};
+
+			if (_havingNewMove) exitWith {true};
+
+			if ([_prevCamLook, [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock] call CFM_fnc_compareVectors) exitWith {false};
+
+			true
+		} else {
+			private _prevCamDir = getPilotCameraDirection _self;
+			private _prevCamUp = _prevCamDir call CFM_fnc_getVectorUpFromDir;
+			private _newDirUp = [_prevCamDir, _prevCamUp, _vertical, _horizontal] call CFM_fnc_transformTurret;
+			private _newCamDir = _newDirUp#0;
+
+			private _prevHandle = _self getVariable ["CFM_rotationHandle", scriptNull];
+			terminate _prevHandle;
+
+			private _rotationHandle = [_self, _prevCamDir, _newCamDir] spawn CFM_fnc_smoothRotateCam;
+			_self setVariable ["CFM_rotationHandle", _rotationHandle];
+
+			private _waitStart = time;
+			waitUntil {
+				sleep 0.01;
+				[_self, -1, false] call CFM_fnc_updateTurretCamera;
+				_havingNewMove = _self getVariable ["CFM_newMove", false];
+				_havingNewMove ||
+				{((time - _waitStart) > 2) || {
+					([_newCamDir, getPilotCameraDirection _self, 0.01] call CFM_fnc_compareVectors)
+				}}
+			};
+			
+			if (_havingNewMove) exitWith {true};
+
+			if ([_prevCamDir, getPilotCameraDirection _self] call CFM_fnc_compareVectors) exitWith {false};
+
+			true
+		};
+
+		_self setVariable ["CFM_moveDone", true];
+		_self setVariable ["CFM_newMove", false];
+
+		if !(_done) exitWith {false};
+
+		private _targets = MONITOR_VIEWERS_AND_SELF(false);
+
+		{
+			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
+		} forEach _monitorsOnTurret;
+
+		true
+	};
 OBJCLASS_END
