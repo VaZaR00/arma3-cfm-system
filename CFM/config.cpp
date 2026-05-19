@@ -1,4 +1,4 @@
-#include "includes\main.hpp"
+#include "includes\defines.hpp"
 
 class CfgPatches {
 	class PREFX {
@@ -13,14 +13,7 @@ class CfgPatches {
         skipWhenMissingDependencies = 1;
 	};
 };
-class CfgFunctions
-{
-	class CFM
-	{
-		#include "includes\CfgFunctions.hpp"
-	};
-};
-#include "includes\CfgRemoteExec.hpp"
 
-#include "includes\interfaces\cfgMavicInterface.hpp"
-#include "includes\interfaces\cfgFPVinterface.hpp"
+#include "includes\CfgFunctions.hpp"
+#include "includes\CfgRemoteExec.hpp"
+#include "includes\includes.hpp"

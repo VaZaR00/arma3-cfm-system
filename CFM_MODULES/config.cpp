@@ -1,7 +1,7 @@
-#include "includes\main.h"
+#include "includes\defines.hpp"
 
 class CfgPatches {
-	class CFM_MODULES {
+	class PREFX {
 		name = "CFM Modules";
 		author = "Vazar";
 		requiredAddons[] = {
@@ -13,11 +13,7 @@ class CfgPatches {
         skipWhenMissingDependencies = 1;
 	};
 };
-// class CfgFunctions
-// {
-// 	class CFM
-// 	{
-// 		#include "includes\CfgFunctions.hpp"
-// 	};
-// };
-#include "includes\CfgModules.hpp"
+
+#include "includes\CfgFunctions.hpp"
+#include "includes\cfgRemoteExec.hpp"
+#include "includes\includes.hpp"

@@ -66,7 +66,6 @@ PREP(transformTurret)
 
 // -- Category Classes --
 FOLDER_PATH(Classes)
-PREP(classSystemCompile)
 PREP(compileClasses)
 
 // -- Category common --

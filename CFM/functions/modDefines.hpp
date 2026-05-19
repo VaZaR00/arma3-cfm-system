@@ -1,25 +1,13 @@
+
+#include "Classes\defines\classDefinesVer1.hpp"
+#include "Classes\defines\classDefines.hpp"
+
+
 #define OPTIMIZE_MONITOR_FEED_DIST "20"
 
 #define DO_CAM_INTERPOLATION false
 
-#define PREFX CFM
-#define SPREFX STR(CFM)
-#define PREF_ PREFX##_
-#define SPREF_ STR(PREF_)
-#define PREF_FNC PREFX##_fnc_
-#define PREFVAR PREF_
-#define SPREFVAR(var) STR(DOUBLE(PREF_, var))
-#define FUNC(f) PREF_FNC##f
-#define SFUNC(f) STR(FUNC(f))
-#define SFUNC_NAME(name) (STR(PREF_FNC) + name)
-#define QFUNC(f) (MGVAR [STR(PREF_FNC) + f, {}])
-#define PREF_QVAR(s) (PREF_VAR + s)
-#define RC_PREF(s) (PREF_CLAS + s)
-
-#define I ,
 #define SET_LOCAL_CAM_VECTORS_TIMEOUT 0.05
-#define STR(s) #s
-#define DOUBLE(a, b) a##b
 #define DEFAULT_PIP_SETTINGS [0.3, 1, 0.8]
 #define DEFAULT_PIP_SETTINGS_STR STR(DEFAULT_PIP_SETTINGS)
 #define GOPRO "gopro"
@@ -29,28 +17,17 @@
 #define GOPRO_MEMPOINT "neck"
 #define OBJ_LOD(o) (o getVariable ["CFM_lod", call {private _lod = (((allLODs o) select {((_x select 1) isEqualTo "memory")}) select 0) select 0; o setVariable ["CFM_lod", _lod];_lod}]) 
 #define OBJ_LOD_VAR(var, o) private var = OBJ_LOD(o); o setVariable ["CFM_lod", var];
-#define IS_FPV(cls) (("fpv" in cls) || {("crocus" in cls)})
-#define IS_MAVIC(cls) ("mavik_3" in cls)
 #define DRIVER_TURRET_IDX -1
 #define GUNNER_TURRET_IDX 0
 #define DRIVER_TURRET_PATH [-1]
 #define GUNNER_TURRET_PATH [0]
 #define ACTION_RADIUS 5
-#define NULL_VECTOR [0,0,0]
-#define DEF_DIR [0,1,0]
-#define DEF_UP [0,0,1]
 #define DEF_CAM_MOVE_RESTR [85,85,180,180]
 #define MONITOR_ACTION_RADIUS(mon) (mon getVariable ["CFM_actionsRadius", ACTION_RADIUS]) 
 #define FEED_ACTION_CONDITION "((_target getVariable ['CFM_feedActive', false])"
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
-#define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
-#define IS_STR(s) ((s isEqualType "") && {!(s isEqualTo "")})
-#define IS_FUNC(f) ((f isEqualType {}) && {!(f isEqualTo {})})
-#define IS_ARRAY(a) ((a isEqualType []) && {!(a isEqualTo [])})
-#define IS_LOC(l) ((typeName l) isEqualTo "LOCATION")
 #define IS_VALID_OP(op) (IS_OBJ(op))
-#define NIL_DEF _NIL(_def)
 #define TYPE_VEH "veh"
 #define TYPE_UAV "uav"
 #define TYPE_WEAP "weap"
@@ -78,25 +55,6 @@
 #define MONITOR_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 #define MONITOR_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers})
 
-#define PLAYER_ (MGVAR ['bis_fnc_moduleremotecontrol_unit', player])
-// #define PLAYER_ player
-#define PLAYER_STR STR(PLAYER_)
-
-#define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};
-#define DLOG call {_txt = text format["[DLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; diag_log _txt};
-#define VARS_STR call {if !(_this isEqualType []) then {_this = ["", _this]}; params["_txt", ["_varstr", ""]]; if (_varstr isEqualTo "") then {_varstr = _txt}; private _ar = _varstr splitString ",;. "; private _arvs = _ar apply {private _val = call compile format["if !(isNil '%1') then {%1}", _x]; if (isNil "_val") then {""} else {format["%1: %2", _x, _val]}}; _txt + "  :  " + (_arvs joinString "; ")}
-#define LOG_VARS ;
-#define RLOG_VARS VARS_STR RLOG
-#define LOGH hintSilent str
-#define HINT hint
-#define CLEAR_HINT hint "";
-#define _HINT call {hint _this};
-#define WARN DLOG
-#define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);
-#define ALOG_V T_LOG
-#define ALOG call {private _arr = (if (isNil STR(ALOG_V)) then {ALOG_V = []; ALOG_V} else {ALOG_V}); _arr pushback [diag_tickTime, count _arr, _this]};
-#define ARLOG call {ALOG; _this RLOG};
-
 
 #define WAIT_FOR_DISPLAY_TIME 10
 #define DISP_CTRL _display displayCtrl
@@ -106,3 +64,24 @@
 
 #define TURR_INDX_STR(idx) ((if (idx < 0) then {"n" + (str (abs idx))} else {str idx}))
 #define TURR_INDX_VAR(name, idx) (format["%1%2", name, TURR_INDX_STR(idx)])
+
+#define RENDER_TARGET_STR "cfmrendertarget"
+#define UI_RENDER_ID_STR "cfmrenderuiid"
+#define ACTIONS_PRIORITY 956
+
+#define FULLSCREEN_HINT_NL(nl) (format["TO EXIT FULLSCREEN MOVE BY MOUSE OR KEYBOARD! %1 АБИ ВИЙТИ З ПОВНОЕКРАННОГО РЕЖИМУ ПОВОРУХНІТСЯ (МИШКОЮ АБО КЛАВІШАМИ)!", nl])
+#define FULLSCREEN_HINT FULLSCREEN_HINT_NL(endl)
+#define FULLSCREEN_TEMPCAM_HINT_NL(nl) (format["%2 %1 %3", nl, FULLSCREEN_TEMPCAM_HINT_ENG, FULLSCREEN_TEMPCAM_HINT_UKR])
+#define FULLSCREEN_TEMPCAM_HINT_ENG "TO EXIT FULLSCREEN PRESS 'CTRL + E' OR YOUR BIND."
+#define FULLSCREEN_TEMPCAM_HINT_UKR "АБИ ВИЙТИ З ПОВНОЕКРАННОГО РЕЖИМУ НАТИСНІТЬ 'CTRL + E' АБО СВІЙ БІНД."
+#define FULLSCREEN_TEMPCAM_HINT FULLSCREEN_TEMPCAM_HINT_NL(endl)
+#define CHECK_OP_COND_FREQ 2
+#define DUMMY_CLASSNAME "Land_HelipadEmpty_F"
+#define DO_INTERPOLATE_STATIC_CAMS true
+#define DO_INTERPOLATE_TOLERANCE 0.0001
+
+#define SET_MON_OP_REMOTE_EXEC
+
+
+#define SIGNAL_WEAK_CONNECTION_THREASHOLD 0.1
+#define SIGNAL_LOST 0

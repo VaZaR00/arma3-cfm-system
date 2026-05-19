@@ -1,4 +1,4 @@
-#define PREFX CFM
+#define PREFX CFM_MODULES
 
 #define ADDON_PATH PREFX##\functions
 

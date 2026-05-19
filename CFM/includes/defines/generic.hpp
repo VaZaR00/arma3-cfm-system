@@ -1,43 +1,62 @@
 
 
 #define STR(s) #s
+#define DOUBLE(a,b) a##b
+#define TRIPLE(a,b,c) a##b##c
+#define QUAD(a,b,c,d) a##b##c##d
+#define SPREFX STR(PREFX)
+#define DO_FUNC_RECOMPILE recompile = 1;
+#define FUNC_PRE_START preStart = 1;
+#define FUNC_PATH_JOIN(path) ADDON_PATH\##path
+#define FUNC_PATH(path) STR(FUNC_PATH_JOIN(path))
+#define PREF_ PREFX##_
+#define SPREF_ STR(PREF_)
+#define PREF_FNC PREFX##_fnc_
+#define PREFVAR PREF_
+#define SPREFVAR(var) STR(DOUBLE(PREF_, var))
+#define FUNC(f) PREF_FNC##f
+#define SFUNC(f) STR(FUNC(f))
+#define SFUNC_NAME(name) (STR(PREF_FNC) + name)
+#define QFUNC(f) (MGVAR [STR(PREF_FNC) + f, {}])
+#define PREF_QVAR(s) (PREF_VAR + s)
+#define RC_PREF(s) (PREF_CLAS + s)
+
+
+#define FN_FUNC_CFG(name) class name {file = FUNC_PATH(TRIPLE(fn_,name,.sqf));DO_FUNC_RECOMPILE};
+#define FN_FUNC_CFG_PRE(name) class name {file = FUNC_PATH(TRIPLE(fn_,name,.sqf));preInit = 1;DO_FUNC_RECOMPILE};
+#define FN_FUNC_CFG_POST(name) class name {file = FUNC_PATH(TRIPLE(fn_,name,.sqf));postInit = 1;DO_FUNC_RECOMPILE};
+
+#define FUNC_CFG(name) class name {file = FUNC_PATH(DOUBLE(name,.sqf));DO_FUNC_RECOMPILE};
+#define FUNC_CFG_POST(name) class name {file = FUNC_PATH(DOUBLE(name,.sqf));postInit = 1;DO_FUNC_RECOMPILE};
+#define FUNC_CFG_PRE(name) class name {file = FUNC_PATH(DOUBLE(name,.sqf));preInit = 1;DO_FUNC_RECOMPILE};
+
+
+#define I ,
 #define PR private
 #define GV getVariable
 #define SV setVariable
 #define MN missionNamespace
-#define MGVAR MN GV
-#define MSVAR MN SV
-#define LOG hint str 
-#define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};
-#define DLOG call {_txt = text format["[DLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; diag_log _txt};
-#define MP_RLOG call {_txt = (format["%3%4 :: %1 :: %2", serverTime, _this, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]); _txtR = format["[MP_RLOG]  {FROM %1} :: %2", if (isServer) then {"SERVER"} else {clientOwner}, _txt]; _txtR remoteExec ["diag_log", -clientOwner]; _txtR remoteExec ["hint", -clientOwner]; _txt = text format["[MP_RLOG]  %1", _txt]; hint _txt; diag_log _txt};
-#define IFLOG call {if (MGVAR ["TEMP_DO_LOG", false]) then {hint str _this; diag_log str _this}};
-#define DOLOG MSVAR ["TEMP_DO_LOG", true];
-#define NOLOG MSVAR ["TEMP_DO_LOG", false];
-#define CRTHSH createHashMap
-
-#define PREF_FNC PREFX##_fnc_
-#define PREF_VAR PREFX##_var_
-#define PREF(t) PREFX##_##t
-#define QPREF(t) STR(PREF(t))
-#define SPREF(t) (STR(PREFX) + "_" + t)
-#define FUNC(fnc) PREF_FNC##fnc
-#define SFUNC(fnc) STR(FUNC(fnc))
-#define VAR(fnc) PREF_VAR##fnc
-#define QFUNC(f) (MGVAR [STR(PREF_FNC) + f, {}])
-
-
-#define GET_PLAYER_DRONE (vehicle (remoteControlled player))
-
-// #define LOC  
+#define IS_FPV(cls) (("fpv" in cls) || {("crocus" in cls)})
+#define IS_MAVIC(cls) ("mavik_3" in cls)
+#define NULL_VECTOR [0,0,0]
+#define DEF_DIR [0,1,0]
+#define DEF_UP [0,0,1]
+#define IS_OBJ(o) (!(o isEqualTo objNull) && {o isEqualType objNull})
+#define IS_STR(s) ((s isEqualType "") && {!(s isEqualTo "")})
+#define IS_FUNC(f) ((f isEqualType {}) && {!(f isEqualTo {})})
+#define IS_ARRAY(a) ((a isEqualType []) && {!(a isEqualTo [])})
+#define IS_LOC(l) ((typeName l) isEqualTo "LOCATION")
+#define IS_HASH(h) (h isEqualType createHashMap)
+#define IS_INT(s) (s isEqualType 0)
+#define _NIL(var) (if !(isNil STR(var)) then {var})
+#define NIL_DEF _NIL(_def)
+#define MGVAR missionNamespace getVariable
+#define CHECK_EX(c) if (c) exitWith {false};
 #define LOC localize
-#define DOUBLE(v1, v2) v1##v2
-#define TRIPLE(v1, v2, v3) v1##v2##v3
 #define SKIP continue
 #define ONUL objNull
 #define EW exitWith
 #define EX EW {};
-#define I , 
 #define EQTYPE isEqualType
 #define EQTO isEqualTo
 #define ISNIL(v) isNil STR(v)
@@ -51,20 +70,12 @@
 #define IF_NIL(v, d) IF_ELSE(ISNIL(v), d, v)
 #define NIL_(v) IF_NIL(v, nil)
 #define SET_IF_NIL(v, d) IF_ELSE(ISNIL(v), v = d, v)
-#define getDef getOrDefault
-#define IS_HASH(h) (h isEqualType createHashMap)
-#define IS_OBJ(o) (o isEqualType objNull)
 #define IS_OBJNULL(o) (o isEqualTo objNull)
 #define IS_OBJNULL_DEF(o) IF_ELSE(IS_OBJ(o), o, objNull)
-#define IS_ARR(o) (o isEqualType [])
-#define IS_STR(s) (s isEqualType "")
 #define IS_BOOL(s) (s isEqualType true)
-#define IS_CODE(s) (s isEqualType {})
-#define IS_INT(s) (s isEqualType 0)
-#define IS_REB(r) (r call REB_fnc_isReb)
-#define IS_LOCAL(o) ((IS_OBJ(o) && {local o}) || isServer)
+#define IS_LOCAL(o) (IS_OBJ(o) && {local o})
 #define STR_EMPTY(s) (s isEqualTo "")
-#define ARR_EMPTY(a) (count a == 0)
+#define ARR_EMPTY(a) (a isEqualTo [])
 #define LWR(s) (toLower s)
 #define FOR_I(n) for "_i" from 0 to (n - 1) do
 
@@ -155,9 +166,27 @@ _serverExecResult; \
 
 #define OBJ_OWNER(o) IF_ELSE(owner o == 0, 2, owner o)
 
-// FOR OOP
 
 #define BOOL(i) (IF_ELSE(IS_INT(i), i == 1, nil))
 #define BOOL_TO_INT(b) (if (b) then {1} else {0})
 #define SET_BOOL(b) (if (IS_BOOL(b)) then {b} else {0})
-#define IS_OOP(s) (IS_CODE(s) && {IS_STR(METHOD(s, "classname", nil))})
+
+
+#define PLAYER_ (MGVAR ['bis_fnc_moduleremotecontrol_unit', player])
+// #define PLAYER_ player
+#define PLAYER_STR STR(PLAYER_)
+
+#define RLOG call {_txt = text format["[RLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; hint _txt; diag_log _txt};
+#define DLOG call {_txt = text format["[DLOG]  %3%4 :: %2 :: %1", _this, serverTime, __FILE_SHORT__, if !(isNil "_ooMember") then {format[".%1", _ooMember]} else {""}]; diag_log _txt};
+#define VARS_STR call {if !(_this isEqualType []) then {_this = ["", _this]}; params["_txt", ["_varstr", ""]]; if (_varstr isEqualTo "") then {_varstr = _txt}; private _ar = _varstr splitString ",;. "; private _arvs = _ar apply {private _val = call compile format["if !(isNil '%1') then {%1}", _x]; if (isNil "_val") then {""} else {format["%1: %2", _x, _val]}}; _txt + "  :  " + (_arvs joinString "; ")}
+#define LOG_VARS ;
+#define RLOG_VARS VARS_STR RLOG
+#define LOGH hintSilent str
+#define HINT hint
+#define CLEAR_HINT hint "";
+#define _HINT call {hint _this};
+#define WARN DLOG
+#define LOG_VARS(txt, vars) LOGH ([txt, vars] VARS_STR);
+#define ALOG_V T_LOG
+#define ALOG call {private _arr = (if (isNil STR(ALOG_V)) then {ALOG_V = []; ALOG_V} else {ALOG_V}); _arr pushback [diag_tickTime, count _arr, _this]};
+#define ARLOG call {ALOG; _this RLOG};

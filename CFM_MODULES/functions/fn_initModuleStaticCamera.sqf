@@ -1,4 +1,4 @@
-#include "defines.h"
+#include "defines.hpp"
 
 #define LGVAR _logic GV 
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)

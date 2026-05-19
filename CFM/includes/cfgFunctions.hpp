@@ -1,5 +1,7 @@
-
-        // #include "Funcs\funcsCommon.hpp"
-        #include "Funcs\funcsMain.hpp"
-        // #include "Funcs\funcsActions.hpp"
-        // #include "Funcs\funcsCamera.hpp"
+class CfgFunctions
+{
+	class PREFX
+	{
+		#include "includes\Funcs\funcsMain.hpp"
+	};
+};

@@ -2,7 +2,7 @@
 #include "defines.hpp"
 
 #ifndef ADDON
-call CFM_fnc_XEH_prep;
+call FUNC(XEH_prep);
 #endif
 
 call CFM_fnc_compile;

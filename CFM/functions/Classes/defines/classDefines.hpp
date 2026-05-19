@@ -1,9 +1,13 @@
-﻿#define OBJCLASS(name) call { \
+﻿#define PREFIX_VAR private _ADDON_PREFX = SPREFX;
+
+
+#define OBJCLASS(name) call { \
     private _fields = []; \
     private _classname = STR(name); \
     private _methods = []; \
     private _selfVar = ""; \
     private _isSignleton = false; \
+    PREFIX_VAR \
 
 
 #define FIELD _fields pushBack
@@ -28,18 +32,21 @@
 
 // Singleton calls
 #define CALL_OBJCLASS(name, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
     [name, obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define SPAWN_OBJCLASS(name, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
     [name, obj, _method, _args, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define REMOTE_EXEC_OBJCLASS(name, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
     [[name, obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
@@ -47,18 +54,21 @@
 
 // non singleton calls
 #define CALL_OBJINSTANCE(name, index, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
     [[name, index], obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define SPAWN_OBJINSTANCE(name, index, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
     [[name, index], obj, _method, _args, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define REMOTE_EXEC_OBJINSTANCE(name, index, obj) call { \
+    PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
     [[[name, index], obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
@@ -66,17 +76,19 @@
 
 #define NEW_OBJINSTANCE_GLOBAL(name, global) call { \
 	if (isNil "_this") exitWith {objNull}; \
+    PREFIX_VAR \
 	if !(_this isEqualType []) then {_this = [_this]}; \
 	_this params [["_obj", objNull], ["_initArgs", []], ["_def", nil]]; \
-    [name, _obj, _initArgs, global, NIL_DEF] call OOP_OBJ_CLASS_fnc_newInstance; \
+    [name, _obj, _initArgs, global, NIL_DEF, _ADDON_PREFX] call OOP_OBJ_CLASS_fnc_newInstance; \
 } \
 
 
 #define SPAWN_NEW_OBJINSTANCE_GLOBAL(name, global) call { \
 	if (isNil "_this") exitWith {objNull}; \
+    PREFIX_VAR \
 	if !(_this isEqualType []) then {_this = [_this]}; \
 	_this params [["_obj", objNull], ["_initArgs", []], ["_def", nil]]; \
-    [name, _obj, _initArgs, global, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_newInstance; \
+    [name, _obj, _initArgs, global, NIL_DEF, _ADDON_PREFX] spawn OOP_OBJ_CLASS_fnc_newInstance; \
 } \
 
 
