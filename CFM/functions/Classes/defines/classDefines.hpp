@@ -34,21 +34,21 @@
 #define CALL_OBJCLASS(name, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
-    [name, obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
+    [name, obj, _method, _args, NIL_DEF, _ADDON_PREFX] call OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define SPAWN_OBJCLASS(name, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
-    [name, obj, _method, _args, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
+    [name, obj, _method, _args, NIL_DEF, _ADDON_PREFX] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define REMOTE_EXEC_OBJCLASS(name, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
-    [[name, obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
+    [[name, obj, _method, _args, NIL_DEF, _ADDON_PREFX], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
 
 
@@ -56,21 +56,21 @@
 #define CALL_OBJINSTANCE(name, index, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
-    [[name, index], obj, _method, _args, NIL_DEF] call OOP_OBJ_CLASS_fnc_callClassInstance; \
+    [[name, index], obj, _method, _args, NIL_DEF, _ADDON_PREFX] call OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define SPAWN_OBJINSTANCE(name, index, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_def", nil]]; \
-    [[name, index], obj, _method, _args, NIL_DEF] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
+    [[name, index], obj, _method, _args, NIL_DEF, _ADDON_PREFX] spawn OOP_OBJ_CLASS_fnc_callClassInstance; \
 } \
 
 
 #define REMOTE_EXEC_OBJINSTANCE(name, index, obj) call { \
     PREFIX_VAR \
     _this params ["_method", ["_args", []], ["_remoteExecParams", false], ["_def", nil]]; \
-    [[[name, index], obj, _method, _args, NIL_DEF], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
+    [[[name, index], obj, _method, _args, NIL_DEF, _ADDON_PREFX], _remoteExecParams] call OOP_OBJ_CLASS_fnc_remoteExecClassInstance; \
 } \
 
 
@@ -107,10 +107,10 @@
 #define SET_SELFSVAR(name) SET_SELFSVART(name, _oopSetVarGlobal)
 #define SET_SELFSVARG(name) SET_SELFVART(name, true)
 
-#define GET_SELFVAR(name) (_self getVariable [STR(DOUBLE(PREFX,name)), name])
+#define GET_SELFVAR(name) (_self getVariable [_ADDON_PREFX + STR(name), name])
 #define SELFVAR(name) name = GET_SELFVAR(name); name
 
-#define IVAR(instance, name, def) private name = instance getVariable [STR(DOUBLE(PREFX,name)), def];
+#define IVAR(instance, name, def) private name = instance getVariable [_ADDON_PREFX + STR(name), def];
 
 
 #define SAVE_VARS _oopSaveVars = true;
