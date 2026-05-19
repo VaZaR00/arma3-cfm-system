@@ -1,6 +1,11 @@
 
-#include "Classes\defines\classDefinesVer1.hpp"
-#include "Classes\defines\classDefines.hpp"
+#include "Classes\classDefinesVer1.hpp"
+#ifdef DEV
+#include "..\..\..\OOP_proj\OOP\includes\classDefines.hpp"
+#endif
+#ifndef DEV
+#include "z\oop_system\addons\oop\includes\classDefines.hpp"
+#endif
 
 
 #define OPTIMIZE_MONITOR_FEED_DIST "20"
