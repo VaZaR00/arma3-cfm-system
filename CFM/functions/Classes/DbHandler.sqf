@@ -90,43 +90,6 @@ CLASS(DbHandler)
 
 		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
 	};
-	CLASS_METHOD("updateIterVariable") {
-		private _res = true;
-		isNil {
-			params["_varname", "_val", ["_global", true], ["_doPublic", false]];
-
-			missionNamespace setVariable [_varname, _NIL(_val)];
-
-			if ((_global isEqualTo false) && !_doPublic) exitWith {};
-
-			private _currentHandler = missionNamespace getVariable ["CFM_serverDbHandlerUpdateVarsHandler", scriptNull];
-
-			private _toUpd = missionNamespace getVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
-			_toUpd set [_varname, [_NIL(_val), _global, _doPublic]];
-			missionNamespace setVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", _toUpd];
-
-			if !(scriptDone _currentHandler) exitWith {};
-
-			CFM_serverDbHandlerUpdateVarsHandler = 0 spawn {
-				uiSleep (missionNamespace getVariable ["CFM_UPD_VARS_WAIT_TIME", 1]);
-				isNil {
-					private _toUpd = missionNamespace getVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
-					{
-						_y params ["_val", "_global", ["_doPublic", false]];
-						if (_doPublic) then {
-							missionNamespace setVariable [_x, _NIL(_val)];
-							publicVariable _x;
-							call (missionNamespace getVariable [_x + "_PublicEH", {}]);
-						} else {
-							missionNamespace setVariable [_x, _NIL(_val), _global];
-						};
-					} forEach _toUpd;
-					missionNamespace setVariable ["CFM_DB_HANDLER_VARS_TO_UPDATE", createHashMap];
-				};
-			};
-		};
-		_res
-	};
 	CLASS_METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
 			
@@ -266,7 +229,7 @@ CLASS(DbHandler)
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
-		publicVariableServer "CFM_makeCamDataSync";
+		[nil, "CFM_makeCamDataSync"] call EFL_fnc_publicVariableServer;
 	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

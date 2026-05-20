@@ -18,5 +18,6 @@ private _localityChanged = false;
 } forEach _localOps;
 
 if (_localityChanged) then {
+    call CFM_fnc_setupLocalActiveOperators;
     call CFM_fnc_operatorsLocalityChangedEvent;
 };

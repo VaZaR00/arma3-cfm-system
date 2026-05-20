@@ -13,12 +13,11 @@ if (isServer) then {
 } else {
 	if (didJIP) then {
 		CFM_makeCamDataSync = true;
-		publicVariableServer "CFM_makeCamDataSync";
+		[nil, "CFM_makeCamDataSync"] call EFL_fnc_publicVariableServer;
 		[clientOwner, {call CFM_fnc_serverSyncVariables}, 2, false, true] call CFM_fnc_remoteExec;
 	};
 };
-CFM_ActiveOperators_PublicEH = {call CFM_fnc_setupLocalActiveOperators};
-"CFM_ActiveOperators" addPublicVariableEventHandler {call CFM_ActiveOperators_PublicEH};
+CFM_ActiveOperators_PublicEH = {[time, "CFM_ActiveOperators"] RLOG; call CFM_fnc_setupLocalActiveOperators};
 
 // default point alignments
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
