@@ -342,7 +342,7 @@ class RscCFM_Mavic_Interface
 		};
 		class DetachGrenade: ctrlControlsGroupNoScrollBars
 		{
-			idc = -1;
+			idc = 552;
 			fade = 1;
 			onLoad = "uiNameSpace setVariable [""DB_DetachGrenade_group"", _this # 0]";
 			x = "0.5 - ( 11 * ( pixelGridNoUIScale * pixelW * 2 )) / 2";

@@ -20,6 +20,7 @@
 ["CFM_canMoveDroneCameraIfUavControlled",  "CHECKBOX",  ["Can intercept move UAV cameras", "Can move UAV cameras via monitor even if drone turret is controlled by other player"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_canHackDrone",  "CHECKBOX",  ["Can hack UAV", "Can hack UAV if using other side monitor"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_canChangeZoomOnDrones",  "CHECKBOX",  ["Can change zoom on UAV", "Can change zoom on UAV"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
+["CFM_Mavic_dropShowMessageEH",  "CHECKBOX",  ["Mavic: Show grenade drop message", "Show grenade drop message for Mavic drones"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 
 [CFM_CATEGORY, "CFM_exitFullScreenKey", ["Exit Fullscreen Mode", "Exit Fullscreen Mode"], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_zoomInKey", ["Zoom In", "Zoom In"], {call CFM_fnc_zoomInKeybind}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
