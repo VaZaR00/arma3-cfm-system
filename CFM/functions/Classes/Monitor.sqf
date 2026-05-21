@@ -190,7 +190,7 @@ OBJCLASS(Monitor)
 
 		private _camera = ["spawnCamera", [_monitor, _monitorR2Tid], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
 
-		if !(IS_OBJ(_camera)) exitWith {
+		if (hasInterface && {!(IS_OBJ(_camera))}) exitWith {
 			_monitor setVariable ["CFM_feedActive", false];
 			_self setVariable ["CFM_menuActive", false];
 			format["ERROR: CAN'T CONNECT TO OPERATOR: CAN'T CREATE CAMERA. Monitor: %1 . RenderTarget: %2", _monitor, _monitorR2Tid] WARN;

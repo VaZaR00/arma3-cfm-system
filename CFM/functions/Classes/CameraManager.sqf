@@ -45,6 +45,7 @@ CLASS(CameraManager)
 		params[["_monitor", objNull], ["_renderTarget", ""]];
 
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {objNull};
+		if !(hasInterface) exitWith {objNull};
 
 		private _cam = ["CreateCamera", [_monitor, _renderTarget], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);
 

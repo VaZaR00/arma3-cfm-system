@@ -21,6 +21,7 @@ if (isServer) then {
 			_this call CFM_fnc_operatorMonitorConnectedEvent;
 		}, _operator, false] call CFM_fnc_remoteExec;
 	} else {
+		_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 		[[_operator, _monitor], {
 			_this call CFM_fnc_operatorMonitorDisconnectedEvent;
 		}, _operator, false] call CFM_fnc_remoteExec;
@@ -35,7 +36,7 @@ if (_isWaiting && _start) exitWith {
 
 _monitor setVariable ["CFM_waitingForStart", _start];
 
-if (_start) then {
+if (_start && {hasInterface}) then {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
 	waitUntil {
 		private _cond = call {

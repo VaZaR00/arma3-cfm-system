@@ -54,6 +54,8 @@ OBJCLASS(DisplayHandler)
 	METHOD("startRendering") {
 		params[["_reset", false], ["_uiParams", []]];
 
+		if (!hasInterface) exitWith {};
+
 		_monitor setVariable ["CFM_uiParams", +_uiParams];
 		private _doUiParams = !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) && {!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}};
 		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
@@ -64,6 +66,7 @@ OBJCLASS(DisplayHandler)
 		};
 	};
 	METHOD("stopRendering") {
+		if (!hasInterface) exitWith {};
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	//----------- UI render version -----------
