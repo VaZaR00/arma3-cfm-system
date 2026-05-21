@@ -694,7 +694,7 @@ OBJCLASS(Operator)
 		private _turretObj = _turretData getOrDefault ["turretObject", _self];
 		if (!(_turretObj isEqualTo _self)) then {
 			CFM_operatorsToUpdate = _self;
-			[nil, "CFM_makeCamDataSync"] call EFL_fnc_publicVariableServer;
+			"CFM_makeCamDataSync" call EFL_fnc_publicVariableServer;
 			[_self, _turretIndex, _turretObj] call CFM_fnc_addActiveTurret;
 		};
 

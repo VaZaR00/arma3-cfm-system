@@ -13,7 +13,7 @@ if (isServer) then {
 } else {
 	if (didJIP) then {
 		CFM_makeCamDataSync = true;
-		[nil, "CFM_makeCamDataSync"] call EFL_fnc_publicVariableServer;
+		"CFM_makeCamDataSync" call EFL_fnc_publicVariableServer;
 		[clientOwner, {call CFM_fnc_serverSyncVariables}, 2, false, true] call CFM_fnc_remoteExec;
 	};
 };

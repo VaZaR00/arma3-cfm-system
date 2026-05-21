@@ -354,7 +354,7 @@ OBJCLASS(Turret)
 
 		if (_self isNotEqualTo _operator) then {
 			CFM_operatorsToUpdate = _operator;
-			[nil, "CFM_operatorsToUpdate"] call EFL_fnc_publicVariableServer;
+			"CFM_operatorsToUpdate" call EFL_fnc_publicVariableServer;
 			[_operator, _turretIndex, _self] call CFM_fnc_addActiveTurret;
 		};
 

@@ -6,4 +6,4 @@
 
 #include "defines.hpp" 
 
-[nil, "CFM_ActiveOperators"] call EFL_fnc_publicVariable;
+"CFM_ActiveOperators" call EFL_fnc_publicVariable;
