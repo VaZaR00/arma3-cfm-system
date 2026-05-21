@@ -17,7 +17,7 @@ if (isServer) then {
 		[clientOwner, {call CFM_fnc_serverSyncVariables}, 2, false, true] call CFM_fnc_remoteExec;
 	};
 };
-CFM_ActiveOperators_PublicEH = {[time, "CFM_ActiveOperators"] RLOG; call CFM_fnc_setupLocalActiveOperators};
+CFM_ActiveOperators_PublicEH = {call CFM_fnc_setupLocalActiveOperators};
 
 // default point alignments
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
