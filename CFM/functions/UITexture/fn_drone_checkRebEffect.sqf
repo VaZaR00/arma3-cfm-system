@@ -18,7 +18,15 @@ if !((_uav getVariable ["REB_uavIsSuppressed", false]) || {
 	};
 	_uav setVariable ["REB_uavActiveRebStrength", _rebStrenght];
 	_rebStrenght > 0
-}) exitWith {false};
+}) exitWith {
+	if (_uav getVariable ["CFM_REB_uavIsSuppressed", false]) then {
+		// turn off effect
+		[1, _ctrlsLayers param [0, controlNull], 0] call CFM_fnc_radioNoiseEffect;
+	};
+	_uav setVariable ["CFM_REB_uavIsSuppressed", false];
+	false
+};
+_uav setVariable ["CFM_REB_uavIsSuppressed", true];
 
 private _signal = (1 - _rebStrenght) / 20;
 
