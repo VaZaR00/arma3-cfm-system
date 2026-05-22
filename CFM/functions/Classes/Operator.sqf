@@ -547,8 +547,7 @@ OBJCLASS(Operator)
 		_turretParams set ["initInterfaceFunc", _initInterfaceFunc];
 
 		// set
-		_turretsParams set [_turretIndex, _turretParams];
-		_self setVariable ["CFM_turretsParams", _turretsParams, SET_VARS_INIT_GLOBAL];
+		[_self, "CFM_turretsParams", _turretIndex, _turretParams, true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
 
 		_turretParams
 	};
@@ -573,8 +572,7 @@ OBJCLASS(Operator)
 
 		if (_setVar) then {
 			_turretParams set ["pointParams", _pointParams];
-			_turretsParams set [_turretIndex, _turretParams];
-			_self setVariable ["CFM_turretsParams", _turretsParams, true];
+			[_self, "CFM_turretsParams", _turretIndex, _turretParams, true, true] call EFL_fnc_hashSetNet;
 		};
 
 		_pointParams
@@ -879,7 +877,7 @@ OBJCLASS(Operator)
 		_turretData set ["currentCamMove", +_currentMove];
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);
-		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
+		[_self, "CFM_turretsParams", _turretIndex, _turretData, true, _targets] call EFL_fnc_hashSetNet;
 
 		private _doInterpolation = _turretData getOrDefault ["doInterpolation", false];
 		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
@@ -1014,10 +1012,9 @@ OBJCLASS(Operator)
 		if !(_done) exitWith {false};
 
 		_turretData set ["currentCamMove", +_currentMove];
-		_turretsParams set [_turretIndex, _turretData];
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(false);
-		_self setVariable ["CFM_turretsParams", _turretsParams, _targets];
+		[_self, "CFM_turretsParams", _turretIndex, _turretData, true, _targets] call EFL_fnc_hashSetNet;
 
 		{
 			_x setVariable ["CFM_currentCameraMoves", +_currentMove, _targets];
