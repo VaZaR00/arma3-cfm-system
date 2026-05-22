@@ -33,6 +33,7 @@ OBJCLASS(Turret)
     FIELD ["_currentCamMove", [0,0,0,0]];
     FIELD ["_monitorsSet", []];
     FIELD ["_hasActiveTurretsObjects", -1];
+    FIELD ["_monitorsOnTurret", []];
 
 	// PP - point params types
 	#define PP_NONE -1
@@ -361,7 +362,7 @@ OBJCLASS(Turret)
 		true
 	};
 	METHOD("moveCamera") {
-		params[["_axisAngles", [0,0], [[]], 2], ["_monitorsOnTurret", []]];
+		params[["_axisAngles", [0,0], [[]], 2]];
 
 		if (_isDroneFeed) exitWith {
 			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
@@ -465,7 +466,7 @@ OBJCLASS(Turret)
 		true
 	};
 	METHOD("moveDroneCamera") {
-		params[["_axisAngles", [0,0], [[]], 2], ["_monitorsOnTurret", []]];
+		params[["_axisAngles", [0,0], [[]], 2]];
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
@@ -582,5 +583,24 @@ OBJCLASS(Turret)
 		} forEach _monitorsOnTurret;
 
 		true
+	};
+	METHOD("addMonitor") {
+		params[["_monitor", objNull]];
+
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+
+		private _res = _monitorsOnTurret pushBackUnique _monitor;
+		SET_SELFVARG(_monitorsOnTurret);
+		
+		_res
+	};
+	METHOD("removeMonitor") {
+		params[["_monitor", objNull]];
+
+		_monitorsOnTurret = _monitorsOnTurret - [_monitor];
+
+		SET_SELFVARG(_monitorsOnTurret);
+
+		true	
 	};
 OBJCLASS_END
