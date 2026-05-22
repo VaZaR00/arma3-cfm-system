@@ -8,7 +8,7 @@ OBJCLASS(Monitor)
 	SET_SELF_VAR("_monitor");
 
 	FIELD ["_radius", ACTION_RADIUS];
-	FIELD ["_monitorSides", [side PLAYER_]];
+	FIELD ["_monitorSides", []];
 	FIELD ["_turnedOffLocal", false];
 	FIELD ["_originalTexture", ""];
 	FIELD ["_menuActive", false];

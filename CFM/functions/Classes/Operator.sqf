@@ -801,7 +801,6 @@ OBJCLASS(Operator)
 
 				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
 				_turretData set ["pointParams", _pointParams];
-				_turretsParams set [_turretIndex, _turretData];
 				
 				true
 			};
@@ -816,7 +815,6 @@ OBJCLASS(Operator)
 
 				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
 				_turretData set ["pointParams", _pointParams];
-				_turretsParams set [_turretIndex, _turretData];
 				
 				true
 			};
@@ -860,7 +858,6 @@ OBJCLASS(Operator)
 
 				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _dir, _up, _setArr]] call CFM_fnc_validatePointParams;
 				_turretData set ["pointParams", _pointParams];
-				_turretsParams set [_turretIndex, _turretData];
 
 				true
 			};
