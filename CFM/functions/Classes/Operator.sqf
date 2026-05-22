@@ -647,8 +647,6 @@ OBJCLASS(Operator)
 			_turretObj = _self;
 		};
 		_cameraMoveRestrictions resize [4, 180];
-		_turretsParams set [_turretIndex, _turretData];
-		_self setVariable ["CFM_turretsParams", _turretsParams];
 
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObj, _global];
