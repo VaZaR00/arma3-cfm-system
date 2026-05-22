@@ -1,21 +1,3 @@
-#define NEW_OBJINSTANCE_GLOBAL(name, global) call { \
-	if (isNil "_this") exitWith {objNull}; \
-	if !(_this isEqualType []) then {_this = [_this]}; \
-	_this params [["_self", objNull], ["_args", []], ["_def", nil]]; \
-	if !(IS_OBJ(_self)) exitWith {objNull}; \
-	private _classFuncExists = CLASSNAME_EXISTS_STR(name); \
-	if !(_classFuncExists select 0) exitWith {objNull}; \
-	private _classFunc = _classFuncExists select 1; \
-	private _ooClassname = _CLASSNAMESTR(name); \
-	SET_THIS_OBJINSTANCE_GLOBAL(name, _self, _classFunc, global) \
-	private _objClasses = _self getVariable ["OOP_this_classes", []];\
-	_objClasses pushBackUnique _ooClassname; \
-	_self setVariable ["OOP_this_classes", _objClasses, global]; \
-	private _ooInitResult = ["Init", _args, _self, _self] call _classFunc; \
-	if (isNil "_ooInitResult") then {NILDEF(_def, _self)} else {_ooInitResult}; \
-};
-#define NEW_OBJINSTANCE(name) NEW_OBJINSTANCE_GLOBAL(name, false)
-#define SPAWN_NEW_OBJINSTANCE(name) call {[_this, name] spawn {params[["_this", []], ["_name", ""]]; _this NEW_OBJINSTANCE_GLOBAL(_name, false)};};
 #define NEW_INSTANCE(name) call {["Init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
 #define CLASSNAME_EXISTS(name) (call { \
 	private _classFunc = (missionNamespace getVariable [STR(name), {}]) \
@@ -39,17 +21,9 @@
 
 #define METHODS switch (_method) do {
 
-#define SET_SELF_VAR(name) private name = _self;
-
 #define CLASS_MIDDLEWARE private _ooLastVar = 0; \
 private _ooLastVarDef = 0; \
 private _ooAllVars = createHashMap; \
-
-#define OBJCLASS(name) _CLASSNAME(name) = {\
-	params[["_method", "Init"], ["_args", []], ["_self", if !(isNil '_self') then {_self} else {objNull}]];\
-	private _this = _args; \
-	private _ooClassname = STR(_CLASSNAME(name)); \
-	CLASS_MIDDLEWARE \
 
 #define CLASS(name) _CLASSNAME(name) = {\
 	params[["_method", "Init"], ["_args", []], ["_self", STR(_CLASSNAME(name))]];\

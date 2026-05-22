@@ -42,7 +42,7 @@ OBJCLASS(Monitor)
 	FIELD ["_currentPiPEffect", 0];
 	FIELD ["_isInNvg", false];
 	FIELD ["_currentTiTable", createHashMap];
-	FIELD ["_currentNvgTable", createHashMap];
+	FIELD ["_currentNvgParam", createHashMap];
 	FIELD ["_zoom", 1, ["", 1]];
 	FIELD ["_zoomFov", 1, ["", 1]];
 	FIELD ["_zoomMax", 1];
@@ -255,7 +255,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentOpHasTurrets", nil];
 		_monitor setVariable ["CFM_cameraType", nil];
 		_monitor setVariable ["CFM_currentTiTable", nil];
-		_monitor setVariable ["CFM_currentNvgTable", nil];
+		_monitor setVariable ["CFM_currentNvgParam", nil];
 		_monitor setVariable ["CFM_currentTurret", nil];
 		_monitor setVariable ["CFM_currentPiPEffect", nil];
 		_monitor setVariable ["CFM_currentFeedCam", nil];

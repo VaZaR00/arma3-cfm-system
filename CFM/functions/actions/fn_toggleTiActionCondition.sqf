@@ -14,10 +14,7 @@ IS_MONITOR_ON
 		!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
 			(
 				!(
-					(
-						(_target getVariable ['CFM_currentTiTable', createHashMap]) getOrDefault
-						[((_target getVariable ['CFM_currentTurret', [-1]])#0), []]
-					) isEqualTo []
+					(_target getVariable ['CFM_currentTiTable', []]) isEqualTo []
 				)
 			)
 		}

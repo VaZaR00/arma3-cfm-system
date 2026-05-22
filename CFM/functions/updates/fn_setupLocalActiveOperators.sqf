@@ -10,13 +10,16 @@ private _activeOperators = missionNamespace getVariable ["CFM_ActiveOperators", 
 CFM_LocalActiveOperators = _activeOperators select {
 	(local _x) && {
 		private _hasTurrLocal = false;
-		private _turretsParams = _x getVariable "CFM_turretsParams";
-		if (isNil "_turretsParams" || {!(_turretsParams isEqualType createHashMap)}) exitWith {false};
+		private _turretsInstances = _x getVariable "CFM_turretsInstances";
+		if (isNil "_turretsInstances" || {!(_turretsInstances isEqualType createHashMap)}) exitWith {false};
+		private _isLocal = false;
 		{
-			if (_y getOrDefault ["IsTurretLocal", false]) exitWith {
+			_x params ["_id", "_obj"];
+			IVAR_S(_obj, "Turret", _isLocal, false);
+			if (_isLocal) exitWith {
 				_hasTurrLocal = true;
 			};
-		} forEach _turretsParams;
+		} forEach _turretsInstances;
 		_hasTurrLocal
 	}
 };

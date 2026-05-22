@@ -2,11 +2,6 @@
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
 
-#define TURRET_INSTANCE(index) (_turretsInstances getOrDefault [index, [-1, objNull]])
-#define TURRET_INSTANCE_ID(index) ((TURRET_INSTANCE(index))#0)
-#define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index))#1)
-#define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx); CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};
-
 OBJCLASS(Operator)
 
 	IS_SINGLETON
@@ -43,13 +38,6 @@ OBJCLASS(Operator)
 	FIELD ["_hasActiveTurretsObjects", -1];
 	FIELD ["_activeTurretsObjects", createHashMap];
 
-	/*
-		_turretsParams: [[turretIndex, [turretName, turretObject, isLocal, pointParams, initialDirUp, zoomTable, nvgTable, tiTable, isGopro, camPosFunc, doInterpolation, currentCamMove, ppType, cameraMoveRestrictions]]]
-		_pointParams: 
-			- for CFM_fnc_camPosVehTurret: [_memPoint, [_addArr, [_dir, _up], _setArr]]
-			- for CFM_fnc_camPosVehStatic: [_pos, [_dir, _up]]
-			- for CFM_fnc_camPosStatic: [_pos, _dir, _up]
-	*/
 
 	// PP - point params types
 	#define PP_NONE -1
@@ -276,7 +264,7 @@ OBJCLASS(Operator)
 			_self call CFM_fnc_checkOperatorTurrets;
 		};
 
-		_turretsParams
+		_turretsInstances
 	};
 	METHOD("setTurretParams") {
 		params [
@@ -294,9 +282,11 @@ OBJCLASS(Operator)
 		};
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_self, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
-		private _turretInstanceId = TURRET_INSTANCE(_turretIndex);
+		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
 		if (_turretInstanceId < 0) then {
-			_turretInstanceId = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true))#0;
+			_turretInstance = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true));
+			_turretInstanceId = _turretInstance param [0, -1];
+			if !(_turretInstanceId isEqualType 1) then {_turretInstanceId = -1};
 		} else {
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
@@ -442,10 +432,7 @@ OBJCLASS(Operator)
 	METHOD("getOperatorName") {
 		params[["_turret", -1]];
 
-		private _turrIndex = TURRET_INDEX(_turret);
-		private _turretData = _turretsParams get _turrIndex;
-		if (isNil "_turretData") exitWith {_operatorName};
-		private _turretName = _turretData getOrDefault ["turretName", ""];
+		private _turretName = CALL_TURRET_INSTANCE(_turret);
 		if (isNil "_turretName") exitWith {_operatorName};
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName

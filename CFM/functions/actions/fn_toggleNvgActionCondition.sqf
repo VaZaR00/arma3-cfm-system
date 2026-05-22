@@ -13,8 +13,7 @@ IS_MONITOR_ON
 	(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
 		!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
 			(
-				(_target getVariable ['CFM_currentNvgTable', createHashMap]) getOrDefault
-				[((_target getVariable ['CFM_currentTurret', [-1]])#0), false]
+				(_target getVariable ['CFM_currentNvgParam', false])
 			)
 		}
 	}

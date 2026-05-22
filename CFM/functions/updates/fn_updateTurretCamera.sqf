@@ -23,21 +23,21 @@ if (isMultiplayer && {_useCooldown && {
 	(diag_tickTime - _prevTimeSet) < SET_LOCAL_CAM_VECTORS_TIMEOUT;
 }}) exitWith {2};
 
-private _turretsParams = _operator getVariable ["CFM_turretsParams", createHashMap];
+private _turretsInstances = _operator getVariable ["CFM_turretsInstances", createHashMap];
 
-if !(_turretIndex in _turretsParams) exitWith {3};
+if !(_turretIndex in _turretsInstances) exitWith {3};
 
-private _turretData = _turretsParams getOrDefault [_turretIndex, createHashMap];
+private _turretData = _turretsInstances getOrDefault [_turretIndex, []];
+_turretData params [["_instanceId", -1], ["_turretObject", objNull]];
 
-if (_onlyIfTurrLocal && {!(_turretData getOrDefault ["IsTurretLocal", false])}) exitWith {4};
+if (_onlyIfTurrLocal && {!(TURRET_VAR(_isLocal, false))}) exitWith {4};
 
 private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
 private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
 // private _posVarName = "CFM_currentTurretPosMS" + str _turretIndex;
-private _camPosFunc = _turretData getOrDefault ["camPosFunc", CAM_POS_FUNC_DEF];
-private _pointParams = _turretData getOrDefault ["pointParams", []];
-private _turretObj = _turretData getOrDefault ["turretObject", _operator];
-private _posVDUp = [objNull, [_operator, _turretObj, [_turretIndex], true, _pointParams, nil, objNull, false, false, false, false], _camPosFunc] call CFM_fnc_updateCamera;
+private _camPosFunc = TURRET_VAR(_camPosFunc, CAM_POS_FUNC_DEF);
+private _pointParams = TURRET_VAR(_pointParams, []);
+private _posVDUp = [objNull, [_operator, _turretObject, [_turretIndex], true, _pointParams, nil, objNull, false, false, false, false], _camPosFunc] call CFM_fnc_updateCamera;
 _posVDUp params [["_pos", NULL_VECTOR], ["_vdup", []]];
 _vdup params [["_dir", DEF_DIR], ["_up", DEF_UP]];
 private _prevDir = _operator getVariable [_dirVarName, []];

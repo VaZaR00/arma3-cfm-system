@@ -1,6 +1,7 @@
 OBJCLASS(Turret)
 
     SET_SELF_VAR("_turret");
+    SET_VARS_PREFIX("_turret");
 
     FIELD ["_operator", objNull];
     FIELD ["_objClass", ""];
@@ -8,6 +9,7 @@ OBJCLASS(Turret)
 	FIELD ["_isMavic", false];	
 	FIELD ["_isFPV", false];
 	FIELD ["_hasGoPro", false];
+	FIELD ["_isStaticCam", false];
 	FIELD ["_classType", ""];
     FIELD ["_turretObject", objNull];
     FIELD ["_turretIndex", -1];
@@ -62,14 +64,16 @@ OBJCLASS(Turret)
 
 		SAVE_VARS
 
-		IVAR(_operator, _isFPV, false);
-		IVAR(_operator, _isMavic, false);
-		IVAR(_operator, _hasGoPro, false);
-		IVAR(_operator, _objClass, "");
-		IVAR(_operator, _classType, "");
-		PR_IVAR(_operator, _cameraZoomSmoothDefault, true);
-		PR_IVAR(_operator, _canMoveCameraByDefault, false);
-		PR_IVAR(_operator, _cameraMoveRestrictionsByDefault, []);
+		IVAR_S(_operator, "Operator", _isFPV, false);
+		IVAR_S(_operator, "Operator", _isMavic, false);
+		IVAR_S(_operator, "Operator", _hasGoPro, false);
+		IVAR_S(_operator, "Operator", _isDroneFeed, false);
+		IVAR_S(_operator, "Operator", _isStaticCam, false);
+		IVAR_S(_operator, "Operator", _objClass, "");
+		IVAR_S(_operator, "Operator", _classType, "");
+		PR_IVAR_S(_operator, "Operator", _cameraZoomSmoothDefault, true);
+		PR_IVAR_S(_operator, "Operator", _canMoveCameraByDefault, false);
+		PR_IVAR_S(_operator, "Operator", _cameraMoveRestrictionsByDefault, []);
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -226,7 +230,6 @@ OBJCLASS(Turret)
 			["setPointParams", [_pointParams]] CALL_OBJCLASS("Turret", _self);
 		};
 
-
 		// CAN MOVE CAMERA
 		private _moveParams = if (_canMoveCamera isEqualTo -1) then {
 			[_canMoveCameraByDefault, +_cameraMoveRestrictionsByDefault]
@@ -249,7 +252,7 @@ OBJCLASS(Turret)
 		};
 
 		// interface
-		_interfaceData params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
+		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData) params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
 		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
 			_interfaceClass = _interfaceClassDef;
 		};
@@ -260,7 +263,7 @@ OBJCLASS(Turret)
 			_initInterfaceFunc = _initInterfaceFuncDef;
 		};
 		// signal func
-		_effectAndSignalFuncsDef params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
+		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineSignalEffectFunc) params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
 		if ((_signalFunc isEqualTo -1) || {!IS_FUNC(_signalFunc) || {!(call {
 			private _signalFunc = missionspace getVariable [_signalFunc, {}];
 			private _testFuncRes = [player, _operator] call _signalFunc;
@@ -288,6 +291,7 @@ OBJCLASS(Turret)
 		if !(IS_FUNC(_initInterfaceFunc)) then {
 			_initInterfaceFunc = {};
 		};
+		true
 	};
     METHOD("setPointParams") {
 		params[["_params", []]];
@@ -308,14 +312,8 @@ OBJCLASS(Turret)
 	METHOD("TurretChanged") {
 		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
-		private _turretIndex = if (_turret isEqualType []) then {_turret#0} else {_turret};
-
-		if !(_turretIndex isEqualType 1) exitWith {false};
-
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
-
-		_cameraMoveRestrictions resize [4, 180];
 
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObject, _global];
@@ -324,8 +322,8 @@ OBJCLASS(Turret)
 		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
 		_monitor setVariable ["CFM_turretLocal", _isLocal, _global];
 		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
-		_monitor setVariable ["CFM_currentTiTable", _tiTable, _global];
-		_monitor setVariable ["CFM_currentNvgTable", _nvgTable, _global];
+		_monitor setVariable ["CFM_currentTiTable", _tiParams, _global];
+		_monitor setVariable ["CFM_currentNvgParam", _nvgParam, _global];
 		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 		_monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
@@ -602,5 +600,8 @@ OBJCLASS(Turret)
 		SET_SELFVARG(_monitorsOnTurret);
 
 		true	
+	};
+	METHOD("getTurretName") {
+		_turretName
 	};
 OBJCLASS_END

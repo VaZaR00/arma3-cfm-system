@@ -37,9 +37,6 @@ if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
 	_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 	private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
 	_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, _targets];
-	// TURRET PARAMS
-	private _turretsParams = _operator getVariable ["CFM_turretsParams", createHashMap];
-	_operator setVariable ["CFM_turretsParams", _turretsParams, _targets];
 } forEach _updOps;
 missionNamespace setVariable ["CFM_operatorsToUpdate", []];
 _updOps

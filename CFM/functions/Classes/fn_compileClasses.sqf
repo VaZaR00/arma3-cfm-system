@@ -5,3 +5,4 @@
 #include "Monitor.sqf" 
 #include "Operator.sqf" 
 #include "DisplayHandler.sqf" 
+#include "Turret.sqf" 
