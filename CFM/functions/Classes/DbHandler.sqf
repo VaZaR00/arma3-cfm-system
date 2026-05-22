@@ -229,7 +229,7 @@ CLASS(DbHandler)
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
-		"CFM_makeCamDataSync" call EFL_fnc_publicVariableServer;
+		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
 	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

@@ -6,13 +6,14 @@
 
 #include "defines.hpp" 
 
+params[["_targets", MONITOR_VIEWERS_AND_SELF(false)]];
+
 private _updOps = missionNamespace getVariable ["CFM_operatorsToUpdate", []];
 if !(_updOps isEqualType []) then {_updOps = [_updOps]};
 if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
 	_updOps = _updOps + (+(missionNamespace getVariable ["CFM_Operators", []]));
 	missionNamespace setVariable ["CFM_makeCamDataSync", false];
 };
-private _targets = MONITOR_VIEWERS_AND_SELF(false);
 {
 	private _operator = _x;
 	if !(IS_OBJ(_operator)) then {continue};
