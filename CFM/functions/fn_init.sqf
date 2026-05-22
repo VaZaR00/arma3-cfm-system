@@ -1,7 +1,6 @@
 #include "defines.hpp"
 
 CFM_updateEachFrame = true;
-CFM_useR2Tsystem = false;
 
 if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;
