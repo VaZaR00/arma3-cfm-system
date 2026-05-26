@@ -381,9 +381,16 @@ OBJCLASS(Operator)
 		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
 	METHOD("checkIfFeedsToAnyMonitor") {
-		private _monitorsOnTurretsArray = values _monitorsSet;
-		private _activeTurrets = {!(_x isEqualTo [])} count _monitorsOnTurretsArray;
-		_activeTurrets > 0
+		private _feeds = false;
+		{
+			_x params [["_turretInstanceId", -1], ["_turretObject", objNull]];
+			private _monitorsSet = TURRET_VAR(_monitorsSet, []);
+			if (count _monitorsSet > 0) exitWith {
+				_feeds = true;
+				break;
+			};
+		} forEach _turretsInstances;
+		_feeds
 	};
 	METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];

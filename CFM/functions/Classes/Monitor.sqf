@@ -239,12 +239,14 @@ OBJCLASS(Monitor)
 			closeDialog 1;
 			call CFM_fnc_onTempDisplayUnload;
 		};
-		["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
-		_self setVariable ['CFM_actionCaller', nil];
+		if !(_reset) then {
+			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+			_self setVariable ['CFM_actionCaller', nil];
+			["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+			["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
+		};
 		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
-		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
-		["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
-		["stopRendering"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["stopRendering", [!_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 		};

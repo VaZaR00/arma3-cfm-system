@@ -66,12 +66,16 @@ OBJCLASS(DisplayHandler)
 		};
 	};
 	METHOD("stopRendering") {
+		params[["_clearMonitorVars", true]];
+
 		if (!hasInterface) exitWith {};
 		if (_currentFeedIsDisplay) then {
-			["stopRenderingUI"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["stopRenderingUI", [_clearMonitorVars]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+			if (_clearMonitorVars) then {
+				["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+			};
 		};
 	};
 	METHOD("clearVariables") {
@@ -205,6 +209,8 @@ OBJCLASS(DisplayHandler)
 		};
 	};
 	METHOD("stopRenderingUI") {
+		params[["_clearMonitorVars", true]];
+
 		/*
 			VERSION FOR EMBEDED UI DISPLAYS
 
@@ -220,7 +226,9 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay closeDisplay 1;
 		waitUntil {isNull (_mainDisplay)};
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		if (_clearMonitorVars) then {
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		};
 	};
 	METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;
@@ -375,7 +383,7 @@ OBJCLASS(DisplayHandler)
 			if (_on) then {
 				["startRendering", [false, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			} else {
-				["stopRendering"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["stopRendering", [false]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			};
 		};
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];
