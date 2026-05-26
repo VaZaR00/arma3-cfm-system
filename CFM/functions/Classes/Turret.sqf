@@ -63,6 +63,7 @@ OBJCLASS(Turret)
 		] NP_PARAMS;
 
 		SAVE_VARS
+		GLOBAL_SETTER
 
 		SIVAR_S(_operator,"Operator",_isFPV,false);
 		SIVAR_S(_operator,"Operator",_isMavic,false);
@@ -304,7 +305,7 @@ OBJCLASS(Turret)
 
 		_pointParams = [_ppType, _pointParams, _params] call CFM_fnc_validatePointParams;
 
-		SAVE_VAR(_pointParams);
+		SET_SELFVARG(_pointParams);
 
 		_pointParams
     };
@@ -465,6 +466,9 @@ OBJCLASS(Turret)
 			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
 		} forEach _monitorsOnTurret;
 
+		SET_SELFVARG(_currentCameraMoves);
+		SET_SELFVARG(_pointParams);
+
 		true
 	};
 	METHOD("moveDroneCamera") {
@@ -585,6 +589,8 @@ OBJCLASS(Turret)
 			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
 		} forEach _monitorsOnTurret;
 
+		SET_SELFVARG(_currentCameraMoves);
+		
 		true
 	};
 	METHOD("addMonitor") {
