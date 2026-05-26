@@ -285,16 +285,13 @@ OBJCLASS(Operator)
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
 		if (_turretInstanceId < 0) then {
 			_turretInstance = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true));
-			["NEW TURR", _self, _turretIndex, _turretInstance] RLOG
 			_turretInstanceId = _turretInstance param [0, -1];
 			if !(_turretInstanceId isEqualType 1) then {_turretInstanceId = -1};
 		} else {
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
 		if (_turretInstanceId < 0) exitWith {};
-		["NEW TURR 1", _self, _turretIndex, _turretsInstances] RLOG
 		[_self, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject], true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
-		["NEW TURR 2", _self, _turretIndex, _turretsInstances, _self getVariable ["CFM_turretsInstances", []]] RLOG
 	};
 	METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];

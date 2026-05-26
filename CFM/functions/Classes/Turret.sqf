@@ -74,7 +74,6 @@ OBJCLASS(Turret)
 		PR_SIVAR_S(_operator,"Operator",_cameraZoomSmoothDefault,true);
 		PR_SIVAR_S(_operator,"Operator",_canMoveCameraByDefault,false);
 		PR_SIVAR_S(_operator,"Operator",_cameraMoveRestrictionsByDefault,[]);
-		["SIVAR_S", "_isFPV, _isMavic, _hasGoPro, _isDroneFeed, _isStaticCam, _objClass, _classType, _cameraZoomSmoothDefault, _canMoveCameraByDefault, _cameraMoveRestrictionsByDefault"] RLOG_VARS
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -255,7 +254,6 @@ OBJCLASS(Turret)
 
 		// interface
 		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData) params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
-		["INIT TURR: INTEFACE", ([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData)] RLOG
 		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
 			_interfaceClass = _interfaceClassDef;
 		};
@@ -267,7 +265,6 @@ OBJCLASS(Turret)
 		};
 		// signal func
 		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineSignalEffectFunc) params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
-		["INIT TURR: SIGNAL",([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineSignalEffectFunc)] RLOG
 		if ((_signalFunc isEqualTo -1) || {!IS_FUNC(_signalFunc) || {!(call {
 			private _signalFuncTest = missionNamespace getVariable [_signalFunc, {}];
 			private _testFuncRes = [player, _operator] call _signalFuncTest;
@@ -296,9 +293,6 @@ OBJCLASS(Turret)
 		if !(IS_FUNC(_initInterfaceFunc)) then {
 			_initInterfaceFunc = {};
 		};
-		["INIT TUR", "_self, _turretObject, _turretIndex, _zoomTable, _isLocal, 
-		_pointParams, _tiParams, _nvgParam, _isStaticCam, _canMoveCamera, _currentCameraMoves, _cameraMoveRestrictions, _smoothZoom,
-		 _camPosFunc"] RLOG_VARS
 		true
 	};
     METHOD("setPointParams") {
@@ -342,7 +336,6 @@ OBJCLASS(Turret)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
-		["TURR CHANGED", "_self, _monitor, _turretObject, _turretIndex, _zoomMax, _zoomTable, _isLocal, _pointParams, _tiParams, _nvgParam, _isStaticCam, _canMoveCamera, _currentCameraMoves, _cameraMoveRestrictions, _smoothZoom, _camPosFunc"] RLOG_VARS
 		[_monitor, true] call CFM_fnc_setOperatorInfo;
 
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
@@ -350,7 +343,6 @@ OBJCLASS(Turret)
 		private _uiParams = if (IS_STR(_interfaceClass)) then {
 			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
 		} else {[]};
-		["START RENDER FROM TURR CHNG", _interfaceClass, _uiParams] RLOG
 		["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
 
 		true
