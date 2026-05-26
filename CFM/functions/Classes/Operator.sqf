@@ -285,20 +285,23 @@ OBJCLASS(Operator)
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
 		if (_turretInstanceId < 0) then {
 			_turretInstance = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true));
+			["NEW TURR", _self, _turretIndex, _turretInstance] RLOG
 			_turretInstanceId = _turretInstance param [0, -1];
 			if !(_turretInstanceId isEqualType 1) then {_turretInstanceId = -1};
 		} else {
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
 		if (_turretInstanceId < 0) exitWith {};
-		[_self, "CFM_turretsInstances", _turretIndex, [_instanceId, _turretObject], true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
+		["NEW TURR 1", _self, _turretIndex, _turretsInstances] RLOG
+		[_self, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject], true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
+		["NEW TURR 2", _self, _turretIndex, _turretsInstances, _self getVariable ["CFM_turretsInstances", []]] RLOG
 	};
 	METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
-		["setPointParams", [_params]] CALL_OBJINSTANCE("Turret", TURRET_INSTANCE(_turretIndex), _turretObject);
+		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
 	METHOD("setDefaultPointAlignment") {
 		{
@@ -348,7 +351,7 @@ OBJCLASS(Operator)
 	METHOD("TurretChangedLocalOperator") {
 		params["_monitor", ["_turret", [-1]]];
 
-		["TurretChanged", _monitor] CALL_TURRET_INSTANCE(_turret);
+		["TurretChangedLocalOperator", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
 	METHOD("NextTurret") {
 		params["_monitor", ["_currentTurret", [-1]]];
@@ -432,7 +435,7 @@ OBJCLASS(Operator)
 	METHOD("getOperatorName") {
 		params[["_turret", -1]];
 
-		private _turretName = CALL_TURRET_INSTANCE(_turret);
+		private _turretName = ["getTurretName"] CALL_TURRET_INSTANCE(_turret);
 		if (isNil "_turretName") exitWith {_operatorName};
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName

@@ -15,7 +15,7 @@ CFM_LocalActiveOperators = _activeOperators select {
 		private _isLocal = false;
 		{
 			_x params ["_id", "_obj"];
-			IVAR_S(_obj, "Turret", _isLocal, false);
+			SIVAR_S(_obj,"Turret",_isLocal,false);
 			if (_isLocal) exitWith {
 				_hasTurrLocal = true;
 			};

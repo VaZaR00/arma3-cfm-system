@@ -92,8 +92,8 @@
 #define SIGNAL_LOST 0
 
 
-#define TURRET_VAR(name, def) (IVAR(_turretObject, "Turret", name, def))
+#define TURRET_VAR(name, def) (IVAR(_turretObject,"Turret",name,_turretInstanceId,def))
 #define TURRET_INSTANCE(index) (_turretsInstances getOrDefault [index, [-1, objNull]])
 #define TURRET_INSTANCE_ID(index) ((TURRET_INSTANCE(index)) select 0)
 #define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index)) select 1)
-#define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx); CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};
+#define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx);["CALL_TURRET_INSTANCE", _self, _turrIdx, _turrInst, _this] RLOG; _this CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};

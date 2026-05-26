@@ -28,7 +28,7 @@ private _turretsInstances = _operator getVariable ["CFM_turretsInstances", creat
 if !(_turretIndex in _turretsInstances) exitWith {3};
 
 private _turretData = _turretsInstances getOrDefault [_turretIndex, []];
-_turretData params [["_instanceId", -1], ["_turretObject", objNull]];
+_turretData params [["_turretInstanceId", -1], ["_turretObject", objNull]];
 
 if (_onlyIfTurrLocal && {!(TURRET_VAR(_isLocal, false))}) exitWith {4};
 
