@@ -164,10 +164,10 @@ OBJCLASS(Operator)
 				};
 				// NVG
 				call {
-					private _nvgForDriver = _tiTable get _turrIndex;
+					private _nvgForDriver = _nvgTable get _turrIndex;
 					if (isNil "_nvgForDriver") exitWith {};
 					if (_nvgForDriver isEqualTo true) exitWith {};
-					private _nvgForGunner = _tiTable get 0;
+					private _nvgForGunner = _nvgTable get 0;
 					if (isNil "_nvgForGunner") exitWith {};
 					if (_nvgForDriver isEqualTo false) exitWith {};
 					_nvgForGunner = +_nvgForGunner;
@@ -514,7 +514,7 @@ OBJCLASS(Operator)
 		// signal func
 		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineSignalEffectFunc) params [["_signalFuncDef", {}], ["_effectFuncDef", ""]];
 		if ((_signalFunc isEqualTo -1) || {!IS_FUNC(_signalFunc) || {!(call {
-			private _signalFunc = missionspace getVariable [_signalFunc, {}];
+			private _signalFunc = missionNamespace getVariable [_signalFunc, {}];
 			private _testFuncRes = [player, _operator] call _signalFunc;
 			if (isNil "_testFuncRes") exitWith {false};
 			_testFuncRes isEqualType 1
@@ -945,7 +945,7 @@ OBJCLASS(Operator)
 		private _done = if (_isGunnerTurret) then {
 			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newDir = _newDirUp param [0, _dir];
-			private _newUp = _newDirUp param [0, _up];
+			private _newUp = _newDirUp param [1, _up];
 			private _lockPos = (_self modelToWorldVisualWorld (vectorNormalized _newDir));
 			private _prevCamLook = [_self, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
