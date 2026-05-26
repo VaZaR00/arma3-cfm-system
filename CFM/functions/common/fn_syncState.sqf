@@ -51,7 +51,7 @@ if (_start && {hasInterface}) then {
 			};
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
 			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
-			_optimizeDistance = call compile _optimizeDistance;
+			_optimizeDistance = parseNumber _optimizeDistance;
 			if (_optimizeDistance <= 0) exitWith {true};
 			private _dist = _monitor distance PLAYER_;
 			private _isClose = _dist < _optimizeDistance;

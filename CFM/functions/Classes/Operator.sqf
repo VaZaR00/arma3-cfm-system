@@ -157,10 +157,10 @@ OBJCLASS(Operator)
 				};
 				// NVG
 				call {
-					private _nvgForDriver = _tiTable get _turrIndex;
+					private _nvgForDriver = _nvgTable get _turrIndex;
 					if (isNil "_nvgForDriver") exitWith {};
 					if (_nvgForDriver isEqualTo true) exitWith {};
-					private _nvgForGunner = _tiTable get 0;
+					private _nvgForGunner = _nvgTable get 0;
 					if (isNil "_nvgForGunner") exitWith {};
 					if (_nvgForDriver isEqualTo false) exitWith {};
 					_nvgForGunner = +_nvgForGunner;

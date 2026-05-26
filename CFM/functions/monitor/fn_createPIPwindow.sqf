@@ -30,7 +30,7 @@ _settings = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then 
     };
     _pipSettings
 };
-private _settingsCompiled = call compile _settings;
+private _settingsCompiled = parseSimpleArray _settings;
 if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])}) then {
 	_settingsCompiled = DEFAULT_PIP_SETTINGS;
 };

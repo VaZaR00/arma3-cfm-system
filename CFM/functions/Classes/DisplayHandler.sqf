@@ -67,7 +67,23 @@ OBJCLASS(DisplayHandler)
 	};
 	METHOD("stopRendering") {
 		if (!hasInterface) exitWith {};
-		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		if (_currentFeedIsDisplay) then {
+			["stopRenderingUI"] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+		} else {
+			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		};
+	};
+	METHOD("clearVariables") {
+		_monitor setVariable ["CFM_mainDisplay", nil];
+		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
+		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
+		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
+		_monitor setVariable ["CFM_effectsLayersControls", nil];
+		_monitor setVariable ["CFM_uiParams", nil];
+		_monitor setVariable ["CFM_currentUiClasname", nil];
+		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
 	};
 	//----------- UI render version -----------
 	METHOD("setupDisplay") {
@@ -189,14 +205,22 @@ OBJCLASS(DisplayHandler)
 		};
 	};
 	METHOD("stopRenderingUI") {
-		["setRenderR2TDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["setRenderInterfaceDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["resetRenderEffects"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["setRenderUpLayer", true] CALL_OBJCLASS("DisplayHandler", _monitor);
+		/*
+			VERSION FOR EMBEDED UI DISPLAYS
 
-		uiSleep WAIT_BEFORE_DISPLAY_UPD;
+			// ["setRenderR2TDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// ["setRenderInterfaceDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// ["resetRenderEffects"] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// ["setRenderUpLayer", true] CALL_OBJCLASS("DisplayHandler", _monitor);
 
-		["updateDisplays"] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// uiSleep WAIT_BEFORE_DISPLAY_UPD;
+
+			// ["updateDisplays"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		*/
+		_mainDisplay closeDisplay 1;
+		waitUntil {isNull (_mainDisplay)};
+		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 	};
 	METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;

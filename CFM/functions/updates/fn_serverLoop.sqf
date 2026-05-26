@@ -25,7 +25,7 @@ if (isNil "CFM_SERVER_CHECK_FOR_NEW_OPERATORS_EC_EH_id") then {
 };
 
 while {missionNamespace getVariable ["CFM_doServerLoop", true]} do {
+	uiSleep (missionNamespace getVariable ["CFM_CHECK_OP_COND_FREQ", CHECK_OP_COND_FREQ]);
 	if (missionNamespace getVariable ["CFM_stopServerLoop", false]) then {continue};
 	call CFM_fnc_checkupAllActiveOperators;
-	uiSleep (missionNamespace getVariable ["CFM_CHECK_OP_COND_FREQ", CHECK_OP_COND_FREQ]);
 };

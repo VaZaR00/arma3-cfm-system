@@ -241,13 +241,13 @@ OBJCLASS(Monitor)
 		};
 		["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
 		_self setVariable ['CFM_actionCaller', nil];
-		if !(_reset) then {
-			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-		};
 		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
 		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
 		["stopRendering"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		if !(_reset) then {
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		};
 	};
 	METHOD("clearVariables") {
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
@@ -284,15 +284,6 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
 		_monitor setVariable ["CFM_doUpdateCamera", nil];
 		_monitor setVariable ["CFM_cam_prevSetPos", nil];
-		_monitor setVariable ["CFM_mainDisplay", nil];
-		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
-		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
-		_monitor setVariable ["CFM_effectsLayersControls", nil];
-		_monitor setVariable ["CFM_uiParams", nil];
-		_monitor setVariable ["CFM_currentUiClasname", nil];
-		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
