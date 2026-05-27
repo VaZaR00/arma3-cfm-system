@@ -60,20 +60,20 @@ OBJCLASS(DisplayHandler)
 		private _doUiParams = !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) && {!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}};
 		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
 		if (!_isHandMonitor && {_doUiParams}) then {
-			["startRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["startRenderingUI", _reset] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
 	};
 	METHOD("stopRendering") {
-		params[["_clearMonitorVars", true]];
+		params[["_reset", false]];
 
 		if (!hasInterface) exitWith {};
 		if (_currentFeedIsDisplay) then {
-			["stopRenderingUI", [_clearMonitorVars]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["stopRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			if (_clearMonitorVars) then {
+			if !(_reset) then {
 				["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 			};
 		};
@@ -209,7 +209,7 @@ OBJCLASS(DisplayHandler)
 		};
 	};
 	METHOD("stopRenderingUI") {
-		params[["_clearMonitorVars", true]];
+		params[["_reset", true]];
 
 		/*
 			VERSION FOR EMBEDED UI DISPLAYS
@@ -226,7 +226,7 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay closeDisplay 1;
 		waitUntil {isNull (_mainDisplay)};
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		if (_clearMonitorVars) then {
+		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 		};
 	};
@@ -383,7 +383,7 @@ OBJCLASS(DisplayHandler)
 			if (_on) then {
 				["startRendering", [false, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			} else {
-				["stopRendering", [false]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["stopRendering", [true]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			};
 		};
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];

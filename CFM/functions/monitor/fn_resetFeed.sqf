@@ -16,4 +16,6 @@ if !(_hndl isEqualType scriptNull) then {
 	_hndl = scriptNull;
 };
 waitUntil {scriptDone (_hndl)};
+private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
+waitUntil {isNull (_mainDisplay)};
 [_monitor, _operator, _currTurret, true] call CFM_fnc_startOperatorFeed;

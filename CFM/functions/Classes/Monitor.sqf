@@ -244,7 +244,7 @@ OBJCLASS(Monitor)
 		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
 		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
-		["stopRendering", [!_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["stopRendering", [_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
 		if !(_reset) then {
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 		};
