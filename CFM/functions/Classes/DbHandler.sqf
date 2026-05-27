@@ -223,13 +223,26 @@ CLASS(DbHandler)
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
 		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
 		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
-			"ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE!" WARN;
+			"ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
 		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
 		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
+	};
+	CLASS_METHOD("removeActiveViewer") {
+		params["_player"];
+		if !(IS_OBJ(_player)) exitWith {false};
+		if !(_player getVariable ["CFM_isActiveViewer", false]) exitWith {false};
+		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
+		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
+			"ERROR removeActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
+			false
+		};
+		["removeFromList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
+		_player setVariable ["CFM_isActiveViewer", false, true];
+		true
 	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

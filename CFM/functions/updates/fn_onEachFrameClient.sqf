@@ -8,7 +8,15 @@
 
 if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
+private _player = PLAYER_;
 private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []];
+
+if (_monitorsParams isEqualTo []) exitWith {
+	if (_player getVariable ["CFM_isActiveViewer", false]) then {
+		["removeActiveViewer", [_player]] CALL_CLASS("DbHandler");
+	};
+};
+
 private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 if !(_optimizeDistance isEqualType "") then {
 	_optimizeDistance = str _optimizeDistance;
@@ -16,7 +24,6 @@ if !(_optimizeDistance isEqualType "") then {
 };
 _optimizeDistance = parseNumber _optimizeDistance;
 private _doOptimize = _optimizeDistance > 0;
-private _player = PLAYER_;
 private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
 {
 	_monitor = _x;
