@@ -12,11 +12,9 @@ CFM_LocalActiveOperators = _activeOperators select {
 		private _hasTurrLocal = false;
 		private _turretsInstances = _x getVariable "CFM_turretsInstances";
 		if (isNil "_turretsInstances" || {!(_turretsInstances isEqualType createHashMap)}) exitWith {false};
-		private _isLocal = false;
 		{
-			_x params ["_id", "_obj"];
-			SIVAR_S(_obj,"Turret",_isLocal,false);
-			if (_isLocal) exitWith {
+			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
+			if (TURRET_VAR(_isLocal, false)) exitWith {
 				_hasTurrLocal = true;
 			};
 		} forEach _turretsInstances;
