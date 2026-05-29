@@ -289,6 +289,8 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
 		_monitor setVariable ["CFM_doUpdateCamera", nil];
 		_monitor setVariable ["CFM_cam_prevSetPos", nil];
+		_monitor setVariable ["CFM_waitingForStartOperator", nil];
+		_monitor setVariable ["CFM_waitingForStartTurret", nil];
 	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
