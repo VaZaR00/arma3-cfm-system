@@ -1,7 +1,6 @@
 #include "defines.hpp"
 
 CFM_updateEachFrame = true;
-missionNamespace setVariable ["CFM_previousFocus", focusOn];
 
 if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;

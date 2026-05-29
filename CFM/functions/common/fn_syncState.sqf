@@ -49,6 +49,7 @@ if (_start && {hasInterface}) then {
 				_start = false;
 				true
 			};
+			_turret = _monitor getVariable ["CFM_waitingForStartTurret", DRIVER_TURRET_PATH];
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
 			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 			_optimizeDistance = parseNumber _optimizeDistance;
@@ -67,7 +68,7 @@ if (_start && {IS_OBJ(_operator)}) then {
 	if (_monitor getVariable ["CFM_feedActive", false]) then {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
 	};
-	[_monitor, _operator] call CFM_fnc_startOperatorFeed;
+	[_monitor, _operator, _turret] call CFM_fnc_startOperatorFeed;
 } else {
 	if !(_monitor getVariable ["CFM_feedActive", true]) exitWith {};
 	[_monitor] call CFM_fnc_stopOperatorFeed;

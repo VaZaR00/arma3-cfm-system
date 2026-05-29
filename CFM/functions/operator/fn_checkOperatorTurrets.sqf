@@ -24,6 +24,6 @@ private ["_turretIndex", "_turretObj"];
 		[_operator, _turretIndex] call CFM_fnc_removeActiveTurret;
 	};
 } forEach _activeTurretsObjects;
-_operator setVariable ["CFM_hasActiveTurretsObjects", _aliveTurret, MONITOR_VIEWERS_AND_SELF(false)];
+_operator setVariable ["CFM_hasActiveTurretsObjects", _aliveTurret, ACTIVE_VIEWERS_AND_SELF(false)];
 
 _aliveTurret

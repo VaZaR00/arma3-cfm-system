@@ -29,7 +29,7 @@ if !(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH_set", false]) th
     [missionNamespace, "DB_mavic_showMessage", {
         if !(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH", true]) exitWith {};
 
-        private _targets = MONITOR_VIEWERS_AND_SELF(false);
+        private _targets = ACTIVE_VIEWERS_AND_SELF(false);
         [cameraOn, {
             params[["_drone", objNull]];
             if !(IS_OBJ(_drone)) exitWith {};

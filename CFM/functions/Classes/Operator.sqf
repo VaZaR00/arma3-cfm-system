@@ -366,7 +366,8 @@ OBJCLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
-		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], true] REMOTE_EXEC_OBJCLASS("Operator", _self);
+		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, false);
+		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _self);
 
 		_nextTurretIndex
 	};
@@ -397,8 +398,8 @@ OBJCLASS(Operator)
 
 		_activeTurretsObjects deleteAt _turretIndex;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
-		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
-		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
 	};
 	METHOD("addActiveTurret") {
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
@@ -408,8 +409,8 @@ OBJCLASS(Operator)
 		_activeTurretsObjects set [_turretIndex, _turretObject];
 		_hasActiveTurretsObjects = _hasActiveTurretsObjects max 0;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects + 1) max 0;
-		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
-		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, MONITOR_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
 		true
 	};
 	METHOD("moveCamera") {

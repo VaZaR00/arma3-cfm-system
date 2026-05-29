@@ -28,6 +28,7 @@ OBJCLASS(Monitor)
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
 	FIELD ["_connectedTurretObject", objNull];
+	FIELD ["_activeMonitorViewers", [2]];
 	FIELD ["_feedActive", false];
 	FIELD ["_currentCameraType", ""];
 	FIELD ["_currentFeedCam", objNull];
@@ -201,10 +202,11 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
-		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
 		["monitorConnected", [_monitor, _turretIndex, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
-
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+
+		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
+		["monitorAddActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
 
 		[_currentMenuObj] call CFM_fnc_monitorCloseMenu;
 
@@ -248,6 +250,7 @@ OBJCLASS(Monitor)
 		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
 		["stopRendering", [_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
 		if !(_reset) then {
+			["monitorRemoveActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
 			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 		};
 	};
@@ -441,7 +444,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
-	METHOD("switchTurret") {
+	UNUSED_METHOD("switchTurret") {
 		params[["_turret", DRIVER_TURRET_PATH]];
 		// _self setVariable ["CFM_currentTurret", _turret, true];
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];

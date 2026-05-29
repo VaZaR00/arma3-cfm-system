@@ -337,6 +337,11 @@ OBJCLASS(Turret)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
+
+		if (isServer) then {
+			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex, true];
+		};
+
 		[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
 
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
@@ -454,7 +459,7 @@ OBJCLASS(Turret)
 
 		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
-		private _targets = MONITOR_VIEWERS_AND_SELF(false);
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 
 		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 		{
@@ -583,7 +588,7 @@ OBJCLASS(Turret)
 
 		if !(_done) exitWith {false};
 
-		private _targets = MONITOR_VIEWERS_AND_SELF(false);
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 
 		{
 			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];

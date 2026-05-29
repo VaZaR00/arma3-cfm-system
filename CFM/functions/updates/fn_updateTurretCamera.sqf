@@ -48,17 +48,18 @@ private _currUpMS = _operator vectorWorldToModelVisual _up;
 // private _currPosMS = _operator worldToModelVisual (ASLToAGL _pos);
 
 private _updated = false;
+private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 if !(_currDirMS isEqualTo _prevDir) then {
 	_updated = true;
-	_operator setVariable [_dirVarName, _currDirMS, MONITOR_VIEWERS_AND_SELF(false)];
+	_operator setVariable [_dirVarName, _currDirMS, _targets];
 };
 if !(_currUpMS isEqualTo _prevUp) then {
 	_updated = true;
-	_operator setVariable [_upVarName, _currUpMS, MONITOR_VIEWERS_AND_SELF(false)];
+	_operator setVariable [_upVarName, _currUpMS, _targets];
 };
 // if !(_currPosMS isEqualTo _prevPos) then {
 // 	_updated = true;
-// 	_operator setVariable [_posVarName, _currPosMS, MONITOR_VIEWERS_AND_SELF(false)];
+// 	_operator setVariable [_posVarName, _currPosMS, _targets];
 // };
 if (cameraOn isEqualTo _operator) then {
 	[_operator] call CFM_fnc_updateOperatorZoom;

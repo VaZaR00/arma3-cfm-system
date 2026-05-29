@@ -73,12 +73,11 @@ OBJCLASS(DisplayHandler)
 			["stopRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			if !(_reset) then {
-				["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-			};
+			["clearVariables", _reset] CALL_OBJCLASS("Monitor", _monitor);
 		};
 	};
 	METHOD("clearVariables") {
+		params[["_reset", false]];
 		_monitor setVariable ["CFM_mainDisplay", nil];
 		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
 		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
@@ -226,9 +225,7 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay closeDisplay 1;
 		waitUntil {isNull (_mainDisplay)};
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		if !(_reset) then {
-			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-		};
+		["clearVariables", _reset] CALL_OBJCLASS("Monitor", _monitor);
 	};
 	METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;

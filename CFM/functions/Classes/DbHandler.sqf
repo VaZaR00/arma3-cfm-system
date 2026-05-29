@@ -244,6 +244,29 @@ CLASS(DbHandler)
 		_player setVariable ["CFM_isActiveViewer", false, true];
 		true
 	};
+	CLASS_METHOD("monitorAddActiveViewer") {
+		params[["_monitor", objNull], ["_player", objNull]];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+		if !(IS_OBJ(_player)) exitWith {-1};
+		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
+		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
+			"ERROR monitorAddActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
+			-1
+		};
+		[_monitor, "CFM_ActiveMonitorViewers", _player, true, true, true, true] call EFL_fnc_pushBackNet;
+	};
+	CLASS_METHOD("monitorRemoveActiveViewer") {
+		params[["_monitor", objNull], ["_player", objNull]];
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+		if !(IS_OBJ(_player)) exitWith {false};
+		if !(_player getVariable ["CFM_isActiveViewer", false]) exitWith {false};
+		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
+		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
+			"ERROR monitorRemoveActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
+			false
+		};
+		[_monitor, "CFM_ActiveMonitorViewers", _player, true, true, true, true] call EFL_fnc_removeFromArrayNet;
+	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];
 		if !(IS_OBJ(_copyFrom)) exitWith {false};

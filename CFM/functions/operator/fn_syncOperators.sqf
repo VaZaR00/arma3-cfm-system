@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-params[["_targets", MONITOR_VIEWERS_AND_SELF(false)]];
+params[["_targets", ACTIVE_VIEWERS_AND_SELF(false)]];
 
 private _updOps = missionNamespace getVariable ["CFM_operatorsToUpdate", []];
 if !(_updOps isEqualType []) then {_updOps = [_updOps]};

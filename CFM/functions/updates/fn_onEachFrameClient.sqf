@@ -13,7 +13,7 @@ private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []
 
 private _previousFocus = missionNamespace getVariable ["CFM_previousFocus", focusOn];
 if (focusOn != _previousFocus) then {
-    [cameraOn] call CFM_fnc_operatorsLocalityChangedEvent;
+    [{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}] call CBA_fnc_execNextFrame;
 };
 missionNamespace setVariable ["CFM_previousFocus", focusOn];
 
