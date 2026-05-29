@@ -73,20 +73,22 @@ OBJCLASS(DisplayHandler)
 			["stopRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 		} else {
 			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			["clearVariables", _reset] CALL_OBJCLASS("Monitor", _monitor);
+			["clearVariables", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
 	};
 	METHOD("clearVariables") {
 		params[["_reset", false]];
 		_monitor setVariable ["CFM_mainDisplay", nil];
-		_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
-		_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
-		_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
-		_monitor setVariable ["CFM_effectsLayersControls", nil];
-		_monitor setVariable ["CFM_uiParams", nil];
-		_monitor setVariable ["CFM_currentUiClasname", nil];
-		_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
+		if !(_reset) then {
+			_monitor setVariable ["CFM_currentOperatorInterfaceFunction", nil];
+			_monitor setVariable ["CFM_currentOperatorSignalFunction", nil];
+			_monitor setVariable ["CFM_currentOperatorEffectsFunction", nil];
+			_monitor setVariable ["CFM_r2tDisplayCtrl", nil];
+			_monitor setVariable ["CFM_effectsLayersControls", nil];
+			_monitor setVariable ["CFM_uiParams", nil];
+			_monitor setVariable ["CFM_currentUiClasname", nil];
+			_monitor setVariable ["CFM_currentFeedIsDisplay", nil];
+		};
 	};
 	//----------- UI render version -----------
 	METHOD("setupDisplay") {
@@ -225,7 +227,7 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay closeDisplay 1;
 		waitUntil {isNull (_mainDisplay)};
 		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["clearVariables", _reset] CALL_OBJCLASS("Monitor", _monitor);
+		["clearVariables", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 	};
 	METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;
