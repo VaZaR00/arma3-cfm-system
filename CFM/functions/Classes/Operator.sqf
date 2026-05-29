@@ -439,7 +439,8 @@ OBJCLASS(Operator)
 	METHOD("getOperatorName") {
 		params[["_turret", -1]];
 
-		private _turretName = ["getTurretName"] CALL_TURRET_INSTANCE(_turret);
+		private _curTurrIndex = TURRET_INDEX(_turret);
+		private _turretName = IDX_TURRET_VAR(_curTurrIndex, _turretName, "");
 		if (isNil "_turretName") exitWith {_operatorName};
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName

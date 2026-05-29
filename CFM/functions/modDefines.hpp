@@ -92,6 +92,7 @@
 #define SIGNAL_LOST 0
 
 
+#define IDX_TURRET_VAR(index, name, def) (IVAR(TURRET_INSTANCE_OBJECT(index),"Turret",name,TURRET_INSTANCE_ID(index),def))
 #define TURRET_VAR(name, def) (IVAR(_turretObject,"Turret",name,_turretInstanceId,def))
 #define TURRET_INSTANCE(index) (_turretsInstances getOrDefault [index, [-1, objNull]])
 #define TURRET_INSTANCE_ID(index) ((TURRET_INSTANCE(index)) select 0)
