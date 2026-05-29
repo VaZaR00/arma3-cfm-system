@@ -6,4 +6,4 @@
 
 #include "defines.hpp" 
 
-"CFM_ActiveOperators" call EFL_fnc_publicVariable;
+[IF_NIL(_this, []), {_this call (MGVAR ["CFM_ActiveOperators_PublicEH", {}])}] call CFM_fnc_remoteExec;

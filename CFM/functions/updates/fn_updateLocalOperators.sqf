@@ -10,14 +10,18 @@ private _localOps = missionNamespace getVariable ["CFM_LocalActiveOperators", []
 
 private _localityChanged = false;
 {
-    if !(local _x) then {
+    _x params [["_operator", objNull], ["_turrets", []]];
+    if !((local _operator) || {_operator call CFM_fnc_checkTurretsLocality}) then {
         _localityChanged = true;
         continue
     };
-	[_x] call CFM_fnc_updateOperator;
+    if (_turrets isEqualTo []) then {continue};
+    {
+        [_operator, _x] call CFM_fnc_updateTurretCamera;
+    } forEach _turrets;
 } forEach _localOps;
 
 if (_localityChanged) then {
     call CFM_fnc_setupLocalActiveOperators;
-    call CFM_fnc_operatorsLocalityChangedEvent;
+    [] call CFM_fnc_operatorsLocalityChangedEvent;
 };

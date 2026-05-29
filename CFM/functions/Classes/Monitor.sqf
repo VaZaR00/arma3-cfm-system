@@ -179,12 +179,12 @@ OBJCLASS(Monitor)
 		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
 		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
 
-		if (!(_turret isEqualTo []) && {(_turret isEqualType []) && {(count _turret) == 1}}) then {
-			_monitor setVariable ["CFM_currentTurret", _turret];
-			_currentTurret = _turret;
-		} else {
+		if (_turret isEqualTo []) then {
 			_turret = _currentTurret;
 		};
+		private _turretIndex = TURRET_INDEX(_turret);
+		_currentTurret = [_turretIndex];
+		_monitor setVariable ["CFM_currentTurret", +_currentTurret];
 		
 		_self setVariable ['CFM_actionCaller', nil];
 
@@ -202,7 +202,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
-		["monitorConnected", [_monitor, _turret, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
+		["monitorConnected", [_monitor, _turretIndex, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
 
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
@@ -239,7 +239,9 @@ OBJCLASS(Monitor)
 			closeDialog 1;
 			call CFM_fnc_onTempDisplayUnload;
 		};
-		["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+		if (IS_OBJ(_connectedOperator)) then {
+			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+		};
 		_self setVariable ['CFM_actionCaller', nil];
 		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 		["setOperatorInfo", [false]] CALL_OBJCLASS("Monitor", _monitor);
@@ -280,7 +282,7 @@ OBJCLASS(Monitor)
 		_monitor setVariable ["CFM_currentCameraCanMove", nil];
 		_monitor setVariable ["CFM_currentCameraIsStatic", nil];
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", nil];
-		_monitor setVariable ["CFM_camInterp_lastDir", nil];
+		_monitor setVariable ["CFM_camInterp_lastDir", nil]; // mb rem?
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
 		_monitor setVariable ["CFM_doUpdateCamera", nil];
 		_monitor setVariable ["CFM_cam_prevSetPos", nil];
@@ -818,11 +820,11 @@ OBJCLASS(Monitor)
 		_infoStr _HINT;
 	};
 	METHOD("setOperatorInfo") {
-		params[["_set", false]];
-		private _infoStr = if (_set && {IS_OBJ(_connectedOperator)}) then {
+		params[["_set", false], ["_operator", _connectedOperator]];
+		private _infoStr = if (_set && {IS_OBJ(_operator)}) then {
 			private _currentTurret = _self getVariable ["CFM_currentTurret", _currentTurret];
 			private _turrIndex = TURRET_INDEX(_currentTurret);
-			private _opName = [_connectedOperator, _turrIndex] call CFM_fnc_getOperatorName;
+			private _opName = [_operator, _turrIndex] call CFM_fnc_getOperatorName;
 			private _turrName = if (_currentCameraIsStatic) then {_turrIndex} else {
 				switch (_turrIndex) do {
 					case -1: {

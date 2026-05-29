@@ -6,5 +6,5 @@
 
 #include "defines.hpp" 
 
-params["_monitor", ["_set", false]];
-["setOperatorInfo", [_set], []] CALL_OBJCLASS("Monitor", _monitor);
+params["_monitor", ["_set", false], ["_operator", nil]];
+["setOperatorInfo", [_set, _NIL(_operator)]] CALL_OBJCLASS("Monitor", _monitor);

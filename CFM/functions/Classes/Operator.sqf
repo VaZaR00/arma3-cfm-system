@@ -283,14 +283,14 @@ OBJCLASS(Operator)
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_self, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
-		if (_turretInstanceId < 0) then {
+		if (_turretInstanceId <= 0) then {
 			_turretInstance = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true));
 			_turretInstanceId = _turretInstance param [0, -1];
 			if !(_turretInstanceId isEqualType 1) then {_turretInstanceId = -1};
 		} else {
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
-		if (_turretInstanceId < 0) exitWith {};
+		if (_turretInstanceId <= 0) exitWith {};
 		[_self, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject], true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
 	};
 	METHOD("setPointParams") {
@@ -368,7 +368,7 @@ OBJCLASS(Operator)
 
 		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], true] REMOTE_EXEC_OBJCLASS("Operator", _self);
 
-		true
+		_nextTurretIndex
 	};
 	METHOD("addMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];

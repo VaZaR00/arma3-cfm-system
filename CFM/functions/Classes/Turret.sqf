@@ -175,15 +175,15 @@ OBJCLASS(Turret)
 			switch (_classType) do {
 				case TYPE_UAV: {
 					if (_isDriverTurr) then {
-						if (_isMavic || {
-							("uav_01" in _objClass) || 
-							{("uav_06" in _objClass)}
-						}) then {
+						// if (_isMavic || {
+						// 	("uav_01" in _objClass) || 
+						// 	{("uav_06" in _objClass)}
+						// }) then {
 							CFM_fnc_camPosPilotTurret
-						} else {
-							_ppType = PP_VEH_TURRET;
-							CFM_fnc_camPosVehTurret
-						};
+						// } else {
+						// 	_ppType = PP_VEH_STATIC;
+						// 	CFM_fnc_camPosVehStatic
+						// };
 					} else {
 						_ppType = PP_VEH_TURRET;
 						CFM_fnc_camPosVehTurret
@@ -337,7 +337,7 @@ OBJCLASS(Turret)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
-		[_monitor, true] call CFM_fnc_setOperatorInfo;
+		[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
 
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 
