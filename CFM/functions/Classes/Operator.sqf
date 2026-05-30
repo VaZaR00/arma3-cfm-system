@@ -424,7 +424,7 @@ OBJCLASS(Operator)
 		["moveDroneCamera", [_axisAngles]] CALL_TURRET_INSTANCE(_turret);
 	};
 	METHOD("setOperatorSides") {
-		params[["_sides", civilian]];
+		params[["_sides", civilian], ["_global", true]];
 
 		if !(_sides isEqualType []) then {
 			_sides = [_sides];
@@ -434,7 +434,7 @@ OBJCLASS(Operator)
 		if (_sides isEqualTo []) exitWith {false};
 
 		_opSides = _sides;
-		_self setVariable ["CFM_opSides", _sides];
+		_self setVariable ["CFM_opSides", _sides, _global];
 		true
 	};
 	METHOD("getOperatorName") {

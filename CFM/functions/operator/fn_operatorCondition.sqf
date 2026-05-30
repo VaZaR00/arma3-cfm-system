@@ -23,9 +23,8 @@ if (!(isNil "REB_fnc_isInDeadzone") && {
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
 if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};
 
-if !(IS_VALID_OP(_op)) then {
+if !(IS_VALID_OP(_op)) exitWith {
 	["removeOperator", [_op]] CALL_CLASS("DbHandler");
-	continue
 };
 private _cls = _op call CFM_fnc_getOperatorClass;
 private _type = [_op] call CFM_fnc_cameraType;

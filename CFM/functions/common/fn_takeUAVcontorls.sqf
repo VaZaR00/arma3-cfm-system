@@ -7,7 +7,7 @@
 #include "defines.hpp" 
 
 
-params ["_monitor"];
+params [["_monitor", objNull]];
 
 if !(focusOn isEqualTo player) exitWith {
 	"Can't take UAV controls when remote controlling other unit!" _HINT
@@ -28,35 +28,7 @@ if (!_canHack && !_sameSide) exitWith {
 };
 if (!_sameSide) exitWith {
 	// do hack
-	[_monitor, _drone, _playerSide] spawn {
-		params ["_monitor", "_drone", "_playerSide"];
-
-		private _playerStartPos = getPosASL player;
-
-		[[_drone, _playerSide, clientOwner], {
-			params ["_drone", "_side", "_netId"];
-			deleteVehicleCrew _drone;
-			_side createVehicleCrew _drone;
-		}] remoteExecCall ["call", _drone];
-
-		"Hacking drone..." _HINT;
-		sleep (missionNamespace getVariable ["CFM_hackDroneTime", 5]);
-
-		private _newSide = side _drone;
-		if !(_newSide isEqualTo _playerSide) exitWith {
-			"Failed to hack drone" _HINT;
-		};
-
-		"Drone hacked!" _HINT;
-
-		[_drone, _playerSide] call CFM_fnc_setOperatorSides;
-
-		if ((_playerStartPos distance (getPosASL player)) > 0.5) exitWith {
-			"Drone hacked! But connection canceled because you moved." _HINT;
-		};
-
-		[_monitor] spawn CFM_fnc_takeUAVcontorls;
-	};
+	[_drone, _playerSide, true, _monitor, false, true] spawn CFM_fnc_hackDrone;
 };
 
 private _dDriver = driver _drone;

@@ -6,5 +6,5 @@
 
 #include "defines.hpp" 
 
-params["_operator", ["_sides", civilian]];
-["setOperatorSides", [_sides], _operator, false] SPAWN_OBJCLASS("Operator", _operator);
+params["_operator", ["_sides", civilian], ["_global", true]];
+["setOperatorSides", [_sides, _global], false] SPAWN_OBJCLASS("Operator", _operator);

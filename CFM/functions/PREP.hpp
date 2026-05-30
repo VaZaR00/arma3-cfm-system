@@ -91,6 +91,7 @@ PREP(smoothRotateCam)
 PREP(syncState)
 PREP(takeUAVcontorls)
 PREP(translateLocalVectors)
+PREP(hackDrone)
 
 // -- Category keybinds --
 FOLDER_PATH(keybinds)
