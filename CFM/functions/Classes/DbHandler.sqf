@@ -253,7 +253,7 @@ CLASS(DbHandler)
 			"ERROR monitorAddActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
-		[_monitor, "CFM_ActiveMonitorViewers", _player, true, true, true, true] call EFL_fnc_pushBackNet;
+		[_monitor, "CFM_ActiveMonitorViewers", _ownerId, true, true, true, true] call EFL_fnc_pushBackNet;
 	};
 	CLASS_METHOD("monitorRemoveActiveViewer") {
 		params[["_monitor", objNull], ["_player", objNull]];
@@ -265,7 +265,7 @@ CLASS(DbHandler)
 			"ERROR monitorRemoveActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			false
 		};
-		[_monitor, "CFM_ActiveMonitorViewers", _player, true, true, true, true] call EFL_fnc_removeFromArrayNet;
+		[_monitor, "CFM_ActiveMonitorViewers", _ownerId, true, true, true, true] call EFL_fnc_removeFromArrayNet;
 	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

@@ -132,7 +132,7 @@ OBJCLASS(Monitor)
 			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 			_monitor setVariable ["CFM_originalTexture", _originalTexture, !_isLocal]; 
 
-			["addMonitor", [_monitor]] CALL_CLASS("DbHandler");
+			["addMonitor", [_monitor, !_isLocal]] CALL_CLASS("DbHandler");
 			_monitor setVariable ["CFM_isHandMonitor", _isHandMonitor, true];
 			_monitor setVariable ["CFM_isLocal", _isLocal, true];
 
@@ -514,6 +514,7 @@ OBJCLASS(Monitor)
 			params ["_target", "_caller", "_", "_p"];
 			_p params ["_monitor"]; 
 
+			STR_CHECK_FOR_NEW_OPS_ACT _HINT;
 			[_monitor] call CFM_fnc_checkForNewOperators;
 		}, [_self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
 
