@@ -20,8 +20,3 @@ private _localityChanged = false;
         [_operator, _x] call CFM_fnc_updateTurretCamera;
     } forEach _turrets;
 } forEach _localOps;
-
-if (_localityChanged) then {
-    call CFM_fnc_setupLocalActiveOperators;
-    [] call CFM_fnc_operatorsLocalityChangedEvent;
-};

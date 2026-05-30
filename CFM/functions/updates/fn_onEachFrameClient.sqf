@@ -12,8 +12,19 @@ private _player = PLAYER_;
 private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 
 private _previousFocus = missionNamespace getVariable ["CFM_previousFocus", focusOn];
-if (focusOn != _previousFocus) then {
-    [{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}] call CBA_fnc_execNextFrame;
+if ((IS_OBJ(focusOn) && {!(isNull player)}) && {focusOn != _previousFocus}) then {
+	private _cameraOn = cameraOn;
+	["FOCUS ON CHANGED", [focusOn, _cameraOn], _previousFocus] DLOG
+	if (_cameraOn turretLocal (_cameraOn unitTurret focusOn)) exitWith {};
+	if !(missionNamespace getVariable ["CFM_operatorsLocalityChangedEventFired", true]) exitWith {};
+	CFM_operatorsLocalityChangedEventFired = false;
+    [
+		{private _cameraOn = cameraOn; ((local _cameraOn) || {_cameraOn turretLocal (_cameraOn unitTurret focusOn)})}, 
+		{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}, 
+		_cameraOn, 
+		1, // timeout
+		{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}
+	] call CBA_fnc_waitUntilAndExecute;
 };
 missionNamespace setVariable ["CFM_previousFocus", focusOn];
 

@@ -1,9 +1,13 @@
 #include "defines.hpp" 
 
 CFM_fnc_checkTurretsLocality = {
-	params [["_operator", objNull]];
+	params [["_operator", objNull], ["_turretPath", []]];
 	
-	private _turrets = allTurrets _operator;
+	private _turrets = if (_turretPath isEqualTo []) then {
+		allTurrets _operator
+	} else {
+		[_turretPath]
+	};
 	private _hasLocalTurret = false;
 	{
 		_hasLocalTurret = _operator turretLocal _x;

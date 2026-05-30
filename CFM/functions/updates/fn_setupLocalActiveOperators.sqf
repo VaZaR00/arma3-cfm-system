@@ -16,6 +16,7 @@ private _activeOperators = (missionNamespace getVariable ["CFM_ActiveOperators",
 {
 	_activeOperators pushBackUnique _x;
 } forEach _ops;
+
 private _localActiveOperators = _activeOperators select {
 	if (IS_OBJ(_x)) then {
 		((local _x) || {_x call CFM_fnc_checkTurretsLocality}) && {
@@ -34,5 +35,10 @@ private _localActiveOperators = _activeOperators select {
 		false
 	};
 };
-CFM_LocalActiveOperators = _localActiveOperators apply {private _obj = _x; [_obj, ((allTurrets _obj) select {_obj turretLocal _x})]};
+CFM_LocalActiveOperators = _localActiveOperators apply {
+	private _obj = _x; 
+	private _allTurerts = (allTurrets _obj) + [DRIVER_TURRET_PATH];
+	private _localTurrets = _allTurerts select {_obj turretLocal _x};
+	[_obj, _localTurrets]
+};
 CFM_LocalActiveOperators
