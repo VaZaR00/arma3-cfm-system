@@ -40,10 +40,6 @@ OBJCLASS(Operator)
 
 
 	// PP - point params types
-	#define PP_NONE -1
-	#define PP_STATIC 0
-	#define PP_VEH_STATIC 1
-	#define PP_VEH_TURRET 2
 	#define TimeToMoveSmoothCoef 0.2
 
 	METHOD("Init") {

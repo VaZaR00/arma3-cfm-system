@@ -175,15 +175,16 @@ OBJCLASS(Turret)
 			switch (_classType) do {
 				case TYPE_UAV: {
 					if (_isDriverTurr) then {
-						// if (_isMavic || {
-						// 	("uav_01" in _objClass) || 
-						// 	{("uav_06" in _objClass)}
-						// }) then {
+						if (_isMavic || {
+							("uav_01" in _objClass) || 
+							{("uav_06" in _objClass)}
+						}) then {
+							_ppType = PP_PILOT;
 							CFM_fnc_camPosPilotTurret
-						// } else {
-						// 	_ppType = PP_VEH_STATIC;
-						// 	CFM_fnc_camPosVehStatic
-						// };
+						} else {
+							_ppType = PP_VEH_STATIC;
+							CFM_fnc_camPosVehStatic
+						};
 					} else {
 						_ppType = PP_VEH_TURRET;
 						CFM_fnc_camPosVehTurret
@@ -224,7 +225,7 @@ OBJCLASS(Turret)
 				};
 			};
 		};
-		_doInterpolation = !_hasGoPro && {!(_ppType > 0) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
+		_doInterpolation = !_hasGoPro && {(_ppType > 0) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
 
 		// POINT ALIGNMENT
 		if (_ppType != PP_NONE) then {

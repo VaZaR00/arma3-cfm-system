@@ -33,16 +33,20 @@
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
 #define IS_VALID_OP(op) (IS_OBJ(op))
+
 #define TYPE_VEH "veh"
 #define TYPE_UAV "uav"
 #define TYPE_WEAP "weap"
 #define TYPE_HELM "helm"
 #define TYPE_UNIT "unit"
 #define TYPE_STATIC "static"
+
 #define PP_NONE -1
 #define PP_STATIC 0
 #define PP_VEH_STATIC 1
 #define PP_VEH_TURRET 2
+#define PP_PILOT 3
+
 #define MGVAR missionNamespace getVariable
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
 #define CHECK_EX(c) if (c) exitWith {false};
