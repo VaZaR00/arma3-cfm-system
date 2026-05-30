@@ -51,8 +51,7 @@ if (_start && {hasInterface}) then {
 			};
 			_turret = _monitor getVariable ["CFM_waitingForStartTurret", DRIVER_TURRET_PATH];
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
-			private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
-			_optimizeDistance = parseNumber _optimizeDistance;
+			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
 			private _dist = _monitor distance PLAYER_;
 			private _isClose = _dist < _optimizeDistance;

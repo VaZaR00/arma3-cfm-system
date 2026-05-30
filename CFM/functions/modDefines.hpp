@@ -94,6 +94,12 @@
 #define SET_MON_OP_REMOTE_EXEC
 
 
+#define GET_OPTIMIZE_DIST call {private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST]; \
+if !(_optimizeDistance isEqualType "") then { \
+	_optimizeDistance = str _optimizeDistance; \
+	missionNamespace setVariable ["CFM_optimizeByDistance", _optimizeDistance];}; \
+parseNumber _optimizeDistance}
+
 #define SIGNAL_WEAK_CONNECTION_THREASHOLD 0.1
 #define SIGNAL_LOST 0
 

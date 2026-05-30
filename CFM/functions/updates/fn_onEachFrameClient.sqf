@@ -25,12 +25,7 @@ if !(_player getVariable ["CFM_isActiveViewer", false]) then {
 // -------------------------------------
 
 // ---------- UPDATE MONITORS ----------
-private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
-if !(_optimizeDistance isEqualType "") then {
-	_optimizeDistance = str _optimizeDistance;
-	missionNamespace setVariable ["CFM_optimizeByDistance", _optimizeDistance];
-};
-_optimizeDistance = parseNumber _optimizeDistance;
+private _optimizeDistance = GET_OPTIMIZE_DIST;
 private _doOptimize = _optimizeDistance > 0;
 private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
 private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
