@@ -64,6 +64,8 @@ OBJCLASS(DisplayHandler)
 		} else {
 			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
 		};
+		private _camera = _self getVariable ["CFM_currentFeedCam", objNull];
+		_camera cameraEffect ["Internal", "BACK", _monitorR2Tid];
 	};
 	METHOD("stopRendering") {
 		params[["_reset", false]];
@@ -374,13 +376,13 @@ OBJCLASS(DisplayHandler)
 
 		if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
 			if (_on) then {
-				[_monitor] call CFM_fnc_setR2TTexture;
+				[_monitor, true, _monitorR2Tid] call CFM_fnc_setR2TTexture;
 			} else {
 				[_monitor, false, "", true] call CFM_fnc_setR2TTexture;
 			};
 		} else {
 			if (_on) then {
-				["startRendering", [false, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["startRendering", [true, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			} else {
 				["stopRendering", [true]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
 			};
