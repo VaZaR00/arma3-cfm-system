@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_setupLocalActiveOperators
+    Function: CFM_fnc_updateActiveOperatorsLocalTurrets
     Author: Vazar
     Description: Automatically generated SQF file.
 */
@@ -41,4 +41,5 @@ CFM_LocalActiveOperators = _localActiveOperators apply {
 	private _localTurrets = _allTurerts select {_obj turretLocal _x};
 	[_obj, _localTurrets]
 };
+
 CFM_LocalActiveOperators

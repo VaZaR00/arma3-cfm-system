@@ -8,26 +8,12 @@
 
 if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
+
 private _player = PLAYER_;
 private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 
-private _previousFocus = missionNamespace getVariable ["CFM_previousFocus", focusOn];
-if ((IS_OBJ(focusOn) && {!(isNull player)}) && {focusOn != _previousFocus}) then {
-	private _cameraOn = cameraOn;
-	["FOCUS ON CHANGED", [focusOn, _cameraOn], _previousFocus] DLOG
-	if (_cameraOn turretLocal (_cameraOn unitTurret focusOn)) exitWith {};
-	if !(missionNamespace getVariable ["CFM_operatorsLocalityChangedEventFired", true]) exitWith {};
-	CFM_operatorsLocalityChangedEventFired = false;
-    [
-		{private _cameraOn = cameraOn; ((local _cameraOn) || {_cameraOn turretLocal (_cameraOn unitTurret focusOn)})}, 
-		{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}, 
-		_cameraOn, 
-		1, // timeout
-		{[cameraOn] call CFM_fnc_operatorsLocalityChangedEvent}
-	] call CBA_fnc_waitUntilAndExecute;
-};
-missionNamespace setVariable ["CFM_previousFocus", focusOn];
 
+// ----------- ACTIVE VIEWER -----------
 if (_monitorsParams isEqualTo []) exitWith {
 	if (_player getVariable ["CFM_isActiveViewer", false]) then {
 		["removeActiveViewer", [_player]] CALL_CLASS("DbHandler");
@@ -36,7 +22,9 @@ if (_monitorsParams isEqualTo []) exitWith {
 if !(_player getVariable ["CFM_isActiveViewer", false]) then {
 	["addActiveViewer", [_player]] CALL_CLASS("DbHandler");
 };
+// -------------------------------------
 
+// ---------- UPDATE MONITORS ----------
 private _optimizeDistance = missionNamespace getVariable ["CFM_optimizeByDistance", OPTIMIZE_MONITOR_FEED_DIST];
 if !(_optimizeDistance isEqualType "") then {
 	_optimizeDistance = str _optimizeDistance;
@@ -73,3 +61,5 @@ private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 		};
 	};
 } forEach _monitorsParams;
+
+// -------------------------------------

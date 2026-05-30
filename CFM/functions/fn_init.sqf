@@ -11,12 +11,36 @@ if (isServer) then {
 	CFM_serverLoop_handle = 0 spawn CFM_fnc_serverLoop;
 } else {
 	if (didJIP) then {
+		// make data sync for JIP clients
 		CFM_makeCamDataSync = true;
 		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
 		[clientOwner, {call CFM_fnc_serverSyncVariables}, 2, false, true] call CFM_fnc_remoteExec;
 	};
 };
-CFM_ActiveOperators_PublicEH = {call CFM_fnc_setupLocalActiveOperators};
+CFM_ActiveOperators_PublicEH = {if !(hasInterface) exitWith {}; call CFM_fnc_updateActiveOperatorsLocalTurrets};
+
+// update operators local turrets loop
+if (hasInterface) then {
+	CFM_updateOperatorsLocalTurretsHandle = 0 spawn {
+		// wait for player
+		waitUntil {sleep 1; !(isNull player)};
+		// wait when player gets control of other unit so that we dont loop unneccesary
+		waitUntil {sleep 0.5; (focusOn isNotEqualTo player)};
+
+		private _timeUpdate = 0;
+		while {MGVAR ["CFM_doLoopUpdateOperatorsLocalTurrets", true]} do {
+			sleep (MGVAR ["CFM_updateOperatorsLocalTurretsLoopSleep", 0.1]);
+
+			if (MGVAR ["CFM_stopUpdateOperatorsLocalTurrets", false]) then {continue};
+
+			if !(MGVAR ["CFM_makeUpdateOperatorsLocalTurrets", false]) then {
+				if ((time - _timeUpdate) < (MGVAR ["CFM_updateOperatorsLocalTurretsFreq", 1])) then {continue};
+			};
+
+			call CFM_fnc_updateActiveOperatorsLocalTurrets;
+		};
+	};
+};
 
 // default point alignments
 private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];

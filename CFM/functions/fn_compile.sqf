@@ -15,3 +15,38 @@ CFM_fnc_checkTurretsLocality = {
 	} forEach _turrets;
 	_hasLocalTurret
 };
+#define LOCAL_ACTIVE_OPERATORS_VAR CFM_LocalActiveOperators
+#define LOCAL_ACTIVE_OPERATORS_VAR_STR STR(LOCAL_ACTIVE_OPERATORS_VAR)
+CFM_fnc_addLocalTurretOperator = {
+	params [["_operator", objNull], ["_turretPath", []]];
+	
+	private _localOps = (missionNamespace getVariable [LOCAL_ACTIVE_OPERATORS_VAR_STR, []]);
+	private _operatorInLocalOps = (_localOps findIf {(_x select 0) isEqualTo _operator});
+	if (_operatorInLocalOps < 0) then {
+		_localOps pushBack [_operator, [_turretPath]];
+	} else {
+		private _turrets = (_localOps param [_operatorInLocalOps, [objNull, []]]) param [1, []];
+		_turrets pushBackUnique _turretPath;
+		_localOps set [_operatorInLocalOps, [_operator, _turrets]];
+	};
+	LOCAL_ACTIVE_OPERATORS_VAR = _localOps;
+	LOCAL_ACTIVE_OPERATORS_VAR
+};
+CFM_fnc_removeLocalTurretOperator = {
+	params [["_operator", objNull], ["_turretPath", []]];
+	
+	private _localOps = (missionNamespace getVariable [LOCAL_ACTIVE_OPERATORS_VAR_STR, []]);
+	private _operatorInLocalOps = (_localOps findIf {(_x select 0) isEqualTo _operator});
+	if (_operatorInLocalOps < 0) exitWith {_localOps}; // operator not found, nothing to remove
+
+	private _turrets = (_localOps param [_operatorInLocalOps, [objNull, []]]) param [1, []];
+	_turrets = _turrets - [_turretPath];
+	
+	if (_turrets isEqualTo []) then {
+		_localOps deleteAt _operatorInLocalOps;
+	} else {
+		_localOps set [_operatorInLocalOps, [_operator, _turrets]];
+	};
+	LOCAL_ACTIVE_OPERATORS_VAR = _localOps;
+	LOCAL_ACTIVE_OPERATORS_VAR
+};
