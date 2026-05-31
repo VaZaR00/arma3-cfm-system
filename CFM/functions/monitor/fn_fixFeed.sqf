@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-params[["_monitors", []]];
+params[["_monitors", []], ["_doHint", true]];
 
 if !(_monitors isEqualType []) then {
     _monitors = [_monitors];
@@ -17,10 +17,13 @@ if (_monitors isEqualTo []) then {
 };
 
 {
+    if !(_x getVariable ["CFM_feedActive", false]) then {continue};
 	[_x] spawn CFM_fnc_resetFeed;
 } forEach _monitors;
 
+if (_doHint) then {
 "
 If you still have no feed try reseting PIP setting value!
 Якщо досі немає картинки, спробуйте переставити параметр PIP в налаштуваннях!
 " _HINT;
+};

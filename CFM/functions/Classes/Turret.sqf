@@ -225,7 +225,7 @@ OBJCLASS(Turret)
 				};
 			};
 		};
-		_doInterpolation = !_hasGoPro && {(_ppType > 0) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
+		_doInterpolation = !_hasGoPro && {(_ppType > 1) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
 
 		// POINT ALIGNMENT
 		if (_ppType != PP_NONE) then {

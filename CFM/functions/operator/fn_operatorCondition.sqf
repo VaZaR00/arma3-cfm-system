@@ -6,9 +6,13 @@
 
 #include "defines.hpp" 
 
-params["_op", ["_monitor", objNull], ["_checkFeeding", false]];
+params[["_op", objNull], ["_monitor", objNull], ["_checkFeeding", false]];
 
 if !(IS_OBJ(_monitor)) exitWith {false};
+if !(IS_VALID_OP(_op)) exitWith {
+	["removeOperator", [_op]] CALL_CLASS("DbHandler");
+	false
+};
 
 // REB COMPAT
 if ((_op getVariable ["REB_uavLostSignal", false]) isEqualTo true) exitWith {false};
@@ -23,9 +27,6 @@ if (!(isNil "REB_fnc_isInDeadzone") && {
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
 if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};
 
-if !(IS_VALID_OP(_op)) exitWith {
-	["removeOperator", [_op]] CALL_CLASS("DbHandler");
-};
 private _cls = _op call CFM_fnc_getOperatorClass;
 private _type = [_op] call CFM_fnc_cameraType;
 if !(call {

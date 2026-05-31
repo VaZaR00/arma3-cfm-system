@@ -6,5 +6,5 @@
 
 #include "defines.hpp" 
 
-[] call CFM_fnc_exitFullScreen;
-[] call CFM_fnc_fixFeed;
+0 call CFM_fnc_exitFullScreen;
+(IF_NIL(_this, [])) call CFM_fnc_fixFeed;

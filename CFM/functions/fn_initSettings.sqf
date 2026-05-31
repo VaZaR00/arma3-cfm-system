@@ -1,3 +1,4 @@
+#include "\a3\ui_f\hpp\definedikcodes.inc"
 #include "defines.hpp"
 #define CFM_CATEGORY "CFM Camera System Settings"
 #define OPTIMIZE_MONITOR_FEED_DIST "20"
@@ -6,7 +7,7 @@
 ["CFM_allUavsAreFeedingByDefault",  "CHECKBOX",  ["All UAVs feed by default", "All UAVs feed by default"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_PIPsettings",  "EDITBOX",  ["PIP Settings", "PIP size and position settings: [size (number or [sizeX, sizeY]), posX, posY]"], CFM_CATEGORY, DEFAULT_PIP_SETTINGS_STR] call CBA_fnc_addSetting;
 ["CFM_useScrollMenuForConnection",  "CHECKBOX",  ["Use scroll menu", "Use scroll menu for connection"], CFM_CATEGORY, true] call CBA_fnc_addSetting;
-["CFM_canFullscreen",  "CHECKBOX",  ["Can fullscreen", "Viewers can enter fullscreen"], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
+["CFM_canFullscreen",  "CHECKBOX",  ["Can fullscreen", "Viewers can enter fullscreen"], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_optimizeByDistance",  "EDITBOX",  ["Optimize by Distance", "Distance to monitor threshold for optimizing PIP settings. -1 for unlimited"], CFM_CATEGORY, OPTIMIZE_MONITOR_FEED_DIST] call CBA_fnc_addSetting;
 ["CFM_menuShowOperatorGrid",  "CHECKBOX",  ["Show operator map grid position", "Show operator map grid position"], CFM_CATEGORY, false] call CBA_fnc_addSetting;
 ["CFM_menuShowOperatorDistance",  "CHECKBOX",  ["Show operator distance to monitor", "Show operator distance to monitor"], CFM_CATEGORY, false] call CBA_fnc_addSetting;
@@ -33,7 +34,8 @@
 [CFM_CATEGORY, "CFM_switchTiKey", ["Switch TI modes", "Switch Thermal Image modes"], {call CFM_fnc_monitorSwitchTIKeybind}, "", [49, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_toggleNVGKey", ["Toggle NVG mode", "Toggle Night Vission mode"], {call CFM_fnc_monitorSwitchNVGKeybind}, "", [49, [false, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_disconnectOperatorKey", ["Disconnect Operator", "Disconnect monitor from Operator"], {call CFM_fnc_disconnectMonitorFromOperatorKeybind}, "", [48, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_fixFeedKey", ["Fix/reset feed", "Fix/reset feed"], {[cursorObject] call CFM_fnc_fixFeedKeybind}, "", [33, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_fixAllMonitorsFeedKey", ["Fix/reset feed of All monitors", "Fix/reset feed of All monitors"], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, false, true]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_turnOnOffKey", ["Toggle on/off Monitor (Localy)", "Toggle on/off Monitor (Localy)"], {call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
 
 [CFM_CATEGORY, "CFM_cameraTurnUpKey", ["Turn Camera Up", "Turn Camera Up"], {call CFM_fnc_cameraTurnUpKeybind}, "", [72, [false, false, true]]] call CBA_fnc_addKeybind;
