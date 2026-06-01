@@ -54,9 +54,7 @@
 #define PP_SETARR "PP_SETARR"
 #define PP_LOD "PP_LOD"
 
-#define MGVAR missionNamespace getVariable
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
-#define CHECK_EX(c) if (c) exitWith {false};
 #define IS_VALID_R2T(s) ((IS_STR(s) && {!(s isEqualTo "") && {(RENDER_TARGET_STR in s)}}))
 #define CAM_POS_FUNC_DEF {[NULL_VECTOR, [DEF_DIR, DEF_UP]]}
 #define TURRET_INDEX(t) (if (t isEqualType []) then {t select 0} else {t})
