@@ -396,6 +396,20 @@ OBJCLASS(Turret)
 
 		true
 	};
+	METHOD("getPPParam") {
+		params[["_ppParam", ""], ["_def", nil]];
+
+		switch (_ppParam) do {
+			case PP_POS: {_ppPos};
+			case PP_DIR: {_ppDir};
+			case PP_UP: {_ppUp};
+			case PP_MEMPOINT: {_ppMemPoint};
+			case PP_ADDARR: {_ppAddArr};
+			case PP_SETARR: {_ppSetArr};
+			case PP_LOD: {_ppLod};
+			default {_NIL(_def)};
+		}
+	};
 	METHOD("setDefaultPointAlignment") {
 		[_self, _turretIndex, -1] call CFM_fnc_setPointAlignment;
 	};
