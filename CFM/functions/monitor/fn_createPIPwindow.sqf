@@ -58,7 +58,7 @@ _background ctrlSetPosition [_bgX, _bgY, _totalW, _totalH];
 _background ctrlCommit 0;
 
 private _title = _display ctrlCreate ["RscText", -1];
-_title ctrlSetText "CAMERA FEED";
+_title ctrlSetText CFM_STR_CAMERA_FEED;
 _title ctrlSetTextColor [1, 1, 1, 1];
 _title ctrlSetPosition [
     _bgX,

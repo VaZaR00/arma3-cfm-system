@@ -10,11 +10,11 @@
 params [["_monitor", objNull]];
 
 if !(focusOn isEqualTo player) exitWith {
-	"Can't take UAV controls when remote controlling other unit!" _HINT
+	CFM_STR_CANT_TAKE_UAV_CONTROLS_REMOTE _HINT
 };
 
 private _drone = _monitor getVariable ["CFM_connectedOperator", objNull];
-private _errtext = "Can't connect to drone";
+private _errtext = CFM_STR_CANT_CONNECT_TO_DRONE;
 
 if !(IS_OBJ(_drone)) exitWith {};
 
@@ -51,14 +51,14 @@ if (isNil "_bot" || {!IS_OBJ(_bot)}) exitWith {
 
 private _controled = [_drone, _turretName] call CFM_fnc_isUAVControlled;
 if (_controled && {!(missionNamespace getVariable ["CFM_canInterceptUAVcontrol", false])}) exitWith {
-	"Someone is controlling drone!" _HINT;
+	CFM_STR_SOMEONE_CONTROLLING_DRONE _HINT;
 };
 
 player connectTerminalToUAV objNull;
 player remoteControl objNull;
 player switchCamera "internal";
 
-"Connecting..." _HINT;
+CFM_STR_CONNECTING _HINT;
 sleep 0.15;
 CLEAR_HINT
 

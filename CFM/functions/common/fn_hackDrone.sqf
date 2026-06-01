@@ -17,7 +17,7 @@ private _playerStartPos = getPosASL player;
 }, _drone] call CFM_fnc_remoteExec;
 
 if (_hint) then {
-	"Hacking drone..." _HINT;
+	CFM_STR_HACKING_DRONE _HINT;
 };
 
 if !(_imidiate) then {
@@ -27,20 +27,20 @@ if !(_imidiate) then {
 private _newSide = side _drone;
 if !(_newSide isEqualTo _side) exitWith {
 	if (_hint) then {
-		"Failed to hack drone" _HINT;
+		CFM_STR_FAILED_TO_HACK_DRONE _HINT;
 	};
 	false
 };
 
 if (_hint) then {
-	"Drone hacked!" _HINT;
+	CFM_STR_DRONE_HACKED _HINT;
 };
 
 [_drone, _side, true] call CFM_fnc_setOperatorSides;
 
 if (_takeControls) then {
 	if ((_playerStartPos distance (getPosASL player)) > 0.5) exitWith {
-		"Drone hacked! But connection canceled because you moved." _HINT;
+		CFM_STR_DRONE_HACKED_MOVED _HINT;
 	};
 
 	[_monitor] spawn CFM_fnc_takeUAVcontorls;

@@ -26,8 +26,5 @@ private _fixed = false;
 if !(_fixed) exitWith {};
 
 if (_doHint) then {
-"
-If you still have no feed try reseting PIP setting value!
-Якщо досі немає картинки, спробуйте переставити параметр PIP в налаштуваннях!
-" _HINT;
+CFM_STR_RESET_FIX_HINT _HINT;
 };
