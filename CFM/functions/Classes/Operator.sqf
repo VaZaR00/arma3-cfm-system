@@ -300,6 +300,13 @@ OBJCLASS(Operator)
 
 		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
+	METHOD("setPPTurret") {
+		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
+
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
+	};
 	METHOD("setDefaultPointAlignment") {
 		{
 			[_self, _x, -1] call CFM_fnc_setPointAlignment;

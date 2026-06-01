@@ -9,7 +9,7 @@
 #define DEF_MEM_POINT "-def-"
 
 private _defaultPresetArray = 
-#include "..\other\defaultAlignmentsPresetVTG.sqf"
+#include "..\..\other\defaultAlignmentsPresetVTG.sqf"
 ;
 private _defaultPreset = createHashMap;
 {

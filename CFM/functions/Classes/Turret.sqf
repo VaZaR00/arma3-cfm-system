@@ -22,6 +22,13 @@ OBJCLASS(Turret)
     FIELD ["_doInterpolation", false];
     FIELD ["_ppType", PP_NONE];
     FIELD ["_pointParams", []];
+    FIELD ["_ppPos", []];
+    FIELD ["_ppDir", DEF_DIR];
+    FIELD ["_ppUp", DEF_UP];
+    FIELD ["_ppMemPoint", ""];
+    FIELD ["_ppAddArr", [0,0,0]];
+    FIELD ["_ppSetArr", [-1,-1,-1]];
+    FIELD ["_ppLod", "Memory"];
     FIELD ["_canMoveCamera", false];
     FIELD ["_currentCameraMoves", [0,0,0,0]];
     FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
@@ -37,11 +44,6 @@ OBJCLASS(Turret)
     FIELD ["_hasActiveTurretsObjects", -1];
     FIELD ["_monitorsOnTurret", []];
 
-	// PP - point params types
-	#define PP_NONE -1
-	#define PP_STATIC 0
-	#define PP_VEH_STATIC 1
-	#define PP_VEH_TURRET 2
 	#define TimeToMoveSmoothCoef 0.2
     
     METHOD("Init") {
@@ -297,6 +299,49 @@ OBJCLASS(Turret)
 		};
 		true
 	};
+    METHOD("compilePointParams") {
+		_pointParams = switch (_ppType) do {
+			case PP_STATIC: {
+				[_ppPos, _ppDir, _ppUp]
+			};
+			case PP_VEH_STATIC: {
+				[_ppPos, [_ppDir, _ppUp]]
+			};
+			case PP_VEH_TURRET: {
+				[_ppMemPoint, [_ppAddArr, [_ppDir, _ppUp], _ppSetArr], _ppLod]
+			};
+			default {[]};
+		};
+
+		SET_SELFVARG(_pointParams);
+
+		_pointParams
+    };
+    METHOD("savePointParamVars") {
+		{
+			_x params [["_varName", ""], ["_value", nil]];
+			switch (_varName) do {
+				case "_ppPos": {_ppPos = _value; SET_SELFVARG(_ppPos)};
+				case "_ppDir": {_ppDir = _value; SET_SELFVARG(_ppDir)};
+				case "_ppUp": {_ppUp = _value; SET_SELFVARG(_ppUp)};
+				case "_ppMemPoint": {_ppMemPoint = _value; SET_SELFVARG(_ppMemPoint)};
+				case "_ppAddArr": {_ppAddArr = _value; SET_SELFVARG(_ppAddArr)};
+				case "_ppSetArr": {_ppSetArr = _value; SET_SELFVARG(_ppSetArr)};
+				case "_ppLod": {_ppLod = _value; SET_SELFVARG(_ppLod)};
+				default {};
+			};
+		} forEach _this;
+    };
+    METHOD("syncPointParamsToMonitors") {
+		private _compiledPointParams = ["compilePointParams"] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
+
+		{
+			_x setVariable ["CFM_currentCamPointParams", +_compiledPointParams, _targets];
+			_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+		} forEach _monitorsOnTurret;
+    };
     METHOD("setPointParams") {
 		params[["_params", []]];
 
@@ -304,12 +349,53 @@ OBJCLASS(Turret)
 			_params = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
 		};
 
-		_pointParams = [_ppType, _pointParams, _params] call CFM_fnc_validatePointParams;
+		private _pointParamsVars = [_ppType, _pointParams, _params, true] call CFM_fnc_validatePointParams;
+		["savePointParamVars", _pointParamsVars] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
+		_pointParams = ["compilePointParams"] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
 
 		SET_SELFVARG(_pointParams);
 
 		_pointParams
     };
+	METHOD("setPPParam") {
+		params[["_ppParam", ""], ["_value", nil]];
+
+		private _params = switch (_ppType) do {
+			case PP_STATIC: {
+				[
+					[_value, _ppPos] select !(_ppParam isEqualTo PP_POS),
+					[_value, _ppDir] select !(_ppParam isEqualTo PP_DIR),
+					[_value, _ppUp] select !(_ppParam isEqualTo PP_UP)
+				]
+			};
+			case PP_VEH_STATIC: {
+				[
+					[_value, _ppPos] select !(_ppParam isEqualTo PP_POS),
+					[_value, _ppDir] select !(_ppParam isEqualTo PP_DIR),
+					[_value, _ppUp] select !(_ppParam isEqualTo PP_UP)
+				]
+			};
+			case PP_VEH_TURRET: {
+				private _memPoint = [_value, _ppMemPoint] select !(_ppParam isEqualTo PP_MEMPOINT);
+				private _lod = [_value, _ppLod] select !(_ppParam isEqualTo PP_LOD);
+				[
+					[_memPoint, _lod],
+					[_value, _ppAddArr] select !(_ppParam in [PP_POS, PP_ADDARR]),
+					[_value, _ppDir] select !(_ppParam isEqualTo PP_DIR),
+					[_value, _ppUp] select !(_ppParam isEqualTo PP_UP),
+					[_value, _ppSetArr] select !(_ppParam isEqualTo PP_SETARR)
+				]
+			};
+			default {[]};
+		};
+
+		if (_params isEqualTo []) exitWith {false};
+
+		["setPointParams", [_params]] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
+		["syncPointParamsToMonitors"] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
+
+		true
+	};
 	METHOD("setDefaultPointAlignment") {
 		[_self, _turretIndex, -1] call CFM_fnc_setPointAlignment;
 	};
@@ -327,14 +413,15 @@ OBJCLASS(Turret)
 		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
 		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
 		_monitor setVariable ["CFM_turretLocal", _isLocal, _global];
-		_monitor setVariable ["CFM_currentCamPointParams", _pointParams, _global];
+		private _compiledPointParams = ["compilePointParams"] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
+		_monitor setVariable ["CFM_currentCamPointParams", _compiledPointParams, _global];
 		_monitor setVariable ["CFM_currentTiTable", _tiParams, _global];
 		_monitor setVariable ["CFM_currentNvgParam", _nvgParam, _global];
 		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
 		_monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
 		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
-		_monitor setVariable ["CFM_doUpdateCamera", [true, _pointParams] select _isStaticCam, _global];
+		_monitor setVariable ["CFM_doUpdateCamera", [true, _compiledPointParams] select _isStaticCam, _global];
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
@@ -394,7 +481,7 @@ OBJCLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp]]] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
 				
 				true
 			};
@@ -407,7 +494,7 @@ OBJCLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = [_ppType, _pointParams, [_pos, _newDir, _newUp]] call CFM_fnc_validatePointParams;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp]]] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
 				
 				true
 			};
@@ -449,7 +536,7 @@ OBJCLASS(Turret)
 					_newUpMS vectorDotProduct _mup
 				];
 
-				_pointParams = [_ppType, _pointParams, [[_memPoint, _lod], _pos, _dir, _up, _setArr]] call CFM_fnc_validatePointParams;
+				_pointParams = ["setPointParams", [[[_memPoint, _lod], _addArr, _dir, _up, _setArr]]] CALL_OBJINSTANCE("Turret", _instanceIndex, _self);
 
 				true
 			};

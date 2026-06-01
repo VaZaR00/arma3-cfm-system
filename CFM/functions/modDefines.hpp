@@ -46,6 +46,13 @@
 #define PP_VEH_STATIC 1
 #define PP_VEH_TURRET 2
 #define PP_PILOT 3
+#define PP_POS "PP_POS"
+#define PP_DIR "PP_DIR"
+#define PP_UP "PP_UP"
+#define PP_MEMPOINT "PP_MEMPOINT"
+#define PP_ADDARR "PP_ADDARR"
+#define PP_SETARR "PP_SETARR"
+#define PP_LOD "PP_LOD"
 
 #define MGVAR missionNamespace getVariable
 #define VALID_CLASS_TYPES [TYPE_VEH, TYPE_UAV, TYPE_WEAP, TYPE_HELM, TYPE_UNIT, TYPE_STATIC]
