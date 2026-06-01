@@ -69,6 +69,10 @@ OBJCLASS(Operator)
 				_operator setVariable ["CFM_isDroneFeed", _isDroneFeed, _global];
 			};
 			case TYPE_VEH: {
+				isNil {
+					if !(isNil "CFM_initDefPointAlignmentsSet") exitWith {};
+					0 call CFM_fnc_setupDefPointAlignments;
+				};
 				_operator setVariable ["CFM_isVehFeed", true, _global];
 			};
 			default {};

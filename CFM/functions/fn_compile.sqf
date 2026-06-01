@@ -50,3 +50,15 @@ CFM_fnc_removeLocalTurretOperator = {
 	LOCAL_ACTIVE_OPERATORS_VAR = _localOps;
 	LOCAL_ACTIVE_OPERATORS_VAR
 };
+CFM_fnc_setupDefPointAlignments = {
+	private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+	if (_pointSetDef isEqualTo createHashMap) then {
+		[] call CFM_fnc_initDefaultPointsAlignment;
+		_pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
+		missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
+	} else {
+		missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
+	};
+	CFM_initDefPointAlignmentsSet = true;
+	_pointSetDef
+};

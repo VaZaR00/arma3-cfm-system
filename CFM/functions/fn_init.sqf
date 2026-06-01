@@ -1,7 +1,7 @@
 #include "defines.hpp"
 
 CFM_updateEachFrame = true;
-CFM_initSetDefPointAlignments = true;
+CFM_initSetDefPointAlignments = false;
 
 if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;
@@ -26,6 +26,7 @@ CFM_ActiveOperators_PublicEH = {
 
 // update operators local turrets loop
 if (hasInterface) then {
+	if !(isNil "CFM_updateOperatorsLocalTurretsHandle") exitWith {};
 	CFM_updateOperatorsLocalTurretsHandle = 0 spawn {
 		// wait for player
 		waitUntil {sleep 1; !(isNull player)};
@@ -67,14 +68,7 @@ if (hasInterface) then {
 
 // default point alignments
 if (CFM_initSetDefPointAlignments) then {
-	private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
-	if (_pointSetDef isEqualTo createHashMap) then {
-		[] call CFM_fnc_initDefaultPointsAlignment;
-		_pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
-		missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
-	} else {
-		missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
-	};
+	0 call CFM_fnc_setupDefPointAlignments;
 };
 
 CFM_max_zoom_gopro = 2;
