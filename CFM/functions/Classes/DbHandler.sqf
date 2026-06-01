@@ -205,17 +205,11 @@ CLASS(DbHandler)
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["addToList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
-		if !(isMultiplayer) then {
-			CFM_LocalActiveOperators = CFM_ActiveOperators;
-		};
 	};
 	CLASS_METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["removeFromList", [_operator, "CFM_ActiveOperators", true, true]] CALL_CLASS(_self);
-		if !(isMultiplayer) then {
-			CFM_LocalActiveOperators = CFM_ActiveOperators;
-		};
 	};
 	CLASS_METHOD("addActiveViewer") {
 		params["_player"];
