@@ -25,6 +25,10 @@ OBJCLASS(Monitor)
 	FIELD ["_allowedOperators", [], [objNull, []]];
 	FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
 
+	// in veh tablet
+	FIELD ["_vehicleTabletSeats", []];
+	FIELD ["_isVehTablet", false];
+
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
 	FIELD ["_connectedTurretObject", objNull];
@@ -63,6 +67,8 @@ OBJCLASS(Monitor)
 			["_allowedOperatorsSet", []],
 			["_allowedOperatorsTypesSet", []],
 			["_isHandMonitorDisplay", false],
+			["_vehicleTabletSeatsSet", -1],
+			["_isVehTabletSet", -1],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true],
 			["_canSwitchTurret", true],
@@ -114,10 +120,16 @@ OBJCLASS(Monitor)
 				};
 			};
 		};
+		_isVehTablet = if (_isVehTabletSet isEqualType true) then {_isVehTabletSet} else {
+			(_self isKindOf "LandVehicle") || {(_self isKindOf "Air")};
+		};
 
-		private _monitorTextures = getObjectTextures _monitor;
-		private _hasTextureSelection = count (_monitorTextures) > 0;
-		if (!_isHandMonitor && !(_hasTextureSelection)) exitWith {
+		private _monitorTextures = [""];
+		if (!_isVehTablet && {
+			_monitorTextures = getObjectTextures _monitor;
+			private _hasTextureSelection = count (_monitorTextures) > 0;
+			!_isHandMonitor && !(_hasTextureSelection)
+		}) exitWith {
 			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
 			false
 		};
@@ -127,7 +139,16 @@ OBJCLASS(Monitor)
 		};
 		
 		if (_local) then {
+			// in veh tablet
 			_isLocal = _isHandMonitor;
+			_isHandMonitor = _isVehTablet || _isHandMonitor;
+			_vehicleTabletSeatsSet = if (_vehicleTabletSeatsSet isEqualType []) then {_vehicleTabletSeatsSet} else {
+				// default seats
+				[["driver"],["commander"],["gunner"],["turret",[-1]],["turret",[0]],["turret",[1]],["turret",[0,0]],["turret",[0,1]],["turret",[1,0]]];
+			};
+			_monitor setVariable ["CFM_isVehTablet", _isVehTablet, !_isLocal];
+			_monitor setVariable ["CFM_vehicleTabletSeatsSet", _vehicleTabletSeatsSet, !_isLocal];
+
 			private _originalTexture = (_monitorTextures) select 0;
 			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
 			_monitor setVariable ["CFM_originalTexture", _originalTexture, !_isLocal]; 
