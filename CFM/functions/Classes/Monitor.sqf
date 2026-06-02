@@ -690,11 +690,11 @@ OBJCLASS(Monitor)
 					(_this#3) params ["_target"]; 
 					[_target] call CFM_fnc_enterMonitorFullScreen;
 				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
-				// private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
-				// 	(_this#3) params ["_target"]; 
-				// 	[_target] call CFM_fnc_exitMonitorFullScreen;
-				// }, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
-				_actions append [_actionEnterFullScreen];
+				private _actionExitFullScreen = _self addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
+					(_this#3) params ["_target"]; 
+					[_target] call CFM_fnc_exitMonitorFullScreen;
+				}, [_self], _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
+				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
 			};
 		};
 		["addActionsToActionsList", _actions] CALL_OBJCLASS("Monitor", _self);
@@ -781,6 +781,13 @@ OBJCLASS(Monitor)
 		true
 	};
 	METHOD("monitorExitFullScreen") {
+		if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {
+			if (_isHandMonitor) then {
+				[_self] spawn CFM_fnc_resetFeed;
+			} else {
+				[_self] call CFM_fnc_turnOffMonitorLocal;
+			};
+		};
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];

@@ -7,4 +7,5 @@
 #include "defines.hpp" 
 
 params["_target"];
+if (missionNamespace getVariable ['CFM_isInPIPFullScreen', false]) exitWith {true};
 focusOn != PLAYER_

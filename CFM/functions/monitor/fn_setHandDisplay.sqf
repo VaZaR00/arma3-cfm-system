@@ -24,8 +24,11 @@ if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 			params['_disp', '_player'];
 			// for safety
 			waitUntil {uiSleep 1; isNull _disp};
+			_disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+			if !(isNull _disp) exitWith {};
 			[_player, false] call CFM_fnc_setHandDisplay;
 		};
+    	missionNamespace setVariable ["CFM_isInPIPFullScreen", true];
 		"[0.9, 0.5, 0.5]"
 	} else {
 		""
@@ -37,5 +40,6 @@ if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		_disp closeDisplay 1;
 		uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
 	};
+	missionNamespace setVariable ["CFM_isInPIPFullScreen", false];	
 	[_player] call CFM_fnc_closePIPwindow;
 };
