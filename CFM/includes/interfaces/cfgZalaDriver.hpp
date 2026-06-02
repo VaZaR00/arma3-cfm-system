@@ -11,150 +11,150 @@ class CFM_Zala421_Interface_Driver
         class CoordinateBox: InfoBox_Base
         {
             idc=825;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-            w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )";
+            w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=825;
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_coord_mainText', _this # 0]";
                     text="3535.85, 4887.42, 500";
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
         class BatteryBox: InfoBox_Base
         {
             idc=987;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 12 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) + 2*( 0.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-            w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 2*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )";
+            w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=987;
                     text="BATTERY: 100";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_fuel_mainText', _this # 0]";
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
         class AltitudeBox: InfoBox_Base
         {
             idc=956;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + 2*( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 12 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) + 3*( 0.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-            w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + 2*( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 3*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )";
+            w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=956;
                     text="ALT: 19";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_alt_mainText', _this # 0]";
-                    w="( 8 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
         class StatusBox: InfoBox_Base
         {
             idc=125;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + 3*( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 12 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) + 4*( 0.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-            w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + 3*( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )";
+            w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=125;
                     text="STATUS: OPERATIONAL";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_status_mainText', _this # 0]";
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
         class DroneSpeedBox: InfoBox_Base
         {
             idc=127;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-            w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )";
+            w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=127;
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_droneSpeed_mainText', _this # 0]";
                     text="РЎРљРћР РћРЎРўР¬: 120 РљРњ/Р§";
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
         class PitchBox: InfoBox_Base
         {
             idc=121;
-            x="( safeZoneX + ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( ( 2.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 8 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
-            y="( safeZoneY + ( 2 * ( pixelGridNoUIScale * pixelH * 2 )) ) - ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) )  + ( ( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) ) + ( 0.4 * ( pixelGridNoUIScale * pixelH * 2 ))";
-            w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+            x="( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
+            y="( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )  + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) + ( 0.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 ))";
+            w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) )";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) )";
                 };
                 class MainText: MainText
                 {
                     idc=121;
                     text="РўРђРќР“РђР–: 75 Рі.";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_pitch_mainText', _this # 0]";
-                    w="( 12 * ( pixelGridNoUIScale * pixelW * 2 ))";
+                    w="( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))";
                 };
             };
         };
@@ -167,9 +167,9 @@ class CFM_Zala421_Interface_Driver
 			onLoad = "uiNamespace setVariable [""DB_zala_r2tPicture"", _this # 0];";
 			text = "";
 			x = "safeZoneXAbs";
-			y = "safeZoneY";
-			w = "safeZoneWAbs";
-			h = "safeZoneH";
+			y = "STATIC_SZ_Y";
+			w = "STATIC_SZ_W";
+			h = "STATIC_SZ_H";
 			show = 1;
 		};
 		class EffectPicture: R2TPicture

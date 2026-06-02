@@ -10,38 +10,38 @@ class RscCFM_Mavic_Interface
 		{
 			idc = -1;
 			text = "\mavik\interface\main\camera.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) / 2 - ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))/2 - ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "safeZoneY + safeZoneH - ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 )) - ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))/2 - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(STATIC_SZ_Y + STATIC_SZ_H - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Settings_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\dots.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) / 2 - ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))/2 - ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "safeZoneY + ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))/2 - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(STATIC_SZ_Y + ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Exit_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\triangle.paa";
-			x = "safeZoneX + ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "safeZoneY + ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(STATIC_SZ_Y + ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class FlightMode_Text: ctrlStructuredText
 		{
 			idc = -1;
 			text = "$STR_mavic_fligtMode";
-			x = "safeZoneX + ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			y = "safeZoneY + ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )  + ( 0.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 5.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			size = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			y = EVAL_UI(STATIC_SZ_Y + ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )  + ( 0.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 5.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			size = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			class Attributes
 			{
 				font = "PuristaMedium";
@@ -52,81 +52,81 @@ class RscCFM_Mavic_Interface
 			idc = 824;
 			text = "In Flight";
 			onLoad = "uiNameSpace setVariable ['DB_mavic_FlightStatus_Text', _this # 0];";
-			x = "safeZoneX + ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) ) + ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.0 * ( pixelGridNoUIScale * pixelW * 2 )) + 2*( 3.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 2*( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
 		};
 		class Cross: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\kross.paa";
-			x = "0.5 - ( 5.0 * ( pixelGridNoUIScale * pixelW * 2 )) / 2";
-			y = "0.5 - ( 5.0 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-			w = "( 5.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 5.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(0.5 - ( 5.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
+			y = EVAL_UI(0.5 - ( 5.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+			w = EVAL_UI(( 5.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 5.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class MapTriangle_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\maptriangle.paa";
-			x = "safeZoneX + ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class RTH_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\arrow.paa";
-			x = "safeZoneX + ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 + ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 + ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Record_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\redcircle.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 3 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-			w = "( 3 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+			w = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Play_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\play.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) / 2 - ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))/2 - ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 + ( 3 * ( pixelGridNoUIScale * pixelH * 2 )) + ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))/2 - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 + ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) + ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Galery_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\main\galery.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) / 2 - ( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))/2 - ( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 ))/2 - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Zoom_Display: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\zoom\zoom.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 2.2 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-			w = "( 2.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+			w = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Zoom_Text: ctrlStructuredText
 		{
 			idc = 278;
 			text = "4x";
 			onLoad = "uiNameSpace setVariable ['DB_mavic_Zoom_Text', _this # 0];";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 2.2 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 + ( 0.5 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 2.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			size = "( 1.1 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 + ( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			size = EVAL_UI(( 1.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			class Attributes
 			{
 				align = "center";
@@ -137,36 +137,36 @@ class RscCFM_Mavic_Interface
 		{
 			idc = -1;
 			text = "\mavik\interface\main\memory.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 2.2 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "safeZoneY + safeZoneH - ( 2.0 * ( pixelGridNoUIScale * pixelH * 2 )) - ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 2.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(STATIC_SZ_Y + STATIC_SZ_H - ( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class AF_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\zoom\AF.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 2.2 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 + ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) + ( 0.05 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 2.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 + ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) + ( 0.05 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class Binoc_Button: ctrlStaticPicture
 		{
 			idc = -1;
 			text = "\mavik\interface\zoom\binocular.paa";
-			x = "safeZoneX + safeZoneWAbs - ( 3 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 2.2 * ( pixelGridNoUIScale * pixelW * 2 )) - 2*( ( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) )";
-			y = "0.5 - ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 2.2 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 2.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+			y = EVAL_UI(0.5 - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 		};
 		class UAVInfo_Group: ctrlControlsGroupNoScrollBars
 		{
 			idc = -1;
-			x = "safeZoneXAbs + ( 0.8 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			y = "safezoneY + safeZoneH - ( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.4 * ( pixelGridNoUIScale * pixelH * 2 ))";
-			w = "( 15 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(safeZoneXAbs + ( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			y = EVAL_UI(safezoneY + STATIC_SZ_H - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			w = EVAL_UI(( 15 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			class controls
 			{
 				class Map_Picture: ctrlStaticPicture
@@ -175,18 +175,18 @@ class RscCFM_Mavic_Interface
 					text = "\mavik\interface\main\map.paa";
 					x = 0;
 					y = 0;
-					w = "( 3.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 3.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					w = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class H_Text: ctrlStructuredText
 				{
 					idc = -1;
-					x = "( 3.0 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 1.4 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					w = "( 1.4 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.4 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					w = EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "H";
-					size = "( 1.4 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					class Attributes
 					{
 						color = "#ccc5c5";
@@ -197,12 +197,12 @@ class RscCFM_Mavic_Interface
 				{
 					idc = 375;
 					onLoad = "uiNameSpace setVariable ['DB_mavic_VSpeed_control', _this # 0];";
-					x = "( 3.0 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.4 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 0.7 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					w = "( 6 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.7 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 0.7 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					w = EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.7 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "0.0 km/h";
-					size = "( 0.9 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 0.9 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					class Attributes
 					{
 						font = "PuristaMedium";
@@ -212,27 +212,27 @@ class RscCFM_Mavic_Interface
 				{
 					idc = 214;
 					onLoad = "uiNameSpace setVariable ['DB_mavic_Height_control', _this # 0];";
-					y = "( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.1 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					h = "( 1.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					y = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					h = EVAL_UI(( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "0.0 ft";
-					size = "( 1.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class D_Text: H_Text
 				{
 					idc = -1;
-					x = "( 3.0 * ( pixelGridNoUIScale * pixelW * 2 )) + 4*( 1.4 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.0 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 1.4 * ( pixelGridNoUIScale * pixelW * 2 ))";
+					x = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
 					text = "D";
 				};
 				class HSpeed: ctrlStructuredText
 				{
 					idc = 952;
 					onLoad = "uiNameSpace setVariable ['DB_mavic_HSpeed_control', _this # 0];";
-					x = "( 3.0 * ( pixelGridNoUIScale * pixelW * 2 )) + 4*( 1.4 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.0 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 0.7 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					w = "( 6 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.7 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 3.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 0.7 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					w = EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.7 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "0.0 km/h";
-					size = "( 0.9 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 0.9 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					class Attributes
 					{
 						font = "PuristaMedium";
@@ -242,20 +242,20 @@ class RscCFM_Mavic_Interface
 				{
 					idc = 458;
 					onLoad = "uiNameSpace setVariable ['DB_mavic_Distance_control', _this # 0];";
-					y = "( 3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.1 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					h = "( 1.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					y = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					h = EVAL_UI(( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "0.0 ft";
-					size = "( 1.3 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 			};
 		};
 		class StatusInfo_Group: ctrlControlsGroupNoScrollBars
 		{
 			idc = -1;
-			x = "safeZoneX + safeZoneWAbs - ( 5 * ( pixelGridNoUIScale * pixelW * 2 )) - ( 11.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			y = "safeZoneY + ( ( 1.3 * ( pixelGridNoUIScale * pixelH * 2 )) )";
-			w = "( 15 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 2.0 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 11.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			y = EVAL_UI(STATIC_SZ_Y + ( ( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w = EVAL_UI(( 15 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 2.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			class controls
 			{
 				class Battery: ctrlStaticPicture
@@ -265,8 +265,8 @@ class RscCFM_Mavic_Interface
 					text = "\mavik\interface\bat\100.paa";
 					x = 0;
 					y = 0;
-					w = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					w = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class BatteryText: ctrlStructuredText
 				{
@@ -274,10 +274,10 @@ class RscCFM_Mavic_Interface
 					onLoad = "uiNameSpace setVariable [""DB_mavic_batteryText"", _this # 0]";
 					text = "99";
 					x = 0;
-					y = "( 0.8 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 0.08 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					w = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.8 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					size = "( 0.8 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					y = EVAL_UI(( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 0.08 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					w = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					size = EVAL_UI(( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					class Attributes
 					{
 						color = "#4cbb90";
@@ -290,53 +290,53 @@ class RscCFM_Mavic_Interface
 					idc = 653;
 					onLoad = "uiNameSpace setVariable [""DB_mavic_RemainingTimeText"", _this # 0]";
 					text = "00'00""";
-					size = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					class Attributes
 					{
 						font = "PuristaMedium";
 					};
-					x = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 ))";
+					x = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
 					y = 0;
-					w = "( 4 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					w = EVAL_UI(( 4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class Signal: ctrlStaticPicture
 				{
 					idc = 624;
 					onLoad = "uiNameSpace setVariable [""DB_mavic_SignalText"", _this # 0]";
 					text = "\mavik\interface\signal\100.paa";
-					x = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 1.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-					w = "( 1.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+					w = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class Sensor: ctrlStaticPicture
 				{
 					idc = -1;
 					text = "\mavik\interface\main\sensor.paa";
-					x = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.2 * ( pixelGridNoUIScale * pixelW * 2 )) + 4*( 0.1 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 1.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-					w = "( 1.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+					w = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class Satellite: ctrlStaticPicture
 				{
 					idc = 385;
 					onLoad = "uiNameSpace setVariable [""DB_mavic_SatellitePicture"", _this # 0]";
 					text = "\mavik\interface\main\sat0.paa";
-					x = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.2 * ( pixelGridNoUIScale * pixelW * 2 )) + 4*( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 1.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-					w = "( 1.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+					w = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class Datchik: ctrlStaticPicture
 				{
 					idc = -1;
 					text = "\mavik\interface\main\datchik.paa";
-					x = "( 1.5 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 3.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 1.2 * ( pixelGridNoUIScale * pixelW * 2 )) + 5*( 0.1 * ( pixelGridNoUIScale * pixelW * 2 )) + 2*( 1.2 * ( pixelGridNoUIScale * pixelW * 2 )) + ( 0.1 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					y = "( 1.5 * ( pixelGridNoUIScale * pixelH * 2 )) / 2 - ( 1.2 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-					w = "( 1.2 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1.2 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					x = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 3.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 5*( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 2*( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					y = EVAL_UI(( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+					w = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 			};
 		};
@@ -345,10 +345,10 @@ class RscCFM_Mavic_Interface
 			idc = 552;
 			fade = 1;
 			onLoad = "uiNameSpace setVariable [""DB_DetachGrenade_group"", _this # 0]";
-			x = "0.5 - ( 11 * ( pixelGridNoUIScale * pixelW * 2 )) / 2";
-			y = "0.5 - ( 6 * ( pixelGridNoUIScale * pixelH * 2 )) / 2";
-			w = "( 11 * ( pixelGridNoUIScale * pixelW * 2 ))";
-			h = "( 6 * ( pixelGridNoUIScale * pixelH * 2 ))";
+			x = EVAL_UI(0.5 - ( 11 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
+			y = EVAL_UI(0.5 - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
+			w = EVAL_UI(( 11 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			h = EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			class controls
 			{
 				class BackGround: ctrlStaticPicture
@@ -357,8 +357,8 @@ class RscCFM_Mavic_Interface
 					text = "\mavik\interface\detach\big.paa";
 					x = 0;
 					y = 0;
-					w = "( 11 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 6 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					w = EVAL_UI(( 11 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 				class Text: ctrlStructuredText
 				{
@@ -368,12 +368,12 @@ class RscCFM_Mavic_Interface
 						align = "center";
 						font = "PuristaMedium";
 					};
-					size = "( 0.9 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					size = EVAL_UI(( 0.9 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 					text = "$STR_mavic_dropMessage";
 					x = 0;
-					y = "( 6 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 1 * ( pixelGridNoUIScale * pixelH * 2 )) - ( 0.9 * ( pixelGridNoUIScale * pixelH * 2 ))";
-					w = "( 11 * ( pixelGridNoUIScale * pixelW * 2 ))";
-					h = "( 1 * ( pixelGridNoUIScale * pixelH * 2 ))";
+					y = EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.9 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+					w = EVAL_UI(( 11 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+					h = EVAL_UI(( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 				};
 			};
 		};
@@ -385,10 +385,10 @@ class RscCFM_Mavic_Interface
 			idc = 1488;
 			onLoad = "uiNamespace setVariable [""DB_mvc_r2tPicture"", _this # 0];";
 			text = "";
-			x = "safeZoneXAbs";
-			y = "safeZoneY";
-			w = "safeZoneWAbs";
-			h = "safeZoneH";
+			x = EVAL_UI(safeZoneXAbs);
+			y = EVAL_UI(STATIC_SZ_Y);
+			w = EVAL_UI(STATIC_SZ_W);
+			h = EVAL_UI(STATIC_SZ_H);
 			show = 1;
 		};
 		class EffectPicture: R2TPicture
@@ -402,10 +402,10 @@ class RscCFM_Mavic_Interface
 			idc = -1;
 			onLoad = "uiNamespace setVariable [""DB_gradient_control"", _this # 0];";
 			text = "\mavik\interface\signal\gradient.paa";
-			x = "safeZoneXAbs";
-			y = "safeZoneY";
-			w = "safeZoneWAbs";
-			h = "safeZoneH";
+			x = EVAL_UI(safeZoneXAbs);
+			y = EVAL_UI(STATIC_SZ_Y);
+			w = EVAL_UI(STATIC_SZ_W);
+			h = EVAL_UI(STATIC_SZ_H);
 			show = 0;
 		};
 	};

@@ -23,10 +23,10 @@ class RscDisplayR2TDisplayCFM: RscDisplayEmpty
 			idc = 1488;
 			onLoad = "uiNamespace setVariable [""CFM_r2t_r2tPicture"", _this # 0];";
 			text = "";
-			x = "safeZoneXAbs";
-			y = "safeZoneY";
-			w = "safeZoneWAbs";
-			h = "safeZoneH";
+			x = EVAL_UI(safeZoneXAbs);
+			y = EVAL_UI(STATIC_SZ_Y);
+			w = EVAL_UI(STATIC_SZ_W);
+			h = EVAL_UI(STATIC_SZ_H);
 			show = 1;
 		};
 		class EffectPicture: R2TPicture
