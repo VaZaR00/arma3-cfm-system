@@ -10,7 +10,7 @@ class RscCFM_ArmaFPV_Dialog
         class LeftLine: RscText
         {
             idc=-1;
-            x=EVAL_UI(safeZoneXAbs);
+            x=EVAL_UI(STATIC_SZ_X);
             y=EVAL_UI(STATIC_SZ_Y);
             w=EVAL_UI((STATIC_SZ_W * 0.15));
             h=EVAL_UI((STATIC_SZ_H));
@@ -18,12 +18,12 @@ class RscCFM_ArmaFPV_Dialog
         };
         class RightLine: LeftLine
         {
-            x=EVAL_UI(safeZoneXAbs + STATIC_SZ_W - (STATIC_SZ_W * 0.15));
+            x=EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - (STATIC_SZ_W * 0.15));
         };
         class CommunicationGroup: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((safeZoneXAbs + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             y=EVAL_UI((STATIC_SZ_Y) + ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
             w=EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
@@ -62,7 +62,7 @@ class RscCFM_ArmaFPV_Dialog
         class BatteryGroup: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((safeZoneXAbs + (STATIC_SZ_W * 0.15)) + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
             w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
@@ -101,7 +101,7 @@ class RscCFM_ArmaFPV_Dialog
         class OnTime_Group: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((safeZoneXAbs + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
             w=EVAL_UI(( 10 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             h=EVAL_UI(( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
@@ -171,7 +171,7 @@ class RscCFM_ArmaFPV_Dialog
             size=EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
             onLoad="uiNameSpace setVariable [""ArmaFPV_MainText"", _this # 0];";
             text="";
-            x=EVAL_UI((safeZoneXAbs + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) / 2 - ( 20 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) / 2 - ( 20 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
             y=EVAL_UI(0.5 - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
             w=EVAL_UI(( 20 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
             h=EVAL_UI(( 1.6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
@@ -180,7 +180,7 @@ class RscCFM_ArmaFPV_Dialog
         {
             idc=-1;
             text="\fpv_ua\pictures\vert.paa";
-            x=EVAL_UI((safeZoneXAbs + (STATIC_SZ_W * 0.15)) + ((STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2) - ((16 * (STATIC_GRID_SCALE * STATIC_PIXEL_W * 2)) / 2));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ((STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2) - ((16 * (STATIC_GRID_SCALE * STATIC_PIXEL_W * 2)) / 2));
             y=EVAL_UI(STATIC_SZ_Y + (0.5 * (STATIC_GRID_SCALE * STATIC_PIXEL_H * 2)));
             w=EVAL_UI((16 * (STATIC_GRID_SCALE * STATIC_PIXEL_W * 2)));
             h=EVAL_UI((1.3 * (STATIC_GRID_SCALE * STATIC_PIXEL_H * 2)));
@@ -193,7 +193,7 @@ class RscCFM_ArmaFPV_Dialog
 				idc = 1488;
 				onLoad = "uiNamespace setVariable [""DB_fpv_r2tPicture"", _this # 0];";
 				text = "";
-				x = EVAL_UI(safeZoneXAbs);
+				x = EVAL_UI(STATIC_SZ_X);
 				y = EVAL_UI(STATIC_SZ_Y);
 				w = EVAL_UI(STATIC_SZ_W);
 				h = EVAL_UI(STATIC_SZ_H);

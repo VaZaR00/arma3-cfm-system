@@ -163,7 +163,7 @@ class RscCFM_Mavic_Interface
 		class UAVInfo_Group: ctrlControlsGroupNoScrollBars
 		{
 			idc = -1;
-			x = EVAL_UI(safeZoneXAbs + ( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+			x = EVAL_UI(STATIC_SZ_X + ( 0.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
 			y = EVAL_UI(safezoneY + STATIC_SZ_H - ( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 0.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
 			w = EVAL_UI(( 15 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
 			h = EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
@@ -385,7 +385,7 @@ class RscCFM_Mavic_Interface
 			idc = 1488;
 			onLoad = "uiNamespace setVariable [""DB_mvc_r2tPicture"", _this # 0];";
 			text = "";
-			x = EVAL_UI(safeZoneXAbs);
+			x = EVAL_UI(STATIC_SZ_X);
 			y = EVAL_UI(STATIC_SZ_Y);
 			w = EVAL_UI(STATIC_SZ_W);
 			h = EVAL_UI(STATIC_SZ_H);
@@ -402,7 +402,7 @@ class RscCFM_Mavic_Interface
 			idc = -1;
 			onLoad = "uiNamespace setVariable [""DB_gradient_control"", _this # 0];";
 			text = "\mavik\interface\signal\gradient.paa";
-			x = EVAL_UI(safeZoneXAbs);
+			x = EVAL_UI(STATIC_SZ_X);
 			y = EVAL_UI(STATIC_SZ_Y);
 			w = EVAL_UI(STATIC_SZ_W);
 			h = EVAL_UI(STATIC_SZ_H);
