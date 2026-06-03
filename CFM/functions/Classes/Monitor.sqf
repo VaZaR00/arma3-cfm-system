@@ -147,7 +147,7 @@ OBJCLASS(Monitor)
 				[["driver"],["commander"],["gunner"],["turret",[-1]],["turret",[0]],["turret",[1]],["turret",[0,0]],["turret",[0,1]],["turret",[1,0]]];
 			};
 			_monitor setVariable ["CFM_isVehTablet", _isVehTablet, !_isLocal];
-			_monitor setVariable ["CFM_vehicleTabletSeatsSet", _vehicleTabletSeatsSet, !_isLocal];
+			_monitor setVariable ["CFM_vehicleTabletSeats", _vehicleTabletSeatsSet, !_isLocal];
 
 			private _originalTexture = (_monitorTextures) select 0;
 			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};

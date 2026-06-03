@@ -65,7 +65,7 @@ CFM_fnc_setupDefPointAlignments = {
 
 CFM_fnc_inVehicleTabletActionCondition = {
 	params ["_target"];
-	if !(_target getVariable ["CFM_inVehTablet", false]) exitWith {true};
+	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
 	private _plr = PLAYER_;
 	if !(_plr in _target) exitWith {false};
 	private _vehMonSeats = _target getVariable ["CFM_vehicleTabletSeats", []];
