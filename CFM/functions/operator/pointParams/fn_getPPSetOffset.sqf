@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_getPPSetArr
+    Function: CFM_fnc_getPPSetOffset
 */
 
 #include "defines.hpp"

@@ -1,5 +1,5 @@
 /*
-    Function: CFM_fnc_setPPAddArr
+    Function: CFM_fnc_setPPAddOffset
 */
 
 #include "defines.hpp"
