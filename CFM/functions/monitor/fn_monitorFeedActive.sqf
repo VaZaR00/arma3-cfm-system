@@ -21,6 +21,11 @@ private _active = _monitor getVariable ["CFM_feedActive", false];
 
 CHECK_EX(!_active);
 
+private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
+if (_isVehTablet) exitWith {
+    [_monitor] call CFM_fnc_inVehicleTabletActionCondition
+};
+
 private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
 if (_isHandMonitor && {!(_monitor call CFM_fnc_handMonitorCondition)}) exitWith {false};
 

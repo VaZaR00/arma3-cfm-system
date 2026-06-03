@@ -123,6 +123,8 @@ OBJCLASS(Monitor)
 		_isVehTablet = if (_isVehTabletSet isEqualType true) then {_isVehTabletSet} else {
 			(_self isKindOf "LandVehicle") || {(_self isKindOf "Air")};
 		};
+		_isLocal = _isHandMonitor;
+		_isHandMonitor = _isVehTablet || _isHandMonitor;
 
 		private _monitorTextures = [""];
 		if (!_isVehTablet && {
@@ -140,8 +142,6 @@ OBJCLASS(Monitor)
 		
 		if (_local) then {
 			// in veh tablet
-			_isLocal = _isHandMonitor;
-			_isHandMonitor = _isVehTablet || _isHandMonitor;
 			_vehicleTabletSeatsSet = if (_vehicleTabletSeatsSet isEqualType []) then {_vehicleTabletSeatsSet} else {
 				// default seats
 				[["driver"],["commander"],["gunner"],["turret",[-1]],["turret",[0]],["turret",[1]],["turret",[0,0]],["turret",[0,1]],["turret",[1,0]]];
