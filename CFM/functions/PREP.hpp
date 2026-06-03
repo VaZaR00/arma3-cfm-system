@@ -95,6 +95,7 @@ PREP(hackDrone)
 
 // -- Category keybinds --
 FOLDER_PATH(keybinds)
+PREP(enterFullscreenKeybind)
 PREP(exitFullscreenKeybind)
 PREP(monitorSwitchNVGKeybind)
 PREP(monitorSwitchTIKeybind)

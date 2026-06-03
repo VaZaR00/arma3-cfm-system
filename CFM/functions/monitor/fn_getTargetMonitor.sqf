@@ -6,9 +6,22 @@
 
 #include "defines.hpp" 
 
-private _plr = PLAYER_;
-private _watchingAtMonitor = [_plr] call CFM_fnc_isWatchingAtMonitor;
-if !(cameraOn isEqualTo _plr) exitWith {objNull};
+private _player = PLAYER_;
+private _plrVeh = vehicle _player;
+if !(_player isEqualTo _plrVeh) exitWith {
+    private _playerActiveFeed = _player getVariable ["CFM_feedActive", false];
+    if (_playerActiveFeed) then {
+        _player
+    } else {
+        if (_plrVeh getVariable ["CFM_feedActive", false]) then {
+            _plrVeh
+        } else {
+            objNull
+        };
+    };
+};
+private _watchingAtMonitor = [_player] call CFM_fnc_isWatchingAtMonitor;
+if !(cameraOn isEqualTo _player) exitWith {objNull};
 if (_watchingAtMonitor) exitWith {cursorObject};
-if ((_plr getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {_plr};
+if ((_player getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {_player};
 objNull

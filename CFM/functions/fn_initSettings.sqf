@@ -24,6 +24,7 @@
 ["CFM_Mavic_dropShowMessageEH",  "CHECKBOX",  [CFM_STR_MAVIC_SHOW_GRENADE_DROP_MESSAGE, CFM_STR_DESC_MAVIC_SHOW_GRENADE_DROP_MESSAGE], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_useR2Tsystem",  "CHECKBOX",  [CFM_STR_USE_R2T_SYSTEM, CFM_STR_DESC_USE_R2T_SYSTEM], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 
+[CFM_CATEGORY, "CFM_enterFullScreenKey", [CFM_STR_ENTER_FULLSCREEN_MODE, CFM_STR_ENTER_FULLSCREEN_MODE], {call CFM_fnc_enterFullscreenKeybind}, "", [DIK_F, [true, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_exitFullScreenKey", [CFM_STR_EXIT_FULLSCREEN_MODE, CFM_STR_EXIT_FULLSCREEN_MODE], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_zoomInKey", [CFM_STR_ZOOM_IN, CFM_STR_ZOOM_IN], {call CFM_fnc_zoomInKeybind}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_zoomOutKey", [CFM_STR_ZOOM_OUT, CFM_STR_ZOOM_OUT], {call CFM_fnc_zoomOutKeybind}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;

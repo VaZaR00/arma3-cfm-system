@@ -519,6 +519,10 @@ OBJCLASS(Monitor)
 		private _menuText = CFM_STR_CAMERA_SYSTEM_MENU;
 		private _additionalCondition = if (_isHandMonitor) then {
 			_radius = -1;
+			if (_isVehTablet) exitWith {
+				_menuText = CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU;
+				"true"
+			};
 			_menuText = CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU;
 			"([_target] call CFM_fnc_hasUAVterminal)"
 		} else {"true"};
