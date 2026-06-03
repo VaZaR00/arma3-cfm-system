@@ -6,12 +6,12 @@
 
 #include "defines.hpp" 
 
-params[["_player", PLAYER_], ["_render", true], ["_fullscreen", false]];
+params[["_monitor", PLAYER_], ["_render", true], ["_fullscreen", false]];
 
-private _isUI = _player getVariable ["CFM_currentFeedIsDisplay", false];
-private _renderTarget = _player getVariable ["CFM_monitorR2Tid", ""];
+private _isUI = _monitor getVariable ["CFM_currentFeedIsDisplay", false];
+private _renderTarget = _monitor getVariable ["CFM_monitorR2Tid", ""];
 private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
-private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_player getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
+private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_monitor getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
 
 if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 	private _settings = if (_isDialog) then {
@@ -20,20 +20,32 @@ if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		uiNamespace setVariable ["CFM_tabletDisplay", _disp];
 		PLAYER_ setVariable ["CFM_tabletDisplayIsOpened", true];
 		PLAYER_ setVariable ["CFM_turnedOffLocal", false];
-		[_disp, _player] spawn {
-			params['_disp', '_player'];
-			// for safety
-			waitUntil {uiSleep 1; isNull _disp};
-			_disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
-			if !(isNull _disp) exitWith {};
-			[_player, false] call CFM_fnc_setHandDisplay;
-		};
+
+		// null display nadler
+		// private _nullDispHndl = [_disp, _monitor] spawn {
+		// 	// for safety
+		// 	params['_disp', '_monitor'];
+		// 	private _prevHndl = _monitor getVariable ["CFM_pip_nullDispHndl", scriptNull];
+
+		// 	if !(scriptDone _prevHndl) then {
+		// 		terminate _prevHndl;
+		// 		waitUntil {uiSleep 0.1; scriptDone _prevHndl};
+		// 	};
+
+		// 	_monitor setVariable ["CFM_pip_nullDispHndl", _thisScript];
+
+		// 	waitUntil {uiSleep 1; isNull _disp};
+		// 	_disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+		// 	if !(isNull _disp) exitWith {};
+		// 	[_monitor, false] call CFM_fnc_setHandDisplay;
+		// };
+
     	missionNamespace setVariable ["CFM_isInPIPFullScreen", true];
 		"[0.9, 0.5, 0.5]"
 	} else {
 		""
 	};
-	[_player, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
+	[_monitor, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
 } else {
 	if (_isDialog) then {
 		private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
@@ -41,5 +53,5 @@ if (_render && {IS_VALID_R2T(_renderTarget)}) then {
 		uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
 	};
 	missionNamespace setVariable ["CFM_isInPIPFullScreen", false];	
-	[_player] call CFM_fnc_closePIPwindow;
+	[_monitor] call CFM_fnc_closePIPwindow;
 };

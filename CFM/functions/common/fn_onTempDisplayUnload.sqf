@@ -10,11 +10,9 @@ params[["_display", displayNull]];
 disableSerialization;
 private _currentFullscreenedMonitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", PLAYER_];
 _currentFullscreenedMonitor setVariable ["CFM_tabletDisplayIsOpened", false];
-if (_currentFullscreenedMonitor isEqualTo PLAYER_) then {
-	[PLAYER_] call CFM_fnc_turnOffMonitorLocal;
-} else {
-	[_currentFullscreenedMonitor, false] call CFM_fnc_setHandDisplay;
-};
+
+[_currentFullscreenedMonitor] spawn CFM_fnc_resetFeed;
+
 if (missionNamespace getVariable ["CFM_isInFullScreen", false]) then {
 	[] call CFM_fnc_exitFullScreen;
 };
