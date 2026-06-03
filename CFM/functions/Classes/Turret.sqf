@@ -54,7 +54,7 @@ OBJCLASS(Turret)
 			["_setZoomTable", []], 
 			["_setNvgAndTi", []], 
 			["_pointParams", -1],  
-			["_doInterpolationSet", true], 
+			["_doInterpolationSet", -1], 
 			["_turretName", ""],
 			["_smoothZoomSetTurr", -1],
 			["_interfaceClass", -1],
@@ -227,7 +227,8 @@ OBJCLASS(Turret)
 				};
 			};
 		};
-		_doInterpolation = !_hasGoPro && {(_ppType > 1) && {_doInterpolationSet && (isMultiplayer || _isStaticCam)}};
+		_doInterpolation = !_hasGoPro && {((_ppType > 1) && {_isDroneFeed}) && {(isMultiplayer || _isStaticCam)}};
+		_doInterpolation = _doInterpolation && {(_doInterpolationSet isNotEqualTo false)};
 
 		// POINT ALIGNMENT
 		if (_ppType != PP_NONE) then {
