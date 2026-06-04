@@ -17,14 +17,10 @@ if (_start && {!(IS_OBJ(_operator))}) exitWith {};
 
 if (isServer) then {
 	if (_start) then {
-		[[_operator, _monitor], {
-			_this call CFM_fnc_operatorMonitorConnectedEvent;
-		}, _operator, false] call CFM_fnc_remoteExec;
+		["CFM_operatorMonitorConnected", [_operator, _monitor], _operator] call CBA_fnc_targetEvent;
 	} else {
 		_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-		[[_operator, _monitor], {
-			_this call CFM_fnc_operatorMonitorDisconnectedEvent;
-		}, _operator, false] call CFM_fnc_remoteExec;
+		["CFM_operatorMonitorDisconnected", [_operator, _monitor], _operator] call CBA_fnc_targetEvent;
 	};
 };
 

@@ -10,11 +10,7 @@ params ["_drone", "_side", ["_takeControls", false], ["_monitor", objNull], ["_i
 
 private _playerStartPos = getPosASL player;
 
-[[_drone, _side, clientOwner], {
-	params ["_drone", "_side", "_netId"];
-	deleteVehicleCrew _drone;
-	_side createVehicleCrew _drone;
-}, _drone] call CFM_fnc_remoteExec;
+["CFM_droneRecreateCrew", [_drone, _side, clientOwner], _drone] call CBA_fnc_targetEvent;
 
 if (_hint) then {
 	CFM_STR_HACKING_DRONE _HINT;

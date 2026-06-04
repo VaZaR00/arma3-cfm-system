@@ -6,6 +6,6 @@
 
 #include "defines.hpp" 
 
-[IF_NIL(_this, []), {_this call (MGVAR ["CFM_ActiveOperators_PublicEH", {}])}] call CFM_fnc_remoteExec;
+["CFM_operatorsLocalityChanged", IF_NIL(_this, []), 0] call CFM_fnc_remoteEvent;
 
 CFM_operatorsLocalityChangedEventFired = true;

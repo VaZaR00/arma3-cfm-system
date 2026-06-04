@@ -316,14 +316,14 @@ OBJCLASS(Monitor)
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
 		_self setVariable ['CFM_actionCaller', _caller];
-		[[netId _self, netId _op, true], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
+		["CFM_syncMonitorState", [netId _self, netId _op, true], !_isLocal, netId _self] call CFM_fnc_remoteEvent; 
 		[_self] call CFM_fnc_monitorCloseMenu;
 		true
 	};
 	METHOD("disconnect") {
 		params[["_caller", objNull]];
 		_self setVariable ['CFM_actionCaller', _caller];
-		[[netId _self, "", false], "CFM_fnc_syncState", !_isLocal, _self] call CFM_fnc_remoteExec; 
+		["CFM_syncMonitorState", [netId _self, "", false], !_isLocal, netId _self] call CFM_fnc_remoteEvent; 
 		[_self] call CFM_fnc_monitorCloseMenu;
 	};
 	METHOD("loadMenu") {

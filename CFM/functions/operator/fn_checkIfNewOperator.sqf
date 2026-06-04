@@ -21,18 +21,12 @@ if !(isNil "_clsArgs") exitWith {
 		_clsArgs = [_clsArgs];
 	};
 	private _args = [_obj] + _clsArgs;
-	[_args, {
-		private _reset = false;
-		_this call CFM_fnc_setOperator;
-	}, 2, false, false] call CFM_fnc_remoteExec;
+	["CFM_setOperator", _args, 2] call CFM_fnc_remoteEvent;
 	true
 };
 if ((MGVAR ["CFM_allUavsAreFeedingByDefault", false]) isEqualTo true) exitWith {
 	if (_obj call CFM_fnc_isUAV) exitWith {
-		[[_obj], {
-			private _reset = false;
-			_this call CFM_fnc_setOperator;
-		}, 2, false, false] call CFM_fnc_remoteExec;
+		["CFM_setOperator", [_obj], 2] call CFM_fnc_remoteEvent;
 		true
 	};
 	false

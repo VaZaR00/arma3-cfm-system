@@ -30,40 +30,7 @@ if !(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH_set", false]) th
         if !(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH", true]) exitWith {};
 
         private _targets = ACTIVE_VIEWERS_AND_SELF(false);
-        [cameraOn, {
-            params[["_drone", objNull]];
-            if !(IS_OBJ(_drone)) exitWith {};
-            {
-                private _monitor = _x;
-                if !(IS_OBJ(_monitor)) exitWith {};
-                if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {};
-                private _op = _monitor getVariable ["CFM_connectedOperator", objNull];
-                if !(IS_OBJ(_op)) exitWith {};
-                if !(_op isEqualTo _drone) exitWith {};
-
-                private _uiDisplayUniqueName = _monitor getVariable ["CFM_uiDisplayUniqueName", ""];
-                private _group = uiNamespace getVariable ["DB_mavic_DetachGrenade" + _uiDisplayUniqueName, controlNull];
-
-                if (isNull _group) exitWith {};
-                if !(ctrlShown _group) exitWith {};
-
-                private _controls = (allControls _group) + [_group];
-
-                {
-                    _x ctrlSetFade 0;
-                    _x ctrlCommit 0.5;
-                } forEach _controls;
-
-                [{
-                    _this params ["_controls"];
-
-                    {
-                        _x ctrlSetFade 1;
-                        _x ctrlCommit 0.0;
-                    } forEach _controls;
-                }, [_controls], 1.5] call CBA_fnc_waitAndExecute;
-            } forEach (missionNamespace getVariable ["CFM_ActiveMonitors", []]);
-        }, _targets, false] call CFM_fnc_remoteExec;
+        ["CFM_mavicDroppedGren", cameraOn, _targets] call CFM_fnc_remoteEvent;
     }] call BIS_fnc_addScriptedEventHandler;
 
     missionNamespace setVariable ["CFM_Mavic_dropShowMessageEH_set", true];

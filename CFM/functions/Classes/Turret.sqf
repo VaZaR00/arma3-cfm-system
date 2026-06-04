@@ -596,11 +596,7 @@ OBJCLASS(Turret)
 			if (isNull _target) then {
 				_target = _operator;
 			};
-			[[_self, [_instanceIndex, _axisAngles]], {
-				params["_turret", "_args"];
-				_args params [["_turretInstanceIndex", -1], ["_axisAngles", [0,0]]];
-				["moveDroneCamera", [_axisAngles]] SPAWN_OBJINSTANCE("Turret", _turretInstanceIndex, _turret);
-			}, _target, false, true] call CFM_fnc_remoteExec;
+			["CFM_moveDroneCamera", [_self, [_instanceIndex, _axisAngles]], _target] call CBA_fnc_targetEvent;
 			true
 		};
 

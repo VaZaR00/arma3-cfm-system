@@ -67,7 +67,7 @@ CLASS(DbHandler)
 		private _classType = [_opClass] call CFM_fnc_validClassType;
 
 		if (_classType isEqualTo TYPE_HELM) then {
-			["addToList", [_opClass, "CFM_goProHelmets", true]] CALL_CLASS(_self);
+			["CFM_" + "addGoProHelmetClass", _opClass, true] call CFM_fnc_remoteEvent;
 			CFM_checkGoPros = true;
 		};
 		if (_classType isEqualTo TYPE_UAV) then {
@@ -79,7 +79,7 @@ CLASS(DbHandler)
 
 		if !(IS_STR(_operator)) exitWith {100};
 
-		["addToHashMap", [_opClass, _mainArgs, "CFM_OperatorClasses", true]] CALL_CLASS(_self);
+		["CFM_" + "addOperatorClass", [_opClass, _mainArgs], true] call CFM_fnc_remoteEvent;
 
 		true
 	};
@@ -91,19 +91,19 @@ CLASS(DbHandler)
 		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
 	};
 	CLASS_METHOD("addToList") {
-		params["_obj", ["_listName", ""], ["_global", false], ["_unique", true], ["_viaPubVar", false]];
+		params["_obj", ["_listName", ""], ["_unique", true]];
 			
-		[nil, _listName, _obj, _unique, true, _global, _global isEqualTo true] call EFL_fnc_pushBackNet;
+		[missionNamespace, _listName, _NIL(_obj), _unique, true] call EFL_fnc_pushBack;
 	};
 	CLASS_METHOD("removeFromList") {
-		params["_obj", ["_listName", ""], ["_global", false], ["_viaPubVar", false]];
+		params["_obj", ["_listName", ""], ["_pop", false]];
 			
-		[nil, _listName, _obj, false, true, _global, _global isEqualTo true] call EFL_fnc_removeFromArrayNet;
+		[missionNamespace, _listName, _NIL(_obj), _pop, true] call EFL_fnc_removeFromArray;
 	};
 	CLASS_METHOD("addToHashMap") {
-		params["_key", ["_val", nil], ["_varName", ""], ["_global", false], ["_unique", true]];
+		params["_key", ["_val", nil], ["_varName", ""]];
 		
-		[nil, _varName, _key, _val, true, _global, _global isEqualTo true] call EFL_fnc_hashSetNet;
+		[missionNamespace, _varName, _key, _NIL(_val), true] call EFL_fnc_hashSet;
 	};
 	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
@@ -117,17 +117,17 @@ CLASS(DbHandler)
 	CLASS_METHOD("addMonitor") {
 		params["_monitor", ["_global", true]];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
-		["addToList", [_monitor, "CFM_Monitors", _global]] CALL_CLASS(_self);
+		["CFM_" + "addMonitor", _monitor, _global] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("addOperator") {
 		params["_operator", ["_global", true]];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["setOperatorId", [_operator]] CALL_CLASS(_self);
-		["addToList", [_operator, "CFM_Operators", _global]] CALL_CLASS(_self);
+		["CFM_" + "addOperator", _operator, _global] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("removeOperator") {
 		params["_operator", ["_global", false]];
-		["removeFromList", [_operator, "CFM_Operators", _global, (_global isEqualTo true)]] CALL_CLASS(_self);
+		["CFM_" + "removeOperator", _operator, _global] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("setOperatorId") {
 		private _res = -1;
@@ -140,7 +140,7 @@ CLASS(DbHandler)
 				private _nextId = ["safeGenerateId", [_opsIdsHash]] CALL_CLASS(_self);
 				if (_nextId < 0) exitWith {-1};
 				_operator setVariable ["CFM_operatorId", _nextId, true];
-				["addToHashMap", [_nextId, _operator, "CFM_OperatorsIds", true]] CALL_CLASS(_self);
+				["CFM_" + "addOperatorId", [_nextId, _operator], true] call CFM_fnc_remoteEvent;
 				_nextId
 			} else {
 				_id
@@ -204,12 +204,12 @@ CLASS(DbHandler)
 	CLASS_METHOD("addActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["addToList", [_operator, "CFM_ActiveOperators", true, true, true]] CALL_CLASS(_self);
+		["CFM_" + "addActiveOperator", _operator, 0] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
-		["removeFromList", [_operator, "CFM_ActiveOperators", true, true]] CALL_CLASS(_self);
+		["CFM_" + "removeActiveOperator", _operator, 0] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("addActiveViewer") {
 		params["_player"];
@@ -220,7 +220,7 @@ CLASS(DbHandler)
 			"ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
-		["addToList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
+		["CFM_" + "addActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
 		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
@@ -234,7 +234,7 @@ CLASS(DbHandler)
 			"ERROR removeActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			false
 		};
-		["removeFromList", [_ownerId, "CFM_ActiveMonitorViewers", true]] CALL_CLASS(_self);
+		["CFM_" + "removeActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		_player setVariable ["CFM_isActiveViewer", false, true];
 		true
 	};
@@ -247,7 +247,7 @@ CLASS(DbHandler)
 			"ERROR monitorAddActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
-		[_monitor, "CFM_ActiveMonitorViewers", _ownerId, true, true, true, true] call EFL_fnc_pushBackNet;
+		["CFM_" + "monitorAddActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("monitorRemoveActiveViewer") {
 		params[["_monitor", objNull], ["_player", objNull]];
@@ -259,7 +259,7 @@ CLASS(DbHandler)
 			"ERROR monitorRemoveActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			false
 		};
-		[_monitor, "CFM_ActiveMonitorViewers", _ownerId, true, true, true, true] call EFL_fnc_removeFromArrayNet;
+		["CFM_" + "monitorRemoveActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
 	CLASS_METHOD("deepCopy") {
 		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];

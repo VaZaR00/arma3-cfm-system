@@ -291,7 +291,7 @@ OBJCLASS(Operator)
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
 		if (_turretInstanceId <= 0) exitWith {};
-		[_self, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject], true, SET_VARS_INIT_GLOBAL] call EFL_fnc_hashSetNet;
+		["CFM_" + "addTurretInstanceToOperator", [_self, _turretIndex, [_turretInstanceId, _turretObject]], true] call CFM_fnc_remoteEvent;
 	};
 	METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];

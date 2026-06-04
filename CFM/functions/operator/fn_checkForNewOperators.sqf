@@ -11,7 +11,7 @@ params[["_monitor", objNull]];
 [_monitor] call CFM_fnc_monitorCloseMenu;
 
 if !(isServer) exitWith {
-	[_monitor, {_this call CFM_fnc_checkForNewOperators}, 2, false, false] call CFM_fnc_remoteExec;
+	["CFM_checkForNewOperators", _monitor, 2] call CFM_fnc_remoteEvent;
 };
 
 {
