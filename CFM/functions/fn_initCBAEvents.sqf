@@ -1,7 +1,7 @@
 #include "defines.hpp"
 
-// #define LOG_CBA_EVENT [_NIL(_eventName), time, _NIL(_this), clientOwner] RLOG
 #define LOG_CBA_EVENT 
+// #define LOG_CBA_EVENT [_NIL(_eventName), time, _NIL(_this), clientOwner] RLOG
 
 ["CFM_syncMonitorState", {
     LOG_CBA_EVENT
@@ -16,11 +16,9 @@
 ["CFM_clientSyncVariables", {
     LOG_CBA_EVENT
 	isNil {
-		missionNamespace setVariable ["CFM_Operators", _this param [0, []]];
-		missionNamespace setVariable ["CFM_Monitors", _this param [1, []]];
-		missionNamespace setVariable ["CFM_OperatorsIds", _this param [2, createHashMap]];
-		missionNamespace setVariable ["CFM_ActiveOperators", _this param [3, []]];
-		missionNamespace setVariable ["CFM_ActiveMonitorViewers", _this param [4, []]];
+		missionNamespace setVariable ["CFM_OperatorsIds", _this param [0, createHashMap]];
+		missionNamespace setVariable ["CFM_ActiveOperators", _this param [1, []]];
+		missionNamespace setVariable ["CFM_ActiveMonitorViewers", _this param [2, []]];
 	};
 }] call CBA_fnc_addEventHandler;
 

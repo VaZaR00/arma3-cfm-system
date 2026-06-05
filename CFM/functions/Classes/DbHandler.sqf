@@ -220,8 +220,8 @@ CLASS(DbHandler)
 			"ERROR addActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
-		["CFM_" + "addActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		_player setVariable ["CFM_isActiveViewer", true, true];
+		["CFM_" + "addActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		CFM_makeCamDataSync = true;
 		["CFM_makeCamDataSync", [true, [clientOwner]]] call CFM_fnc_publicVariableServer;
 	};
@@ -234,8 +234,8 @@ CLASS(DbHandler)
 			"ERROR removeActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			false
 		};
-		["CFM_" + "removeActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		_player setVariable ["CFM_isActiveViewer", false, true];
+		["CFM_" + "removeActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		true
 	};
 	CLASS_METHOD("monitorAddActiveViewer") {
