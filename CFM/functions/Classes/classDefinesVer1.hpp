@@ -1,3 +1,7 @@
+#define OOP_PREF_ OOP_PREFX##_
+#define OOP_SPREF STR(OOP_PREFX)
+
+
 #define NEW_INSTANCE(name) call {["Init", _this] call (missionNamespace getVariable [_CLASSNAMESTR(name), {}])};
 #define CLASSNAME_EXISTS(name) (call { \
 	private _classFunc = (missionNamespace getVariable [STR(name), {}]) \
@@ -16,8 +20,8 @@
 	[true, _classFunc] \
 })
 
-#define _CLASSNAME(name) OOP_##PREFX##_Class_##name
-#define _CLASSNAMESTR(name) format["OOP_%1_Class_%2", STR(PREFX), name]
+#define _CLASSNAME(name) OOP_PREF_##PREFX##_Class_##name
+#define _CLASSNAMESTR(name) format[OOP_SPREF + "_%1_Class_%2", STR(PREFX), name]
 
 #define METHODS switch (_method) do {
 
@@ -55,7 +59,7 @@ if (_method isEqualTo "oopCopySelf") exitWith { \
 default{}};};
 
 #define THIS_INSTANCE(name, obj) (obj getVariable [THIS_INSTANCE_VARNAME(name), {CALL_PARAMS_OBJCLASS; _NIL(_def)}])
-#define THIS_INSTANCE_VARNAME(name) (if ("_thisInstance" in name) then {name} else {format["OOP_%1_%2_thisInstance", SPREFX, name]})
+#define THIS_INSTANCE_VARNAME(name) (if ("_thisInstance" in name) then {name} else {format[OOP_SPREF + "_%1_%2_thisInstance", SPREFX, name]})
 #define SET_THIS_OBJINSTANCE_GLOBAL(name, obj, func, global) obj setVariable [THIS_INSTANCE_VARNAME(name), func, global];
 #define SET_THIS_OBJINSTANCE(name, obj, func) SET_THIS_OBJINSTANCE_GLOBAL(name, obj, func, false)
 

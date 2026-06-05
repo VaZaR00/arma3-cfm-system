@@ -72,3 +72,25 @@ CFM_fnc_inVehicleTabletActionCondition = {
 	if (_vehMonSeats isEqualTo []) exitWith {true};
 	(assignedVehicleRole _plr) in _vehMonSeats
 };
+
+// EFL WRAPPERS
+#define EFL_WRAP(f) FUNC(f) = {(IF_NIL(_this, [])) call TRIPLE(EFL_PREF,_fnc_,f)};
+
+EFL_WRAP(pushBackGlobal);
+EFL_WRAP(hashSetGlobal);
+EFL_WRAP(removeFromArrayGlobal);
+EFL_WRAP(deleteAtGlobal);
+EFL_WRAP(publicVariableServer);
+EFL_WRAP(pushBackNet);
+EFL_WRAP(pushBack);
+EFL_WRAP(hashSetNet);
+EFL_WRAP(hashSet);
+EFL_WRAP(removeFromArrayNet);
+EFL_WRAP(removeFromArray);
+EFL_WRAP(deleteAtNet);
+EFL_WRAP(deleteAt);
+EFL_WRAP(remoteExec);
+EFL_WRAP(remoteEvent);
+EFL_WRAP(callVariableEH);
+EFL_WRAP(publicVariable);
+EFL_WRAP(setVariable);

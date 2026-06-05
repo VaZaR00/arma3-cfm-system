@@ -167,17 +167,17 @@
 ["CFM_" + "monitorAddActiveViewer", {
     LOG_CBA_EVENT
 	params["_monitor", "_viewer"];
-	[_monitor, "CFM_ActiveMonitorViewers", _viewer, true, true] call EFL_fnc_pushBack;
+	[_monitor, "CFM_ActiveMonitorViewers", _viewer, true, true] call CFM_fnc_pushBack;
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_" + "monitorRemoveActiveViewer", {
     LOG_CBA_EVENT
 	params["_monitor", "_viewer"];
-	[_monitor, "CFM_ActiveMonitorViewers", _viewer, false, true] call EFL_fnc_removeFromArray;
+	[_monitor, "CFM_ActiveMonitorViewers", _viewer, false, true] call CFM_fnc_removeFromArray;
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_" + "addTurretInstanceToOperator", {
     LOG_CBA_EVENT
 	params["_self", "_turretIndex", "_data"];
-	[_self, "CFM_turretsInstances", _turretIndex, _data, true] call EFL_fnc_hashSet;
+	[_self, "CFM_turretsInstances", _turretIndex, _data, true] call CFM_fnc_hashSet;
 }] call CBA_fnc_addEventHandler;

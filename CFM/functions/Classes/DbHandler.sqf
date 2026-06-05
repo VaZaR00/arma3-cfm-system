@@ -93,17 +93,17 @@ CLASS(DbHandler)
 	CLASS_METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_unique", true]];
 			
-		[missionNamespace, _listName, _NIL(_obj), _unique, true] call EFL_fnc_pushBack;
+		[missionNamespace, _listName, _NIL(_obj), _unique, true] call CFM_fnc_pushBack;
 	};
 	CLASS_METHOD("removeFromList") {
 		params["_obj", ["_listName", ""], ["_pop", false]];
 			
-		[missionNamespace, _listName, _NIL(_obj), _pop, true] call EFL_fnc_removeFromArray;
+		[missionNamespace, _listName, _NIL(_obj), _pop, true] call CFM_fnc_removeFromArray;
 	};
 	CLASS_METHOD("addToHashMap") {
 		params["_key", ["_val", nil], ["_varName", ""]];
 		
-		[missionNamespace, _varName, _key, _NIL(_val), true] call EFL_fnc_hashSet;
+		[missionNamespace, _varName, _key, _NIL(_val), true] call CFM_fnc_hashSet;
 	};
 	CLASS_METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
@@ -223,7 +223,7 @@ CLASS(DbHandler)
 		["CFM_" + "addActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		_player setVariable ["CFM_isActiveViewer", true, true];
 		CFM_makeCamDataSync = true;
-		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
+		["CFM_makeCamDataSync", [true, [clientOwner]]] call CFM_fnc_publicVariableServer;
 	};
 	CLASS_METHOD("removeActiveViewer") {
 		params["_player"];

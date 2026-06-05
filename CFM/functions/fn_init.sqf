@@ -14,7 +14,7 @@ if (isServer) then {
 	if (didJIP) then {
 		// make data sync for JIP clients
 		CFM_makeCamDataSync = true;
-		["CFM_makeCamDataSync", [true, [clientOwner]]] call EFL_fnc_publicVariableServer;
+		["CFM_makeCamDataSync", [true, [clientOwner]]] call CFM_fnc_publicVariableServer;
 		["CFM_serverSyncVariables", clientOwner, 2] call CFM_fnc_remoteEvent;
 	};
 };
