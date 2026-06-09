@@ -67,16 +67,16 @@ CLASS(Turret)
 		SAVE_VARS
 		GLOBAL_SETTER
 
-		SIVAR_S(_operator,"Operator",_isFPV,false);
-		SIVAR_S(_operator,"Operator",_isMavic,false);
-		SIVAR_S(_operator,"Operator",_hasGoPro,false);
-		SIVAR_S(_operator,"Operator",_isDroneFeed,false);
-		SIVAR_S(_operator,"Operator",_isStaticCam,false);
-		SIVAR_S(_operator,"Operator",_objClass,"");
-		SIVAR_S(_operator,"Operator",_classType,"");
-		PR_SIVAR_S(_operator,"Operator",_cameraZoomSmoothDefault,true);
-		PR_SIVAR_S(_operator,"Operator",_canMoveCameraByDefault,false);
-		PR_SIVAR_S(_operator,"Operator",_cameraMoveRestrictionsByDefault,[]);
+		SOIVAR_S(_operator,"Operator",_isFPV,false);
+		SOIVAR_S(_operator,"Operator",_isMavic,false);
+		SOIVAR_S(_operator,"Operator",_hasGoPro,false);
+		SOIVAR_S(_operator,"Operator",_isDroneFeed,false);
+		SOIVAR_S(_operator,"Operator",_isStaticCam,false);
+		SOIVAR_S(_operator,"Operator",_objClass,"");
+		SOIVAR_S(_operator,"Operator",_classType,"");
+		PR_SOIVAR_S(_operator,"Operator",_cameraZoomSmoothDefault,true);
+		PR_SOIVAR_S(_operator,"Operator",_canMoveCameraByDefault,false);
+		PR_SOIVAR_S(_operator,"Operator",_cameraMoveRestrictionsByDefault,[]);
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 

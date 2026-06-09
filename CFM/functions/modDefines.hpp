@@ -48,8 +48,8 @@
 #define TURR_INDX_STR(idx) ((if (idx < 0) then {"n" + (str (abs idx))} else {str idx}))
 #define TURR_INDX_VAR(name, idx) (format["%1%2", name, TURR_INDX_STR(idx)])
 
-#define IDX_TURRET_VAR(index, name, def) (IVAR(TURRET_INSTANCE_OBJECT(index),"Turret",name,TURRET_INSTANCE_ID(index),def))
-#define TURRET_VAR(name, def) (IVAR(_turretObject,"Turret",name,_turretInstanceId,def))
+#define IDX_TURRET_VAR(index, name, def) (OIVAR(TURRET_INSTANCE_OBJECT(index),"Turret",name,TURRET_INSTANCE_ID(index),def))
+#define TURRET_VAR(name, def) (OIVAR(_turretObject,"Turret",name,_turretInstanceId,def))
 #define TURRET_INSTANCE(index) (_turretsInstances getOrDefault [index, [-1, objNull]])
 #define TURRET_INSTANCE_ID(index) ((TURRET_INSTANCE(index)) select 0)
 #define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index)) select 1)
