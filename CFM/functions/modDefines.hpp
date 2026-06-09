@@ -1,6 +1,3 @@
-// -- OOP --
-#include "Classes\classDefinesVer1.hpp"
-
 #ifdef DEV
 #include "..\..\..\OOP_proj\OOP\includes\classDefines.hpp"
 #endif
