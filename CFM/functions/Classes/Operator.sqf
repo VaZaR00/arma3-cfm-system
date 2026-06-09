@@ -2,10 +2,8 @@
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
 
-OBJCLASS(Operator)
+SINGLETON_CLASS(Operator)
 
-	IS_SINGLETON
-	
 	SET_SELF_VAR("_operator");
 
 	FIELD ["_canSwitchTi", false];
@@ -103,7 +101,7 @@ OBJCLASS(Operator)
 		}) then { // && {MGVAR ["CFM_canMoveDroneCameras", false]}
 			_canMoveCameraByDefaultSet = true;
 		};
-		private _moveParams = [_canMoveCameraByDefaultSet, _self] call CFM_fnc_defineCameraMovementOptions;
+		private _moveParams = [_canMoveCameraByDefaultSet, _selfObj] call CFM_fnc_defineCameraMovementOptions;
 		_moveParams params [["_canMoveCameraByDefault", false], ["_cameraMoveRestrictionsByDefault", [], [[]]]];
 		_operator setVariable ["CFM_canMoveCameraByDefault", _canMoveCameraByDefault, _global];
 		_operator setVariable ["CFM_cameraMoveRestrictionsByDefault", +_cameraMoveRestrictionsByDefault, _global];
@@ -132,11 +130,11 @@ OBJCLASS(Operator)
 
 
 		// TURRETS
-		["DefineTurretsParams", [_turrets]] CALL_OBJCLASS("Operator", _self);
+		["DefineTurretsParams", [_turrets]] CALL_SELF;
 
 
 		// CHECK NVG TI
-		private _turrets = _self getVariable ["CFM_turrets", []];
+		private _turrets = _selfObj getVariable ["CFM_turrets", []];
 		private _turrCount = count _turrets;
 		if (_turrCount == 1) then {
 			// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
@@ -188,15 +186,15 @@ OBJCLASS(Operator)
 		if (_name isEqualTo "") then {
 			_name = switch (_cameraType) do {
 				case GOPRO: {
-					format["%1: %2", groupId group _self, name _self]
+					format["%1: %2", groupId group _selfObj, name _selfObj]
 				};
 				case TYPE_STATIC: {
-					private _operatorId = _self getVariable ["CFM_operatorId", 0];
-					_self getVariable ["CFM_staticCameraID", "Camera " + str _operatorId];
+					private _operatorId = _selfObj getVariable ["CFM_operatorId", 0];
+					_selfObj getVariable ["CFM_staticCameraID", "Camera " + str _operatorId];
 				};
 				default {
-					private _group = groupId group _self;
-					private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _self) >> "displayName");
+					private _group = groupId group _selfObj;
+					private _dispName = getText (configFile >> "CfgVehicles" >> (typeOf _selfObj) >> "displayName");
 					if (_group isEqualTo "") then {
 						_dispName
 					} else {
@@ -215,7 +213,7 @@ OBJCLASS(Operator)
 		params[["_turretsParamsInit", []]];
 		
 		if (_turretsParamsInit isEqualTo []) then {
-			private _fullCrew = fullCrew [_self, "", true];
+			private _fullCrew = fullCrew [_selfObj, "", true];
 			private _crewCount = count _fullCrew;
 
 			if (_crewCount == 0) exitWith {
@@ -261,7 +259,7 @@ OBJCLASS(Operator)
 		} forEach _validTurretInitParams;
 
 		if (isServer) then {
-			_self call CFM_fnc_checkOperatorTurrets;
+			_selfObj call CFM_fnc_checkOperatorTurrets;
 		};
 
 		_turretsInstances
@@ -272,16 +270,16 @@ OBJCLASS(Operator)
 			["_turretObject", objNull]
 		];
 		if !(IS_OBJ(_turretObject)) then {
-			_turretObject = _self;
+			_turretObject = _selfObj;
 		} else {
 			if (isServer) then {
 				if (_hasActiveTurretsObjects > 0) exitWith {};
 				_hasActiveTurretsObjects = 0;
-				_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
+				_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
 			};
 		};
 		if (!(_this isEqualType [])) then {_this = [_this]};
-		_this = [_self, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
+		_this = [_selfObj, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
 		if (_turretInstanceId <= 0) then {
 			_turretInstance = ([_turretObject, _this] NEW_OBJINSTANCE_GLOBAL("Turret", true));
@@ -291,7 +289,7 @@ OBJCLASS(Operator)
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
 		if (_turretInstanceId <= 0) exitWith {};
-		["CFM_" + "addTurretInstanceToOperator", [_self, _turretIndex, [_turretInstanceId, _turretObject]], true] call CFM_fnc_remoteEvent;
+		["CFM_" + "addTurretInstanceToOperator", [_selfObj, _turretIndex, [_turretInstanceId, _turretObject]], true] call CFM_fnc_remoteEvent;
 	};
 	METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];
@@ -316,7 +314,7 @@ OBJCLASS(Operator)
 	};
 	METHOD("setDefaultPointAlignment") {
 		{
-			[_self, _x, -1] call CFM_fnc_setPointAlignment;
+			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
 		} forEach _turrets;
 	};
 	METHOD("monitorConnected") {
@@ -327,20 +325,20 @@ OBJCLASS(Operator)
 
 		private _callerLocal = IS_OBJ(_caller) && {(local _caller)};
 
-		_self setVariable ["CFM_isFeeding", true];
+		_selfObj setVariable ["CFM_isFeeding", true];
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
 		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
 		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
 		_monitor setVariable ["CFM_currentCameraType", _cameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
 
-		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_OBJCLASS("Operator", _self);
+		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_SELF;
 	};
 	METHOD("monitorConnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
-		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
+		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_SELF;
 	};
 	METHOD("monitorDisconnected") {
 		// should be executed globaly
@@ -349,8 +347,8 @@ OBJCLASS(Operator)
 	METHOD("monitorDisconnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
-		["removeMonitor", [_monitor, _turret]] CALL_OBJCLASS("Operator", _self);
-		if !([_self] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
+		["removeMonitor", [_monitor, _turret]] CALL_SELF;
+		if !([_selfObj] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
 			["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		};
 	};
@@ -381,7 +379,7 @@ OBJCLASS(Operator)
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
 		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, false);
-		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _self);
+		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 
 		_nextTurretIndex
 	};
@@ -412,19 +410,19 @@ OBJCLASS(Operator)
 
 		_activeTurretsObjects deleteAt _turretIndex;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
-		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
-		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
 	};
 	METHOD("addActiveTurret") {
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
 
-		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _self}) exitWith {false};
+		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _selfObj}) exitWith {false};
 
 		_activeTurretsObjects set [_turretIndex, _turretObject];
 		_hasActiveTurretsObjects = _hasActiveTurretsObjects max 0;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects + 1) max 0;
-		_self setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
-		_self setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
 		true
 	};
 	METHOD("moveCamera") {
@@ -448,7 +446,7 @@ OBJCLASS(Operator)
 		if (_sides isEqualTo []) exitWith {false};
 
 		_opSides = _sides;
-		_self setVariable ["CFM_opSides", _sides, _global];
+		_selfObj setVariable ["CFM_opSides", _sides, _global];
 		true
 	};
 	METHOD("getOperatorName") {

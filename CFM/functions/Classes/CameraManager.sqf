@@ -1,5 +1,5 @@
 
-CLASS(CameraManager)
+SINGLETON_CLASS(CameraManager)
 
 	/*
 		Operator's camerasSet: [monitor, camera, params:[operator, turret, zoom, turretLocal]]
@@ -7,9 +7,9 @@ CLASS(CameraManager)
 
 	METHODS
 
-	CLASS_METHOD("Init") {
+	METHOD("Init") {
 	};
-	CLASS_METHOD("CreateCamera") {
+	METHOD("CreateCamera") {
 		params[["_monitor", objNull], ["_renderTarget", ""]];
 		
 		if !(IS_OBJ(_monitor)) exitWith {[objNull, ""]};
@@ -20,34 +20,34 @@ CLASS(CameraManager)
 
 		_cam cameraEffect ["internal", "back", _renderTarget];
 		
-		["setMonitorCamera", [_self]] CALL_CLASS(_self);
-		["addCameraToPool", [_self]] CALL_CLASS(_self);
+		["setMonitorCamera", [_selfObj]] CALL_SELF;
+		["addCameraToPool", [_selfObj]] CALL_SELF;
 
 		_cam
 	};
-	CLASS_METHOD("addCameraToPool") {
+	METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
 		["addCameraToPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	CLASS_METHOD("removeCameraFromPool") {
+	METHOD("removeCameraFromPool") {
 		params[["_cam", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	CLASS_METHOD("destroyCamera") {
+	METHOD("destroyCamera") {
 		params[["_cam", objNull], ["_renderTarget", ""]];
-		["removeCameraFromPool", [_cam]] CALL_CLASS(_self);
+		["removeCameraFromPool", [_cam]] CALL_SELF;
 		if !(IS_OBJ(_cam)) exitWith {false};
 		_cam cameraEffect ["terminate", "back", _renderTarget];
 		camDestroy _cam;
 		true
 	};
-	CLASS_METHOD("spawnCamera") {
+	METHOD("spawnCamera") {
 		params[["_monitor", objNull], ["_renderTarget", ""]];
 
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {objNull};
 		if !(hasInterface) exitWith {objNull};
 
-		private _cam = ["CreateCamera", [_monitor, _renderTarget], _self, [objNull, "", "NONE"]] CALL_CLASS(_self);
+		private _cam = ["CreateCamera", [_monitor, _renderTarget], objNull] CALL_SELF;
 
 		_cam
 	};

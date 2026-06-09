@@ -7,10 +7,8 @@
 #define UP_CTRL_ID 959
 #define EFFECT_CTRL_ID 825
 
-OBJCLASS(DisplayHandler)
+SINGLETON_CLASS(DisplayHandler)
 
-	IS_SINGLETON
-	
 	SET_SELF_VAR("_monitor");
 
 	FIELD ["_monitorUid", ""];
@@ -60,11 +58,11 @@ OBJCLASS(DisplayHandler)
 		private _doUiParams = !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) && {!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}};
 		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
 		if (!_isHandMonitor && {_doUiParams}) then {
-			["startRenderingUI", _reset] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["startRenderingUI", _reset] SPAWN_SELF;
 		} else {
-			["startRenderingR2T", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
+			["startRenderingR2T", _reset] CALL_SELF;
 		};
-		private _camera = _self getVariable ["CFM_currentFeedCam", objNull];
+		private _camera = _selfObj getVariable ["CFM_currentFeedCam", objNull];
 		_camera cameraEffect ["Internal", "BACK", _monitorR2Tid];
 	};
 	METHOD("stopRendering") {
@@ -72,10 +70,10 @@ OBJCLASS(DisplayHandler)
 
 		if (!hasInterface) exitWith {};
 		if (_currentFeedIsDisplay) then {
-			["stopRenderingUI", [_reset]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+			["stopRenderingUI", [_reset]] SPAWN_SELF;
 		} else {
-			["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			["clearVariables", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
+			["stopRenderingR2T"] CALL_SELF;
+			["clearVariables", _reset] CALL_SELF;
 		};
 	};
 	METHOD("clearVariables") {
@@ -107,7 +105,7 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay = findDisplay _monitorUid;
 
 		if (isNull _mainDisplay) exitWith {
-			format["DisplayHandler.setupDisplay: ERROR: can't create main display for monitor: %1", _self] WARN
+			format["DisplayHandler.setupDisplay: ERROR: can't create main display for monitor: %1", _selfObj] WARN
 		};
 
 		// control that renders picture of r2t display
@@ -125,7 +123,7 @@ OBJCLASS(DisplayHandler)
 		_r2tDisplay = findDisplay _r2tDisplayName;
 
 		if (isNull _r2tDisplay) exitWith {
-			format["DisplayHandler.setupDisplay: ERROR: can't create r2t display for monitor: %1", _self] WARN
+			format["DisplayHandler.setupDisplay: ERROR: can't create r2t display for monitor: %1", _selfObj] WARN
 		};
 
 		// control that renders r2t picture on r2t display
@@ -150,22 +148,22 @@ OBJCLASS(DisplayHandler)
 		_displayUpLayerCtrl ctrlSetPosition [0, 0, 1, 1];
 		_displayUpLayerCtrl ctrlCommit 0;
 
-		_self setVariable ["CFM_mainDisplay", _mainDisplay];
-		_self setVariable ["CFM_displayR2TDisplayCtrl", _r2tDisplayCtrl];
-		_self setVariable ["CFM_r2tDisplay", _r2tDisplay];
-		_self setVariable ["CFM_r2tDisplayName", _r2tDisplayName];
-		_self setVariable ["CFM_r2tDisplayR2TCtrl", _r2tDisplayR2TCtrl];
-		_self setVariable ["CFM_effectsLayersCount", _effectsLayersCount];
-		_self setVariable ["CFM_effectsLayersControls", _effectsLayersControls];
-		_self setVariable ["CFM_displayUiCtrl", _displayUiCtrl];
-		_self setVariable ["CFM_displayUpLayerCtrl", _displayUpLayerCtrl];
+		_selfObj setVariable ["CFM_mainDisplay", _mainDisplay];
+		_selfObj setVariable ["CFM_displayR2TDisplayCtrl", _r2tDisplayCtrl];
+		_selfObj setVariable ["CFM_r2tDisplay", _r2tDisplay];
+		_selfObj setVariable ["CFM_r2tDisplayName", _r2tDisplayName];
+		_selfObj setVariable ["CFM_r2tDisplayR2TCtrl", _r2tDisplayR2TCtrl];
+		_selfObj setVariable ["CFM_effectsLayersCount", _effectsLayersCount];
+		_selfObj setVariable ["CFM_effectsLayersControls", _effectsLayersControls];
+		_selfObj setVariable ["CFM_displayUiCtrl", _displayUiCtrl];
+		_selfObj setVariable ["CFM_displayUpLayerCtrl", _displayUpLayerCtrl];
 
 		_uiCtrlUIDisplayName = _monitorUid + "ui";
-		_self setVariable ["CFM_uiCtrlUIDisplayName", _uiCtrlUIDisplayName];
+		_selfObj setVariable ["CFM_uiCtrlUIDisplayName", _uiCtrlUIDisplayName];
 		
 		uiSleep WAIT_BEFORE_DISPLAY_UPD;
 
-		["stopRenderingUI"] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["stopRenderingUI"] CALL_SELF;
 	};
 	METHOD("startRenderingUI") {
 		params[["_reset", false], ["_ctrl", controlNull], ["_uiParamsSet", []]];
@@ -188,7 +186,7 @@ OBJCLASS(DisplayHandler)
 		_mainDisplay = findDisplay _uiDisplayUniqueName;
 
 		if (isNull _mainDisplay) exitWith {
-			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _self] WARN
+			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _selfObj] WARN
 		};
 		_monitor setVariable ["CFM_uiDisplayUniqueName", _uiDisplayUniqueName];
 		_monitor setVariable ["CFM_uiIndex", _uiIndex + 1];
@@ -217,19 +215,19 @@ OBJCLASS(DisplayHandler)
 		/*
 			VERSION FOR EMBEDED UI DISPLAYS
 
-			// ["setRenderR2TDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
-			// ["setRenderInterfaceDisplay", false] CALL_OBJCLASS("DisplayHandler", _monitor);
-			// ["resetRenderEffects"] CALL_OBJCLASS("DisplayHandler", _monitor);
-			// ["setRenderUpLayer", true] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// ["setRenderR2TDisplay", false] CALL_SELF;
+			// ["setRenderInterfaceDisplay", false] CALL_SELF;
+			// ["resetRenderEffects"] CALL_SELF;
+			// ["setRenderUpLayer", true] CALL_SELF;
 
 			// uiSleep WAIT_BEFORE_DISPLAY_UPD;
 
-			// ["updateDisplays"] CALL_OBJCLASS("DisplayHandler", _monitor);
+			// ["updateDisplays"] CALL_SELF;
 		*/
 		_mainDisplay closeDisplay 1;
 		waitUntil {isNull (_mainDisplay)};
-		["stopRenderingR2T"] CALL_OBJCLASS("DisplayHandler", _monitor);
-		["clearVariables", _reset] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["stopRenderingR2T"] CALL_SELF;
+		["clearVariables", _reset] CALL_SELF;
 	};
 	METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;
@@ -249,24 +247,24 @@ OBJCLASS(DisplayHandler)
 			private _signalFunc = missionNamespace getVariable _signalFuncName;
 			if (isNil "_signalFunc") exitWith {};
 			if !(_signalFunc isEqualType {}) exitWith {};
-			private _testFuncRes = [_self, player] call _signalFunc;
+			private _testFuncRes = [_selfObj, player] call _signalFunc;
 			if (isNil "_testFuncRes") exitWith {false};
 			if !(_testFuncRes isEqualType 1) exitWith {false};
-			_self setVariable ["CFM_currentOperatorSignalFunction", _signalFunc];
+			_selfObj setVariable ["CFM_currentOperatorSignalFunction", _signalFunc];
 			_set = true;
 		};
 		if (IS_STR(_interfaceFuncName)) then {
 			private _interfaceFunc = missionNamespace getVariable _interfaceFuncName;
 			if (isNil "_interfaceFunc") exitWith {};
 			if !(_interfaceFunc isEqualType {}) exitWith {};
-			_self setVariable ["CFM_currentOperatorInterfaceFunction", _interfaceFunc];
+			_selfObj setVariable ["CFM_currentOperatorInterfaceFunction", _interfaceFunc];
 			_set = true;
 		};
 		if (IS_STR(_effectFuncName)) then {
 			private _effectFunc = missionNamespace getVariable _effectFuncName;
 			if (isNil "_effectFunc") exitWith {};
 			if !(_effectFunc isEqualType {}) exitWith {};
-			_self setVariable ["_currentOperatorEffectsFunction", _effectFunc];
+			_selfObj setVariable ["_currentOperatorEffectsFunction", _effectFunc];
 			_set = true;
 		};
 		_set
@@ -291,8 +289,8 @@ OBJCLASS(DisplayHandler)
 			_currentUIDisplayRenderClass = "";
 			_displayUiCtrl ctrlSetText ("");
 		};
-		_self setVariable ["CFM_currentOperatorInterfaceClass", _currentUIDisplayRenderClass];
-		_self setVariable ["CFM_currentUIDisplayRenderClass", _currentUIDisplayRenderClass];
+		_selfObj setVariable ["CFM_currentOperatorInterfaceClass", _currentUIDisplayRenderClass];
+		_selfObj setVariable ["CFM_currentUIDisplayRenderClass", _currentUIDisplayRenderClass];
 
 		// init display func
 		_currentUIDisplayRenderClassInit = if !(_currentUIDisplayRenderClassInit isEqualType {}) then {
@@ -303,8 +301,8 @@ OBJCLASS(DisplayHandler)
 			_uiCtrlUIDisplayName spawn _currentUIDisplayRenderClassInit;
 		};
 
-		[_self, _uiCtrlUIDisplayName] spawn {
-			params["_self", "_uiCtrlUIDisplayName"];
+		[_selfObj, _uiCtrlUIDisplayName] spawn {
+			params["_selfObj", "_uiCtrlUIDisplayName"];
 
 			private _waitStart = time;
 			waitUntil {
@@ -313,7 +311,7 @@ OBJCLASS(DisplayHandler)
 			};
 			private _display = findDisplay _uiCtrlUIDisplayName;
 
-			_self setVariable ["CFM_uiCtrlCurrentUIDisplay", _display];
+			_selfObj setVariable ["CFM_uiCtrlCurrentUIDisplay", _display];
 		};
 
 		_displayUiCtrl ctrlCommit 0;
@@ -327,7 +325,7 @@ OBJCLASS(DisplayHandler)
 	METHOD("setRenderUpLayer") {
 		params[["_set", false]];
 		if (_set) then {
-			["setOriginalTexture"] CALL_OBJCLASS("DisplayHandler", _monitor);
+			["setOriginalTexture"] CALL_SELF;
 		} else {
 			_displayUpLayerCtrl ctrlSetText "";
 			_displayUiCtrl ctrlCommit 0;
@@ -341,14 +339,14 @@ OBJCLASS(DisplayHandler)
 	METHOD("startRenderingR2T") {
 		params[["_reset", false]];
 
-		["setR2TTexture", [true, _monitorR2Tid]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["setR2TTexture", [true, _monitorR2Tid]] CALL_SELF;
 		
 		if (_reset) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		};
 	};
 	METHOD("stopRenderingR2T") {
-		["setR2TTexture", [false]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		["setR2TTexture", [false]] CALL_SELF;
 	};
 	METHOD("setR2TTexture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
@@ -382,9 +380,9 @@ OBJCLASS(DisplayHandler)
 			};
 		} else {
 			if (_on) then {
-				["startRendering", [true, _uiParams]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["startRendering", [true, _uiParams]] SPAWN_SELF;
 			} else {
-				["stopRendering", [true]] SPAWN_OBJCLASS("DisplayHandler", _monitor);
+				["stopRendering", [true]] SPAWN_SELF;
 			};
 		};
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];
