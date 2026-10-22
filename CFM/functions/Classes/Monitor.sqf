@@ -350,9 +350,9 @@ SINGLETON_CLASS(Monitor)
 
 		private _closeID = _target addAction [format["<t color='#ff6600'>   [%1]</t>", CFM_STR_CLOSE_MENU], { 
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor"]; 
+			_p params ["_monitor", "_self"]; 
 			[_monitor] call CFM_fnc_monitorCloseMenu;
-		}, [_selfObj], 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _targetStr], _radius]; 
+		}, [_selfObj, _self], 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _targetStr], _radius]; 
 		_tempIDs pushBack _closeID; 
 
 		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
@@ -393,9 +393,9 @@ SINGLETON_CLASS(Monitor)
 			};
 			private _id = _target addAction [format["        <t color='#3e99fa'>[%1]</t>: %2 %3", CFM_STR_CONNECT, _name, _distanceStr], { 
 				params ["_t", "_c", "_i", "_p"]; 
-				_p params ["_m", "_o"];
+				_p params ["_m", "_self", "_o"];
 				[_m, _o, _c] call CFM_fnc_connectMonitorToOperator;
-			}, [_selfObj, _x], 10, true,false,"",format["[%1] call CFM_fnc_connectActionCondition", _targetStr], _radius]; 
+			}, [_selfObj, _self, _x], 10, true,false,"",format["[%1] call CFM_fnc_connectActionCondition", _targetStr], _radius]; 
 			_tempIDs pushBack _id; 
 		} forEach _ops; 
 		
@@ -535,51 +535,51 @@ SINGLETON_CLASS(Monitor)
 
 		private _actionCheckNewOps = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_CHECK_FOR_NEW_OPERATORS], { 
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor"]; 
+			_p params ["_monitor", "_self"]; 
 
 			STR_CHECK_FOR_NEW_OPS_ACT _HINT;
 			[_monitor] call CFM_fnc_checkForNewOperators;
-		}, [_selfObj], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
+		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
 
 		_actions append [_actionCheckNewOps];
 
 		private _actionMenu = _selfObj addAction [format["<t color='#00FF00'>%1</t>", format[_menuText, _name]], { 
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor"]; 
+			_p params ["_monitor", "_self"]; 
 
 			["loadMenu", [_caller, _target]] CALL_SELF;
-		}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_menuActionCondition", _target], _radius]; 
+		}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_menuActionCondition", _target], _radius]; 
 
 		private _actionDisc = _selfObj addAction [format["<t color='#FF0000'>%1</t>", CFM_STR_DISCONNECT_CAMERA], { 
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor"]; 
+			_p params ["_monitor", "_self"]; 
 
 			[_monitor, _caller] call CFM_fnc_disconnectMonitorFromOperator;
-		}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
+		}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
 
 		_actions append [_actionMenu, _actionDisc];
 
 		if (_isHandMonitor) then {
 			private _actionWatch = _selfObj addAction [format["<t color='#0000FF'>%1</t>", CFM_STR_WATCH_TABLET], { 
 				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor"]; 
+				_p params ["_monitor", "_self"]; 
 				
 				[_monitor] call CFM_fnc_turnOnMonitorLocal;
-			}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
 
 			private _actionStopWatch = _selfObj addAction [format["<t color='#FF3344'>%1</t>", CFM_STR_STOP_WATCHING_TABLET], { 
 				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor"]; 
+				_p params ["_monitor", "_self"]; 
 
 				[_monitor] call CFM_fnc_turnOffMonitorLocal;
-			}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
 
 			private _actionSwitchDrones = _selfObj addAction [format["<t color='#c31cff'>%1</t>", CFM_STR_SWITCH_UAV], { 
 				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor"]; 
+				_p params ["_monitor", "_self"]; 
 
 				[_monitor] call CFM_fnc_switchUAV;
-			}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_switchUAVActionCondition", _target], _radius]; 
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchUAVActionCondition", _target], _radius]; 
 
 			_actions append [_actionWatch, _actionStopWatch, _actionSwitchDrones];
 		};
@@ -604,119 +604,119 @@ SINGLETON_CLASS(Monitor)
 		call {
 			if (true) then {
 				_operatorInfoActionId = _selfObj addAction [OPERATOR_INFO_TEXT_DEF, { 
-					(_this#3) params ["_target"];
+					(_this#3) params ["_target", "_self"];
 					
 					[_target] call CFM_fnc_getOperatorInfo;
-				}, [_selfObj], _priority + 1, true, false, "", format["[%1] call CFM_fnc_operatorInfoActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority + 1, true, false, "", format["[%1] call CFM_fnc_operatorInfoActionCondition", _target], _radius]; 
 				_selfObj setVariable ["CFM_operatorInfoActionId", _operatorInfoActionId];
 				_actions append [_operatorInfoActionId];
 			};
 
 			if (_canZoom) then {
 				private _actionZoomIn = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_IN], { 
-					(_this#3) params ["_target"];
+					(_this#3) params ["_target", "_self"];
 					
 					[_target, +1] call CFM_fnc_zoom;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_zoomInActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomInActionCondition", _target], _radius]; 
 
 				private _actionZoomOut = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_OUT], { 
-					(_this#3) params ["_target"];
+					(_this#3) params ["_target", "_self"];
 					
 					[_target, -1] call CFM_fnc_zoom;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
 			
 				private _actionZoomDefault = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_RESET_ZOOM], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 
 					[_target, "reset"] call CFM_fnc_zoom;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
 
 				private _actionZoomByDrone = _selfObj addAction [format["<t color='#90c73e'>%1</t>", CFM_STR_USE_OPERATOR_ZOOM], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 
 					[_target, "op"] call CFM_fnc_zoom;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_operatorZoomActionsCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_operatorZoomActionsCondition", _target], _radius]; 
 
 				_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 			};
 
 			if (_canConnectDrone) then {
 				private _connectDroneAction = _selfObj addAction [format["<t color='#1c399e'>%1</t>", CFM_STR_TAKE_UAV_CONTROL], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 
 					[_target] spawn CFM_fnc_takeUAVcontorls;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_connectDroneActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_connectDroneActionCondition", _target], _radius]; 
 				_actions append [_connectDroneAction];
 			};
 
 			if (_canFix) then {
 				private _actionFix = _selfObj addAction [format["<t color='#690707'>%1</t>", CFM_STR_RESET_FIX_FEED_LOCAL], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					
 					[_target] call CFM_fnc_fixFeed;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_fixFeedActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_fixFeedActionCondition", _target], _radius]; 
 				_actions append [_actionFix];
 			};
 
 			if (_canSwitchTurret) then {
 				// private _actionSwitchTurret = _selfObj addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
-				// 	(_this#3) params ["_target"]; 
+				// 	(_this#3) params ["_target", "_self"]; 
 					
 				// 	["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				// }, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
+				// }, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
 				// private _actionSwitchDriver = _selfObj addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
-				// 	(_this#3) params ["_target"]; 
+				// 	(_this#3) params ["_target", "_self"]; 
 
 				// 	["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				// }, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
+				// }, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
 				// _actions append [_actionSwitchTurret, _actionSwitchDriver];
 				private _actionSwitchCamera = _selfObj addAction [format["<t color='#ffba4a'>%1</t>", CFM_STR_SWITCH_CAMERA], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 
 					[_target] call CFM_fnc_monitorNextTurretCamera;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraTurretActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraTurretActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchCamera];
 			};
 
 			if (_canTurnOffLocal && !_isHandMonitor) then {
 				private _actionTurnOffLocal = _selfObj addAction [format["<t color='#8a3200'>%1</t>", CFM_STR_TURN_OFF_FEED_LOCAL], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					
 					[_target] call CFM_fnc_turnOffMonitorLocal;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_turnOffActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_turnOffActionCondition", _target], _radius]; 
 				private _actionTurnOnLocal = _selfObj addAction [format["<t color='#036900'>%1</t>", CFM_STR_TURN_ON_FEED_LOCAL], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					
 					[_target] call CFM_fnc_turnOnMonitorLocal;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_turnOnActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_turnOnActionCondition", _target], _radius]; 
 				_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
 			};
 
 			if (_canSwitchNvg) then {
 				private _actionSwitchNvg = _selfObj addAction [format["<t color='#006e02'>%1</t>", CFM_STR_TOGGLE_NVG], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					[_target] call CFM_fnc_monitorToggleNVG;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_toggleNvgActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_toggleNvgActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchNvg];
 			};
 
 			if (_canSwitchTi) then {
 				private _actionSwitchTi = _selfObj addAction [format["<t color='#525252'>%1</t>", CFM_STR_TOGGLE_TI], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					[_target] call CFM_fnc_monitorSwitchTi;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_toggleTiActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_toggleTiActionCondition", _target], _radius]; 
 				_actions append [_actionSwitchTi];
 			};
 
 			if (_canFullScreen) then {
 				private _actionEnterFullScreen = _selfObj addAction [format["<t color='#67bce0'>%1</t>", CFM_STR_ENTER_FULLSCREEN], { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					[_target] call CFM_fnc_enterMonitorFullScreen;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
 				private _actionExitFullScreen = _selfObj addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
-					(_this#3) params ["_target"]; 
+					(_this#3) params ["_target", "_self"]; 
 					[_target] call CFM_fnc_exitMonitorFullScreen;
-				}, [_selfObj], _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
+				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
 				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
 			};
 		};
@@ -937,4 +937,4 @@ SINGLETON_CLASS(Monitor)
 
 		true
 	};
-OBJCLASS_END
+CLASS_END

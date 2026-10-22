@@ -719,4 +719,4 @@ CLASS(Turret)
 	METHOD("getTurretName") {
 		_turretName
 	};
-OBJCLASS_END
+CLASS_END

@@ -5,8 +5,6 @@ SINGLETON_CLASS(CameraManager)
 		Operator's camerasSet: [monitor, camera, params:[operator, turret, zoom, turretLocal]]
 	*/
 
-	METHODS
-
 	METHOD("Init") {
 	};
 	METHOD("CreateCamera") {
@@ -20,7 +18,6 @@ SINGLETON_CLASS(CameraManager)
 
 		_cam cameraEffect ["internal", "back", _renderTarget];
 		
-		["setMonitorCamera", [_selfObj]] CALL_SELF;
 		["addCameraToPool", [_selfObj]] CALL_SELF;
 
 		_cam

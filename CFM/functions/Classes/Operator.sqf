@@ -458,4 +458,4 @@ SINGLETON_CLASS(Operator)
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName
 	};
-OBJCLASS_END
+CLASS_END

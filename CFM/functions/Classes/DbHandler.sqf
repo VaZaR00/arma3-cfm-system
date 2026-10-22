@@ -4,8 +4,6 @@
 
 SINGLETON_CLASS(DbHandler)
 
-	METHODS
-
 	METHOD("Init") {
 		if !(isNil "CFM_inited") exitWith {};
 		// local variables
@@ -260,30 +258,6 @@ SINGLETON_CLASS(DbHandler)
 			false
 		};
 		["CFM_" + "monitorRemoveActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
-	};
-	METHOD("deepCopy") {
-		params [["_copyFrom", objNull], ["_copyTo", objNull], ["_classname", ""], ["_doInit", false], ["_global", false]];
-		if !(IS_OBJ(_copyFrom)) exitWith {false};
-		if !(IS_OBJ(_copyTo)) exitWith {false};
-		if !(IS_STR(_classname)) exitWith {false};
-		if (_classname isEqualTo "") exitWith {false};
-
-		private _ooAllVars = _copyFrom getVariable ["CFM_ooAllVars", createHashMap];
-		_ooAllVars apply {
-			private _name = _x;
-			private _def = _y;
-			private _val = _copyFrom getVariable [_name, _def];
-			_copyTo setVariable [_name, _val, _global];
-		};
-		if (_doInit) then {
-			[_copyTo] NEW_OBJINSTANCE(_classname)
-		} else {
-			private _classFunc = (missionNamespace getVariable [_classname, {}]);
-			if !(_classFunc isEqualType {}) exitWith {};
-			if (_classFunc isEqualTo {}) exitWith {};
-			SET_THIS_OBJINSTANCE(_classname, _copyTo, _classFunc) \
-		};
-		true
 	};
 	METHOD("nextR2Tindex") {
 		private _current = missionNamespace getVariable ["CFM_R2T_index", 0];

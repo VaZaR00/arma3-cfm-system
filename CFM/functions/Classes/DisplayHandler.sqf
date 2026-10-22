@@ -387,4 +387,4 @@ SINGLETON_CLASS(DisplayHandler)
 		};
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];
 	};
-OBJCLASS_END
+CLASS_END
