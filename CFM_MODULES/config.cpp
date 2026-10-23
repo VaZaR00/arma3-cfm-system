@@ -14,6 +14,9 @@ class CfgPatches {
 	};
 };
 
+#ifdef FINAL
 #include "includes\CfgFunctions.hpp"
+#endif
+
 #include "includes\cfgRemoteExec.hpp"
 #include "includes\configIncludes.hpp"
