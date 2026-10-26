@@ -118,7 +118,7 @@ private _onConfirm = {
 				_monitor setVariable ["CFM_passwordAccess", _accessList, !_isLocal];
 				CFM_STR_PASSWORD_ACCEPTED _HINT;
 				if !(_monitor getVariable ["CFM_feedActive", false]) then {
-					["loadMenuScrollMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _monitor);
+					["loadMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _monitor);
 				};
 			} else {
 				_display closeDisplay 2;
