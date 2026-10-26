@@ -7,8 +7,14 @@
 #include "defines.hpp" 
 
 params["_target"];
-HAND_MON_CONDITION
-if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
-if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
-private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
-_target call _additionalCondition
+IN_VEH_TABLET_CONDITION
+if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
+if ([_target] call CFM_fnc_hasMonitorPasswordAccess) then {
+	if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
+	if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
+	private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
+	_target call _additionalCondition
+} else {
+	private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
+	_target call _additionalCondition
+};

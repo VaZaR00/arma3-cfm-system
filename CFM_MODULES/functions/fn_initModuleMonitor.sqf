@@ -95,6 +95,7 @@ if (is3DEN) exitWith {};
 		BOOL("monitorCanFullScreen", 1),
 		BOOL("monitorCanConnectDrone", 1),
 		BOOL("monitorCanFix", 1),
-		BOOL("monitorCanTurnOffLocal", 1)
+		BOOL("monitorCanTurnOffLocal", 1),
+		BOOL("monitorHasPassword", 1)
 	] call CFM_fnc_setMonitor;
 };

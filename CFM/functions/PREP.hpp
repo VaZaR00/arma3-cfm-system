@@ -34,6 +34,8 @@ PREP(turnOnActionCondition)
 PREP(watchTabletActionCondition)
 PREP(zoomActionsCondition)
 PREP(zoomInActionCondition)
+PREP(setPasswordActionCondition)
+PREP(changePasswordActionCondition)
 
 // -- Category camera --
 FOLDER_PATH(camera)
@@ -137,6 +139,7 @@ PREP(turnOffMonitorLocal)
 PREP(turnOnMonitorLocal)
 PREP(turnOnOffMonitorLocalKeybind)
 PREP(zoom)
+PREP(openPasswordDialog)
 
 // -- Category operator --
 FOLDER_PATH(operator)

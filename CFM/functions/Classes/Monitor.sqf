@@ -57,6 +57,9 @@ SINGLETON_CLASS(Monitor)
 	FIELD ["_cameraPosFunc", {}];
 	FIELD ["_currentCamPointParams", []];
 	FIELD ["_camDoInterpolation", false];
+	FIELD ["_canSetPassword", true];
+	FIELD ["_password", ""];
+	FIELD ["_passwordAccess", []];
 
 	METHOD("Init") { 
 		// should be executed globaly
@@ -74,7 +77,8 @@ SINGLETON_CLASS(Monitor)
 			["_canFullScreen", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
-			["_canTurnOffLocal", true]
+			["_canTurnOffLocal", true],
+			["_canSetPassword", true]
 		]; 
 
 		if !(IS_OBJ(_monitor)) exitWith {false};
@@ -171,6 +175,13 @@ SINGLETON_CLASS(Monitor)
 			if !(_allowedOperatorsTypesSet isEqualType []) then {_allowedOperatorsTypesSet = [_allowedOperatorsTypesSet]};
 			_allowedOperatorsTypesSet = _allowedOperatorsTypesSet select {(_x isEqualType "") || {(_x isEqualType 1)}};
 			_monitor setVariable ["CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, !_isLocal];
+			_monitor setVariable ["CFM_canSetPassword", _canSetPassword && !_isHandMonitor, !_isLocal];
+			if (isNil {_monitor getVariable "CFM_password"}) then {
+				_monitor setVariable ["CFM_password", "", !_isLocal];
+			};
+			if (isNil {_monitor getVariable "CFM_passwordAccess"}) then {
+				_monitor setVariable ["CFM_passwordAccess", [], !_isLocal];
+			};
 		};
 
 		private _radius = ACTION_RADIUS;
@@ -347,6 +358,9 @@ SINGLETON_CLASS(Monitor)
 	};
 	METHOD("loadMenu") {
 		params[["_caller", objNull], ["_target", _selfObj]];
+		if !([_selfObj] call CFM_fnc_hasMonitorPasswordAccess) exitWith {
+			[_selfObj, "enter", _caller, _target] call CFM_fnc_openPasswordDialog;
+		};
 		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
 			["loadMenuScrollMenu", [_caller, _target]] CALL_SELF;
 		} else {
@@ -365,7 +379,10 @@ SINGLETON_CLASS(Monitor)
 
 		private _radius = MONITOR_ACTION_RADIUS(_selfObj);
 
-		if (count _ops == 0) exitWith { CFM_STR_NO_ACTIVE_CAMERAS _HINT }; 
+		if (count _ops == 0) then {
+			CFM_STR_NO_ACTIVE_CAMERAS _HINT;
+		};
+		if ((count _ops == 0) && {!(_selfObj getVariable ["CFM_canSetPassword", false])}) exitWith {};
 			
 		private _tempIDs = []; 
 
@@ -432,7 +449,7 @@ SINGLETON_CLASS(Monitor)
 			
 		private _menuHndl = [_target, _selfObj, _tempIDs] spawn { 
 			params["_target", "_selfObj", "_tempIDs"];
-			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && !(PLAYER_ in _selfObj)}};
+			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && !(PLAYER_ in _selfObj)} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
 			[_target] call CFM_fnc_monitorCloseMenu;
 		}; 
 		_target setVariable ['CFM_menuHndl', _menuHndl];
@@ -564,7 +581,21 @@ SINGLETON_CLASS(Monitor)
 			[_monitor] call CFM_fnc_checkForNewOperators;
 		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
 
-		_actions append [_actionCheckNewOps];
+		private _actionSetPassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_SET_PASSWORD], { 
+			params ["_target", "_caller", "_", "_p"];
+			_p params ["_monitor", "_self"]; 
+
+			[_monitor, "set", _caller, _target] call CFM_fnc_openPasswordDialog;
+		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_setPasswordActionCondition", _target], _radius]; 
+
+		private _actionChangePassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_CHANGE_PASSWORD], { 
+			params ["_target", "_caller", "_", "_p"];
+			_p params ["_monitor", "_self"]; 
+
+			[_monitor, "change", _caller, _target] call CFM_fnc_openPasswordDialog;
+		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_changePasswordActionCondition", _target], _radius]; 
+
+		_actions append [_actionCheckNewOps, _actionSetPassword, _actionChangePassword];
 
 		private _actionMenu = _selfObj addAction [format["<t color='#00FF00'>%1</t>", format[_menuText, _name]], { 
 			params ["_target", "_caller", "_", "_p"];

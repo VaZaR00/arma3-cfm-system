@@ -24,6 +24,7 @@
 		13. _canConnectDrone [bool] - if it can connect to currently feeding drone
 		14. _canFix [bool] - if has "fix feed" action
 		15. _canTurnOffLocal [bool] - if has "turn off/on local" action
+		16. _canSetPassword [bool] - if monitor can have a password set
 */
 
 #include "defines.hpp"

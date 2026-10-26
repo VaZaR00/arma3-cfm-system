@@ -29,6 +29,8 @@ STR_CFM_Module_monitorCanFix, "Can Fix/Reset Feed", "Можна скидати/�
 STR_CFM_Module_DESC_monitorCanFix, "Allow reset/fix feed action on monitor", "Дозволити дію скидання/виправлення трансляції на моніторі"
 STR_CFM_Module_monitorCanTurnOffLocal, "Can Turn Off/On Locally", "Можна вимикати/вмикати локально"
 STR_CFM_Module_DESC_monitorCanTurnOffLocal, "Allow turning monitor feed off/on locally", "Дозволити локальне вимкнення/увімкнення трансляції на моніторі"
+STR_CFM_Module_monitorHasPassword, "Can Set Password", "Можна встановлювати пароль"
+STR_CFM_Module_DESC_monitorHasPassword, "Allow setting a password on the monitor", "Дозволити встановлення пароля на моніторі"
 STR_CFM_Module_isCameraTurret, "Is Just Turret/Camera", "Лише турель/камера"
 STR_CFM_Module_DESC_isCameraTurret, "Is this module is just a turret for camera/operator (for multi turret cams)", "Чи є цей модуль турелю/однією з камер для камери/оператора (для багатокамерного оператора)"
 STR_CFM_Module_cameraMemoryPoint, "Memory Point", "Точка прив'язки"

@@ -74,6 +74,19 @@ CFM_fnc_inVehicleTabletActionCondition = {
 	(assignedVehicleRole _plr) in _vehMonSeats
 };
 
+CFM_fnc_hasMonitorPasswordAccess = {
+	params ["_monitor"];
+	if !(_monitor getVariable ["CFM_canSetPassword", false]) exitWith {true};
+	private _pass = _monitor getVariable ["CFM_password", ""];
+	if (_pass isEqualTo "") exitWith {true};
+	private _accessList = _monitor getVariable ["CFM_passwordAccess", []];
+	PLAYER_PASS_ID in _accessList
+};
+
+// PASSWORD ACCESS HELPER END
+call {
+};
+
 // EFL WRAPPERS
 #define EFL_WRAP(f) FUNC(f) = {(IF_NIL(_this, [])) call TRIPLE(EFL_PREF,_fnc_,f)};
 
