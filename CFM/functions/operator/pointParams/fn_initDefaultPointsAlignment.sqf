@@ -79,26 +79,28 @@ private _proccessed = [];
 	private _type = TYPE_VEH;
 	private _checkClasses = false;
 	private _cls = (_x#0);
+	private _rawTurrParams = _x#1;
 	if (_cls isEqualType []) then {
 		_checkClasses = true;
 		_cls = _cls apply {toLower _x};
 	} else {
 		_cls = toLower _cls;
 	};
-	private _params = createHashMapFromArray (_x#1);
 	if (_checkClasses) then {
 		private _fitClasses = _vehConfigClasses select {private _c = _x; (_cls findIf {_x in _c}) != -1};
 		{
 			private _cls = _x;
+			private _params = createHashMapFromArray (+_rawTurrParams);
 			{
-				_params set [_x, ([_y] call _defaultMemPointF)];
+				_params set [_x, ([+_y] call _defaultMemPointF)];
 			} forEach _params;
 			_proccessed pushBack _cls;
 			_pointSet set [_cls, _params];
 		} forEach _fitClasses;
 	} else {
+		private _params = createHashMapFromArray (+_rawTurrParams);
 		{
-			_params set [_x, ([_y] call _defaultMemPointF)];
+			_params set [_x, ([+_y] call _defaultMemPointF)];
 		} forEach _params;
 		_proccessed pushBack _cls;
 		_pointSet set [_cls, _params];

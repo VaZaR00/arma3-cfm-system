@@ -201,18 +201,16 @@ CLASS(Turret)
 				};
 				case TYPE_VEH: {
 					if (call {
-						if !(_pointParams isEqualType []) then {
-							// will get default point params
-							false
+						if (!(_pointParams isEqualType []) || {(_pointParams isEqualTo [])}) then {
+							_pointParams = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
+						};
+						private _memPoint = _pointParams param [0,""];
+						if (_memPoint isEqualType []) then {_memPoint = _memPoint param [0,""]};
+						if (!(_memPoint isEqualType '') || {_memPoint isEqualTo ""}) then {
+							true
 						} else {
-							private _memPoint = _pointParams param [0,""];
-							if (_memPoint isEqualType []) then {_memPoint = _memPoint param [0,""]};
-							if (!(_memPoint isEqualType '') || {_memPoint isEqualTo ""}) then {
-								true
-							} else {
-								false
-							};
-						}
+							false
+						};
 					}) then {
 						_ppType = PP_VEH_STATIC;
 						CFM_fnc_camPosVehStatic
@@ -232,7 +230,9 @@ CLASS(Turret)
 
 		// POINT ALIGNMENT
 		if (_ppType != PP_NONE) then {
-			_pointParams = ["setPointParams", [_pointParams]] CALL_SELF;
+			private _initPointParams = _pointParams;
+			_pointParams = [];
+			_pointParams = ["setPointParams", [_initPointParams]] CALL_SELF;
 		};
 
 		// CAN MOVE CAMERA

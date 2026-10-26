@@ -13,6 +13,9 @@ params[["_ppType", -1], ["_prevParams", []], ["_params", []], ["_returnVars", fa
 #define VALIDATE_VECTOR_SET_DEF_DIR(vec) if !(VALID_VECTOR(vec)) then {vec = DEF_DIR};
 #define VALIDATE_VECTOR_SET_DEF_UP(vec) if !(VALID_VECTOR(vec)) then {vec = DEF_UP};
 
+if !(_prevParams isEqualType []) then {_prevParams = []};
+if !(_params isEqualType []) then {_params = []};
+
 switch (_ppType) do {
 	case PP_STATIC: {
 		_prevParams params [['_prevpos', []], ['_prevdir', []], ['_prevup', []]];
@@ -51,9 +54,16 @@ switch (_ppType) do {
 			_dir = _dir param [0, []];
 		};
 
-		if ((_pos isEqualType "") || {(_pos#0) isEqualType ""}) then {
+		if ((_pos isEqualType "") || {(_pos isEqualType []) && {(_pos param [0, 0]) isEqualType ""}}) then {
 			// case if we need to convert params for PP_VEH_TURRET into PP_VEH_STATIC
 			_params params[["_memPoint", ""], ["_addArr", []], ["_sdir", []], ["_sup", []], ["_setArr", []]];
+			if ((_addArr isEqualType []) && {(_addArr param [0, 0]) isEqualType []}) then {
+				private _alignment = _addArr;
+				private _dirUp = _alignment param [1, []];
+				_addArr = _alignment param [0, []];
+				_sdir = _dirUp param [0, []];
+				_sup = _dirUp param [1, []];
+			};
 			_pos = _addArr;
 			_dir = _sdir;
 			_up = _sup;
@@ -85,7 +95,7 @@ switch (_ppType) do {
 		_params params[["_memPoint", ""], ["_addArr", []], ["_dir", []], ["_up", []], ["_setArr", []]];
 		private _lod = "";
 
-		if ((_addArr isEqualType []) && {(count _addArr) >= 3} && {(_addArr#1) isEqualType []}) then {
+		if ((_addArr isEqualType []) && {(_addArr param [0, 0]) isEqualType []}) then {
 			private _alignment = _addArr;
 			private _dirUp = _alignment param [1, []];
 			_addArr = _alignment param [0, []];
@@ -101,7 +111,7 @@ switch (_ppType) do {
 		};
 
 		if !(VALID_VECTOR(_prevSetArr)) then {_prevSetArr = [-1,-1,-1]};
-		if !((_memPoint isEqualType "") && !(_memPoint isEqualTo "")) then {_prevMemPoint = ""};
+		if !((_prevMemPoint isEqualType "") && !(_prevMemPoint isEqualTo "")) then {_prevMemPoint = ""};
 		VALIDATE_VECTOR_SET_DEF(_prevAddArr)
 		VALIDATE_VECTOR_SET_DEF_DIR(_prevDir)
 		VALIDATE_VECTOR_SET_DEF_UP(_prevUp)

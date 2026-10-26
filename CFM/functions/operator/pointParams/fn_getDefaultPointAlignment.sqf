@@ -6,7 +6,13 @@
 
 #include "defines.hpp" 
 
-params["_objClass", ["_turrIndex", -1]];
+params[["_objClass", ""], ["_turrIndex", -1]];
+
+if (isNil "CFM_initDefPointAlignmentsSet") then {
+	0 call CFM_fnc_setupDefPointAlignments;
+};
+
+_objClass = toLower _objClass;
 
 private _pointSet = missionNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 
@@ -24,4 +30,4 @@ if ((isNil "_predefinedAlignment") || {!(_predefinedAlignment isEqualType create
 
 private _predefinedAlignmentTurr = _predefinedAlignment getOrDefault [_turrIndex, []];
 
-if (_predefinedAlignmentTurr isEqualType []) then {_predefinedAlignmentTurr} else {[]};
+if (_predefinedAlignmentTurr isEqualType []) then {+_predefinedAlignmentTurr} else {[]};

@@ -38,11 +38,12 @@ if (is3DEN) exitWith {};
 	private _proccessArrayString = {
 		params["_l", "_offsetsStr", ['_isOffset', true]];
 		private _res = [];
-		private _isThis = ((trim (toLower _offsetsStr)) isEqualTo "this");
+		private _trimmed = trim (toLower _offsetsStr);
+		private _isThis = ((_trimmed isEqualTo "this") || {_isOffset && {_trimmed isEqualTo ""}});
 		if (_isOffset && {_isThis}) then {
 			_res = [getPosASL _l, [vectorDir _l, vectorUp _l]];
 		};
-		if (!_isThis && {!(_offsetsStr isEqualTo "")}) then {
+		if (!_isThis && {!(_trimmed isEqualTo "")}) then {
 			_res = call compile _offsetsStr;
 		};
 		if (isNil "_res") then {

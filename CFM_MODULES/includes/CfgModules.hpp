@@ -108,7 +108,7 @@ class CfgVehicles
             PARAMETER_SELECT(isCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
             PARAMETER(cameraName, "STRING", "")
             PARAMETER(cameraSides, "STRING", "west")
-            PARAMETER(cameraTurretsCustom, "STRING", "this")
+            PARAMETER(cameraTurretsCustom, "STRING", "")
             PARAMETER(cameraMemoryPoint, "STRING", "")
             PARAMETER(cameraObject, "STRING", "")
             PARAMETER_SELECT(cameraHasTI, 1)
