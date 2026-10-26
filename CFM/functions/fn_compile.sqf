@@ -63,15 +63,27 @@ CFM_fnc_setupDefPointAlignments = {
 	_pointSetDef
 };
 
-CFM_fnc_inVehicleTabletActionCondition = {
+CFM_fnc_inVehicleTabletSeatCondition = {
 	params ["_target"];
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
 	private _plr = PLAYER_;
 	if !(_plr in _target) exitWith {false};
-	if (_plr getVariable ["CFM_menuActive", false]) exitWith {false};
 	private _vehMonSeats = _target getVariable ["CFM_vehicleTabletSeats", []];
 	if (_vehMonSeats isEqualTo []) exitWith {true};
-	(assignedVehicleRole _plr) in _vehMonSeats
+	if ((assignedVehicleRole _plr) in _vehMonSeats) exitWith {true};
+	private _roleInfo = (fullCrew [_target, "", false]) select {(_x select 0) isEqualTo _plr};
+	if (_roleInfo isEqualTo []) exitWith {false};
+	(_roleInfo select 0) params ["", "_role", "", "_turretPath"];
+	_role = toLower _role;
+	([_role] in _vehMonSeats) || {([_role, _turretPath] in _vehMonSeats)} || {(["turret", _turretPath] in _vehMonSeats)}
+};
+
+CFM_fnc_inVehicleTabletActionCondition = {
+	params ["_target"];
+	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
+	private _plr = PLAYER_;
+	if (_plr getVariable ["CFM_menuActive", false]) exitWith {false};
+	[_target] call CFM_fnc_inVehicleTabletSeatCondition
 };
 
 CFM_fnc_hasMonitorPasswordAccess = {
@@ -82,10 +94,6 @@ CFM_fnc_hasMonitorPasswordAccess = {
 	if ((MGVAR ["CFM_debug", false]) || {PLAYER_IS_ADMIN && {(MGVAR ["CFM_adminHaveAccessToAllMonitors", false])}}) exitWith {true};
 	private _accessList = _monitor getVariable ["CFM_passwordAccess", []];
 	PLAYER_PASS_ID in _accessList
-};
-
-// PASSWORD ACCESS HELPER END
-call {
 };
 
 // EFL WRAPPERS

@@ -777,6 +777,7 @@ SINGLETON_CLASS(Monitor)
 		["addActionsToActionsList", _actions] CALL_SELF;
 	};
 	METHOD("monitorEnterFullScreen") {
+		if !([_selfObj] call CFM_fnc_enterFullScreenActionCondition) exitWith {false};
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _selfObj];
 		if (missionNamespace getVariable ["CFM_fullscreenIsPip", false]) exitWith {
 			[_selfObj, true, true] call CFM_fnc_setHandDisplay;

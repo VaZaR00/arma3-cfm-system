@@ -59,6 +59,9 @@ if (_start && {hasInterface}) then {
 			};
 			_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]];
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
+			if (_monitor getVariable ["CFM_isVehTablet", false]) exitWith {
+				[_monitor] call CFM_fnc_inVehicleTabletSeatCondition
+			};
 			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
 			private _dist = _monitor distance PLAYER_;

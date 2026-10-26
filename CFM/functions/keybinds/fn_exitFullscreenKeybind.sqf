@@ -6,4 +6,11 @@
 
 #include "defines.hpp" 
 
-call CFM_fnc_onTempDisplayUnload;
+if !((missionNamespace getVariable ["CFM_isInFullScreen", false]) || (missionNamespace getVariable ["CFM_isInPIPFullScreen", false])) exitWith {};
+
+private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+if (!isNull _disp) then {
+	_disp closeDisplay 1;
+} else {
+	call CFM_fnc_onTempDisplayUnload;
+};

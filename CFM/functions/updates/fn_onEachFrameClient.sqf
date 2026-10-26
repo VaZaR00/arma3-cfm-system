@@ -31,6 +31,16 @@ private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_tur
 private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 {
 	_monitor = _x;
+	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call CFM_fnc_inVehicleTabletSeatCondition)}) then {
+		_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+		_turret = _monitor getVariable ["CFM_currentTurret", _monitor getVariable ["CFM_waitingForStartTurret", DRIVER_TURRET_PATH]];
+		[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
+		if (IS_OBJ(_operator)) then {
+			[_monitor, _operator, true, _turret, true] spawn CFM_fnc_syncState;
+		};
+		call _remMonF;
+		continue;
+	};
 	_condition = _monitor call CFM_fnc_monitorFeedActive;
 	if (_condition isEqualTo false) then {
 		[_monitor] call CFM_fnc_stopOperatorFeed;

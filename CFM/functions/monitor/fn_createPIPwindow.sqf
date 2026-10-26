@@ -8,10 +8,16 @@
 
 params [["_player", objNull], ["_renderTarget", "rendertarget0"], ["_settings", ""], ["_isUI", false]];
 
+if !(IS_OBJ(_player)) exitWith {};
+
 disableSerialization;
 
-[_player] call CFM_fnc_closePIPwindow;
+[_player, false] call CFM_fnc_closePIPwindow;
 sleep 0.01;
+
+if !(_player getVariable ["CFM_feedActive", false]) exitWith {};
+if (_player getVariable ["CFM_turnedOffLocal", false]) exitWith {};
+if ((_player getVariable ["CFM_isVehTablet", false]) && {!([_player] call CFM_fnc_inVehicleTabletSeatCondition)}) exitWith {};
 
 _renderTarget cutRsc ["RscTitleDisplayEmpty", "PLAIN"];
 waitUntil {!(isNil {uiNamespace getVariable "RscTitleDisplayEmpty"})};
@@ -88,16 +94,19 @@ if (_isUI) then {
 
 _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
 
-_player spawn {
-    private _isWatching = _this getVariable ["CFM_feedActive", false];
-    waitUntil {
-        sleep 1;
-        _isWatching = _this getVariable ["CFM_feedActive", false];
-        !_isWatching 
-        // || {!(focusOn isEqualTo _this)}
-    };
-    if !(_isWatching) exitWith {};
-    [_this, false] call CFM_fnc_setHandDisplay;
+private _prevWatchHndl = _player getVariable ["CFM_pipWatchHndl", scriptNull];
+if (!isNull _prevWatchHndl && {!(scriptDone _prevWatchHndl)}) then {
+    terminate _prevWatchHndl;
 };
+private _watchHndl = _player spawn {
+    waitUntil {
+        sleep 0.5;
+        !(_this getVariable ["CFM_feedActive", false])
+        || {_this getVariable ["CFM_turnedOffLocal", false]}
+        || {(_this getVariable ["CFM_isVehTablet", false]) && {!([_this] call CFM_fnc_inVehicleTabletSeatCondition)}}
+    };
+    [_this] call CFM_fnc_closePIPwindow;
+};
+_player setVariable ["CFM_pipWatchHndl", _watchHndl];
 
 [_display, _pictureCtrl, _background, _title]

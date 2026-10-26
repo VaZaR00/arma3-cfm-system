@@ -23,7 +23,7 @@
 ["CFM_canChangeZoomOnDrones",  "CHECKBOX",  [CFM_STR_CAN_CHANGE_ZOOM_ON_UAV, CFM_STR_DESC_CAN_CHANGE_ZOOM_ON_UAV], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_Mavic_dropShowMessageEH",  "CHECKBOX",  [CFM_STR_MAVIC_SHOW_GRENADE_DROP_MESSAGE, CFM_STR_DESC_MAVIC_SHOW_GRENADE_DROP_MESSAGE], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_useR2Tsystem",  "CHECKBOX",  [CFM_STR_USE_R2T_SYSTEM, CFM_STR_DESC_USE_R2T_SYSTEM], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
-["CFM_adminHaveAccessToAllMonitors",  "CHECKBOX",  [CFM_STR_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS, CFM_STR_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
+["CFM_adminHaveAccessToAllMonitors",  "CHECKBOX",  [CFM_STR_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS, CFM_STR_DESC_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 
 [CFM_CATEGORY, "CFM_enterFullScreenKey", [CFM_STR_ENTER_FULLSCREEN_MODE, CFM_STR_ENTER_FULLSCREEN_MODE], {call CFM_fnc_enterFullscreenKeybind}, "", [DIK_F, [true, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_exitFullScreenKey", [CFM_STR_EXIT_FULLSCREEN_MODE, CFM_STR_EXIT_FULLSCREEN_MODE], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;

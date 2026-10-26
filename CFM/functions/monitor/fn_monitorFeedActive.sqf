@@ -23,7 +23,7 @@ CHECK_EX(!_active);
 
 private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
 if (_isVehTablet) exitWith {
-    [_monitor] call CFM_fnc_inVehicleTabletActionCondition
+    [_monitor] call CFM_fnc_inVehicleTabletSeatCondition
 };
 
 private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];

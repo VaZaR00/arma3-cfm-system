@@ -14,7 +14,7 @@ private _mon = call {
         if (_playerActiveFeed) then {
             _player
         } else {
-            if (_plrVeh getVariable ["CFM_feedActive", false]) then {
+            if ((_plrVeh getVariable ["CFM_feedActive", false]) && {[_plrVeh] call CFM_fnc_inVehicleTabletSeatCondition}) then {
                 _plrVeh
             } else {
                 objNull
@@ -23,8 +23,8 @@ private _mon = call {
     };
     private _watchingAtMonitor = [_player] call CFM_fnc_isWatchingAtMonitor;
     if !(cameraOn isEqualTo _player) exitWith {objNull};
-    if (_watchingAtMonitor) exitWith {cursorObject};
-    if ((_player getVariable ["CFM_isHandMonitor", false]) isEqualTo true) exitWith {_player};
+    if (_watchingAtMonitor && {(cursorObject distance _player) <= ACTION_RADIUS} && {cursorObject getVariable ["CFM_feedActive", false]}) exitWith {cursorObject};
+    if (((_player getVariable ["CFM_isHandMonitor", false]) isEqualTo true) && {_player getVariable ["CFM_feedActive", false]}) exitWith {_player};
     objNull
 };
 if (!isNull _mon && {!([_mon] call CFM_fnc_hasMonitorPasswordAccess)}) exitWith {objNull};
