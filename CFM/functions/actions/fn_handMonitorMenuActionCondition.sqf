@@ -15,5 +15,5 @@ if (_isVehTablet) exitWith {false};
 if !(_target isEqualTo PLAYER_) exitWith {true};
 
 private _veh = objectParent _target;
-if (!isNull _veh && {(_veh getVariable ["CFM_isVehTablet", false]) && (_veh getVariable ["CFM_menuActive", false])}) exitWith {true};
+if (!isNull _veh && {(_veh getVariable ["CFM_isVehTablet", false]) && {(_veh getVariable ["CFM_menuActive", false]) || {(_veh getVariable ["CFM_feedActive", false])}}}) exitWith {true};
 [_target] call CFM_fnc_isWatchingAtMonitor;
