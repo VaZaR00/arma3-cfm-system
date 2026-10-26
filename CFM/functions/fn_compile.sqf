@@ -79,6 +79,7 @@ CFM_fnc_hasMonitorPasswordAccess = {
 	if !(_monitor getVariable ["CFM_canSetPassword", false]) exitWith {true};
 	private _pass = _monitor getVariable ["CFM_password", ""];
 	if (_pass isEqualTo "") exitWith {true};
+	if ((MGVAR ["CFM_debug", false]) || {PLAYER_IS_ADMIN && {(MGVAR ["CFM_adminHaveAccessToAllMonitors", false])}}) exitWith {true};
 	private _accessList = _monitor getVariable ["CFM_passwordAccess", []];
 	PLAYER_PASS_ID in _accessList
 };

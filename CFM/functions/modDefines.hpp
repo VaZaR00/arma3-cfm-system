@@ -91,6 +91,7 @@
 #define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
 #define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
 #define PLAYER_PASS_ID (call {private _uid = getPlayerUID player; if (_uid isEqualTo "") then {str player} else {_uid}})
+#define PLAYER_IS_ADMIN (!isMultiplayer || {isServer || {serverCommandAvailable "#logout"}})
 #define PASSWORD_ACCESS_CONDITION if !([_target] call CFM_fnc_hasMonitorPasswordAccess) exitWith {false};
 #define IN_VEH_TABLET_CONDITION if !([_target] call CFM_fnc_inVehicleTabletActionCondition) exitWith {false};
 #define HAND_MON_CONDITION IN_VEH_TABLET_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false}; PASSWORD_ACCESS_CONDITION
