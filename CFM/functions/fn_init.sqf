@@ -77,8 +77,8 @@ CFM_max_zoom_drone = 5;
 // Classes
 call CFM_fnc_compileClasses;
 
-NEW_INSTANCE("DbHandler");
-NEW_INSTANCE("CameraManager");
+[] NEW_INSTANCE("DbHandler");
+[] NEW_INSTANCE("CameraManager");
 
 
 CFM_inited = true;
