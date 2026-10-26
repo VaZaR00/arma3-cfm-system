@@ -7,5 +7,5 @@
 #include "defines.hpp" 
 
 
-params ["_monitor", ["_reset", false]];
-["stopFeed", [_reset]] CALL_OBJCLASS("Monitor", _monitor);
+params ["_monitor", ["_reset", false], ["_isOptimize", false]];
+["stopFeed", [_reset, _isOptimize]] CALL_OBJCLASS("Monitor", _monitor);

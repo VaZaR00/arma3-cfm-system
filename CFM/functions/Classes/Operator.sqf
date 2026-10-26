@@ -378,7 +378,8 @@ SINGLETON_CLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
-		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, false);
+		private _monIsLocal = _monitor getVariable ["CFM_isLocal", false];
+		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, _monIsLocal);
 		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 
 		_nextTurretIndex
@@ -396,9 +397,9 @@ SINGLETON_CLASS(Operator)
 	METHOD("checkIfFeedsToAnyMonitor") {
 		private _feeds = false;
 		{
-			_x params [["_turretInstanceId", -1], ["_turretObject", objNull]];
-			private _monitorsSet = TURRET_VAR(_monitorsSet, []);
-			if (count _monitorsSet > 0) exitWith {
+			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
+			private _monitorsOnTurret = TURRET_VAR(_monitorsOnTurret, []);
+			if (count _monitorsOnTurret > 0) exitWith {
 				_feeds = true;
 				break;
 			};

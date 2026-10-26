@@ -422,6 +422,14 @@ CLASS(Turret)
 
 		_cameraMoveRestrictions resize [4, 0];
 
+		private _monIsLocal = _monitor getVariable ["CFM_isLocal", false];
+		if (isServer || _monIsLocal) then {
+			["TurretChangedLocalOperator", [_monitor]] CALL_SELF;
+			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex, !_monIsLocal];
+		} else {
+			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex];
+		};
+
 		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
 		_monitor setVariable ["CFM_connectedTurretObject", _turretObject, _global];
 		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
@@ -440,19 +448,16 @@ CLASS(Turret)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
-
-		if (isServer) then {
-			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex, true];
-		};
-
-		[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
-
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
 
-		private _uiParams = if (IS_STR(_interfaceClass)) then {
-			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
-		} else {[]};
-		["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		if (_monitor getVariable ["CFM_feedActive", false]) then {
+			[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
+
+			private _uiParams = if (IS_STR(_interfaceClass)) then {
+				[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+			} else {[]};
+			["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
+		};
 
 		true
 	};

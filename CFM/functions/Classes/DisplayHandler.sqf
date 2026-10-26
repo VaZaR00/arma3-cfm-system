@@ -57,13 +57,14 @@ SINGLETON_CLASS(DisplayHandler)
 		_monitor setVariable ["CFM_uiParams", +_uiParams];
 		private _doUiParams = !(missionNamespace getVariable ["CFM_useR2Tsystem", false]) && {!(_uiParams isEqualTo []) && {(_uiParams isEqualType [])}};
 		_monitor setVariable ["CFM_currentFeedIsDisplay", _doUiParams];
+		private _camera = _selfObj getVariable ["CFM_currentFeedCam", objNull];
+		_camera cameraEffect ["Internal", "BACK", _monitorR2Tid];
+		if (_turnedOffLocal) exitWith {};
 		if (!_isHandMonitor && {_doUiParams}) then {
 			["startRenderingUI", _reset] SPAWN_SELF;
 		} else {
 			["startRenderingR2T", _reset] CALL_SELF;
 		};
-		private _camera = _selfObj getVariable ["CFM_currentFeedCam", objNull];
-		_camera cameraEffect ["Internal", "BACK", _monitorR2Tid];
 	};
 	METHOD("stopRendering") {
 		params[["_reset", false]];
@@ -205,7 +206,7 @@ SINGLETON_CLASS(DisplayHandler)
 		_r2tDisplayCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
 		_r2tDisplayCtrl ctrlCommit 0;
 		
-		if (_reset) then {
+		if (_reset || {_currentPiPEffect != 0}) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		};
 	};
@@ -341,7 +342,7 @@ SINGLETON_CLASS(DisplayHandler)
 
 		["setR2TTexture", [true, _monitorR2Tid]] CALL_SELF;
 		
-		if (_reset) then {
+		if (_reset || {_currentPiPEffect != 0}) then {
 			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 		};
 	};
@@ -372,6 +373,7 @@ SINGLETON_CLASS(DisplayHandler)
 	METHOD("toggleMonitorLocal") {
 		params[["_on", true, [true]]];
 
+		_monitor setVariable ["CFM_turnedOffLocal", !_on];
 		if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
 			if (_on) then {
 				[_monitor, true, _monitorR2Tid] call CFM_fnc_setR2TTexture;
@@ -385,6 +387,5 @@ SINGLETON_CLASS(DisplayHandler)
 				["stopRendering", [true]] SPAWN_SELF;
 			};
 		};
-		_monitor setVariable ["CFM_turnedOffLocal", !_on];
 	};
 CLASS_END

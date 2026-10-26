@@ -255,12 +255,12 @@ SINGLETON_CLASS(Monitor)
 		true
 	}; 
 	METHOD("stopFeed") {
-		params[["_reset", false]];
+		params[["_reset", false], ["_isOptimize", false]];
 		if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _selfObj) then {
 			closeDialog 1;
 			call CFM_fnc_onTempDisplayUnload;
 		};
-		if (IS_OBJ(_connectedOperator)) then {
+		if (!_isOptimize && {IS_OBJ(_connectedOperator)}) then {
 			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
 		};
 		_selfObj setVariable ['CFM_actionCaller', nil];
@@ -268,9 +268,21 @@ SINGLETON_CLASS(Monitor)
 		["setOperatorInfo", [false]] CALL_SELF;
 		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
 		["stopRendering", [_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
-		if !(_reset) then {
+		if (_isOptimize) then {
 			["monitorRemoveActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
-			["clearVariables"] CALL_SELF;
+			_monitor setVariable ["CFM_currentFeedCam", nil];
+			_monitor setVariable ["CFM_feedActive", false];
+			_monitor setVariable ["CFM_menuActive", false];
+			_monitor setVariable ["CFM_actionCaller", nil];
+			_monitor setVariable ["CFM_camInterp_lastDir", nil];
+			_monitor setVariable ["CFM_camInterp_lastUp", nil];
+			_monitor setVariable ["CFM_doUpdateCamera", nil];
+			_monitor setVariable ["CFM_cam_prevSetPos", nil];
+		} else {
+			if !(_reset) then {
+				["monitorRemoveActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
+				["clearVariables"] CALL_SELF;
+			};
 		};
 	};
 	METHOD("clearVariables") {
@@ -314,7 +326,16 @@ SINGLETON_CLASS(Monitor)
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
 		_selfObj setVariable ['CFM_actionCaller', _caller];
-		["CFM_syncMonitorState", [netId _selfObj, netId _op, true], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
+		private _initTurret = (_op getVariable ["CFM_turrets", DRIVER_TURRET_PATH]) param [0, DRIVER_TURRET_PATH];
+		private _initTurrIdx = TURRET_INDEX(_initTurret);
+		_selfObj setVariable ["CFM_waitingForStartTurret", _initTurrIdx, !_isLocal];
+		_selfObj setVariable ["CFM_currentTurret", [_initTurrIdx], !_isLocal];
+		_selfObj setVariable ["CFM_currentPiPEffect", 0, !_isLocal];
+		_selfObj setVariable ["CFM_isInNvg", false, !_isLocal];
+		_selfObj setVariable ["CFM_zoom", 1, !_isLocal];
+		_selfObj setVariable ["CFM_zoomFov", 1, !_isLocal];
+		_selfObj setVariable ["CFM_maxZoomed", false, !_isLocal];
+		["CFM_syncMonitorState", [netId _selfObj, netId _op, true, _initTurrIdx], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
 		[_selfObj] call CFM_fnc_monitorCloseMenu;
 		true
 	};
@@ -347,6 +368,7 @@ SINGLETON_CLASS(Monitor)
 		if (count _ops == 0) exitWith { CFM_STR_NO_ACTIVE_CAMERAS _HINT }; 
 			
 		private _tempIDs = []; 
+
 
 		private _closeID = _target addAction [format["<t color='#ff6600'>   [%1]</t>", CFM_STR_CLOSE_MENU], { 
 			params ["_target", "_caller", "_", "_p"];
@@ -463,6 +485,7 @@ SINGLETON_CLASS(Monitor)
 	METHOD("nextTurret") {
 		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
+		_monitor setVariable ["CFM_isInNvg", false, true];
 		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
 	UNUSED_METHOD("switchTurret") {

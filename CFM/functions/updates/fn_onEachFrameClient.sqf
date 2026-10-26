@@ -27,7 +27,7 @@ if !(_player getVariable ["CFM_isActiveViewer", false]) then {
 // ---------- UPDATE MONITORS ----------
 private _optimizeDistance = GET_OPTIMIZE_DIST;
 private _doOptimize = _optimizeDistance > 0;
-private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator"];
+private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_turret"];
 private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 {
 	_monitor = _x;
@@ -42,8 +42,9 @@ private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 		_dist = _player distance _monitor;
 		if (_dist > _optimizeDistance) then {
 			_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-			[_monitor] call CFM_fnc_stopOperatorFeed;
-			[_monitor, _operator, true] spawn CFM_fnc_syncState;
+			_turret = _monitor getVariable ["CFM_currentTurret", _monitor getVariable ["CFM_waitingForStartTurret", DRIVER_TURRET_PATH]];
+			[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
+			[_monitor, _operator, true, _turret, true] spawn CFM_fnc_syncState;
 			call _remMonF;
 			continue;
 		};
