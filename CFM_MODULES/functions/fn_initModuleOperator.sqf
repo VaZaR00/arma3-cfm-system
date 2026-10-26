@@ -27,7 +27,7 @@ if (is3DEN) exitWith {};
 			private _res = [];
 			_offsetsStr = trim (tolower _offsetsStr);
 			private _forObj = IS_OBJ(_mainObject);
-			if (_forObj && {(_offsetsStr isEqualTo "default")}) exitWith {[]};;
+			if (_forObj && {(_offsetsStr isEqualTo "default")}) exitWith {[]};
 			private _isThis = (_offsetsStr isEqualTo "this");
 			if (_isThis && _forObj) then {
 				private _relPosModule = _mainObject worldToModelVisual (getPos _l);
@@ -50,13 +50,14 @@ if (is3DEN) exitWith {};
 				_res = [];
 			};
 			if (_res isEqualTo []) exitWith {[]};
-			+_res
+			if (_res isEqualType []) exitWith {+_res};
+			_res
 		};
 		private _proccessTurretModule = {
-			params["_logic", ["_mainObj", objNull], ["_checkPointParams", false]];
+			params["_logic", ["_mainObj", objNull], ["_checkPointParams", false], ["_isMainModule", false]];
 
 			// skip if its not set as turret
-			if !(BOOL("isCameraTurret", 0)) then {continue};
+			if (!_isMainModule && {!(BOOL("isCameraTurret", 0))}) exitWith {[]};
 
 			private _memPointLodStr = _logic getVariable ["cameraMemoryPoint", ""];
 
@@ -110,32 +111,34 @@ if (is3DEN) exitWith {};
 		private _operatorClasses = [];
 		private _argumentsNotProccessed = [];
 		private ["_class", "_op"];
-		private _objectCondition = {(_this isKindOf "Land") || (_this isKindOf "Air")};
-		private _operators = (_syncedObjs + (_operatorsStr splitString SPLIT_CHARACTERS)) select {
-			call {
-				if (_x isEqualType objNull) exitWith {
-					_x call _objectCondition;
+		private _objectCondition = {(_this isKindOf "Land") || (_this isKindOf "Air") || (_this isKindOf "Ship")};
+		private _operators = [];
+		{
+			if (_x isEqualType objNull) then {
+				if (_x call _objectCondition) then {
+					_operators pushBackUnique _x;
 				};
+			} else {
 				if (("""" in _x) || ("'" in _x)) then {
 					comment "Classnames (strings)";
 					_class = call compile _x;
-					if (isNil "_class") exitWith {
+					if (isNil "_class") then {
 						_argumentsNotProccessed pushBack _x;
-						false; 
+					} else {
+						_operatorClasses pushBackUnique _class;
 					};
-					_operatorClasses pushBackUnique _class;
-					false; 
 				} else {
 					_op = missionNamespace getVariable _x;
 					if ((isNil "_op") || {!(IS_OBJ(_op))}) then {
 						_argumentsNotProccessed pushBack _x;
-						false;
 					} else {
-						_op call _objectCondition;
+						if (_op call _objectCondition) then {
+							_operators pushBackUnique _op;
+						};
 					};
 				};
 			};
-		};
+		} forEach (_syncedObjs + (_operatorsStr splitString SPLIT_CHARACTERS));
 		private _hasNoOperatorObjs = _operators isEqualTo [];
 	// ---------------------------------------
 
@@ -162,7 +165,7 @@ if (is3DEN) exitWith {};
 		// _pointParams: [_memPoint, ["_addArr", ["_dir", "_up"], "_setArr"]]
 		// _turretsCustom: [[turrIndex, [_turretObject, _canMoveCamera, _setZoomTable, _setNvgAndTi, _pointParams, _doInterpolationSet, _turretName, _smoothZoomSetTurr]]]
 
-		private _nvgTi = [SELECT_DEF("cameraHasNvg", 1), SELECT_DEF("cameraHasTI", 1)];
+		private _nvgTi = [SELECT_DEF("cameraHasTI", 1), SELECT_DEF("cameraHasNvg", 1)];
 
 		private _name = LGVAR ["cameraName", ""];
 		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
@@ -179,7 +182,8 @@ if (is3DEN) exitWith {};
 	// -------- PROCCESS OPERATOR CLASSES --------
 		if !(_operatorClasses isEqualTo []) then {
 			private _turretsCustom = [[_logic, LGVAR ["cameraTurretsCustom", "this"]] call _proccessArrayString];
-			(_operatorClasses + [
+			[
+				_operatorClasses,
 				_sides,
 				_turretsCustom,
 				_nvgTi,
@@ -188,13 +192,15 @@ if (is3DEN) exitWith {};
 					_canMoveCam,
 					_smoothZoom
 				]
-			]) call CFM_fnc_setOperator;
+			] call CFM_fnc_setOperator;
 		};
 	// ---------------------------------------
 
 	// ------ PROCCESS IF STATIC CAMERA --------
 	if (_operators isEqualTo []) exitWith {
-		[_logic] call CFM_fnc_initModuleStaticCamera;
+		if (_operatorClasses isEqualTo []) then {
+			[_logic] call CFM_fnc_initModuleStaticCamera;
+		};
 	};
 	// ---------------------------------------
 
@@ -211,12 +217,12 @@ if (is3DEN) exitWith {};
 		private _mainObject = _operators param [0, objNull];
 		private _turretsCustom = [];
 		// get the offset of main module
-		private _turretParamsMain = [_logic, _mainObject, true] call _proccessTurretModule;
+		private _turretParamsMain = [_logic, _mainObject, true, true] call _proccessTurretModule;
 		if !(_turretParamsMain isEqualTo []) then {
 			_turretsCustom pushBack _turretParamsMain;
 		};
 		{
-			private _turretModuleParams = [_x, _mainObject, true] call _proccessTurretModule;
+			private _turretModuleParams = [_x, _mainObject, true, false] call _proccessTurretModule;
 			if (_turretModuleParams isEqualTo []) then {continue};
 			_turretsCustom pushBack _turretModuleParams;
 		} forEach _syncedTurretModules;
@@ -234,4 +240,3 @@ if (is3DEN) exitWith {};
 		_args call CFM_fnc_setOperator;
 	// ---------------------------------------
 };
-

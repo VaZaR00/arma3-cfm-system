@@ -75,13 +75,19 @@ class CfgVehicles
         {
             PARAMETER(monitorObject, "STRING", "")
             PARAMETER(monitorSides, "STRING", "west")
+            PARAMETER(allowedOperators, "STRING", "")
+            PARAMETER(allowedOperatorsTypes, "STRING", "")
             PARAMETER_SELECT(IsHandMonitorDisplay, 0)
+            PARAMETER(vehicleTabletSeats, "STRING", "")
+            PARAMETER_SELECT_DEFAULT(isVehTablet, -1)
             PARAMETER_SELECT(monitorcanSwitchNvg, 1)
             PARAMETER_SELECT(monitorCanSwitchTi, 1)
             PARAMETER_SELECT(monitorCanSwitchTurret, 1)
             PARAMETER_SELECT(monitorCanZoom, 1)
             PARAMETER_SELECT(monitorCanFullScreen, 1)
             PARAMETER_SELECT(monitorCanConnectDrone, 1)
+            PARAMETER_SELECT(monitorCanFix, 1)
+            PARAMETER_SELECT(monitorCanTurnOffLocal, 1)
         };
     };
     class CFM_Module_Camera: Module_F

@@ -14,14 +14,16 @@
 		3. _allowedOperators [Array[object], object] - defines which operators it have access to
 		4. _allowedOperatorsTypes [Array[string], string] - defines which operators it have access to
 		5. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
-		6. _canSwitchNvg [bool]
-		7. _canSwitchTi [bool]
-		8. _canSwitchTurret [bool]
-		9. _canZoom [bool]
-		10. _canFullScreen [bool]
-		11. _canConnectDrone [bool] - if it can connect to currently feeding drone
-		12. _canFix [bool] - if has "fix feed" action
-		13. _canTurnOffLocal [bool] - if has "turn off/on local" action
+		6. _vehicleTabletSeats [Array] - defines vehicle seats which have access to vehicle tablet
+		7. _isVehTablet [bool] - if monitor is a vehicle tablet
+		8. _canSwitchNvg [bool]
+		9. _canSwitchTi [bool]
+		10. _canSwitchTurret [bool]
+		11. _canZoom [bool]
+		12. _canFullScreen [bool]
+		13. _canConnectDrone [bool] - if it can connect to currently feeding drone
+		14. _canFix [bool] - if has "fix feed" action
+		15. _canTurnOffLocal [bool] - if has "turn off/on local" action
 */
 
 #include "defines.hpp"

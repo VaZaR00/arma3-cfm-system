@@ -183,7 +183,7 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_actionsRadius", _radius];
 
 		["addMenuActions", [_radius]] CALL_SELF;
-		["addOptionalActions", [_radius]] CALL_SELF;
+		["addOptionalActions", [_radius, _canZoom, _canConnectDrone, _canFix, _canSwitchTurret, _canTurnOffLocal, _canSwitchNvg, _canSwitchTi]] CALL_SELF;
 		["updateActionPriority"] CALL_CLASS("DbHandler");
 		["setupMonitorDisplay", _monitor] CALL_CLASS("DbHandler");
 

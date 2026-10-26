@@ -38,7 +38,7 @@ if (is3DEN) exitWith {};
 	private _proccessArrayString = {
 		params["_l", "_offsetsStr", ['_isOffset', true]];
 		private _res = [];
-		private _isThis = (_offsetsStr isEqualTo "this");
+		private _isThis = ((trim (toLower _offsetsStr)) isEqualTo "this");
 		if (_isOffset && {_isThis}) then {
 			_res = [getPosASL _l, [vectorDir _l, vectorUp _l]];
 		};
@@ -49,7 +49,8 @@ if (is3DEN) exitWith {};
 			_res = [];
 		};
 		if (_res isEqualTo []) exitWith {[]};
-		[+_res]
+		if (_res isEqualType []) exitWith {+_res};
+		_res
 	};
 	private _proccessCameraParams = {
 		params["_logic"];
@@ -78,7 +79,13 @@ if (is3DEN) exitWith {};
 			_canMoveCamArr
 		};
 		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
-		private _turretIndex = parseNumber (LGVAR ["turretIndex", ""]);
+		private _turretIndexStr = trim (LGVAR ["turretIndex", ""]);
+		private _turretIndex = if (
+			!(_turretIndexStr isEqualTo "") && {
+				private _idx = parseNumber _turretIndexStr;
+				((_idx == 0) && (_turretIndexStr isEqualTo "0")) || (_idx != 0)
+			}
+		) then {parseNumber _turretIndexStr} else {nil};
 		private _zoomParamsStr = (LGVAR ["zoomParams", ""]);
 		private _zoomParams = [_logic, _zoomParamsStr, false] call _proccessArrayString;
 
@@ -93,12 +100,17 @@ if (is3DEN) exitWith {};
 		]
 	};
 
+	private _params = _logic call _proccessCameraParams;
+
 	private _offsetsStr = LGVAR ["cameraTurretsCustom", "this"];
-	private _offsets = [_logic, _offsetsStr] call _proccessArrayString;
-	if (isNil "_offsets") then {
-		_offsets = [];
+	private _mainOffset = [_logic, _offsetsStr] call _proccessArrayString;
+	if (isNil "_mainOffset") then {
+		_mainOffset = [];
 	};
-	_offsets = [_offsets];
+	private _offsets = [];
+	if !(_mainOffset isEqualTo []) then {
+		_offsets pushBack ([_mainOffset] + _params);
+	};
 
 	private _staticCamModuleClass = (tolower "CFM_Module_Camera");
 	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
@@ -109,9 +121,7 @@ if (is3DEN) exitWith {};
 
 		private _turrOffsetsStr = _x getVariable ["cameraTurretsCustom", "this"];
 		private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
-		if (isNil "_turrOffsets") then {
-			_turrOffsets = [];
-		};
+		if (isNil "_turrOffsets" || {_turrOffsets isEqualTo []}) then {continue};
 		private _turrParams = _x call _proccessCameraParams;
 		private _turrArgs = [_turrOffsets] + _turrParams;
 		_offsets pushBack _turrArgs;
@@ -121,18 +131,18 @@ if (is3DEN) exitWith {};
 		format["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] WARN
 	};
 
-	private _params = _logic call _proccessCameraParams;
+	private _hasTi = BOOL("cameraHasTI", 1);
+	private _hasNvg = BOOL("cameraHasNvg", 1);
 
 	[
 		_params param [5, ""],
 		_offsets,
 		_sides,
 		_params param [0, objNull],
-		_params param [4, [true, true]],
+		[_hasTi, _hasNvg],
 		[
 			_params param [1, -1],
 			_params param [6, -1]
 		]
 	] call CFM_fnc_setStaticCamera;
 };
-
