@@ -68,6 +68,7 @@ CFM_fnc_inVehicleTabletActionCondition = {
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
 	private _plr = PLAYER_;
 	if !(_plr in _target) exitWith {false};
+	if (_plr getVariable ["CFM_menuActive", false]) exitWith {false};
 	private _vehMonSeats = _target getVariable ["CFM_vehicleTabletSeats", []];
 	if (_vehMonSeats isEqualTo []) exitWith {true};
 	(assignedVehicleRole _plr) in _vehMonSeats

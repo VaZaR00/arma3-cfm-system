@@ -7,4 +7,4 @@
 #include "defines.hpp" 
 
 params[["_target", PLAYER_]];
-(!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject isEqualTo _target)};
+(!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject getVariable ["CFM_isVehTablet", false])} && {!(cursorObject isEqualTo _target)};

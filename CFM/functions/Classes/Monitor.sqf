@@ -432,7 +432,7 @@ SINGLETON_CLASS(Monitor)
 			
 		private _menuHndl = [_target, _selfObj, _tempIDs] spawn { 
 			params["_target", "_selfObj", "_tempIDs"];
-			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5}};
+			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && !(PLAYER_ in _selfObj)}};
 			[_target] call CFM_fnc_monitorCloseMenu;
 		}; 
 		_target setVariable ['CFM_menuHndl', _menuHndl];
