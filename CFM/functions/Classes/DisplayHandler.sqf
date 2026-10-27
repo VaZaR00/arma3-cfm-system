@@ -206,9 +206,7 @@ SINGLETON_CLASS(DisplayHandler)
 		_r2tDisplayCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
 		_r2tDisplayCtrl ctrlCommit 0;
 		
-		if (_reset || {_currentPiPEffect != 0}) then {
-			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
-		};
+		[_monitor, _monitor getVariable ["CFM_currentPiPEffect", _currentPiPEffect]] call CFM_fnc_setMonitorPiPEffect;
 	};
 	METHOD("stopRenderingUI") {
 		params[["_reset", true]];
@@ -342,9 +340,7 @@ SINGLETON_CLASS(DisplayHandler)
 
 		["setR2TTexture", [true, _monitorR2Tid]] CALL_SELF;
 		
-		if (_reset || {_currentPiPEffect != 0}) then {
-			[_monitor, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
-		};
+		[_monitor, _monitor getVariable ["CFM_currentPiPEffect", _currentPiPEffect]] call CFM_fnc_setMonitorPiPEffect;
 	};
 	METHOD("stopRenderingR2T") {
 		["setR2TTexture", [false]] CALL_SELF;

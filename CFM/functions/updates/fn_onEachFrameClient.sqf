@@ -10,8 +10,89 @@ if !(missionNamespace getVariable ["CFM_updateEachFrame", false]) exitWith {};
 
 
 private _player = PLAYER_;
-private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 
+// ---------- VEH SEAT TABLETs ---------
+/*
+LOGIC:
+1. player left vehicle in which he had seaten at seat WITHOUT tablet
+2. player left vehicle in which he had seaten at seat WITH tablet
+3. player sit in vehicle in seat WITH tablet
+4. player sit in vehicle in seat WITHOUT tablet
+5. player changed seat in vehicle to seat WITHOUT tablet
+6. player changed seat in vehicle to seat WITH tablet
+7. no changes
+*/
+private _currentVeh = objectParent _player;
+private _lastVeh = _player getVariable ["CFM_currentVeh", objNull];
+private _inVeh = !isNull _currentVeh && {!(_currentVeh isEqualTo _player)};
+
+if (!_inVeh) then {
+	// 1 & 2. Игрок покинул технику
+	if (!isNull _lastVeh) then {
+		private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
+		_player setVariable ["CFM_currentVeh", objNull];
+		_player setVariable ["CFM_currentSeatRole", []];
+		_player setVariable ["CFM_currentVehMonSet", false];
+		_player setVariable ["CFM_activeSeatKey", ""];
+
+		// 2. Вылез из техники с места С планшетом
+		if !(_lastSeatKey isEqualTo "") then {
+			["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
+		};
+	};
+} else {
+	private _currentRole = PLAYER_CREW_ROLE(_currentVeh);
+	private _curMonSet = _currentVeh getVariable ["CFM_isMonitorSet", false];
+
+	// Если изменилась машина, место или инициализировался монитор техники
+	if (
+		!(_currentVeh isEqualTo _lastVeh)
+		|| {!(_curMonSet isEqualTo (_player getVariable ["CFM_currentVehMonSet", false]))}
+		|| {!(_currentRole isEqualTo (_player getVariable ["CFM_currentSeatRole", []]))}
+	) then {
+		_player setVariable ["CFM_currentSeatRole", _currentRole];
+		_player setVariable ["CFM_currentVehMonSet", _curMonSet];
+
+		private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
+		private _isVehTablet = _curMonSet && {_currentVeh getVariable ["CFM_isVehTablet", false]};
+
+		// Проверяем, есть ли на новом месте планшет
+		private _curSeatKey = if (_isVehTablet && {[_currentVeh, _currentRole] call CFM_fnc_isCrewSeatAllowed}) then {
+			[_currentRole] call CFM_fnc_getCrewSeatKey
+		} else {
+			""
+		};
+
+		// Обработка смены техники (сели в новую машину или пересели напрямую между машинами)
+		if !(_currentVeh isEqualTo _lastVeh) then {
+			if (!isNull _lastVeh && {!(_lastSeatKey isEqualTo "")}) then {
+				["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
+				_lastSeatKey = "";
+			};
+			_player setVariable ["CFM_currentVeh", _currentVeh];
+		};
+
+		// Всегда обновляем CFM_activeSeatKey при любом изменении места
+		_player setVariable ["CFM_activeSeatKey", _curSeatKey];
+
+		// Обработка перехода между местами
+		if !(_lastSeatKey isEqualTo _curSeatKey) then {
+			// 5 или 6 (пересадка с места С планшетом): деактивируем прошлый планшет
+			if !(_lastSeatKey isEqualTo "") then {
+				["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _lastSeatKey);
+			};
+
+			// 3 или 6 (посадка/пересадка на место С планшетом): активируем новый планшет
+			if !(_curSeatKey isEqualTo "") then {
+				["activateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _curSeatKey);
+			};
+		};
+	};
+};
+// -------------------------------------
+
+
+private _monitorsParams = missionNamespace getVariable ["CFM_ActiveMonitors", []];
 
 // ----------- ACTIVE VIEWER -----------
 if (_monitorsParams isEqualTo []) exitWith {
@@ -31,12 +112,6 @@ private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_tur
 private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 {
 	_monitor = _x;
-	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call CFM_fnc_inVehicleTabletSeatCondition)}) then {
-		[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
-		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-		call _remMonF;
-		continue;
-	};
 	_condition = _monitor call CFM_fnc_monitorFeedActive;
 	if (_condition isEqualTo false) then {
 		[_monitor] call CFM_fnc_stopOperatorFeed;
@@ -64,83 +139,4 @@ private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
 	};
 } forEach _monitorsParams;
 
-// -------------------------------------
-
-
-// ---------- VEH SEAT TABLETs ---------
-/*
-LOGIC:
-1. player left vehicle in which he had seaten at seat WITHOUT tablet
-2. player left vehicle in which he had seaten at seat WITH tablet
-3. player sit in vehicle in seat WITH tablet
-4. player sit in vehicle in seat WITHOUT tablet
-5. player changed seat in vehicle to seat WITHOUT tablet
-6. player changed seat in vehicle to seat WITH tablet
-7. no changes
-*/
-
-
-private _currentVeh = objectParent _player;
-private _lastVeh = _player getVariable ["CFM_currentVeh", objNull];
-
-// 7. Без изменений: игрок на ногах
-if (((isNull _currentVeh) || {(_currentVeh isEqualTo _player)}) && {isNull _lastVeh}) exitWith {
-	_player setVariable ["CFM_activeSeatKey", ""];
-};
-
-// Игрок покинул технику
-if (isNull _currentVeh) exitWith {
-	private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
-	_player setVariable ["CFM_currentVeh", objNull];
-	_player setVariable ["CFM_currentSeatRole", []];
-
-	// 2. Вылез из техники с места С планшетом
-	if !(_lastSeatKey isEqualTo "") then {
-		_player setVariable ["CFM_activeSeatKey", ""];
-		["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
-	};
-	// 1. Вылез из техники с места БЕЗ планшета (сброс переменных выше)
-};
-
-// 7. Без изменений: игрок сидит в той же технике на том же месте
-private _currentRole = PLAYER_CREW_ROLE(_currentVeh);
-if ((_currentVeh isEqualTo _lastVeh) && {_currentRole isEqualTo (_player getVariable ["CFM_currentSeatRole", []])}) exitWith {};
-
-// --- Если дошли сюда, произошло изменение (сели в машину / сменили место) ---
-_player setVariable ["CFM_currentSeatRole", _currentRole];
-
-private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
-private _isVehTablet = _currentVeh getVariable ["CFM_isVehTablet", false];
-
-// Проверяем, есть ли на новом месте планшет
-private _curSeatKey = if (_isVehTablet && {[_currentVeh] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-	[_currentVeh, _player] call CFM_fnc_getUnitVehicleSeatKey
-} else {
-	""
-};
-
-// Обработка смены техники (сели в новую машину или пересели напрямую между машинами)
-if !(_currentVeh isEqualTo _lastVeh) then {
-	if (!isNull _lastVeh && {!(_lastSeatKey isEqualTo "")}) then {
-		["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
-		_lastSeatKey = "";
-	};
-	_player setVariable ["CFM_currentVeh", _currentVeh];
-};
-
-// Обработка перехода между местами
-if !(_lastSeatKey isEqualTo _curSeatKey) then {
-	// 5 или 6 (пересадка с места С планшетом): деактивируем прошлый планшет
-	if !(_lastSeatKey isEqualTo "") then {
-		["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _lastSeatKey);
-	};
-
-	_player setVariable ["CFM_activeSeatKey", _curSeatKey];
-
-	// 3 или 6 (посадка/пересадка на место С планшетом): активируем новый планшет
-	if !(_curSeatKey isEqualTo "") then {
-		["activateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _curSeatKey);
-	};
-	// 4 или 5 (на место БЕЗ планшета): _curSeatKey == "", планшет не активируется
-};
 // -------------------------------------

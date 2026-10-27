@@ -131,6 +131,7 @@ CLASS(SeatTablet)
 		};
 
 		if (hasInterface && {((PLAYER_ getVariable ["CFM_activeSeatKey", ""]) isEqualTo _seatKey)}) then {
+			_monitor setVariable ["CFM_waitingForStart" + _seatKey, false];
 			_monitor setVariable ["CFM_waitingForStart", false];
 			if (_monitor getVariable ["CFM_feedActive", false]) then {
 				[_monitor] call CFM_fnc_stopOperatorFeed;
@@ -143,22 +144,23 @@ CLASS(SeatTablet)
 
 	METHOD("activateSeat") {
 		if !(hasInterface) exitWith {false};
-		// if (IS_OBJ(_connectedOperator)) then {
-		// 	if !([_connectedOperator, _monitor] call CFM_fnc_operatorCondition) exitWith {
-		// 		["disconnect"] CALL_SELF;
-		// 		false
-		// 	};
-		// 	["applyToMonitor"] CALL_SELF;
-		// 	[_monitor, _connectedOperator, true, _currentTurret, true, _seatKey] spawn CFM_fnc_syncState;
-		// 	true
-		// } else {
-		// 	_monitor setVariable ["CFM_waitingForStart", false];
-		// 	if (_monitor getVariable ["CFM_feedActive", false]) then {
-		// 		[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
-		// 	};
-		// 	["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-		// 	false
-		// };
+		if (IS_OBJ(_connectedOperator)) then {
+			if !([_connectedOperator, _monitor] call CFM_fnc_operatorCondition) exitWith {
+				["disconnect"] CALL_SELF;
+				false
+			};
+			["applyToMonitor"] CALL_SELF;
+			[_monitor, _connectedOperator, true, _currentTurret, true, _seatKey] spawn CFM_fnc_syncState;
+			true
+		} else {
+			_monitor setVariable ["CFM_waitingForStart" + _seatKey, false];
+			_monitor setVariable ["CFM_waitingForStart", false];
+			if (_monitor getVariable ["CFM_feedActive", false]) then {
+				[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
+			};
+			["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+			false
+		};
 	};
 
 	METHOD("deactivateSeat") {
@@ -167,12 +169,12 @@ CLASS(SeatTablet)
 			["saveFromMonitor"] CALL_SELF;
 		};
 		[_monitor] call CFM_fnc_monitorCloseMenu;
+		_monitor setVariable ["CFM_waitingForStart" + _seatKey, false];
 		_monitor setVariable ["CFM_waitingForStart", false];
 		if (_monitor getVariable ["CFM_feedActive", false]) then {
 			[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
 		};
 		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
-		["CFM_syncMonitorState", [netId _selfObj, netId _connectedOperator, true, TURRET_INDEX(_currentTurret), false, _seatKey], true, netId _selfObj] call CFM_fnc_remoteEvent;
 		true
 	};
 

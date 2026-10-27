@@ -236,6 +236,12 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_feedActive", true];
 		_monitor setVariable ["CFM_connectedOperator", _operator];
 
+		private _initFov = _monitor getVariable ["CFM_zoomFov", 1];
+		if (_initFov isEqualType 1) then {
+			_camera camSetFov _initFov;
+			_camera camCommit 0;
+		};
+
 		["monitorConnected", [_monitor, _turretIndex, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
 		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
 
@@ -291,6 +297,7 @@ SINGLETON_CLASS(Monitor)
 			_monitor setVariable ["CFM_actionCaller", nil];
 			_monitor setVariable ["CFM_camInterp_lastDir", nil];
 			_monitor setVariable ["CFM_camInterp_lastUp", nil];
+			_monitor setVariable ["CFM_camInterp_lastFov", nil];
 			_monitor setVariable ["CFM_doUpdateCamera", nil];
 			_monitor setVariable ["CFM_cam_prevSetPos", nil];
 		} else {
@@ -333,6 +340,7 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_currentCameraSmoothZoom", nil];
 		_monitor setVariable ["CFM_camInterp_lastDir", nil]; // mb rem?
 		_monitor setVariable ["CFM_camInterp_lastUp", nil];
+		_monitor setVariable ["CFM_camInterp_lastFov", nil];
 		_monitor setVariable ["CFM_doUpdateCamera", nil];
 		_monitor setVariable ["CFM_cam_prevSetPos", nil];
 		_monitor setVariable ["CFM_waitingForStartOperator", nil];
@@ -348,6 +356,7 @@ SINGLETON_CLASS(Monitor)
 				};
 			};
 		} forEach _fullCrew;
+		_monitor setVariable ["CFM_seatTabletsInstances", _seatTabletsInstances, true];
 		_seatTabletsInstances
 	};
 	METHOD("setSeatTablet") {
@@ -362,6 +371,8 @@ SINGLETON_CLASS(Monitor)
 			["Init", [_seatKey]] CALL_OBJINSTANCE("SeatTablet", _seatInstanceId, _monitor);
 		};
 		if (_seatInstanceId <= 0) exitWith {-1};
+		_seatTabletsInstances set [_seatKey, _seatInstanceId];
+		_monitor setVariable ["CFM_seatTabletsInstances", _seatTabletsInstances, true];
 		["CFM_addSeatTabletInstanceToMonitor", [_monitor, _seatKey, _seatInstanceId], true] call CFM_fnc_remoteEvent;
 		_seatInstanceId
 	};

@@ -30,7 +30,8 @@ if (isServer && !_isOptimize) then {
 	};
 };
 
-private _isWaiting = _monitor getVariable ["CFM_waitingForStart" + _seatKey, false];
+private _waitVar = "CFM_waitingForStart" + _seatKey;
+private _isWaiting = _monitor getVariable [_waitVar, false];
 
 if (_isWaiting && _start) exitWith {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
@@ -39,17 +40,23 @@ if (_isWaiting && _start) exitWith {
 	};
 };
 
-_monitor setVariable ["CFM_waitingForStart" + _seatKey, _start];
+_monitor setVariable [_waitVar, _start];
 
 if (_start && {hasInterface}) then {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
-	if (!isNil "_turret" && {isNil {_monitor getVariable "CFM_waitingForStartTurret"}}) then {
+	if (!isNil "_turret" && {(!(_seatKey isEqualTo "")) || {isNil {_monitor getVariable "CFM_waitingForStartTurret"}}}) then {
 		_monitor setVariable ["CFM_waitingForStartTurret", _turret];
 	};
 	waitUntil {
 		private _cond = call {
-			_start = _monitor getVariable ["CFM_waitingForStart" + _seatKey, true];
+			_start = _monitor getVariable [_waitVar, true];
 			if !(_start) exitWith {true};
+			if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!(_seatKey isEqualTo "")}) then {
+				if !((PLAYER_ getVariable ["CFM_activeSeatKey", ""]) isEqualTo _seatKey) exitWith {
+					_start = false;
+					true
+				};
+			};
 			if !(isPipEnabled) exitWith {false};
 			if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
 			_operator = _monitor getVariable ["CFM_waitingForStartOperator", objNull];
@@ -60,7 +67,7 @@ if (_start && {hasInterface}) then {
 			_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]];
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
 			if (_monitor getVariable ["CFM_isVehTablet", false]) exitWith {
-				([_monitor, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey
+				(PLAYER_ getVariable ["CFM_activeSeatKey", ""]) isEqualTo _seatKey
 			};
 			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
@@ -76,15 +83,18 @@ if (_start && {hasInterface}) then {
 };
 if (_start && {IS_OBJ(_operator)}) then {
 	if (_monitor getVariable ["CFM_feedActive", false]) then {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
+		[_monitor, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+	};
+	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!(_seatKey isEqualTo "")}) then {
+		["applyToMonitor"] CALL_SEAT_TABLET_INSTANCE(_monitor, _seatKey);
 	};
 	_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret}]];
 	[_monitor, _operator, _turret, _isOptimize] call CFM_fnc_startOperatorFeed;
 } else {
 	if (_monitor getVariable ["CFM_feedActive", false]) then {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
+		[_monitor, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
 	} else {
 		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 	};
 };
-_monitor setVariable ["CFM_waitingForStart" + _seatKey, false];
+_monitor setVariable [_waitVar, false];

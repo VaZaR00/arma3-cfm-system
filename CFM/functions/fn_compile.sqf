@@ -64,19 +64,29 @@ CFM_fnc_setupDefPointAlignments = {
 };
 
 CFM_fnc_getCrewSeatKey = {
-	params ["_crewEntry"];
+	params [["_crewEntry", []]];
+	if (_crewEntry isEqualType objNull) then {
+		private _veh = objectParent _crewEntry;
+		_crewEntry = if (IS_OBJ(_veh)) then {
+			((fullCrew [_veh, "", false]) select {(_x select 0) isEqualTo _crewEntry}) param [0, []]
+		} else {[]};
+	};
+	if (!(_crewEntry isEqualType []) || {_crewEntry isEqualTo []}) exitWith {""};
 	_crewEntry params ["", ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
 	_role = toLower _role;
 	if (_role isEqualTo "driver") exitWith {"driver"};
 	if !(_turretPath isEqualTo []) exitWith {format ["turret_%1", _turretPath]};
-	format ["cargo_%1", _cargoIdx]
+	if (_cargoIdx >= 0) exitWith {format ["cargo_%1", _cargoIdx]};
+	""
 };
 
 CFM_fnc_getUnitVehicleSeatKey = {
 	params [["_veh", objNull], ["_unit", PLAYER_]];
 	if !(IS_OBJ(_veh)) exitWith {""};
 	if !(_unit in _veh) exitWith {""};
-	[_unit] call CFM_fnc_getCrewSeatKey
+	private _crew = (fullCrew [_veh, "", false]) select {(_x select 0) isEqualTo _unit};
+	if (_crew isEqualTo []) exitWith {""};
+	[_crew select 0] call CFM_fnc_getCrewSeatKey
 };
 
 CFM_fnc_isCrewSeatAllowed = {
@@ -88,14 +98,16 @@ CFM_fnc_isCrewSeatAllowed = {
 	if (_crewEntry isEqualType objNull) then {
 		_crewEntry = PLAYER_CREW_ROLE(_veh);
 	};
+	if (_crewEntry isEqualTo []) exitWith {false};
 	_crewEntry params [["_unit", objNull], ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
 	_role = toLower _role;
 	if (IS_OBJ(_unit) && {(_unit in _veh) && {(assignedVehicleRole _unit) in _vehMonSeats}}) exitWith {true};
-	([_role] in _vehMonSeats) ||
+	(_role in _vehMonSeats) ||
+	{([_role] in _vehMonSeats)} ||
 	{([_role, _turretPath] in _vehMonSeats)} ||
 	{([_role, _cargoIdx] in _vehMonSeats)} ||
-	{(!(_turretPath isEqualTo []) && {(["turret", _turretPath] in _vehMonSeats)})} ||
-	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats)})}
+	{(!(_turretPath isEqualTo []) && {(["turret", _turretPath] in _vehMonSeats) || {(_turretPath in _vehMonSeats)}})} ||
+	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats) || {([-1] in _vehMonSeats)} || {(-1 in _vehMonSeats)}})}
 };
 
 CFM_fnc_getOrCreateSeatTabletId = {

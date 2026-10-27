@@ -86,10 +86,11 @@ _pictureCtrl ctrlSetPosition [_picX, _picY, _picW, _picH];
 _pictureCtrl ctrlCommit 0;
 
 if (_isUI) then {
-    ["startRenderingUI", [false, _pictureCtrl]] SPAWN_OBJCLASS("DisplayHandler", _player);
+    ["startRenderingUI", [true, _pictureCtrl]] SPAWN_OBJCLASS("DisplayHandler", _player);
 } else {
     _pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
     _pictureCtrl ctrlCommit 0;
+    [_player, _player getVariable ["CFM_currentPiPEffect", 0]] call CFM_fnc_setMonitorPiPEffect;
 };
 
 _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
