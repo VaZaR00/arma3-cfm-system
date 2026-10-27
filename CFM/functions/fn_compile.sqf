@@ -90,6 +90,7 @@ CFM_fnc_isCrewSeatAllowed = {
 	if (IS_OBJ(_unit) && {(_unit in _veh) && {(assignedVehicleRole _unit) in _vehMonSeats}}) exitWith {true};
 	([_role] in _vehMonSeats) ||
 	{([_role, _turretPath] in _vehMonSeats)} ||
+	{([_role, _cargoIdx] in _vehMonSeats)} ||
 	{(!(_turretPath isEqualTo []) && {(["turret", _turretPath] in _vehMonSeats)})} ||
 	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats)})}
 };

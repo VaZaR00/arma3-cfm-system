@@ -189,34 +189,6 @@ SINGLETON_CLASS(Monitor)
 			};
 		};
 
-		if (_isVehTablet && hasInterface) then {
-			private _prevSeatHndl = _monitor getVariable ["CFM_vehSeatLoopHndl", scriptNull];
-			if ((_prevSeatHndl isEqualType scriptNull) && {!(scriptDone _prevSeatHndl)}) then {
-				terminate _prevSeatHndl;
-			};
-			private _seatHndl = [_monitor] spawn {
-				params ["_monitor"];
-				private _lastSeatKey = "";
-				while {IS_OBJ(_monitor) && {alive _monitor}} do {
-					private _plr = PLAYER_;
-					private _inAllowedSeat = (_plr in _monitor) && {[_monitor] call CFM_fnc_inVehicleTabletSeatCondition};
-					private _curSeatKey = if (_inAllowedSeat) then {[_monitor, _plr] call CFM_fnc_getUnitVehicleSeatKey} else {""};
-					if (_curSeatKey isNotEqualTo _lastSeatKey) then {
-						if !(_lastSeatKey isEqualTo "") then {
-							["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_monitor, _lastSeatKey);
-						};
-						_monitor setVariable ["CFM_activeSeatKey", _curSeatKey];
-						if !(_curSeatKey isEqualTo "") then {
-							["activateSeat"] CALL_SEAT_TABLET_INSTANCE(_monitor, _curSeatKey);
-						};
-						_lastSeatKey = _curSeatKey;
-					};
-					sleep 0.25;
-				};
-			};
-			_monitor setVariable ["CFM_vehSeatLoopHndl", _seatHndl];
-		};
-
 		private _radius = ACTION_RADIUS;
 		private _menuText = CFM_STR_CAMERA_SYSTEM_MENU;
 		if (_isPlayer) then {
