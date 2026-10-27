@@ -189,7 +189,7 @@
 	params["_monitor", "_operator", "_turretIndex", "_pointParams", "_doUpdCam", ["_camMoves", nil], ["_forceInterp", false]];
 	if !(IS_OBJ(_monitor)) exitWith {};
 	if !((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _operator) exitWith {};
-	if !((TURRET_INDEX(_monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH])) isEqualTo _turretIndex) exitWith {};
+	if !((TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH])) isEqualTo _turretIndex) exitWith {};
 	if (_forceInterp) then {
 		_monitor setVariable ["CFM_camDoInterpolation", true];
 	};
