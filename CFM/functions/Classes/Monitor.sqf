@@ -27,7 +27,6 @@ SINGLETON_CLASS(Monitor)
 	FIELD ["_vehicleTabletSeats", []];
 	FIELD ["_isVehTablet", false];
 	FIELD ["_seatTabletsInstances", createHashMap];
-	FIELD ["_activeSeatKey", ""];
 
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
@@ -177,7 +176,7 @@ SINGLETON_CLASS(Monitor)
 			if !(_allowedOperatorsTypesSet isEqualType []) then {_allowedOperatorsTypesSet = [_allowedOperatorsTypesSet]};
 			_allowedOperatorsTypesSet = _allowedOperatorsTypesSet select {(_x isEqualType "") || {(_x isEqualType 1)}};
 			_monitor setVariable ["CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, !_isLocal];
-			_monitor setVariable ["CFM_canSetPassword", _canSetPassword && !_isHandMonitor, !_isLocal];
+			_monitor setVariable ["CFM_canSetPassword", _canSetPassword && {!_isHandMonitor || _isVehTablet}, !_isLocal];
 			if (isNil {_monitor getVariable "CFM_password"}) then {
 				_monitor setVariable ["CFM_password", "", !_isLocal];
 			};

@@ -76,15 +76,18 @@ CFM_fnc_getUnitVehicleSeatKey = {
 	params [["_veh", objNull], ["_unit", PLAYER_]];
 	if !(IS_OBJ(_veh)) exitWith {""};
 	if !(_unit in _veh) exitWith {""};
-	private _crew = (fullCrew [_veh, "", false]) select {(_x select 0) isEqualTo _unit};
-	if (_crew isEqualTo []) exitWith {""};
-	[_crew select 0] call CFM_fnc_getCrewSeatKey
+	[_unit] call CFM_fnc_getCrewSeatKey
 };
 
 CFM_fnc_isCrewSeatAllowed = {
-	params ["_veh", "_crewEntry"];
+	params ["_veh", ["_crewEntry", objNull]];
+	if (_crewEntry isEqualTo objNull) exitWith {false};
+	if (_crewEntry isEqualTo []) exitWith {false};
 	private _vehMonSeats = _veh getVariable ["CFM_vehicleTabletSeats", []];
 	if (_vehMonSeats isEqualTo []) exitWith {true};
+	if (_crewEntry isEqualType objNull) then {
+		_crewEntry = PLAYER_CREW_ROLE(_veh);
+	};
 	_crewEntry params [["_unit", objNull], ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
 	_role = toLower _role;
 	if (IS_OBJ(_unit) && {(_unit in _veh) && {(assignedVehicleRole _unit) in _vehMonSeats}}) exitWith {true};

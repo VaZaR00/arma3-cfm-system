@@ -84,7 +84,9 @@ private _currentVeh = objectParent _player;
 private _lastVeh = _player getVariable ["CFM_currentVeh", objNull];
 
 // 7. Без изменений: игрок на ногах
-if (((isNull _currentVeh) || {(_currentVeh isEqualTo _player)}) && {isNull _lastVeh}) exitWith {};
+if (((isNull _currentVeh) || {(_currentVeh isEqualTo _player)}) && {isNull _lastVeh}) exitWith {
+	_player setVariable ["CFM_activeSeatKey", ""];
+};
 
 // Игрок покинул технику
 if (isNull _currentVeh) exitWith {
@@ -101,8 +103,8 @@ if (isNull _currentVeh) exitWith {
 };
 
 // 7. Без изменений: игрок сидит в той же технике на том же месте
-private _currentRole = assignedVehicleRole _player;
-if (_currentVeh isEqualTo _lastVeh && {_currentRole isEqualTo (_player getVariable ["CFM_currentSeatRole", []])}) exitWith {};
+private _currentRole = PLAYER_CREW_ROLE(_currentVeh);
+if ((_currentVeh isEqualTo _lastVeh) && {_currentRole isEqualTo (_player getVariable ["CFM_currentSeatRole", []])}) exitWith {};
 
 // --- Если дошли сюда, произошло изменение (сели в машину / сменили место) ---
 _player setVariable ["CFM_currentSeatRole", _currentRole];

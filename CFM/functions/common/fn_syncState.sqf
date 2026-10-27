@@ -7,7 +7,7 @@
 #include "defines.hpp" 
 
 
-params ["_mNetId", "_oNetId", ["_start", true], ["_turret", nil], ["_isOptimize", false]];
+params ["_mNetId", "_oNetId", ["_start", true], ["_turret", nil], ["_isOptimize", false], ["_seatKey", ""]];
 
 private _monitor = if (_mNetId isEqualType "") then {objectFromNetId _mNetId} else {_mNetId};
 private _operator = if (_oNetId isEqualType "") then {objectFromNetId _oNetId} else {_oNetId};
@@ -30,7 +30,7 @@ if (isServer && !_isOptimize) then {
 	};
 };
 
-private _isWaiting = _monitor getVariable ["CFM_waitingForStart", false];
+private _isWaiting = _monitor getVariable ["CFM_waitingForStart" + _seatKey, false];
 
 if (_isWaiting && _start) exitWith {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
@@ -39,7 +39,7 @@ if (_isWaiting && _start) exitWith {
 	};
 };
 
-_monitor setVariable ["CFM_waitingForStart", _start];
+_monitor setVariable ["CFM_waitingForStart" + _seatKey, _start];
 
 if (_start && {hasInterface}) then {
 	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
@@ -48,7 +48,7 @@ if (_start && {hasInterface}) then {
 	};
 	waitUntil {
 		private _cond = call {
-			_start = _monitor getVariable ["CFM_waitingForStart", true];
+			_start = _monitor getVariable ["CFM_waitingForStart" + _seatKey, true];
 			if !(_start) exitWith {true};
 			if !(isPipEnabled) exitWith {false};
 			if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
@@ -60,7 +60,7 @@ if (_start && {hasInterface}) then {
 			_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]];
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
 			if (_monitor getVariable ["CFM_isVehTablet", false]) exitWith {
-				[_monitor] call CFM_fnc_inVehicleTabletSeatCondition
+				([_monitor, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey
 			};
 			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
@@ -87,4 +87,4 @@ if (_start && {IS_OBJ(_operator)}) then {
 		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 	};
 };
-_monitor setVariable ["CFM_waitingForStart", false];
+_monitor setVariable ["CFM_waitingForStart" + _seatKey, false];

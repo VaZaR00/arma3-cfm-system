@@ -55,7 +55,8 @@
 // -- SeatTablets --
 #define SEAT_TABLET_INSTANCE_ID(mon, seatKey) ((mon getVariable ["CFM_seatTabletsInstances", createHashMap]) getOrDefault [seatKey, -1])
 #define CALL_SEAT_TABLET_INSTANCE(mon, seatKey) call {private _stId = [mon, seatKey] call CFM_fnc_getOrCreateSeatTabletId; if (_stId > 0) then {_this CALL_OBJINSTANCE("SeatTablet", _stId, mon)} else {false}};
-#define CALL_ACTIVE_SEAT_TABLET(mon) call {private _sKey = mon getVariable ["CFM_activeSeatKey", ""]; if (_sKey isEqualTo "") then {_sKey = [mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey}; _this CALL_SEAT_TABLET_INSTANCE(mon, _sKey)};
+#define CALL_ACTIVE_SEAT_TABLET(mon) call {private _sKey = PLAYER_ getVariable ["CFM_activeSeatKey", ""]; if (_sKey isEqualTo "") then {_sKey = [mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey}; _this CALL_SEAT_TABLET_INSTANCE(mon, _sKey)};
+#define PLAYER_CREW_ROLE(veh) (call {((fullCrew [veh, "", false]) select {(_x select 0) isEqualTo PLAYER_}) param [0, []]})
 
 // -- Point params --
 #define PP_NONE -1
