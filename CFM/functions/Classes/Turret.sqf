@@ -339,8 +339,12 @@ CLASS(Turret)
 		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
 
 		{
-			_x setVariable ["CFM_currentCamPointParams", +_compiledPointParams, _targets];
-			_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+			if (_x getVariable ["CFM_isVehTablet", false]) then {
+				["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_compiledPointParams, _doUpdCam], _targets] call CFM_fnc_remoteEvent;
+			} else {
+				_x setVariable ["CFM_currentCamPointParams", +_compiledPointParams, _targets];
+				_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+			};
 		} forEach _monitorsOnTurret;
     };
     METHOD("setPointParams") {
@@ -422,9 +426,15 @@ CLASS(Turret)
 
 		_cameraMoveRestrictions resize [4, 0];
 
-		private _monIsLocal = _monitor getVariable ["CFM_isLocal", false];
+		private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
+		private _monIsLocal = (_monitor getVariable ["CFM_isLocal", false]) || _isVehTablet;
+		if (_isVehTablet) then {
+			_global = false;
+		};
 		if (isServer || _monIsLocal) then {
-			["TurretChangedLocalOperator", [_monitor]] CALL_SELF;
+			if (isServer || !_isVehTablet) then {
+				["TurretChangedLocalOperator", [_monitor]] CALL_SELF;
+			};
 			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex, !_monIsLocal];
 		} else {
 			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex];
@@ -449,6 +459,9 @@ CLASS(Turret)
 		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
 		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
 		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
+		if (_isVehTablet && hasInterface && {[_monitor] call CFM_fnc_inVehicleTabletSeatCondition}) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
 
 		if (_monitor getVariable ["CFM_feedActive", false]) then {
 			[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
@@ -466,7 +479,9 @@ CLASS(Turret)
 
 		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
 
-		["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _operator);
+		if !([_monitor, _operator, _prevTurret] call CFM_fnc_isVehTabletUsingOperator) then {
+			["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _operator);
+		};
 		["addMonitor", [_monitor, _turretIndex]] CALL_OBJCLASS("Operator", _operator);
 
 		if (_selfObj isNotEqualTo _operator) then {
@@ -571,12 +586,16 @@ CLASS(Turret)
 
 		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 		{
-			if !(_doInterpolation) then {
-				_x setVariable ["CFM_camDoInterpolation", true, _targets];
+			if (_x getVariable ["CFM_isVehTablet", false]) then {
+				["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _targets] call CFM_fnc_remoteEvent;
+			} else {
+				if !(_doInterpolation) then {
+					_x setVariable ["CFM_camDoInterpolation", true, _targets];
+				};
+				_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
+				_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
 			};
-			_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
-			_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
-			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
 		} forEach _monitorsOnTurret;
 
 		SET_SELFVARG(_currentCameraMoves);

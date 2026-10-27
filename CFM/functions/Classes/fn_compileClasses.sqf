@@ -6,3 +6,4 @@
 #include "Operator.sqf" 
 #include "DisplayHandler.sqf" 
 #include "Turret.sqf" 
+#include "SeatTablet.sqf" 

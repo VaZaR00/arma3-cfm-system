@@ -378,9 +378,13 @@ SINGLETON_CLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
-		private _monIsLocal = _monitor getVariable ["CFM_isLocal", false];
+		private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
+		private _monIsLocal = (_monitor getVariable ["CFM_isLocal", false]) || _isVehTablet;
 		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, _monIsLocal);
 		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+		if (_isVehTablet && !isServer) then {
+			["TurretChangedLocalOperator", [_monitor, [_nextTurretIndex]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+		};
 
 		_nextTurretIndex
 	};

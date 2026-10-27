@@ -26,6 +26,8 @@ SINGLETON_CLASS(Monitor)
 	// in veh tablet
 	FIELD ["_vehicleTabletSeats", []];
 	FIELD ["_isVehTablet", false];
+	FIELD ["_seatTabletsInstances", createHashMap];
+	FIELD ["_activeSeatKey", ""];
 
 	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	FIELD ["_connectedOperator", objNull];
@@ -182,6 +184,37 @@ SINGLETON_CLASS(Monitor)
 			if (isNil {_monitor getVariable "CFM_passwordAccess"}) then {
 				_monitor setVariable ["CFM_passwordAccess", [], !_isLocal];
 			};
+			if (_isVehTablet) then {
+				["DefineSeatTablets"] CALL_SELF;
+			};
+		};
+
+		if (_isVehTablet && hasInterface) then {
+			private _prevSeatHndl = _monitor getVariable ["CFM_vehSeatLoopHndl", scriptNull];
+			if ((_prevSeatHndl isEqualType scriptNull) && {!(scriptDone _prevSeatHndl)}) then {
+				terminate _prevSeatHndl;
+			};
+			private _seatHndl = [_monitor] spawn {
+				params ["_monitor"];
+				private _lastSeatKey = "";
+				while {IS_OBJ(_monitor) && {alive _monitor}} do {
+					private _plr = PLAYER_;
+					private _inAllowedSeat = (_plr in _monitor) && {[_monitor] call CFM_fnc_inVehicleTabletSeatCondition};
+					private _curSeatKey = if (_inAllowedSeat) then {[_monitor, _plr] call CFM_fnc_getUnitVehicleSeatKey} else {""};
+					if (_curSeatKey isNotEqualTo _lastSeatKey) then {
+						if !(_lastSeatKey isEqualTo "") then {
+							["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_monitor, _lastSeatKey);
+						};
+						_monitor setVariable ["CFM_activeSeatKey", _curSeatKey];
+						if !(_curSeatKey isEqualTo "") then {
+							["activateSeat"] CALL_SEAT_TABLET_INSTANCE(_monitor, _curSeatKey);
+						};
+						_lastSeatKey = _curSeatKey;
+					};
+					sleep 0.25;
+				};
+			};
+			_monitor setVariable ["CFM_vehSeatLoopHndl", _seatHndl];
 		};
 
 		private _radius = ACTION_RADIUS;
@@ -334,11 +367,43 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_waitingForStartOperator", nil];
 		_monitor setVariable ["CFM_waitingForStartTurret", nil];
 	};
+	METHOD("DefineSeatTablets") {
+		private _fullCrew = fullCrew [_monitor, "", true];
+		{
+			if ([_monitor, _x] call CFM_fnc_isCrewSeatAllowed) then {
+				private _seatKey = [_x] call CFM_fnc_getCrewSeatKey;
+				if !(_seatKey isEqualTo "") then {
+					["setSeatTablet", [_seatKey]] CALL_SELF;
+				};
+			};
+		} forEach _fullCrew;
+		_seatTabletsInstances
+	};
+	METHOD("setSeatTablet") {
+		params [["_seatKey", ""]];
+		if (_seatKey isEqualTo "") exitWith {-1};
+		private _seatInstanceId = SEAT_TABLET_INSTANCE_ID(_monitor, _seatKey);
+		if (_seatInstanceId <= 0) then {
+			private _seatInstance = ([_monitor, [_seatKey]] NEW_OBJINSTANCE_GLOBAL("SeatTablet", true));
+			_seatInstanceId = _seatInstance param [0, -1];
+			if !(_seatInstanceId isEqualType 1) then {_seatInstanceId = -1};
+		} else {
+			["Init", [_seatKey]] CALL_OBJINSTANCE("SeatTablet", _seatInstanceId, _monitor);
+		};
+		if (_seatInstanceId <= 0) exitWith {-1};
+		["CFM_addSeatTabletInstanceToMonitor", [_monitor, _seatKey, _seatInstanceId], true] call CFM_fnc_remoteEvent;
+		_seatInstanceId
+	};
 	METHOD("connect") {
 		params["_op", ["_caller", objNull]];
 		_selfObj setVariable ['CFM_actionCaller', _caller];
 		private _initTurret = (_op getVariable ["CFM_turrets", DRIVER_TURRET_PATH]) param [0, DRIVER_TURRET_PATH];
 		private _initTurrIdx = TURRET_INDEX(_initTurret);
+		if (_isVehTablet) exitWith {
+			["connect", [_op, _initTurrIdx, _caller]] CALL_ACTIVE_SEAT_TABLET(_selfObj);
+			[_selfObj] call CFM_fnc_monitorCloseMenu;
+			true
+		};
 		_selfObj setVariable ["CFM_waitingForStartTurret", _initTurrIdx, !_isLocal];
 		_selfObj setVariable ["CFM_currentTurret", [_initTurrIdx], !_isLocal];
 		_selfObj setVariable ["CFM_currentPiPEffect", 0, !_isLocal];
@@ -353,6 +418,10 @@ SINGLETON_CLASS(Monitor)
 	METHOD("disconnect") {
 		params[["_caller", objNull]];
 		_selfObj setVariable ['CFM_actionCaller', _caller];
+		if (_isVehTablet) exitWith {
+			["disconnect", [_caller]] CALL_ACTIVE_SEAT_TABLET(_selfObj);
+			[_selfObj] call CFM_fnc_monitorCloseMenu;
+		};
 		["CFM_syncMonitorState", [netId _selfObj, "", false], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
 		[_selfObj] call CFM_fnc_monitorCloseMenu;
 	};
@@ -449,7 +518,7 @@ SINGLETON_CLASS(Monitor)
 			
 		private _menuHndl = [_target, _selfObj, _tempIDs] spawn { 
 			params["_target", "_selfObj", "_tempIDs"];
-			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && !(PLAYER_ in _selfObj)} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
+			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && {!([_selfObj] call CFM_fnc_inVehicleTabletSeatCondition)}} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
 			[_target] call CFM_fnc_monitorCloseMenu;
 		}; 
 		_target setVariable ['CFM_menuHndl', _menuHndl];
@@ -492,17 +561,22 @@ SINGLETON_CLASS(Monitor)
 			_maxZoomed = false;
 		};
 
-		_monitor setVariable ['CFM_maxZoomed', _maxZoomed, true];
-		_monitor setVariable ["CFM_zoom", _newzoom, true];
-		_monitor setVariable ["CFM_zoomFov", _fov, true];
-		_monitor setVariable ["CFM_doUpdateCamera", true, true];
+		private _syncGlobal = !_isHandMonitor;
+		_monitor setVariable ['CFM_maxZoomed', _maxZoomed, _syncGlobal];
+		_monitor setVariable ["CFM_zoom", _newzoom, _syncGlobal];
+		_monitor setVariable ["CFM_zoomFov", _fov, _syncGlobal];
+		_monitor setVariable ["CFM_doUpdateCamera", true, _syncGlobal];
+		if (_isVehTablet) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
 
 		_newzoom
 	};
 	METHOD("nextTurret") {
-		_monitor setVariable ["CFM_currentPiPEffect", 0, true];
-		_monitor setVariable ["CFM_doUpdatePip", true, true];
-		_monitor setVariable ["CFM_isInNvg", false, true];
+		private _syncGlobal = !_isHandMonitor;
+		_monitor setVariable ["CFM_currentPiPEffect", 0, _syncGlobal];
+		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
+		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
 		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
 	UNUSED_METHOD("switchTurret") {
@@ -520,9 +594,13 @@ SINGLETON_CLASS(Monitor)
 		if (_currentPiPEffect == 1) then {
 			_newEffect = 0;
 		};
-		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
-		_monitor setVariable ["CFM_doUpdatePip", true, true];
-		_monitor setVariable ["CFM_isInNvg", _newEffect isEqualTo 1, true];
+		private _syncGlobal = !_isHandMonitor;
+		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, _syncGlobal];
+		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
+		_monitor setVariable ["CFM_isInNvg", _newEffect isEqualTo 1, _syncGlobal];
+		if (_isVehTablet) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
 	};
 	METHOD("switchTi") { 
 		private _currentTurret = _selfObj getVariable ["CFM_currentTurret", [-1]];
@@ -539,9 +617,13 @@ SINGLETON_CLASS(Monitor)
 		};
 		if (isNil "_newEffect") exitWith {};
 		if !(_newEffect isEqualType 1) exitWith {};
-		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, true];
-		_monitor setVariable ["CFM_doUpdatePip", true, true];
-		_monitor setVariable ["CFM_isInNvg", false, true];
+		private _syncGlobal = !_isHandMonitor;
+		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, _syncGlobal];
+		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
+		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
+		if (_isVehTablet) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
 	};
 	METHOD("addActionsToActionsList") {
 		private _savedActions = _selfObj getVariable ["CFM_mainActions", []];

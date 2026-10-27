@@ -52,6 +52,11 @@
 #define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index)) select 1)
 #define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx); _this CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};
 
+// -- SeatTablets --
+#define SEAT_TABLET_INSTANCE_ID(mon, seatKey) ((mon getVariable ["CFM_seatTabletsInstances", createHashMap]) getOrDefault [seatKey, -1])
+#define CALL_SEAT_TABLET_INSTANCE(mon, seatKey) call {private _stId = [mon, seatKey] call CFM_fnc_getOrCreateSeatTabletId; if (_stId > 0) then {_this CALL_OBJINSTANCE("SeatTablet", _stId, mon)} else {false}};
+#define CALL_ACTIVE_SEAT_TABLET(mon) call {private _sKey = mon getVariable ["CFM_activeSeatKey", ""]; if (_sKey isEqualTo "") then {_sKey = [mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey}; _this CALL_SEAT_TABLET_INSTANCE(mon, _sKey)};
+
 // -- Point params --
 #define PP_NONE -1
 #define PP_STATIC 0

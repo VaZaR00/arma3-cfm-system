@@ -374,6 +374,9 @@ SINGLETON_CLASS(DisplayHandler)
 		params[["_on", true, [true]]];
 
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];
+		if (_monitor getVariable ["CFM_isVehTablet", false]) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
 		if (missionNamespace getVariable ["CFM_useR2Tsystem", false]) then {
 			if (_on) then {
 				[_monitor, true, _monitorR2Tid] call CFM_fnc_setR2TTexture;

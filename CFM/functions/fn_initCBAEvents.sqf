@@ -176,3 +176,26 @@
 	params["_self", "_turretIndex", "_data"];
 	[_self, "CFM_turretsInstances", _turretIndex, _data, true] call CFM_fnc_hashSet;
 }] call CBA_fnc_addEventHandler;
+
+
+["CFM_" + "addSeatTabletInstanceToMonitor", {
+    LOG_CBA_EVENT
+	params["_self", "_seatKey", "_instanceId"];
+	[_self, "CFM_seatTabletsInstances", _seatKey, _instanceId, true] call CFM_fnc_hashSet;
+}] call CBA_fnc_addEventHandler;
+
+["CFM_" + "syncVehTabletTurretMove", {
+    LOG_CBA_EVENT
+	params["_monitor", "_operator", "_turretIndex", "_pointParams", "_doUpdCam", ["_camMoves", nil], ["_forceInterp", false]];
+	if !(IS_OBJ(_monitor)) exitWith {};
+	if !((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _operator) exitWith {};
+	if !((TURRET_INDEX(_monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH])) isEqualTo _turretIndex) exitWith {};
+	if (_forceInterp) then {
+		_monitor setVariable ["CFM_camDoInterpolation", true];
+	};
+	_monitor setVariable ["CFM_currentCamPointParams", +_pointParams];
+	_monitor setVariable ["CFM_doUpdateCamera", _doUpdCam];
+	if !(isNil "_camMoves") then {
+		_monitor setVariable ["CFM_currentCameraMoves", +_camMoves];
+	};
+}] call CBA_fnc_addEventHandler;

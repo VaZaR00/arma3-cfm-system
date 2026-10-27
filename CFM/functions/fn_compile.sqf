@@ -63,19 +63,72 @@ CFM_fnc_setupDefPointAlignments = {
 	_pointSetDef
 };
 
+CFM_fnc_getCrewSeatKey = {
+	params ["_crewEntry"];
+	_crewEntry params ["", ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
+	_role = toLower _role;
+	if (_role isEqualTo "driver") exitWith {"driver"};
+	if !(_turretPath isEqualTo []) exitWith {format ["turret_%1", _turretPath]};
+	format ["cargo_%1", _cargoIdx]
+};
+
+CFM_fnc_getUnitVehicleSeatKey = {
+	params [["_veh", objNull], ["_unit", PLAYER_]];
+	if !(IS_OBJ(_veh)) exitWith {""};
+	if !(_unit in _veh) exitWith {""};
+	private _crew = (fullCrew [_veh, "", false]) select {(_x select 0) isEqualTo _unit};
+	if (_crew isEqualTo []) exitWith {""};
+	[_crew select 0] call CFM_fnc_getCrewSeatKey
+};
+
+CFM_fnc_isCrewSeatAllowed = {
+	params ["_veh", "_crewEntry"];
+	private _vehMonSeats = _veh getVariable ["CFM_vehicleTabletSeats", []];
+	if (_vehMonSeats isEqualTo []) exitWith {true};
+	_crewEntry params [["_unit", objNull], ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
+	_role = toLower _role;
+	if (IS_OBJ(_unit) && {(_unit in _veh) && {(assignedVehicleRole _unit) in _vehMonSeats}}) exitWith {true};
+	([_role] in _vehMonSeats) ||
+	{([_role, _turretPath] in _vehMonSeats)} ||
+	{(!(_turretPath isEqualTo []) && {(["turret", _turretPath] in _vehMonSeats)})} ||
+	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats)})}
+};
+
+CFM_fnc_getOrCreateSeatTabletId = {
+	params [["_monitor", objNull], ["_seatKey", ""]];
+	if (!(IS_OBJ(_monitor)) || {_seatKey isEqualTo ""}) exitWith {-1};
+	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
+	private _instId = _seatInstances getOrDefault [_seatKey, -1];
+	if (_instId > 0) exitWith {_instId};
+	["setSeatTablet", [_seatKey], -1] CALL_OBJCLASS("Monitor", _monitor)
+};
+
+CFM_fnc_isVehTabletUsingOperator = {
+	params ["_monitor", "_operator", ["_turretIdx", nil]];
+	if !(_monitor getVariable ["CFM_isVehTablet", false]) exitWith {false};
+	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
+	private _used = false;
+	{
+		private _seatInstId = _y;
+		private _op = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
+		if (_op isEqualTo _operator) then {
+			if (isNil "_turretIdx") exitWith { _used = true; };
+			private _turr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
+			if (TURRET_INDEX(_turr) isEqualTo TURRET_INDEX(_turretIdx)) exitWith { _used = true; };
+		};
+		if (_used) exitWith {};
+	} forEach _seatInstances;
+	_used
+};
+
 CFM_fnc_inVehicleTabletSeatCondition = {
 	params ["_target"];
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
 	private _plr = PLAYER_;
 	if !(_plr in _target) exitWith {false};
-	private _vehMonSeats = _target getVariable ["CFM_vehicleTabletSeats", []];
-	if (_vehMonSeats isEqualTo []) exitWith {true};
-	if ((assignedVehicleRole _plr) in _vehMonSeats) exitWith {true};
 	private _roleInfo = (fullCrew [_target, "", false]) select {(_x select 0) isEqualTo _plr};
 	if (_roleInfo isEqualTo []) exitWith {false};
-	(_roleInfo select 0) params ["", "_role", "", "_turretPath"];
-	_role = toLower _role;
-	([_role] in _vehMonSeats) || {([_role, _turretPath] in _vehMonSeats)} || {(["turret", _turretPath] in _vehMonSeats)}
+	[_target, _roleInfo select 0] call CFM_fnc_isCrewSeatAllowed
 };
 
 CFM_fnc_inVehicleTabletActionCondition = {
