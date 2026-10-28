@@ -26,8 +26,12 @@ if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
 		private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
 		private _currDir = _operator getVariable [_dirVarName, []];
 		private _currUp = _operator getVariable [_upVarName, []];
-		_operator setVariable [_dirVarName, _currDir, _targets];
-		_operator setVariable [_upVarName, _currUp, _targets];
+		if ((_currDir isEqualType []) && {count _currDir == 3}) then {
+			_operator setVariable [_dirVarName, _currDir, _targets];
+		};
+		if ((_currUp isEqualType []) && {count _currUp == 3}) then {
+			_operator setVariable [_upVarName, _currUp, _targets];
+		};
 	} forEach _turrets;
 	// ZOOM
 	private _currentZoom = _operator getVariable ["CFM_prevZoomLocalFov", 1];

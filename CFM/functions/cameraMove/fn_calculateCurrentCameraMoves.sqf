@@ -6,14 +6,24 @@
 
 #include "defines.hpp" 
 
-params[["_initialDirUp", [[0,1,0], [0,0,1]]], ["_currentDirUp", [[0,1,0], [0,0,1]]]];
+params[
+	["_initialDirUp", [[0,1,0], [0,0,1]], [[]]], 
+	["_currentDirUp", [[0,1,0], [0,0,1]], [[]]]
+];
 
 if (_initialDirUp isEqualTo _currentDirUp) exitWith {[0,0,0,0]};
 
-private _initialDir = _initialDirUp select 0;
-private _initialUp = _initialDirUp select 1;
-private _currentDir = _currentDirUp select 0;
-private _currentUp = _currentDirUp select 1;
+private _initialDir = _initialDirUp param [0, [0,1,0], [[]], 3];
+private _initialUp = _initialDirUp param [1, [0,0,1], [[]], 3];
+private _currentDir = _currentDirUp param [0, [0,1,0], [[]], 3];
+private _currentUp = _currentDirUp param [1, [0,0,1], [[]], 3];
+
+if ((count _initialDir != 3) || {vectorMagnitude _initialDir == 0}) then {_initialDir = [0,1,0]};
+if ((count _initialUp != 3) || {vectorMagnitude _initialUp == 0}) then {_initialUp = [0,0,1]};
+if ((count _currentDir != 3) || {vectorMagnitude _currentDir == 0}) then {_currentDir = [0,1,0]};
+if ((count _currentUp != 3) || {vectorMagnitude _currentUp == 0}) then {_currentUp = [0,0,1]};
+
+if (_initialDir isEqualTo _currentDir && {_initialUp isEqualTo _currentUp}) exitWith {[0,0,0,0]};
 
 private _worldZ = [0,0,1];
 
@@ -48,6 +58,9 @@ private _dotPitch = ((_rotDirN vectorDotProduct _currentDirN) min 1) max -1;
 private _pitch = acos _dotPitch;
 private _signPitch = ((_rotDirN vectorCrossProduct _currentDirN) vectorDotProduct _side);
 if (_signPitch < 0) then {_pitch = -_pitch};
+
+if (!finite _pitch) then {_pitch = 0};
+if (!finite _yaw) then {_yaw = 0};
 
 private _degPitch = _pitch;
 private _degYaw = _yaw;

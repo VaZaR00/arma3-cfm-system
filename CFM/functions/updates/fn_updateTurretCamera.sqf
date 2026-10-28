@@ -49,11 +49,11 @@ private _currUpMS = _operator vectorWorldToModelVisual _up;
 
 private _updated = false;
 private _targets = ACTIVE_VIEWERS_AND_SELF(false);
-if !(_currDirMS isEqualTo _prevDir) then {
+if ((_currDirMS isEqualType []) && {count _currDirMS == 3} && {!(_currDirMS isEqualTo _prevDir)}) then {
 	_updated = true;
 	_operator setVariable [_dirVarName, _currDirMS, _targets];
 };
-if !(_currUpMS isEqualTo _prevUp) then {
+if ((_currUpMS isEqualType []) && {count _currUpMS == 3} && {!(_currUpMS isEqualTo _prevUp)}) then {
 	_updated = true;
 	_operator setVariable [_upVarName, _currUpMS, _targets];
 };

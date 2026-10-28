@@ -630,8 +630,27 @@ CLASS(Turret)
 		private _turrIdxStr = TURR_INDX_STR(_turretIndex);
 		private _dirVarName = "CFM_currentTurretDirMS" + _turrIdxStr;
 		private _upVarName = "CFM_currentTurretUpMS" + _turrIdxStr;
-		private _dir = _selfObj getVariable [_dirVarName, [0,1,0]];
-		private _up = _selfObj getVariable [_upVarName, [0,0,1]];
+		private _dir = _selfObj getVariable [_dirVarName, []];
+		private _up = _selfObj getVariable [_upVarName, []];
+
+		if (!_isGunnerTurret) then {
+			private _pilotDir = getPilotCameraDirection _selfObj;
+			if ((_pilotDir isEqualType []) && {count _pilotDir == 3} && {vectorMagnitude _pilotDir > 0}) then {
+				_dir = _pilotDir;
+				_up = _dir call CFM_fnc_getVectorUpFromDir;
+			};
+		};
+
+		if (!(_dir isEqualType []) || {count _dir != 3} || {vectorMagnitude _dir == 0}) then {
+			_dir = [0,1,0];
+		};
+		if (!(_up isEqualType []) || {count _up != 3} || {vectorMagnitude _up == 0}) then {
+			_up = _dir call CFM_fnc_getVectorUpFromDir;
+			if (!(_up isEqualType []) || {count _up != 3} || {vectorMagnitude _up == 0}) then {
+				_up = [0,0,1];
+			};
+		};
+
 		_currentCameraMoves = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;
 		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
@@ -650,7 +669,7 @@ CLASS(Turret)
 		private _done = if (_isGunnerTurret) then {
 			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newDir = _newDirUp param [0, _dir];
-			private _newUp = _newDirUp param [0, _up];
+			private _newUp = _newDirUp param [1, _up];
 			private _lockPos = (_selfObj modelToWorldVisualWorld (vectorNormalized _newDir));
 			private _prevCamLook = [_selfObj, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
