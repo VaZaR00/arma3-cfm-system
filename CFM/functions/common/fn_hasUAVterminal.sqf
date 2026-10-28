@@ -6,4 +6,6 @@
 
 #include "defines.hpp" 
 
-'terminal' in (toLower (_this getSlotItemName 612))
+params [["_unit", objNull]];
+
+'terminal' in (toLower (_unit getSlotItemName 612))

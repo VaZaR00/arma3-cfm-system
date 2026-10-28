@@ -386,6 +386,9 @@ SINGLETON_CLASS(Monitor)
 			[_selfObj] call CFM_fnc_monitorCloseMenu;
 			true
 		};
+		if (_isHandMonitor && {!(_selfObj getVariable ["CFM_feedActive", false])}) then {
+			_selfObj setVariable ["CFM_pipSlot", [_selfObj, _selfObj getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]] call CFM_fnc_getFreePipSlot];
+		};
 		_selfObj setVariable ["CFM_waitingForStartTurret", _initTurrIdx, !_isLocal];
 		_selfObj setVariable ["CFM_currentTurret", [_initTurrIdx], !_isLocal];
 		_selfObj setVariable ["CFM_currentPiPEffect", 0, !_isLocal];
@@ -500,7 +503,7 @@ SINGLETON_CLASS(Monitor)
 			
 		private _menuHndl = [_target, _selfObj, _tempIDs] spawn { 
 			params["_target", "_selfObj", "_tempIDs"];
-			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && {!([_selfObj] call CFM_fnc_inVehicleTabletSeatCondition)}} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
+			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && {!([_selfObj] call CFM_fnc_inVehicleTabletSeatCondition)}} || {(_selfObj getVariable ["CFM_isHandMonitor", false]) && {!([_selfObj] call CFM_fnc_isSelectedTablet)}} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
 			[_target] call CFM_fnc_monitorCloseMenu;
 		}; 
 		_target setVariable ['CFM_menuHndl', _menuHndl];
@@ -678,6 +681,15 @@ SINGLETON_CLASS(Monitor)
 		_actions append [_actionMenu, _actionDisc];
 
 		if (_isHandMonitor) then {
+			private _switchMenuText = [CFM_STR_SWITCH_MENU_SEAT_TABLET, CFM_STR_SWITCH_MENU_HAND_TABLET] select _isVehTablet;
+			private _switchTargetMode = ["veh", "hand"] select _isVehTablet;
+			private _actionSwitchMenu = _selfObj addAction [format["<t color='#00e5ff'>%1</t>", _switchMenuText], { 
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_self", "_mode"]; 
+				
+				[_mode] call CFM_fnc_switchTabletMenu;
+			}, [_selfObj, _self, _switchTargetMode], _priority + 0.5, true, false, "", format["[%1] call CFM_fnc_switchTabletMenuActionCondition", _target], _radius]; 
+
 			private _actionWatch = _selfObj addAction [format["<t color='#0000FF'>%1</t>", CFM_STR_WATCH_TABLET], { 
 				params ["_target", "_caller", "_", "_p"];
 				_p params ["_monitor", "_self"]; 
@@ -692,6 +704,27 @@ SINGLETON_CLASS(Monitor)
 				[_monitor] call CFM_fnc_turnOffMonitorLocal;
 			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
 
+			private _actionPipLeft = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_LEFT], { 
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_self"]; 
+
+				[_monitor, PIP_SLOT_LEFT] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchPipSlotActionCondition", _target, PIP_SLOT_LEFT], _radius]; 
+
+			private _actionPipRight = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_RIGHT], { 
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_self"]; 
+
+				[_monitor, PIP_SLOT_RIGHT] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchPipSlotActionCondition", _target, PIP_SLOT_RIGHT], _radius]; 
+
+			private _actionPipNextSlot = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_NEXT_SLOT], { 
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_self"]; 
+
+				[_monitor, -1] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _self], _priority, true, false, "", format["[%1, -1] call CFM_fnc_switchPipSlotActionCondition", _target], _radius]; 
+
 			private _actionSwitchDrones = _selfObj addAction [format["<t color='#c31cff'>%1</t>", CFM_STR_SWITCH_UAV], { 
 				params ["_target", "_caller", "_", "_p"];
 				_p params ["_monitor", "_self"]; 
@@ -699,7 +732,7 @@ SINGLETON_CLASS(Monitor)
 				[_monitor] call CFM_fnc_switchUAV;
 			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchUAVActionCondition", _target], _radius]; 
 
-			_actions append [_actionWatch, _actionStopWatch, _actionSwitchDrones];
+			_actions append [_actionSwitchMenu, _actionWatch, _actionStopWatch, _actionPipLeft, _actionPipRight, _actionPipNextSlot, _actionSwitchDrones];
 		};
 	
 		["addActionsToActionsList", _actions] CALL_SELF;

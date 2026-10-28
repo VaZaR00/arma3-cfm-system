@@ -11,13 +11,23 @@ private _plrVeh = vehicle _player;
 private _mon = call {
     if !(_player isEqualTo _plrVeh) exitWith {
         private _playerActiveFeed = _player getVariable ["CFM_feedActive", false];
-        if (_playerActiveFeed) then {
-            _player
-        } else {
-            if ((_plrVeh getVariable ["CFM_feedActive", false]) && {[_plrVeh] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-                _plrVeh
+        private _vehActiveFeed = (_plrVeh getVariable ["CFM_feedActive", false]) && {[_plrVeh] call CFM_fnc_inVehicleTabletSeatCondition};
+        if (call CFM_fnc_hasDualTabletMenu) then {
+            private _selected = _player getVariable ["CFM_selectedTablet", "veh"];
+            if (_selected isEqualTo "veh") then {
+                if (_vehActiveFeed) then {_plrVeh} else {if (_playerActiveFeed) then {_player} else {objNull}}
             } else {
-                objNull
+                if (_playerActiveFeed) then {_player} else {if (_vehActiveFeed) then {_plrVeh} else {objNull}}
+            }
+        } else {
+            if (_playerActiveFeed) then {
+                _player
+            } else {
+                if (_vehActiveFeed) then {
+                    _plrVeh
+                } else {
+                    objNull
+                };
             };
         };
     };

@@ -12,6 +12,7 @@ CLASS(SeatTablet)
 	FIELD ["_currentPiPEffect", 0];
 	FIELD ["_isInNvg", false];
 	FIELD ["_turnedOffLocal", false];
+	FIELD ["_pipSlot", PIP_SLOT_RIGHT];
 
 	METHOD("Init") {
 		[
@@ -26,6 +27,10 @@ CLASS(SeatTablet)
 
 	METHOD("applyToMonitor") {
 		private _turrIdx = TURRET_INDEX(_currentTurret);
+		if ([PLAYER_] call CFM_fnc_isPipVisible) then {
+			_pipSlot = [_monitor, _pipSlot] call CFM_fnc_getFreePipSlot;
+			SET_SELFVARG(_pipSlot);
+		};
 		_monitor setVariable ["CFM_connectedOperator", _connectedOperator];
 		_monitor setVariable ["CFM_waitingForStartTurret", _turrIdx];
 		_monitor setVariable ["CFM_currentTurret", [_turrIdx]];
@@ -35,6 +40,7 @@ CLASS(SeatTablet)
 		_monitor setVariable ["CFM_currentPiPEffect", _currentPiPEffect];
 		_monitor setVariable ["CFM_isInNvg", _isInNvg];
 		_monitor setVariable ["CFM_turnedOffLocal", _turnedOffLocal];
+		_monitor setVariable ["CFM_pipSlot", _pipSlot];
 		true
 	};
 
@@ -51,6 +57,7 @@ CLASS(SeatTablet)
 		_currentPiPEffect = _monitor getVariable ["CFM_currentPiPEffect", _currentPiPEffect];
 		_isInNvg = _monitor getVariable ["CFM_isInNvg", _isInNvg];
 		_turnedOffLocal = _monitor getVariable ["CFM_turnedOffLocal", _turnedOffLocal];
+		_pipSlot = _monitor getVariable ["CFM_pipSlot", _pipSlot];
 
 		SET_SELFVARG(_currentTurret);
 		SET_SELFVARG(_zoom);
@@ -59,6 +66,7 @@ CLASS(SeatTablet)
 		SET_SELFVARG(_currentPiPEffect);
 		SET_SELFVARG(_isInNvg);
 		SET_SELFVARG(_turnedOffLocal);
+		SET_SELFVARG(_pipSlot);
 		true
 	};
 
@@ -78,6 +86,9 @@ CLASS(SeatTablet)
 		_zoomFov = 1;
 		_maxZoomed = false;
 		_turnedOffLocal = false;
+		if (!(_monitor getVariable ["CFM_feedActive", false]) && {[PLAYER_] call CFM_fnc_isPipVisible}) then {
+			_pipSlot = [_monitor, _pipSlot] call CFM_fnc_getFreePipSlot;
+		};
 
 		SET_SELFVARG(_connectedOperator);
 		SET_SELFVARG(_currentTurret);
@@ -87,6 +98,7 @@ CLASS(SeatTablet)
 		SET_SELFVARG(_zoomFov);
 		SET_SELFVARG(_maxZoomed);
 		SET_SELFVARG(_turnedOffLocal);
+		SET_SELFVARG(_pipSlot);
 
 		if (IS_OBJ(_prevOp) && {!(_prevOp isEqualTo _op) || {!(TURRET_INDEX(_prevTurr) isEqualTo _initTurrIdx)}}) then {
 			if !([_monitor, _prevOp, _prevTurr] call CFM_fnc_isVehTabletUsingOperator) then {

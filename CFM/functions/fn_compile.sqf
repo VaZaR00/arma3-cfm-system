@@ -147,12 +147,314 @@ CFM_fnc_inVehicleTabletSeatCondition = {
 	[_target, _roleInfo select 0] call CFM_fnc_isCrewSeatAllowed
 };
 
+CFM_fnc_hasHandTablet = {
+	params [["_plr", PLAYER_]];
+	if !(IS_OBJ(_plr)) exitWith {false};
+	(_plr getVariable ["CFM_isMonitorSet", false]) &&
+	{(_plr getVariable ["CFM_isHandMonitor", false])} &&
+	{!(_plr getVariable ["CFM_isVehTablet", false])} &&
+	{[_plr] call CFM_fnc_hasUAVterminal}
+};
+
+CFM_fnc_hasDualTabletMenu = {
+	private _plr = PLAYER_;
+	if !([_plr] call CFM_fnc_hasHandTablet) exitWith {false};
+	private _veh = objectParent _plr;
+	if (isNull _veh || {_veh isEqualTo _plr}) exitWith {false};
+	if !(_veh getVariable ["CFM_isMonitorSet", false]) exitWith {false};
+	if !(_veh getVariable ["CFM_isVehTablet", false]) exitWith {false};
+	[_veh] call CFM_fnc_inVehicleTabletSeatCondition
+};
+
+CFM_fnc_isSelectedTablet = {
+	params [["_monitor", objNull]];
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	if !(call CFM_fnc_hasDualTabletMenu) exitWith {true};
+	private _selected = PLAYER_ getVariable ["CFM_selectedTablet", "veh"];
+	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
+		_selected isEqualTo "veh"
+	} else {
+		_selected isEqualTo "hand"
+	}
+};
+
+CFM_fnc_getOtherTabletMonitor = {
+	params [["_monitor", objNull]];
+	private _plr = PLAYER_;
+	private _veh = objectParent _plr;
+	if (_monitor isEqualTo _plr) exitWith {
+		if (!isNull _veh && {!(_veh isEqualTo _plr)} && {_veh getVariable ["CFM_isVehTablet", false]}) then {_veh} else {objNull}
+	};
+	if (!isNull _veh && {_monitor isEqualTo _veh}) exitWith {
+		if (_plr getVariable ["CFM_isHandMonitor", false]) then {_plr} else {objNull}
+	};
+	objNull
+};
+
+CFM_fnc_isPipVisible = {
+	params [["_monitor", objNull]];
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
+	if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {false};
+	if (_monitor getVariable ["CFM_turnedOffLocal", false]) exitWith {false};
+	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call CFM_fnc_inVehicleTabletSeatCondition)}) exitWith {false};
+	true
+};
+
+CFM_fnc_getPipSlotsSettings = {
+	private _pipSettings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR];
+	if !(_pipSettings isEqualType "") then {
+		_pipSettings = str _pipSettings;
+		missionNamespace setVariable ["CFM_PIPsettings", _pipSettings];
+	};
+	private _compiled = parseSimpleArray _pipSettings;
+	if ((isNil "_compiled") || {!(_compiled isEqualType [])} || {_compiled isEqualTo []}) exitWith {
+		missionNamespace setVariable ["CFM_pipSlotsCount", count DEFAULT_PIP_SETTINGS];
+		DEFAULT_PIP_SETTINGS
+	};
+	private _first = _compiled select 0;
+	private _slots = if (
+		(_first isEqualType []) &&
+		{count _first >= 3} &&
+		{(_first select 1) isEqualType 0} &&
+		{(_first select 2) isEqualType 0}
+	) then {
+		_compiled
+	} else {
+		_compiled params [["_size", 0.3], ["_offsetX", 1], ["_offsetY", 0.8]];
+		[[_size, _offsetX, _offsetY], [_size, [1, 0] select (_offsetX >= 0.5), _offsetY]]
+	};
+	missionNamespace setVariable ["CFM_pipSlotsCount", count _slots];
+	_slots
+};
+
+CFM_fnc_getPipSlotSettings = {
+	params [["_monitor", objNull], ["_slotIdx", -1]];
+	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slotsCount = count _slots;
+	if (_slotIdx < 0) then {
+		_slotIdx = if (IS_OBJ(_monitor)) then {
+			_monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]
+		} else {
+			PIP_SLOT_RIGHT
+		};
+	};
+	if (!(_slotIdx isEqualType 0) || {_slotIdx < 0} || {_slotIdx >= _slotsCount}) then {
+		_slotIdx = 0;
+	};
+	_slots param [_slotIdx, DEFAULT_PIP_SETTINGS_RIGHT]
+};
+
+CFM_fnc_getFreePipSlot = {
+	params [["_monitor", objNull], ["_preferredSlot", -1]];
+	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slotsCount = count _slots;
+	private _plr = PLAYER_;
+	private _veh = objectParent _plr;
+	private _usedSlots = [];
+	{
+		if (IS_OBJ(_x) && {!(_x isEqualTo _monitor)} && {[_x] call CFM_fnc_isPipVisible}) then {
+			_usedSlots pushBackUnique (_x getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]);
+		};
+	} forEach [_plr, _veh];
+
+	private _curSlot = if (_preferredSlot >= 0) then {
+		_preferredSlot
+	} else {
+		if (IS_OBJ(_monitor)) then {_monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]} else {PIP_SLOT_RIGHT}
+	};
+	if (!(_curSlot isEqualType 0) || {_curSlot < 0} || {_curSlot >= _slotsCount}) then {
+		_curSlot = PIP_SLOT_RIGHT;
+	};
+	if !(_curSlot in _usedSlots) exitWith {_curSlot};
+
+	private _freeSlot = _curSlot;
+	for "_i" from 0 to (_slotsCount - 1) do {
+		if !(_i in _usedSlots) exitWith {
+			_freeSlot = _i;
+		};
+	};
+	_freeSlot
+};
+
+CFM_fnc_calcPipControlsPositions = {
+	params [["_monitor", objNull], ["_settings", ""]];
+	private _settingsCompiled = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
+		parseSimpleArray _settings
+	} else {
+		[_monitor] call CFM_fnc_getPipSlotSettings
+	};
+	if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])} || {count _settingsCompiled < 3}) then {
+		_settingsCompiled = DEFAULT_PIP_SETTINGS_RIGHT;
+	};
+	_settingsCompiled params [["_size", 0.3], ["_offsetX", 1], ["_offsetY", 0.8]];
+
+	private _w = _size;
+	private _h = _size;
+	if (_size isEqualType []) then {
+		_w = _size#0;
+		_h = _size#1;
+	};
+
+	private _totalW = _w * safeZoneW;
+	private _totalH = _h * safeZoneH;
+
+	private _bgX = safeZoneX + (safeZoneW - _totalW) * _offsetX;
+	private _bgY = safeZoneY + (safeZoneH - _totalH) * _offsetY;
+
+	private _borderSize = 0.004;
+	private _headerHeight = 0.03;
+
+	private _picX = _bgX + _borderSize;
+	private _picY = _bgY + _headerHeight;
+	private _picW = _totalW - (_borderSize * 2);
+	private _picH = _totalH - _headerHeight - _borderSize;
+
+	[
+		[_bgX, _bgY, _totalW, _totalH],
+		[_bgX, _bgY, _totalW, _headerHeight],
+		[_picX, _picY, _picW, _picH]
+	]
+};
+
+CFM_fnc_updatePipWindowPosition = {
+	params [["_monitor", objNull]];
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	private _display = _monitor getVariable ["CFM_currentDisplay", displayNull];
+	if (isNull _display) exitWith {false};
+	private _ctrls = _monitor getVariable ["CFM_currentPipControls", []];
+	if (count _ctrls < 3) exitWith {false};
+	_ctrls params [["_background", controlNull], ["_title", controlNull], ["_pictureCtrl", controlNull]];
+	if (isNull _background || {isNull _title} || {isNull _pictureCtrl}) exitWith {false};
+
+	([_monitor] call CFM_fnc_calcPipControlsPositions) params ["_bgPos", "_titlePos", "_picPos"];
+	_background ctrlSetPosition _bgPos;
+	_background ctrlCommit 0;
+	_title ctrlSetPosition _titlePos;
+	_title ctrlCommit 0;
+	_pictureCtrl ctrlSetPosition _picPos;
+	_pictureCtrl ctrlCommit 0;
+	true
+};
+
+CFM_fnc_bringPipToTop = {
+	params [["_monitor", objNull], ["_forceRecreate", false]];
+	if !([_monitor] call CFM_fnc_isPipVisible) exitWith {false};
+	private _otherMon = [_monitor] call CFM_fnc_getOtherTabletMonitor;
+	private _needRecreate = _forceRecreate;
+	if (!_needRecreate && {[_otherMon] call CFM_fnc_isPipVisible}) then {
+		private _mySlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
+		private _otherLayer = _otherMon getVariable ["CFM_currentRscLayer", -1];
+		if ((_mySlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
+			_needRecreate = true;
+		};
+	};
+	if (_needRecreate) then {
+		[_monitor, true] call CFM_fnc_setHandDisplay;
+	};
+	true
+};
+
+CFM_fnc_switchTabletMenu = {
+	params [["_mode", ""]];
+	private _plr = PLAYER_;
+	private _veh = objectParent _plr;
+	private _curMode = _plr getVariable ["CFM_selectedTablet", "veh"];
+	if !(_mode in ["hand", "veh"]) then {
+		_mode = ["hand", "veh"] select (_curMode isEqualTo "hand");
+	};
+	if (_mode isEqualTo "hand") then {
+		if (IS_OBJ(_veh) && {_veh getVariable ["CFM_menuActive", false]}) then {
+			[_veh] call CFM_fnc_monitorCloseMenu;
+		};
+		_plr setVariable ["CFM_selectedTablet", "hand"];
+		[_plr] call CFM_fnc_bringPipToTop;
+	} else {
+		if (_plr getVariable ["CFM_menuActive", false]) then {
+			[_plr] call CFM_fnc_monitorCloseMenu;
+		};
+		_plr setVariable ["CFM_selectedTablet", "veh"];
+		if (IS_OBJ(_veh)) then {
+			[_veh] call CFM_fnc_bringPipToTop;
+		};
+	};
+	true
+};
+
+CFM_fnc_switchPipSlot = {
+	params [["_monitor", GET_MON], ["_targetSlot", -1]];
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
+	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slotsCount = count _slots;
+	private _curSlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+	if (_targetSlot < 0) then {
+		_targetSlot = (_curSlot + 1) mod _slotsCount;
+	};
+	_monitor setVariable ["CFM_pipSlot", _targetSlot];
+	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
+		["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+	};
+	if !([_monitor] call CFM_fnc_isPipVisible) exitWith {true};
+
+	private _otherMon = [_monitor] call CFM_fnc_getOtherTabletMonitor;
+	private _needTopLayer = false;
+	if ([_otherMon] call CFM_fnc_isPipVisible) then {
+		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
+		private _otherLayer = _otherMon getVariable ["CFM_currentRscLayer", -1];
+		if ((_targetSlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
+			_needTopLayer = true;
+		};
+	};
+	if (_needTopLayer) exitWith {
+		[_monitor, true] call CFM_fnc_setHandDisplay;
+		true
+	};
+
+	if !([_monitor] call CFM_fnc_updatePipWindowPosition) then {
+		[_monitor, true] call CFM_fnc_setHandDisplay;
+	};
+	true
+};
+
+CFM_fnc_switchTabletMenuActionCondition = {
+	params ["_target"];
+	if !(call CFM_fnc_hasDualTabletMenu) exitWith {false};
+	[_target] call CFM_fnc_isSelectedTablet
+};
+
+CFM_fnc_switchPipSlotActionCondition = {
+	params ["_target", ["_targetSlot", -1]];
+	HAND_MON_CONDITION
+	IS_MONITOR_ON
+	if !(_target getVariable ["CFM_feedActive", false]) exitWith {false};
+	if !(_target getVariable ["CFM_isHandMonitor", false]) exitWith {false};
+	if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {false};
+	if (
+		(_target getVariable ["CFM_isHandMonitorDisplay", false]) ||
+		{MGVAR ["CFM_allHandMonitorsAreDisplays", false]}
+	) exitWith {false};
+
+	private _slotsCount = missionNamespace getVariable ["CFM_pipSlotsCount", PIP_SLOTS_COUNT];
+	if (_slotsCount < 2) exitWith {false};
+
+	if (_targetSlot < 0) exitWith {
+		_slotsCount > 2
+	};
+	if (_slotsCount > 2) exitWith {false};
+
+	private _curSlot = _target getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+	!(_curSlot isEqualTo _targetSlot)
+};
+
 CFM_fnc_inVehicleTabletActionCondition = {
 	params ["_target"];
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
-	private _plr = PLAYER_;
-	if (_plr getVariable ["CFM_menuActive", false]) exitWith {false};
-	[_target] call CFM_fnc_inVehicleTabletSeatCondition
+	if !([_target] call CFM_fnc_inVehicleTabletSeatCondition) exitWith {false};
+	[_target] call CFM_fnc_isSelectedTablet
 };
 
 CFM_fnc_hasMonitorPasswordAccess = {

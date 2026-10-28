@@ -15,6 +15,7 @@ SINGLETON_CLASS(DbHandler)
 		CFM_tiModesTable = createHashMapFromArray CFM_tiModesTableArray;
 		CFM_tiModesTableReverse = createHashMapFromArray CFM_tiModesTableArrayReverse;
 		CFM_R2T_index = 0;
+		CFM_pipSlotsCount = PIP_SLOTS_COUNT;
 		CFM_MonitorsUIds = createHashMap;
 		CFM_MonitorsR2Ts = createHashMap;
 		CFM_DO_UPD_VARS = true;

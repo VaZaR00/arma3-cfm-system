@@ -13,7 +13,12 @@ if !(_isHandMonitor) exitWith {false};
 private _isVehTablet = _target getVariable ["CFM_isVehTablet", false];
 if (_isVehTablet) exitWith {false};
 if !(_target isEqualTo PLAYER_) exitWith {true};
+if !([_target] call CFM_fnc_hasUAVterminal) exitWith {true};
+
+if (call CFM_fnc_hasDualTabletMenu) exitWith {
+	!([_target] call CFM_fnc_isSelectedTablet)
+};
 
 private _veh = objectParent _target;
-if (!isNull _veh && {(_veh getVariable ["CFM_isVehTablet", false]) && {(_veh getVariable ["CFM_menuActive", false]) || {(_veh getVariable ["CFM_feedActive", false])}}}) exitWith {true};
+if (!isNull _veh && {!(_veh isEqualTo _target)}) exitWith {false};
 [_target] call CFM_fnc_isWatchingAtMonitor;

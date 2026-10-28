@@ -7,7 +7,13 @@
 
 // -- Settings defaults --
 #define OPTIMIZE_MONITOR_FEED_DIST "20"
-#define DEFAULT_PIP_SETTINGS [0.3, 1, 0.8]
+#define PIP_SLOTS_COUNT 2
+#define PIP_SLOT_RIGHT 0
+#define PIP_SLOT_LEFT 1
+#define PIP_BASE_LAYER 900
+#define DEFAULT_PIP_SETTINGS_RIGHT [0.3, 1, 0.8]
+#define DEFAULT_PIP_SETTINGS_LEFT [0.3, 0, 0.8]
+#define DEFAULT_PIP_SETTINGS [[0.3, 1, 0.8], [0.3, 0, 0.8]]
 #define DEFAULT_PIP_SETTINGS_STR STR(DEFAULT_PIP_SETTINGS)
 
 // -- Timing and interpolation --

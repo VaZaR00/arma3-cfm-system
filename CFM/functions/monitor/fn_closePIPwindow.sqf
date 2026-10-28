@@ -17,12 +17,18 @@ if (_terminateCreate) then {
 	};
 };
 
-private _renderTarget = _player getVariable ["CFM_currentRscLayer", _player getVariable ["CFM_monitorR2Tid", ""]];
-if (_renderTarget isNotEqualTo "") then {
-	_renderTarget cutFadeOut 0;
+private _rscLayer = _player getVariable ["CFM_currentRscLayer", ""];
+if ((_rscLayer isEqualType "" && {_rscLayer isNotEqualTo ""}) || {_rscLayer isEqualType 0 && {_rscLayer >= 0}}) then {
+	_rscLayer cutFadeOut 0;
 };
 private _prevDisplay = _player getVariable ["CFM_currentDisplay", displayNull];
 if (!isNull _prevDisplay) then {
 	_prevDisplay closeDisplay 1;
 };
+private _prevMainDisplay = _player getVariable ["CFM_mainDisplay", displayNull];
+if (!isNull _prevMainDisplay) then {
+	_prevMainDisplay closeDisplay 1;
+};
+_player setVariable ["CFM_currentRscLayer", -1];
 _player setVariable ["CFM_currentDisplay", displayNull];
+_player setVariable ["CFM_currentPipControls", []];

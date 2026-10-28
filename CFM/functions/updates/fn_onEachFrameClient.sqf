@@ -34,6 +34,7 @@ if (!_inVeh) then {
 		_player setVariable ["CFM_currentSeatRole", []];
 		_player setVariable ["CFM_currentVehMonSet", false];
 		_player setVariable ["CFM_activeSeatKey", ""];
+		_player setVariable ["CFM_selectedTablet", "hand"];
 
 		// 2. Вылез из техники с места С планшетом
 		if !(_lastSeatKey isEqualTo "") then {
@@ -74,6 +75,14 @@ if (!_inVeh) then {
 
 		// Всегда обновляем CFM_activeSeatKey при любом изменении места
 		_player setVariable ["CFM_activeSeatKey", _curSeatKey];
+		if (_curSeatKey isEqualTo "") then {
+			_player setVariable ["CFM_selectedTablet", "hand"];
+		} else {
+			if (_player getVariable ["CFM_menuActive", false]) then {
+				[_player] call CFM_fnc_monitorCloseMenu;
+			};
+			_player setVariable ["CFM_selectedTablet", "veh"];
+		};
 
 		// Обработка перехода между местами
 		if !(_lastSeatKey isEqualTo _curSeatKey) then {

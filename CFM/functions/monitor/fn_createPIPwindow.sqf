@@ -19,70 +19,56 @@ if !(_player getVariable ["CFM_feedActive", false]) exitWith {};
 if (_player getVariable ["CFM_turnedOffLocal", false]) exitWith {};
 if ((_player getVariable ["CFM_isVehTablet", false]) && {!([_player] call CFM_fnc_inVehicleTabletSeatCondition)}) exitWith {};
 
-_renderTarget cutRsc ["RscTitleDisplayEmpty", "PLAIN"];
-waitUntil {!(isNil {uiNamespace getVariable "RscTitleDisplayEmpty"})};
-private _display = uiNamespace getVariable "RscTitleDisplayEmpty";
+if (isNil {_player getVariable "CFM_pipSlot"}) then {
+    _player setVariable ["CFM_pipSlot", [_player] call CFM_fnc_getFreePipSlot];
+};
 
-_player setVariable ["CFM_currentRscLayer", _renderTarget];
+private _otherMon = [_player] call CFM_fnc_getOtherTabletMonitor;
+private _otherVisible = [_otherMon] call CFM_fnc_isPipVisible;
+private _otherLayer = if (_otherVisible) then {_otherMon getVariable ["CFM_currentRscLayer", -1]} else {-1};
+private _isFullscreen = missionNamespace getVariable ["CFM_isInPIPFullScreen", false];
+private _isSelected = _isFullscreen || {[_player] call CFM_fnc_isSelectedTablet};
+
+private _layerId = if (_otherVisible && {_otherLayer isEqualType 0} && {_otherLayer >= 0}) then {
+    if (_isSelected) then {
+        _otherLayer + 1
+    } else {
+        (_otherLayer - 1) max 1
+    }
+} else {
+    PIP_BASE_LAYER
+};
+
+waitUntil {
+    private _lockScript = missionNamespace getVariable ["CFM_creatingPipDisplayScript", scriptNull];
+    isNull _lockScript || {scriptDone _lockScript}
+};
+missionNamespace setVariable ["CFM_creatingPipDisplayScript", _thisScript];
+uiNamespace setVariable ["RscTitleDisplayEmpty", displayNull];
+_layerId cutRsc ["RscTitleDisplayEmpty", "PLAIN"];
+waitUntil {!isNull (uiNamespace getVariable ["RscTitleDisplayEmpty", displayNull])};
+private _display = uiNamespace getVariable "RscTitleDisplayEmpty";
+missionNamespace setVariable ["CFM_creatingPipDisplayScript", scriptNull];
+
+_player setVariable ["CFM_currentRscLayer", _layerId];
 _player setVariable ["CFM_currentDisplay", _display];
 
-_settings = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
-	_settings
-} else {
-    private _pipSettings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR];
-    if !(_pipSettings isEqualType "") then {
-        _pipSettings = str _pipSettings;
-        missionNamespace setVariable ["CFM_PIPsettings", _pipSettings];
-    };
-    _pipSettings
-};
-private _settingsCompiled = parseSimpleArray _settings;
-if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])}) then {
-	_settingsCompiled = DEFAULT_PIP_SETTINGS;
-};
-_settingsCompiled params [["_size", 0.2], ["_offsetX", 1], ["_offsetY", 0.8]];
-
-private _w = _size;
-private _h = _size;
-if (_size isEqualType []) then {
-	_w = _size#0;
-	_h = _size#1;
-};
-
-private _totalW = _w * safeZoneW;
-private _totalH = _h * safeZoneH;
-
-private _bgX = safeZoneX + (safeZoneW - _totalW) * _offsetX;
-private _bgY = safeZoneY + (safeZoneH - _totalH) * _offsetY;
-
-private _borderSize = 0.004;
-private _headerHeight = 0.03;
+([_player, _settings] call CFM_fnc_calcPipControlsPositions) params ["_bgPos", "_titlePos", "_picPos"];
 
 private _background = _display ctrlCreate ["RscText", -1];
 _background ctrlSetBackgroundColor [0, 0, 0, 1];
-_background ctrlSetPosition [_bgX, _bgY, _totalW, _totalH];
+_background ctrlSetPosition _bgPos;
 _background ctrlCommit 0;
 
 private _title = _display ctrlCreate ["RscText", -1];
 _title ctrlSetText CFM_STR_CAMERA_FEED;
 _title ctrlSetTextColor [1, 1, 1, 1];
-_title ctrlSetPosition [
-    _bgX,
-    _bgY,
-    _totalW,
-    _headerHeight
-];
+_title ctrlSetPosition _titlePos;
 _title ctrlSetScale 0.85;
 _title ctrlCommit 0;
 
 private _pictureCtrl = _display ctrlCreate ["RscPicture", -1];
-
-private _picX = _bgX + _borderSize;
-private _picY = _bgY + _headerHeight;
-private _picW = _totalW - (_borderSize * 2);
-private _picH = _totalH - _headerHeight - _borderSize;
-
-_pictureCtrl ctrlSetPosition [_picX, _picY, _picW, _picH];
+_pictureCtrl ctrlSetPosition _picPos;
 _pictureCtrl ctrlCommit 0;
 
 if (_isUI) then {
@@ -94,6 +80,7 @@ if (_isUI) then {
 };
 
 _player setVariable ["CFM_currentPictureCtrl", _pictureCtrl];
+_player setVariable ["CFM_currentPipControls", [_background, _title, _pictureCtrl]];
 
 private _prevWatchHndl = _player getVariable ["CFM_pipWatchHndl", scriptNull];
 if (!isNull _prevWatchHndl && {!(scriptDone _prevWatchHndl)}) then {
