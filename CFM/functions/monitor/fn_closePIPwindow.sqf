@@ -25,10 +25,6 @@ private _prevDisplay = _player getVariable ["CFM_currentDisplay", displayNull];
 if (!isNull _prevDisplay) then {
 	_prevDisplay closeDisplay 1;
 };
-private _prevMainDisplay = _player getVariable ["CFM_mainDisplay", displayNull];
-if (!isNull _prevMainDisplay) then {
-	_prevMainDisplay closeDisplay 1;
-};
 _player setVariable ["CFM_currentRscLayer", -1];
 _player setVariable ["CFM_currentDisplay", displayNull];
 _player setVariable ["CFM_currentPipControls", []];

@@ -71,7 +71,11 @@ SINGLETON_CLASS(DisplayHandler)
 
 		if (!hasInterface) exitWith {};
 		if (_currentFeedIsDisplay) then {
-			["stopRenderingUI", [_reset]] SPAWN_SELF;
+			if (canSuspend) then {
+				["stopRenderingUI", [_reset]] CALL_SELF;
+			} else {
+				["stopRenderingUI", [_reset]] SPAWN_SELF;
+			};
 		} else {
 			["stopRenderingR2T"] CALL_SELF;
 			["clearVariables", _reset] CALL_SELF;
@@ -223,8 +227,10 @@ SINGLETON_CLASS(DisplayHandler)
 
 			// ["updateDisplays"] CALL_SELF;
 		*/
-		_mainDisplay closeDisplay 1;
-		waitUntil {isNull (_mainDisplay)};
+		if (!isNull _mainDisplay) then {
+			_mainDisplay closeDisplay 1;
+			waitUntil {isNull (_mainDisplay)};
+		};
 		["stopRenderingR2T"] CALL_SELF;
 		["clearVariables", _reset] CALL_SELF;
 	};
@@ -380,11 +386,16 @@ SINGLETON_CLASS(DisplayHandler)
 				[_monitor, false, "", true] call CFM_fnc_setR2TTexture;
 			};
 		} else {
-			if (_on) then {
-				["startRendering", [true, _uiParams]] SPAWN_SELF;
-			} else {
-				["stopRendering", [true]] SPAWN_SELF;
+			private _prevHndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
+			if (!isNull _prevHndl && {!(scriptDone _prevHndl)}) then {
+				terminate _prevHndl;
 			};
+			private _hndl = if (_on) then {
+				["startRendering", [true, _uiParams]] SPAWN_SELF
+			} else {
+				["stopRendering", [true]] SPAWN_SELF
+			};
+			_monitor setVariable ["CFM_monitorMainHndl", _hndl];
 		};
 	};
 CLASS_END

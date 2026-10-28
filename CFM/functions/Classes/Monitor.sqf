@@ -957,11 +957,13 @@ SINGLETON_CLASS(Monitor)
 	};
 	METHOD("monitorExitFullScreen") {
 		if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {
-			if (_isHandMonitor) then {
-				[_selfObj] spawn CFM_fnc_resetFeed;
+			private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+			if (!isNull _disp) then {
+				_disp closeDisplay 1;
 			} else {
-				[_selfObj] call CFM_fnc_turnOffMonitorLocal;
+				call CFM_fnc_onTempDisplayUnload;
 			};
+			true
 		};
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
