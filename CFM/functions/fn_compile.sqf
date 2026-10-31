@@ -478,19 +478,23 @@ CFM_fnc_isCameraObjectDestroyed = {
 // _turretIndex: turret index to check, or -2 to check if ALL operator turrets cameras are destroyed
 CFM_fnc_isOperatorCameraDestroyed = {
 	params [["_op", objNull], ["_turretIndex", -2]];
+	private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
 	private _camObjs = _op getVariable ["CFM_cameraObjects", createHashMap];
-	if (_camObjs isEqualTo createHashMap) exitWith {false};
 	_turretIndex = TURRET_INDEX(_turretIndex);
 	if (_turretIndex isNotEqualTo -2) exitWith {
+		if (_turretIndex in _disabledTurrets) exitWith {true};
 		if !(_turretIndex in _camObjs) exitWith {false};
 		[_camObjs getOrDefault [_turretIndex, objNull]] call CFM_fnc_isCameraObjectDestroyed
 	};
-	private _turrets = _op getVariable ["CFM_turrets", [DRIVER_TURRET_IDX]];
-	if !(_turrets isEqualType []) then {_turrets = [_turrets]};
-	if (_turrets isEqualTo []) then {_turrets = keys _camObjs};
-	(_turrets findIf {
+	private _allTurrets = _op getVariable ["CFM_allTurrets", _op getVariable ["CFM_turrets", [DRIVER_TURRET_IDX]]];
+	if !(_allTurrets isEqualType []) then {_allTurrets = [_allTurrets]};
+	if (_allTurrets isEqualTo []) then {_allTurrets = keys _camObjs};
+	if (_allTurrets isEqualTo []) exitWith {false};
+	(_allTurrets findIf {
 		private _idx = TURRET_INDEX(_x);
-		!(_idx in _camObjs) || {!([_camObjs getOrDefault [_idx, objNull]] call CFM_fnc_isCameraObjectDestroyed)}
+		!(_idx in _disabledTurrets) && {
+			!(_idx in _camObjs) || {!([_camObjs getOrDefault [_idx, objNull]] call CFM_fnc_isCameraObjectDestroyed)}
+		}
 	}) == -1
 };
 

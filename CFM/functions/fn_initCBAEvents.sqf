@@ -212,3 +212,17 @@
 	};
 	_self setVariable ["CFM_cameraObjects", _camObjs];
 }] call CBA_fnc_addEventHandler;
+
+["CFM_" + "disableTurret", {
+    LOG_CBA_EVENT
+	params["_operator", "_turretIndex"];
+	if !(IS_OBJ(_operator)) exitWith {};
+	["disableTurret", [_turretIndex]] CALL_OBJCLASS("Operator", _operator);
+}] call CBA_fnc_addEventHandler;
+
+["CFM_" + "enableTurret", {
+    LOG_CBA_EVENT
+	params["_operator", "_turretIndex"];
+	if !(IS_OBJ(_operator)) exitWith {};
+	["enableTurret", [_turretIndex]] CALL_OBJCLASS("Operator", _operator);
+}] call CBA_fnc_addEventHandler;

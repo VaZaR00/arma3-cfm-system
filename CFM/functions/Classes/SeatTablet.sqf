@@ -78,6 +78,11 @@ CLASS(SeatTablet)
 		private _prevTurr = _currentTurret;
 
 		_initTurrIdx = TURRET_INDEX(_initTurrIdx);
+		private _disabledTurrs = _op getVariable ["CFM_disabledTurrets", []];
+		if (_initTurrIdx in _disabledTurrs) then {
+			private _activeTurrs = _op getVariable ["CFM_turrets", [DRIVER_TURRET_PATH]];
+			_initTurrIdx = TURRET_INDEX(_activeTurrs param [0 I DRIVER_TURRET_PATH]);
+		};
 		_connectedOperator = _op;
 		_currentTurret = [_initTurrIdx];
 		_currentPiPEffect = 0;

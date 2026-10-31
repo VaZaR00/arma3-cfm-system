@@ -10,6 +10,7 @@ CLASS(Turret)
 	FIELD ["_isFPV", false];
 	FIELD ["_hasGoPro", false];
 	FIELD ["_isStaticCam", false];
+	FIELD ["_disabled", false];
 	FIELD ["_classType", ""];
     FIELD ["_turretObject", objNull];
     FIELD ["_turretIndex", -1];
@@ -421,6 +422,8 @@ CLASS(Turret)
 	METHOD("TurretChanged") {
 		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
+		if (_disabled) exitWith {false};
+
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
@@ -761,5 +764,14 @@ CLASS(Turret)
 	};
 	METHOD("getTurretName") {
 		_turretName
+	};
+	METHOD("setDisabled") {
+		params[["_state", true]];
+		_disabled = _state;
+		SET_SELFVAR(_disabled);
+		true
+	};
+	METHOD("isDisabled") {
+		_disabled
 	};
 CLASS_END

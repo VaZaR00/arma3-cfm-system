@@ -10,6 +10,8 @@ SINGLETON_CLASS(Operator)
 	FIELD ["_canSwitchNvg", false];
 	FIELD ["_opHasTurrets", false];
 	FIELD ["_turrets", [DRIVER_TURRET_PATH]];
+	FIELD ["_allTurrets", []];
+	FIELD ["_disabledTurrets", []];
 	FIELD ["_cameraType", ""];
 	FIELD ["_operatorName", ""];
 	FIELD ["_operatorId", -1];
@@ -31,6 +33,7 @@ SINGLETON_CLASS(Operator)
 	FIELD ["_staticCamOffset", NULL_VECTOR];	
 	FIELD ["_isStaticCam", false];	
 	FIELD ["_opSides", []];	
+	FIELD ["_cameraObjects", createHashMap];	
 	FIELD ["_turretsInstances", createHashMap];	
 	FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
 	FIELD ["_hasActiveTurretsObjects", -1];
@@ -249,6 +252,10 @@ SINGLETON_CLASS(Operator)
 			_turrets pushBackUnique _turretIndex;
 		} forEach _turretsParamsInit;
 
+		_allTurrets = +_turrets;
+		_disabledTurrets = [];
+		_operator setVariable ["CFM_allTurrets", _allTurrets, SET_VARS_INIT_GLOBAL];
+		_operator setVariable ["CFM_disabledTurrets", _disabledTurrets, SET_VARS_INIT_GLOBAL];
 		_operator setVariable ["CFM_turrets", _turrets, SET_VARS_INIT_GLOBAL]; 
 
 		{
@@ -382,11 +389,14 @@ SINGLETON_CLASS(Operator)
 
 		private _curTurrIndex = TURRET_INDEX(_currentTurret);
 
-		private _turretsIndexes = _turrets apply {TURRET_INDEX(_x)};
+		private _activeTurrs = _selfObj getVariable ["CFM_turrets", _turrets];
+		private _turretsIndexes = _activeTurrs apply {TURRET_INDEX(_x)};
 		private _turretsCount = count _turretsIndexes;
 
+		if (_turretsCount <= 1) exitWith {_curTurrIndex};
+
 		private _currIndex = _turretsIndexes findIf {_x isEqualTo _curTurrIndex};
-		private _nextIndex = _currIndex + 1;
+		private _nextIndex = if (_currIndex == -1) then {0} else {_currIndex + 1};
 
 		if ((_nextIndex + 1) > _turretsCount) then {
 			_nextIndex = 0;
@@ -477,5 +487,112 @@ SINGLETON_CLASS(Operator)
 		if (isNil "_turretName") exitWith {_operatorName};
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName
+	};
+	METHOD("disableTurret") {
+		params[["_turretIndex", -1]];
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		private _disTurrs = _selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets];
+		if (_turretIndex in _disTurrs) exitWith {false};
+		_disabledTurrets = +_disTurrs;
+		_disabledTurrets pushBackUnique _turretIndex;
+
+		// mark turret instance as disabled (instance is kept, not deleted)
+		["setDisabled", [true]] CALL_TURRET_INSTANCE(_turretIndex);
+
+		private _initAll = _selfObj getVariable ["CFM_allTurrets", _allTurrets];
+		if (_initAll isEqualTo []) then {
+			_initAll = _selfObj getVariable ["CFM_turrets", _turrets];
+		};
+		_allTurrets = +_initAll;
+
+		_turrets = _allTurrets select {!((TURRET_INDEX(_x)) in _disabledTurrets)};
+		_opHasTurrets = (count _turrets) > 1;
+
+		_selfObj setVariable ["CFM_allTurrets", _allTurrets];
+		_selfObj setVariable ["CFM_disabledTurrets", _disabledTurrets];
+		_selfObj setVariable ["CFM_turrets", _turrets];
+		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
+
+		// Handle monitors viewing this disabled turret
+		["handleDisabledTurretViewers", [_turretIndex]] CALL_SELF;
+
+		true
+	};
+	METHOD("enableTurret") {
+		params[["_turretIndex", -1]];
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		private _disTurrs = _selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets];
+		if !(_turretIndex in _disTurrs) exitWith {false};
+		_disabledTurrets = _disTurrs select {_x isNotEqualTo _turretIndex};
+
+		["setDisabled", [false]] CALL_TURRET_INSTANCE(_turretIndex);
+
+		private _initAll = _selfObj getVariable ["CFM_allTurrets", _allTurrets];
+		_allTurrets = +_initAll;
+
+		_turrets = _allTurrets select {!((TURRET_INDEX(_x)) in _disabledTurrets)};
+		_opHasTurrets = (count _turrets) > 1;
+
+		_selfObj setVariable ["CFM_disabledTurrets", _disabledTurrets];
+		_selfObj setVariable ["CFM_turrets", _turrets];
+		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
+		true
+	};
+	METHOD("isTurretDisabled") {
+		params[["_turretIndex", -1]];
+		(TURRET_INDEX(_turretIndex)) in (_selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets])
+	};
+	METHOD("handleDisabledTurretViewers") {
+		params[["_turretIndex", -1]];
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		private _monitors = missionNamespace getVariable ["CFM_Monitors", []];
+		private _hasOtherTurrets = (_turrets isNotEqualTo []);
+		private _nextTurr = if (_hasOtherTurrets) then {TURRET_INDEX(_turrets select 0)} else {-2};
+
+		{
+			private _mon = _x;
+			if !(IS_OBJ(_mon)) then {continue};
+
+			if (_mon getVariable ["CFM_isVehTablet", false]) then {
+				private _seatInstances = _mon getVariable ["CFM_seatTabletsInstances", createHashMap];
+				{
+					private _seatInstId = _y;
+					private _seatOp = OIVAR(_mon, "SeatTablet", _connectedOperator, _seatInstId, objNull);
+					if (_seatOp isEqualTo _selfObj) then {
+						private _seatTurr = OIVAR(_mon, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
+						_seatTurr = TURRET_INDEX(_seatTurr);
+						if (_seatTurr isEqualTo _turretIndex) then {
+							if (_hasOtherTurrets) then {
+								["connect", [_selfObj, _nextTurr]] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
+								if (hasInterface && {[_mon] call CFM_fnc_inVehicleTabletSeatCondition}) then {
+									["applyToMonitor"] CALL_ACTIVE_SEAT_TABLET(_mon);
+								};
+							} else {
+								["disconnect"] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
+							};
+						};
+					};
+				} forEach _seatInstances;
+			} else {
+				private _connOp = _mon getVariable ["CFM_connectedOperator", objNull];
+				if (_connOp isEqualTo _selfObj) then {
+					private _currTurr = TURRET_INDEX(_mon getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
+					if (_currTurr isEqualTo _turretIndex) then {
+						if (_hasOtherTurrets) then {
+							private _isVehTablet = _mon getVariable ["CFM_isVehTablet", false];
+							private _monIsLocal = (_mon getVariable ["CFM_isLocal", false]) || _isVehTablet;
+							private _targets = MONITOR_VIEWERS_AND_SELF(_mon, _monIsLocal);
+							["TurretChanged", [_mon, [_nextTurr], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+							_mon setVariable ["CFM_currentOpHasTurrets", _opHasTurrets, true];
+						} else {
+							[_mon, _mon] call CFM_fnc_disconnectMonitorFromOperator;
+						};
+					};
+				};
+			};
+		} forEach _monitors;
 	};
 CLASS_END

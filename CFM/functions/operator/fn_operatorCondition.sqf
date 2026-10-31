@@ -27,27 +27,54 @@ if (!(isNil "REB_fnc_isInDeadzone") && {
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
 if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};
 
-// CAMERA OBJECT (proxy) DESTROYED
+// TURRETS / CAMERA OBJECT DESTROYED
 if (call {
-	if ((_op getVariable ["CFM_cameraObjects", createHashMap]) isEqualTo createHashMap) exitWith {false};
-	private _checkTurret = if ((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _op) then {
-		TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH])
+	// 1. Check if all cameras on operator are destroyed
+	if ([_op, -2] call CFM_fnc_isOperatorCameraDestroyed) exitWith {true};
+
+	// 2. Check if operator has no working turrets left
+	private _allTurrs = _op getVariable ["CFM_allTurrets", []];
+	private _activeTurrs = _op getVariable ["CFM_turrets", []];
+	if ((_allTurrs isNotEqualTo []) && {_activeTurrs isEqualTo []}) exitWith {true};
+
+	// 3. If monitor is connected, check current turret
+	private _connectedOp = _monitor getVariable ["CFM_connectedOperator", objNull];
+	if (_connectedOp isEqualTo _op) then {
+		private _currTurret = TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
+		private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
+		if (_currTurret in _disabledTurrets || {[_op, _currTurret] call CFM_fnc_isOperatorCameraDestroyed}) then {
+			// Trigger turret checkup to disable dead turret and switch monitor to active turret
+			_op call CFM_fnc_checkOperatorTurrets;
+			(_op getVariable ["CFM_turrets", []]) isEqualTo []
+		} else {
+			false
+		};
 	} else {
 		if (_monitor getVariable ["CFM_isVehTablet", false]) then {
-			private _foundTurret = -2;
 			private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
+			private _hasAliveSeat = false;
+			private _hasSeatWithOp = false;
 			{
 				private _seatInstId = _y;
 				private _seatOp = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
-				if (_seatOp isEqualTo _op) exitWith {
-					private _turr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
-					_foundTurret = TURRET_INDEX(_turr);
+				if (_seatOp isEqualTo _op) then {
+					_hasSeatWithOp = true;
+					private _seatTurr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
+					_seatTurr = TURRET_INDEX(_seatTurr);
+					private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
+					if (_seatTurr in _disabledTurrets || {[_op, _seatTurr] call CFM_fnc_isOperatorCameraDestroyed}) then {
+						_op call CFM_fnc_checkOperatorTurrets;
+					};
+					if ((_op getVariable ["CFM_turrets", []]) isNotEqualTo []) then {
+						_hasAliveSeat = true;
+					};
 				};
 			} forEach _seatInstances;
-			_foundTurret
-		} else {-2};
+			if (_hasSeatWithOp) then {!_hasAliveSeat} else {false};
+		} else {
+			false
+		};
 	};
-	[_op, _checkTurret] call CFM_fnc_isOperatorCameraDestroyed
 }) exitWith {false};
 
 private _cls = _op call CFM_fnc_getOperatorClass;

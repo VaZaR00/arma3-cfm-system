@@ -15,11 +15,10 @@
 			private _seatInstId = _y;
 			private _operator = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
 			if (IS_OBJ(_operator)) then {
+				_operator call CFM_fnc_checkOperatorTurrets;
 				private _opCond = [_operator, _monitor] call CFM_fnc_operatorCondition;
 				if !(_opCond) then {
 					["disconnect"] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _monitor);
-				} else {
-					_operator call CFM_fnc_checkOperatorTurrets;
 				};
 			};
 		} forEach _seatInstances;
@@ -27,9 +26,9 @@
 	};
 	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
 	if !(IS_OBJ(_operator)) then {continue};
+	_operator call CFM_fnc_checkOperatorTurrets;
 	private _opCond = [_operator, _monitor] call CFM_fnc_operatorCondition;
 	if !(_opCond) then {
 		[_monitor, _monitor] call CFM_fnc_disconnectMonitorFromOperator;
 	};
-	_operator call CFM_fnc_checkOperatorTurrets;
 } forEach (missionNamespace getVariable ["CFM_Monitors", []]);
