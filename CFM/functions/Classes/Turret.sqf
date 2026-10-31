@@ -81,6 +81,12 @@ CLASS(Turret)
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
+		private _camObjs = _operator getVariable ["CFM_cameraObjects", createHashMap];
+		private _camObj = _camObjs getOrDefault [_turretIndex, objNull];
+		if (IS_OBJ(_camObj)) then {
+			[_operator, _turretIndex, _camObj] call CFM_fnc_initCameraObjectEHs;
+		};
+
 		_turretObject = if (_selfObj getVariable ["OOP_isDummy", false]) then {
 			_operator
 		} else {_selfObj};

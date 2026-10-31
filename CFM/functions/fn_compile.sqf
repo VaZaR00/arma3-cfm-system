@@ -498,6 +498,60 @@ CFM_fnc_isOperatorCameraDestroyed = {
 	}) == -1
 };
 
+CFM_fnc_initCameraObjectEHs = {
+	params [["_operator", objNull], ["_turretIndex", -1], ["_cameraObject", objNull]];
+
+	if (!IS_OBJ(_operator) || {!IS_OBJ(_cameraObject)}) exitWith {false};
+
+	_turretIndex = TURRET_INDEX(_turretIndex);
+
+	// Register operator and turret on the camera object
+	private _registeredTurrets = _cameraObject getVariable ["CFM_registeredTurrets", []];
+	private _turrData = [_operator, _turretIndex];
+	if !(_turrData in _registeredTurrets) then {
+		_registeredTurrets pushBackUnique _turrData;
+		_cameraObject setVariable ["CFM_registeredTurrets", _registeredTurrets];
+	};
+
+	// If camera object is already destroyed, disable turret immediately
+	if ([_cameraObject] call CFM_fnc_isCameraObjectDestroyed) exitWith {
+		["CFM_" + "disableTurret", [_operator, _turretIndex], true] call CFM_fnc_remoteEvent;
+		true
+	};
+
+	// Ensure EHs are added only once per camera object
+	private _ehsAdded = _cameraObject getVariable ["CFM_cameraObjectEHsAdded", false];
+	if (!_ehsAdded) then {
+		_cameraObject setVariable ["CFM_cameraObjectEHsAdded", true];
+
+		_cameraObject addEventHandler ["Deleted", {
+			params ["_entity"];
+			if !(local _entity) exitWith {};
+			private _turrets = _entity getVariable ["CFM_registeredTurrets", []];
+			{
+				_x params ["_op", "_tIdx"];
+				if (IS_OBJ(_op)) then {
+					["CFM_" + "disableTurret", [_op, _tIdx], true] call CFM_fnc_remoteEvent;
+				};
+			} forEach _turrets;
+		}];
+
+		_cameraObject addEventHandler ["Killed", {
+			params ["_unit"];
+			if !(local _unit) exitWith {};
+			private _turrets = _unit getVariable ["CFM_registeredTurrets", []];
+			{
+				_x params ["_op", "_tIdx"];
+				if (IS_OBJ(_op)) then {
+					["CFM_" + "disableTurret", [_op, _tIdx], true] call CFM_fnc_remoteEvent;
+				};
+			} forEach _turrets;
+		}];
+	};
+
+	true
+};
+
 // EFL WRAPPERS
 #define EFL_WRAP(f) FUNC(f) = {(IF_NIL(_this, [])) call TRIPLE(EFL_PREF,_fnc_,f)};
 

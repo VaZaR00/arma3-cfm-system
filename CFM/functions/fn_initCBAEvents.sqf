@@ -207,6 +207,7 @@
 	private _camObjs = _self getVariable ["CFM_cameraObjects", createHashMap];
 	if (IS_OBJ(_cameraObject)) then {
 		_camObjs set [_turretIndex, _cameraObject];
+		[_self, _turretIndex, _cameraObject] call CFM_fnc_initCameraObjectEHs;
 	} else {
 		_camObjs deleteAt _turretIndex;
 	};

@@ -299,7 +299,10 @@ SINGLETON_CLASS(Operator)
 				_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
 			};
 		};
-		["CFM_" + "addCameraObjectToOperator", [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], false] call CFM_fnc_remoteEvent;
+		if (IS_OBJ(_cameraObject)) then {
+			[_selfObj, TURRET_INDEX(_turretIndex), _cameraObject] call CFM_fnc_initCameraObjectEHs;
+		};
+		["CFM_" + "addCameraObjectToOperator", [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], true] call CFM_fnc_remoteEvent;
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_selfObj, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
