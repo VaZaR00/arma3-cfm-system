@@ -467,6 +467,33 @@ CFM_fnc_hasMonitorPasswordAccess = {
 	PLAYER_PASS_ID in _accessList
 };
 
+// CAMERA OBJECT (proxy object that represents camera)
+// destroyed = deleted, or damage allowed and damage reached 1
+CFM_fnc_isCameraObjectDestroyed = {
+	params [["_camObj", objNull]];
+	if !(IS_OBJ(_camObj)) exitWith {true};
+	if !(isDamageAllowed _camObj) exitWith {false};
+	((damage _camObj) >= 1) || {!(alive _camObj)}
+};
+// _turretIndex: turret index to check, or -2 to check if ALL operator turrets cameras are destroyed
+CFM_fnc_isOperatorCameraDestroyed = {
+	params [["_op", objNull], ["_turretIndex", -2]];
+	private _camObjs = _op getVariable ["CFM_cameraObjects", createHashMap];
+	if (_camObjs isEqualTo createHashMap) exitWith {false};
+	_turretIndex = TURRET_INDEX(_turretIndex);
+	if (_turretIndex isNotEqualTo -2) exitWith {
+		if !(_turretIndex in _camObjs) exitWith {false};
+		[_camObjs getOrDefault [_turretIndex, objNull]] call CFM_fnc_isCameraObjectDestroyed
+	};
+	private _turrets = _op getVariable ["CFM_turrets", [DRIVER_TURRET_IDX]];
+	if !(_turrets isEqualType []) then {_turrets = [_turrets]};
+	if (_turrets isEqualTo []) then {_turrets = keys _camObjs};
+	(_turrets findIf {
+		private _idx = TURRET_INDEX(_x);
+		!(_idx in _camObjs) || {!([_camObjs getOrDefault [_idx, objNull]] call CFM_fnc_isCameraObjectDestroyed)}
+	}) == -1
+};
+
 // EFL WRAPPERS
 #define EFL_WRAP(f) FUNC(f) = {(IF_NIL(_this, [])) call TRIPLE(EFL_PREF,_fnc_,f)};
 

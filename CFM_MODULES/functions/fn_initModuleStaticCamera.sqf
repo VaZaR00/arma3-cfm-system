@@ -68,7 +68,7 @@ if (is3DEN) exitWith {};
 			_name = "Camera ID: " + str _num;
 		};
 
-		private _camObj = MGVAR [LGVAR ["cameraObject", ""], objNull];
+		private _camObj = MGVAR [trim (LGVAR ["cameraObject", ""]), objNull];
 		private _hasNvg = BOOL("cameraHasNvg", 1);
 		private _hasTi = BOOL("cameraHasTI", 1);
 		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {

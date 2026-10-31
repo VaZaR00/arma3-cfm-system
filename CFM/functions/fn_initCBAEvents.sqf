@@ -199,3 +199,16 @@
 		_monitor setVariable ["CFM_currentCameraMoves", +_camMoves];
 	};
 }] call CBA_fnc_addEventHandler;
+
+["CFM_" + "addCameraObjectToOperator", {
+    LOG_CBA_EVENT
+	params["_self", "_turretIndex", ["_cameraObject", objNull]];
+	if !(IS_OBJ(_self)) exitWith {};
+	private _camObjs = _self getVariable ["CFM_cameraObjects", createHashMap];
+	if (IS_OBJ(_cameraObject)) then {
+		_camObjs set [_turretIndex, _cameraObject];
+	} else {
+		_camObjs deleteAt _turretIndex;
+	};
+	_self setVariable ["CFM_cameraObjects", _camObjs];
+}] call CBA_fnc_addEventHandler;

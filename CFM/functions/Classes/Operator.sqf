@@ -269,15 +269,30 @@ SINGLETON_CLASS(Operator)
 			["_turretIndex", -1],
 			["_turretObject", objNull]
 		];
+		// CAMERA OBJECT (proxy object which represents camera, used only for "camera destroyed" check)
+		private _cameraObject = objNull;
+		if (_turretObject isEqualType "") then {
+			_turretObject = missionNamespace getVariable [_turretObject, objNull];
+		};
+		if (IS_OBJ(_turretObject) && {!(_turretObject getVariable ["OOP_isDummy", false])}) then {
+			if (_isStaticCam || {_turretObject isNotEqualTo _selfObj}) then {
+				_cameraObject = _turretObject;
+			};
+		};
+		if (!_isStaticCam) then {
+			// for non static cameras instance is always on operator, camera object is just proxy
+			_turretObject = _selfObj;
+		};
 		if !(IS_OBJ(_turretObject)) then {
 			_turretObject = _selfObj;
 		} else {
-			if (isServer) then {
+			if (isServer && {_turretObject isNotEqualTo _selfObj}) then {
 				if (_hasActiveTurretsObjects > 0) exitWith {};
 				_hasActiveTurretsObjects = 0;
 				_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, true];
 			};
 		};
+		["CFM_" + "addCameraObjectToOperator", [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], false] call CFM_fnc_remoteEvent;
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_selfObj, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);

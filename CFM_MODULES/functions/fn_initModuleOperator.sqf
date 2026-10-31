@@ -132,7 +132,7 @@ if (is3DEN) exitWith {};
 			};
 			private _zoomParams = [_logic, (LGVAR ["zoomParams", ""]), objNull] call _proccessArrayString;
 			private _turretIndexStr = trim (LGVAR ["turretIndex", ""]);
-			private _camObj = MGVAR [LGVAR ["cameraObject", ""], objNull];
+			private _camObj = MGVAR [trim (LGVAR ["cameraObject", ""]), objNull];
 			if (_camObj in _operators) then {
 				_camObj = objNull;
 			};

@@ -27,6 +27,29 @@ if (!(isNil "REB_fnc_isInDeadzone") && {
 private _hasActiveTurretsObjects = _op getVariable ["CFM_hasActiveTurretsObjects", -1];
 if (_hasActiveTurretsObjects isEqualTo 0) exitWith {false};
 
+// CAMERA OBJECT (proxy) DESTROYED
+if (call {
+	if ((_op getVariable ["CFM_cameraObjects", createHashMap]) isEqualTo createHashMap) exitWith {false};
+	private _checkTurret = if ((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _op) then {
+		TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH])
+	} else {
+		if (_monitor getVariable ["CFM_isVehTablet", false]) then {
+			private _foundTurret = -2;
+			private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
+			{
+				private _seatInstId = _y;
+				private _seatOp = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
+				if (_seatOp isEqualTo _op) exitWith {
+					private _turr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
+					_foundTurret = TURRET_INDEX(_turr);
+				};
+			} forEach _seatInstances;
+			_foundTurret
+		} else {-2};
+	};
+	[_op, _checkTurret] call CFM_fnc_isOperatorCameraDestroyed
+}) exitWith {false};
+
 private _cls = _op call CFM_fnc_getOperatorClass;
 private _type = [_op] call CFM_fnc_cameraType;
 if !(call {
