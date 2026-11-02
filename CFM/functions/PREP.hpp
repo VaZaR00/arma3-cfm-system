@@ -1,4 +1,3 @@
-PREP(compile)
 PREP(getStaticCameraOffset)
 PREP(init)
 PREP(initSettings)

@@ -1,6 +1,10 @@
 #include "defines.hpp" 
 
-CFM_fnc_checkTurretsLocality = {
+#ifndef FINAL
+#define CFUNC(f) FUNC(f)
+#endif
+
+CFUNC(checkTurretsLocality) = {
 	params [["_operator", objNull], ["_turretPath", []]];
 	
 	private _turrets = if (_turretPath isEqualTo []) then {
@@ -17,7 +21,7 @@ CFM_fnc_checkTurretsLocality = {
 };
 #define LOCAL_ACTIVE_OPERATORS_VAR CFM_LocalActiveOperators
 #define LOCAL_ACTIVE_OPERATORS_VAR_STR STR(LOCAL_ACTIVE_OPERATORS_VAR)
-CFM_fnc_addLocalTurretOperator = {
+CFUNC(addLocalTurretOperator) = {
 	params [["_operator", objNull], ["_turretPath", []]];
 	
 	private _localOps = (missionNamespace getVariable [LOCAL_ACTIVE_OPERATORS_VAR_STR, []]);
@@ -32,7 +36,7 @@ CFM_fnc_addLocalTurretOperator = {
 	LOCAL_ACTIVE_OPERATORS_VAR = _localOps;
 	LOCAL_ACTIVE_OPERATORS_VAR
 };
-CFM_fnc_removeLocalTurretOperator = {
+CFUNC(removeLocalTurretOperator) = {
 	params [["_operator", objNull], ["_turretPath", []]];
 	
 	private _localOps = (missionNamespace getVariable [LOCAL_ACTIVE_OPERATORS_VAR_STR, []]);
@@ -50,10 +54,10 @@ CFM_fnc_removeLocalTurretOperator = {
 	LOCAL_ACTIVE_OPERATORS_VAR = _localOps;
 	LOCAL_ACTIVE_OPERATORS_VAR
 };
-CFM_fnc_setupDefPointAlignments = {
+CFUNC(setupDefPointAlignments) = {
 	private _pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 	if (_pointSetDef isEqualTo createHashMap) then {
-		[] call CFM_fnc_initDefaultPointsAlignment;
+		[] call FUNC(initDefaultPointsAlignment);
 		_pointSetDef = parsingNamespace getVariable ["CFM_classesPointAlignmentSet", createHashMap];
 		missionNamespace setVariable ["CFM_classesPointAlignmentSet", _pointSetDef];
 	} else {
@@ -63,7 +67,7 @@ CFM_fnc_setupDefPointAlignments = {
 	_pointSetDef
 };
 
-CFM_fnc_getCrewSeatKey = {
+CFUNC(getCrewSeatKey) = {
 	params [["_crewEntry", []]];
 	if (_crewEntry isEqualType objNull) then {
 		private _veh = objectParent _crewEntry;
@@ -80,16 +84,16 @@ CFM_fnc_getCrewSeatKey = {
 	""
 };
 
-CFM_fnc_getUnitVehicleSeatKey = {
+CFUNC(getUnitVehicleSeatKey) = {
 	params [["_veh", objNull], ["_unit", PLAYER_]];
 	if !(IS_OBJ(_veh)) exitWith {""};
 	if !(_unit in _veh) exitWith {""};
 	private _crew = (fullCrew [_veh, "", false]) select {(_x select 0) isEqualTo _unit};
 	if (_crew isEqualTo []) exitWith {""};
-	[_crew select 0] call CFM_fnc_getCrewSeatKey
+	[_crew select 0] call FUNC(getCrewSeatKey)
 };
 
-CFM_fnc_isCrewSeatAllowed = {
+CFUNC(isCrewSeatAllowed) = {
 	params ["_veh", ["_crewEntry", objNull]];
 	if (_crewEntry isEqualTo objNull) exitWith {false};
 	if (_crewEntry isEqualTo []) exitWith {false};
@@ -110,7 +114,7 @@ CFM_fnc_isCrewSeatAllowed = {
 	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats) || {([-1] in _vehMonSeats)} || {(-1 in _vehMonSeats)}})}
 };
 
-CFM_fnc_getOrCreateSeatTabletId = {
+CFUNC(getOrCreateSeatTabletId) = {
 	params [["_monitor", objNull], ["_seatKey", ""]];
 	if (!(IS_OBJ(_monitor)) || {_seatKey isEqualTo ""}) exitWith {-1};
 	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
@@ -119,7 +123,7 @@ CFM_fnc_getOrCreateSeatTabletId = {
 	["setSeatTablet", [_seatKey], -1] CALL_OBJCLASS("Monitor", _monitor)
 };
 
-CFM_fnc_isVehTabletUsingOperator = {
+CFUNC(isVehTabletUsingOperator) = {
 	params ["_monitor", "_operator", ["_turretIdx", nil]];
 	if !(_monitor getVariable ["CFM_isVehTablet", false]) exitWith {false};
 	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
@@ -137,39 +141,39 @@ CFM_fnc_isVehTabletUsingOperator = {
 	_used
 };
 
-CFM_fnc_inVehicleTabletSeatCondition = {
+CFUNC(inVehicleTabletSeatCondition) = {
 	params ["_target"];
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
 	private _plr = PLAYER_;
 	if !(_plr in _target) exitWith {false};
 	private _roleInfo = (fullCrew [_target, "", false]) select {(_x select 0) isEqualTo _plr};
 	if (_roleInfo isEqualTo []) exitWith {false};
-	[_target, _roleInfo select 0] call CFM_fnc_isCrewSeatAllowed
+	[_target, _roleInfo select 0] call FUNC(isCrewSeatAllowed)
 };
 
-CFM_fnc_hasHandTablet = {
+CFUNC(hasHandTablet) = {
 	params [["_plr", PLAYER_]];
 	if !(IS_OBJ(_plr)) exitWith {false};
 	(_plr getVariable ["CFM_isMonitorSet", false]) &&
 	{(_plr getVariable ["CFM_isHandMonitor", false])} &&
 	{!(_plr getVariable ["CFM_isVehTablet", false])} &&
-	{[_plr] call CFM_fnc_hasUAVterminal}
+	{[_plr] call FUNC(hasUAVterminal)}
 };
 
-CFM_fnc_hasDualTabletMenu = {
+CFUNC(hasDualTabletMenu) = {
 	private _plr = PLAYER_;
-	if !([_plr] call CFM_fnc_hasHandTablet) exitWith {false};
+	if !([_plr] call FUNC(hasHandTablet)) exitWith {false};
 	private _veh = objectParent _plr;
 	if (isNull _veh || {_veh isEqualTo _plr}) exitWith {false};
 	if !(_veh getVariable ["CFM_isMonitorSet", false]) exitWith {false};
 	if !(_veh getVariable ["CFM_isVehTablet", false]) exitWith {false};
-	[_veh] call CFM_fnc_inVehicleTabletSeatCondition
+	[_veh] call FUNC(inVehicleTabletSeatCondition)
 };
 
-CFM_fnc_isSelectedTablet = {
+CFUNC(isSelectedTablet) = {
 	params [["_monitor", objNull]];
 	if !(IS_OBJ(_monitor)) exitWith {false};
-	if !(call CFM_fnc_hasDualTabletMenu) exitWith {true};
+	if !(call FUNC(hasDualTabletMenu)) exitWith {true};
 	private _selected = PLAYER_ getVariable ["CFM_selectedTablet", "veh"];
 	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
 		_selected isEqualTo "veh"
@@ -178,7 +182,7 @@ CFM_fnc_isSelectedTablet = {
 	}
 };
 
-CFM_fnc_getOtherTabletMonitor = {
+CFUNC(getOtherTabletMonitor) = {
 	params [["_monitor", objNull]];
 	private _plr = PLAYER_;
 	private _veh = objectParent _plr;
@@ -191,17 +195,17 @@ CFM_fnc_getOtherTabletMonitor = {
 	objNull
 };
 
-CFM_fnc_isPipVisible = {
+CFUNC(isPipVisible) = {
 	params [["_monitor", objNull]];
 	if !(IS_OBJ(_monitor)) exitWith {false};
 	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
 	if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {false};
 	if (_monitor getVariable ["CFM_turnedOffLocal", false]) exitWith {false};
-	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call CFM_fnc_inVehicleTabletSeatCondition)}) exitWith {false};
+	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call FUNC(inVehicleTabletSeatCondition))}) exitWith {false};
 	true
 };
 
-CFM_fnc_getPipSlotsSettings = {
+CFUNC(getPipSlotsSettings) = {
 	private _pipSettings = missionNamespace getVariable ["CFM_PIPsettings", DEFAULT_PIP_SETTINGS_STR];
 	if !(_pipSettings isEqualType "") then {
 		_pipSettings = str _pipSettings;
@@ -228,9 +232,9 @@ CFM_fnc_getPipSlotsSettings = {
 	_slots
 };
 
-CFM_fnc_getPipSlotSettings = {
+CFUNC(getPipSlotSettings) = {
 	params [["_monitor", objNull], ["_slotIdx", -1]];
-	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
 	if (_slotIdx < 0) then {
 		_slotIdx = if (IS_OBJ(_monitor)) then {
@@ -245,15 +249,15 @@ CFM_fnc_getPipSlotSettings = {
 	_slots param [_slotIdx, DEFAULT_PIP_SETTINGS_RIGHT]
 };
 
-CFM_fnc_getFreePipSlot = {
+CFUNC(getFreePipSlot) = {
 	params [["_monitor", objNull], ["_preferredSlot", -1]];
-	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
 	private _plr = PLAYER_;
 	private _veh = objectParent _plr;
 	private _usedSlots = [];
 	{
-		if (IS_OBJ(_x) && {!(_x isEqualTo _monitor)} && {[_x] call CFM_fnc_isPipVisible}) then {
+		if (IS_OBJ(_x) && {!(_x isEqualTo _monitor)} && {[_x] call FUNC(isPipVisible)}) then {
 			_usedSlots pushBackUnique (_x getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]);
 		};
 	} forEach [_plr, _veh];
@@ -277,12 +281,12 @@ CFM_fnc_getFreePipSlot = {
 	_freeSlot
 };
 
-CFM_fnc_calcPipControlsPositions = {
+CFUNC(calcPipControlsPositions) = {
 	params [["_monitor", objNull], ["_settings", ""]];
 	private _settingsCompiled = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
 		parseSimpleArray _settings
 	} else {
-		[_monitor] call CFM_fnc_getPipSlotSettings
+		[_monitor] call FUNC(getPipSlotSettings)
 	};
 	if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])} || {count _settingsCompiled < 3}) then {
 		_settingsCompiled = DEFAULT_PIP_SETTINGS_RIGHT;
@@ -317,7 +321,7 @@ CFM_fnc_calcPipControlsPositions = {
 	]
 };
 
-CFM_fnc_updatePipWindowPosition = {
+CFUNC(updatePipWindowPosition) = {
 	params [["_monitor", objNull]];
 	if !(IS_OBJ(_monitor)) exitWith {false};
 	private _display = _monitor getVariable ["CFM_currentDisplay", displayNull];
@@ -327,7 +331,7 @@ CFM_fnc_updatePipWindowPosition = {
 	_ctrls params [["_background", controlNull], ["_title", controlNull], ["_pictureCtrl", controlNull]];
 	if (isNull _background || {isNull _title} || {isNull _pictureCtrl}) exitWith {false};
 
-	([_monitor] call CFM_fnc_calcPipControlsPositions) params ["_bgPos", "_titlePos", "_picPos"];
+	([_monitor] call FUNC(calcPipControlsPositions)) params ["_bgPos", "_titlePos", "_picPos"];
 	_background ctrlSetPosition _bgPos;
 	_background ctrlCommit 0;
 	_title ctrlSetPosition _titlePos;
@@ -337,12 +341,12 @@ CFM_fnc_updatePipWindowPosition = {
 	true
 };
 
-CFM_fnc_bringPipToTop = {
+CFUNC(bringPipToTop) = {
 	params [["_monitor", objNull], ["_forceRecreate", false]];
-	if !([_monitor] call CFM_fnc_isPipVisible) exitWith {false};
-	private _otherMon = [_monitor] call CFM_fnc_getOtherTabletMonitor;
+	if !([_monitor] call FUNC(isPipVisible)) exitWith {false};
+	private _otherMon = [_monitor] call FUNC(getOtherTabletMonitor);
 	private _needRecreate = _forceRecreate;
-	if (!_needRecreate && {[_otherMon] call CFM_fnc_isPipVisible}) then {
+	if (!_needRecreate && {[_otherMon] call FUNC(isPipVisible)}) then {
 		private _mySlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
 		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
 		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
@@ -352,12 +356,12 @@ CFM_fnc_bringPipToTop = {
 		};
 	};
 	if (_needRecreate) then {
-		[_monitor, true] call CFM_fnc_setHandDisplay;
+		[_monitor, true] call FUNC(setHandDisplay);
 	};
 	true
 };
 
-CFM_fnc_switchTabletMenu = {
+CFUNC(switchTabletMenu) = {
 	params [["_mode", ""]];
 	private _plr = PLAYER_;
 	private _veh = objectParent _plr;
@@ -367,27 +371,27 @@ CFM_fnc_switchTabletMenu = {
 	};
 	if (_mode isEqualTo "hand") then {
 		if (IS_OBJ(_veh) && {_veh getVariable ["CFM_menuActive", false]}) then {
-			[_veh] call CFM_fnc_monitorCloseMenu;
+			[_veh] call FUNC(monitorCloseMenu);
 		};
 		_plr setVariable ["CFM_selectedTablet", "hand"];
-		[_plr] call CFM_fnc_bringPipToTop;
+		[_plr] call FUNC(bringPipToTop);
 	} else {
 		if (_plr getVariable ["CFM_menuActive", false]) then {
-			[_plr] call CFM_fnc_monitorCloseMenu;
+			[_plr] call FUNC(monitorCloseMenu);
 		};
 		_plr setVariable ["CFM_selectedTablet", "veh"];
 		if (IS_OBJ(_veh)) then {
-			[_veh] call CFM_fnc_bringPipToTop;
+			[_veh] call FUNC(bringPipToTop);
 		};
 	};
 	true
 };
 
-CFM_fnc_switchPipSlot = {
+CFUNC(switchPipSlot) = {
 	params [["_monitor", GET_MON], ["_targetSlot", -1]];
 	if !(IS_OBJ(_monitor)) exitWith {false};
 	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
-	private _slots = call CFM_fnc_getPipSlotsSettings;
+	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
 	private _curSlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
 	if (_targetSlot < 0) then {
@@ -397,11 +401,11 @@ CFM_fnc_switchPipSlot = {
 	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
 		["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
 	};
-	if !([_monitor] call CFM_fnc_isPipVisible) exitWith {true};
+	if !([_monitor] call FUNC(isPipVisible)) exitWith {true};
 
-	private _otherMon = [_monitor] call CFM_fnc_getOtherTabletMonitor;
+	private _otherMon = [_monitor] call FUNC(getOtherTabletMonitor);
 	private _needTopLayer = false;
-	if ([_otherMon] call CFM_fnc_isPipVisible) then {
+	if ([_otherMon] call FUNC(isPipVisible)) then {
 		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
 		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
 		private _otherLayer = _otherMon getVariable ["CFM_currentRscLayer", -1];
@@ -410,23 +414,23 @@ CFM_fnc_switchPipSlot = {
 		};
 	};
 	if (_needTopLayer) exitWith {
-		[_monitor, true] call CFM_fnc_setHandDisplay;
+		[_monitor, true] call FUNC(setHandDisplay);
 		true
 	};
 
-	if !([_monitor] call CFM_fnc_updatePipWindowPosition) then {
-		[_monitor, true] call CFM_fnc_setHandDisplay;
+	if !([_monitor] call FUNC(updatePipWindowPosition)) then {
+		[_monitor, true] call FUNC(setHandDisplay);
 	};
 	true
 };
 
-CFM_fnc_switchTabletMenuActionCondition = {
+CFUNC(switchTabletMenuActionCondition) = {
 	params ["_target"];
-	if !(call CFM_fnc_hasDualTabletMenu) exitWith {false};
-	[_target] call CFM_fnc_isSelectedTablet
+	if !(call FUNC(hasDualTabletMenu)) exitWith {false};
+	[_target] call FUNC(isSelectedTablet)
 };
 
-CFM_fnc_switchPipSlotActionCondition = {
+CFUNC(switchPipSlotActionCondition) = {
 	params ["_target", ["_targetSlot", -1]];
 	HAND_MON_CONDITION
 	IS_MONITOR_ON
@@ -450,14 +454,14 @@ CFM_fnc_switchPipSlotActionCondition = {
 	!(_curSlot isEqualTo _targetSlot)
 };
 
-CFM_fnc_inVehicleTabletActionCondition = {
+CFUNC(inVehicleTabletActionCondition) = {
 	params ["_target"];
 	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
-	if !([_target] call CFM_fnc_inVehicleTabletSeatCondition) exitWith {false};
-	[_target] call CFM_fnc_isSelectedTablet
+	if !([_target] call FUNC(inVehicleTabletSeatCondition)) exitWith {false};
+	[_target] call FUNC(isSelectedTablet)
 };
 
-CFM_fnc_hasMonitorPasswordAccess = {
+CFUNC(hasMonitorPasswordAccess) = {
 	params ["_monitor"];
 	if !(_monitor getVariable ["CFM_canSetPassword", false]) exitWith {true};
 	private _pass = _monitor getVariable ["CFM_password", ""];
@@ -469,14 +473,14 @@ CFM_fnc_hasMonitorPasswordAccess = {
 
 // CAMERA OBJECT (proxy object that represents camera)
 // destroyed = deleted, or damage allowed and damage reached 1
-CFM_fnc_isCameraObjectDestroyed = {
+CFUNC(isCameraObjectDestroyed) = {
 	params [["_camObj", objNull]];
 	if !(IS_OBJ(_camObj)) exitWith {true};
 	if !(isDamageAllowed _camObj) exitWith {false};
 	((damage _camObj) >= 1) || {!(alive _camObj)}
 };
 // _turretIndex: turret index to check, or -2 to check if ALL operator turrets cameras are destroyed
-CFM_fnc_isOperatorCameraDestroyed = {
+CFUNC(isOperatorCameraDestroyed) = {
 	params [["_op", objNull], ["_turretIndex", -2]];
 	private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
 	private _camObjs = _op getVariable ["CFM_cameraObjects", createHashMap];
@@ -484,7 +488,7 @@ CFM_fnc_isOperatorCameraDestroyed = {
 	if (_turretIndex isNotEqualTo -2) exitWith {
 		if (_turretIndex in _disabledTurrets) exitWith {true};
 		if !(_turretIndex in _camObjs) exitWith {false};
-		[_camObjs getOrDefault [_turretIndex, objNull]] call CFM_fnc_isCameraObjectDestroyed
+		[_camObjs getOrDefault [_turretIndex, objNull]] call FUNC(isCameraObjectDestroyed)
 	};
 	private _allTurrets = _op getVariable ["CFM_allTurrets", _op getVariable ["CFM_turrets", [DRIVER_TURRET_IDX]]];
 	if !(_allTurrets isEqualType []) then {_allTurrets = [_allTurrets]};
@@ -493,12 +497,12 @@ CFM_fnc_isOperatorCameraDestroyed = {
 	(_allTurrets findIf {
 		private _idx = TURRET_INDEX(_x);
 		!(_idx in _disabledTurrets) && {
-			!(_idx in _camObjs) || {!([_camObjs getOrDefault [_idx, objNull]] call CFM_fnc_isCameraObjectDestroyed)}
+			!(_idx in _camObjs) || {!([_camObjs getOrDefault [_idx, objNull]] call FUNC(isCameraObjectDestroyed))}
 		}
 	}) == -1
 };
 
-CFM_fnc_initCameraObjectEHs = {
+CFUNC(initCameraObjectEHs) = {
 	params [["_operator", objNull], ["_turretIndex", -1], ["_cameraObject", objNull]];
 
 	if (!IS_OBJ(_operator) || {!IS_OBJ(_cameraObject)}) exitWith {false};
@@ -514,8 +518,8 @@ CFM_fnc_initCameraObjectEHs = {
 	};
 
 	// If camera object is already destroyed, disable turret immediately
-	if ([_cameraObject] call CFM_fnc_isCameraObjectDestroyed) exitWith {
-		["CFM_" + "disableTurret", [_operator, _turretIndex], true] call CFM_fnc_remoteEvent;
+	if ([_cameraObject] call FUNC(isCameraObjectDestroyed)) exitWith {
+		["CFM_" + "disableTurret", [_operator, _turretIndex], true] call FUNC(remoteEvent);
 		true
 	};
 
@@ -531,7 +535,7 @@ CFM_fnc_initCameraObjectEHs = {
 			{
 				_x params ["_op", "_tIdx"];
 				if (IS_OBJ(_op)) then {
-					["CFM_" + "disableTurret", [_op, _tIdx], true] call CFM_fnc_remoteEvent;
+					["CFM_" + "disableTurret", [_op, _tIdx], true] call FUNC(remoteEvent);
 				};
 			} forEach _turrets;
 		}];
@@ -543,7 +547,7 @@ CFM_fnc_initCameraObjectEHs = {
 			{
 				_x params ["_op", "_tIdx"];
 				if (IS_OBJ(_op)) then {
-					["CFM_" + "disableTurret", [_op, _tIdx], true] call CFM_fnc_remoteEvent;
+					["CFM_" + "disableTurret", [_op, _tIdx], true] call FUNC(remoteEvent);
 				};
 			} forEach _turrets;
 		}];
