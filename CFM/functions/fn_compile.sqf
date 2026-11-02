@@ -557,7 +557,12 @@ CFUNC(initCameraObjectEHs) = {
 };
 
 // EFL WRAPPERS
-#define EFL_WRAP(f) FUNC(f) = {(IF_NIL(_this, [])) call TRIPLE(EFL_PREF,_fnc_,f)};
+#define COMPILE_C compile
+#ifdef FINAL
+#define COMPILE_C compileFinal
+#endif
+
+#define EFL_WRAP(f) FUNC(f) = COMPILE_C (format["(if (isNil '_this') then {[]} else {_this}) call %1_fnc_%2", STR(EFL_PREF), STR(f)]);
 
 EFL_WRAP(pushBackGlobal);
 EFL_WRAP(hashSetGlobal);
