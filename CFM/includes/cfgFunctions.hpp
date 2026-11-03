@@ -2,6 +2,6 @@ class CfgFunctions
 {
 	class PREFX
 	{
-		#include "includes\Funcs\funcsMain.hpp"
+		#include "Funcs\funcsMain.hpp"
 	};
 };
