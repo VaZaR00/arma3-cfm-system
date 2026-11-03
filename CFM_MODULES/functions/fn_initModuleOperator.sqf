@@ -127,6 +127,9 @@ if (is3DEN) exitWith {};
 			];
 
 			private _turrOffsetsStr = _logic getVariable ["cameraTurretsCustom", ""];
+			if (!_isMainModule && {trim _turrOffsetsStr isEqualTo ""}) then {
+				_turrOffsetsStr = "this";
+			};
 			private _turrOffsets = [_logic, _turrOffsetsStr, _mainObj, _memPoint, _lod] call _proccessArrayString;
 			if (isNil "_turrOffsets") then {
 				_turrOffsets = [];
@@ -249,7 +252,7 @@ if (is3DEN) exitWith {};
 			_turretsCustom pushBack _turretParamsMain;
 		};
 		{
-			private _turretModuleParams = [_x, _mainObject, true, false] call _proccessTurretModule;
+			private _turretModuleParams = [_x, _mainObject, false, false] call _proccessTurretModule;
 			if (_turretModuleParams isEqualTo []) then {continue};
 			_turretsCustom pushBack _turretModuleParams;
 		} forEach _syncedTurretModules;
