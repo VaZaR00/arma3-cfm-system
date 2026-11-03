@@ -1,3 +1,3 @@
-// #define FINAL
+#define FINAL
 #define ADDON
-#define DEV
+// #define DEV
