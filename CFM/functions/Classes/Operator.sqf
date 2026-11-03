@@ -302,7 +302,9 @@ SINGLETON_CLASS(Operator)
 		if (IS_OBJ(_cameraObject)) then {
 			[_selfObj, "CFM_cameraObjects", TURRET_INDEX(_turretIndex), _cameraObject, [true, [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], ["CFM_fnc_initCameraObjectEHs", true]]] call CFM_fnc_hashSetGlobal;
 		} else {
-			[_selfObj, "CFM_cameraObjects", TURRET_INDEX(_turretIndex), false] call CFM_fnc_deleteAtGlobal;
+			if ((TURRET_INDEX(_turretIndex)) in (_selfObj getVariable ["CFM_cameraObjects", createHashMap])) then {
+				[_selfObj, "CFM_cameraObjects", TURRET_INDEX(_turretIndex), false] call CFM_fnc_deleteAtGlobal;
+			};
 		};
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_selfObj, _turretIndex] + (_this select [2, (count _this - 2) max 0]);

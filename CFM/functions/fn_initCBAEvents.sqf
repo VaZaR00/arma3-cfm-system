@@ -208,7 +208,9 @@
 		[_self, "CFM_cameraObjects", _turretIndex, _cameraObject, false] call CFM_fnc_hashSet;
 		[_self, _turretIndex, _cameraObject] call CFM_fnc_initCameraObjectEHs;
 	} else {
-		[_self, "CFM_cameraObjects", _turretIndex, false] call CFM_fnc_deleteAt;
+		if (_turretIndex in (_self getVariable ["CFM_cameraObjects", createHashMap])) then {
+			[_self, "CFM_cameraObjects", _turretIndex, false] call CFM_fnc_deleteAt;
+		};
 	};
 }] call CBA_fnc_addEventHandler;
 
