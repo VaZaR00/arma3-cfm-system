@@ -1,6 +1,7 @@
 #include "defines.hpp"
 
 #define LGVAR _logic GV 
+#undef BOOL
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 #define SELECT_DEF(var, def) (call {private _val = (LGVAR [var, def]); if (_val isEqualTo -1) then {-1} else {_val isEqualTo 1}})
@@ -74,7 +75,7 @@ if (is3DEN) exitWith {};
 			};
 			private _isThis = (_offsetsStr isEqualTo "this");
 			if (_isThis && _forObj) then {
-				private _relPosModule = _mainObject worldToModelVisual (getPos _l);
+				private _relPosModule = _mainObject worldToModelVisual (ASLToAGL getPosASL _l);
 				private _relDirModule = _mainObject vectorWorldToModelVisual (vectorDir _l);
 				private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
 				if (_memPoint isEqualTo "") then {
@@ -139,6 +140,7 @@ if (is3DEN) exitWith {};
 			if (_checkPointParams && {_turrOffsets isEqualTo []} && {_zoomParams isEqualTo []} && {_turretIndexStr isEqualTo ""} && {!IS_OBJ(_camObj)}) exitWith {[]};
 			private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
 				if (_this isEqualTo "true") exitWith {true};
+				if (_this isEqualTo "false" || {_this isEqualTo ""}) exitWith {false};
 				private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
 				_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
 				if (_canMoveCamArr isEqualTo []) exitWith {false};
@@ -197,6 +199,7 @@ if (is3DEN) exitWith {};
 		private _name = LGVAR ["cameraName", ""];
 		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
 			if (_this isEqualTo "true") exitWith {true};
+			if (_this isEqualTo "false" || {_this isEqualTo ""}) exitWith {false};
 			private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
 			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
 			if (_canMoveCamArr isEqualTo []) exitWith {false};

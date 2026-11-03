@@ -204,14 +204,12 @@
     LOG_CBA_EVENT
 	params["_self", "_turretIndex", ["_cameraObject", objNull]];
 	if !(IS_OBJ(_self)) exitWith {};
-	private _camObjs = _self getVariable ["CFM_cameraObjects", createHashMap];
 	if (IS_OBJ(_cameraObject)) then {
-		_camObjs set [_turretIndex, _cameraObject];
+		[_self, "CFM_cameraObjects", _turretIndex, _cameraObject, false] call CFM_fnc_hashSet;
 		[_self, _turretIndex, _cameraObject] call CFM_fnc_initCameraObjectEHs;
 	} else {
-		_camObjs deleteAt _turretIndex;
+		[_self, "CFM_cameraObjects", _turretIndex, false] call CFM_fnc_deleteAt;
 	};
-	_self setVariable ["CFM_cameraObjects", _camObjs];
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_" + "disableTurret", {

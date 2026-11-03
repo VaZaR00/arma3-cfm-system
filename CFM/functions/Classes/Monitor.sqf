@@ -356,8 +356,7 @@ SINGLETON_CLASS(Monitor)
 				};
 			};
 		} forEach _fullCrew;
-		_monitor setVariable ["CFM_seatTabletsInstances", _seatTabletsInstances, true];
-		_seatTabletsInstances
+		_monitor getVariable ["CFM_seatTabletsInstances", createHashMap]
 	};
 	METHOD("setSeatTablet") {
 		params [["_seatKey", ""]];
@@ -371,9 +370,7 @@ SINGLETON_CLASS(Monitor)
 			["Init", [_seatKey]] CALL_OBJINSTANCE("SeatTablet", _seatInstanceId, _monitor);
 		};
 		if (_seatInstanceId <= 0) exitWith {-1};
-		_seatTabletsInstances set [_seatKey, _seatInstanceId];
-		_monitor setVariable ["CFM_seatTabletsInstances", _seatTabletsInstances, true];
-		["CFM_addSeatTabletInstanceToMonitor", [_monitor, _seatKey, _seatInstanceId], true] call CFM_fnc_remoteEvent;
+		[_monitor, "CFM_seatTabletsInstances", _seatKey, _seatInstanceId] call CFM_fnc_hashSetGlobal;
 		_seatInstanceId
 	};
 	METHOD("connect") {
@@ -450,17 +447,13 @@ SINGLETON_CLASS(Monitor)
 
 		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
 		private _showGrid = missionNamespace getVariable ["CFM_menuShowOperatorGrid", false];
-		private _distanceStrFormat = format[
-			"%1 %2",
-			if (_showDist) then {"[%1 m]"} else {""}, 
-			if (_showGrid) then {"[Grid: %2]"} else {""}
-		];
-		if (_showGrid || _showDist) then {
-			_distanceStrFormat = format["<t color='#36f56f'>%1</t>", _distanceStrFormat];
-		}; 
 		{  
-			private _grid = mapGridPosition _x;
-			private _distanceStr = format[_distanceStrFormat, round (_selfObj distance _x), _grid];
+			private _parts = [];
+			if (_showDist) then { _parts pushBack format ["[%1 m]", round (_selfObj distance _x)]; };
+			if (_showGrid) then { _parts pushBack format ["[Grid: %1]", mapGridPosition _x]; };
+			private _distanceStr = if (_parts isNotEqualTo []) then {
+				format ["<t color='#36f56f'>%1</t>", _parts joinString " "]
+			} else {""};
 			private _type = _x getVariable ["CFM_currentCameraType", [_x] call CFM_fnc_cameraType];
 			private _opName = _x getVariable ["CFM_operatorName", ""];
 			private _name = if ((_opName isEqualType "") && {!(_opName isEqualTo "")}) then {
@@ -1004,8 +997,21 @@ SINGLETON_CLASS(Monitor)
 		private _grid = mapGridPosition _connectedOperator;
 		private _currentTurret = _selfObj getVariable ["CFM_currentTurret", _currentTurret];
 		private _turrIndex = TURRET_INDEX(_currentTurret);
+		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
+		private _showGrid = missionNamespace getVariable ["CFM_menuShowOperatorGrid", false];
 
-		private _infoStr = format["%2 %1 %3: %7%1 %4: %8%1 %5: %9%1 %6: %10", endl, CFM_STR_OPERATOR_INFO_TITLE, CFM_STR_NAME, CFM_STR_MAP_POS, CFM_STR_DISTANCE, CFM_STR_TURRET, _opName, _grid, _dist, _turrIndex];
+		private _lines = [
+			CFM_STR_OPERATOR_INFO_TITLE,
+			format [" %1: %2", CFM_STR_NAME, _opName]
+		];
+		if (_showGrid) then {
+			_lines pushBack format [" %1: %2", CFM_STR_MAP_POS, _grid];
+		};
+		if (_showDist) then {
+			_lines pushBack format [" %1: %2", CFM_STR_DISTANCE, _dist];
+		};
+		_lines pushBack format [" %1: %2", CFM_STR_TURRET, _turrIndex];
+		private _infoStr = _lines joinString endl;
 
 		_infoStr _HINT;
 	};

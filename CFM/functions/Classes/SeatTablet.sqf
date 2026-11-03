@@ -113,6 +113,10 @@ CLASS(SeatTablet)
 
 		["CFM_operatorMonitorConnected", [_op, _monitor, [_initTurrIdx]], _op] call CBA_fnc_targetEvent;
 
+		if (_seatKey isEqualTo "") then {
+			_seatKey = PLAYER_ getVariable ["CFM_activeSeatKey", [_monitor, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey];
+			SET_SELFVARG(_seatKey);
+		};
 		["applyToMonitor"] CALL_SELF;
 		[_monitor, _op, true, [_initTurrIdx], true, _seatKey] spawn CFM_fnc_syncState;
 		true

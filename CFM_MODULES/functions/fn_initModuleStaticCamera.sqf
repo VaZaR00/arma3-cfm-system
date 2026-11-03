@@ -1,6 +1,7 @@
 #include "defines.hpp"
 
 #define LGVAR _logic GV 
+#undef BOOL
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 
@@ -73,6 +74,7 @@ if (is3DEN) exitWith {};
 		private _hasTi = BOOL("cameraHasTI", 1);
 		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
 			if (_this isEqualTo "true") exitWith {true};
+			if (_this isEqualTo "false" || {_this isEqualTo ""}) exitWith {false};
 			private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
 			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
 			if (_canMoveCamArr isEqualTo []) exitWith {false};

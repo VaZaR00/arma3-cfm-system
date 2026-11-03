@@ -40,7 +40,9 @@ if (missionNamespace getVariable ["CFM_makeCamDataSync", false]) then {
 	private _hasActiveTurretsObjects = _operator getVariable ["CFM_hasActiveTurretsObjects", -1];
 	_operator setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 	private _activeTurretsObjects = _operator getVariable ["CFM_activeTurretsObjects", createHashMap];
-	_operator setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, _targets];
+	{
+		[_operator, "CFM_activeTurretsObjects", _x, _y, false, _targets, false] call CFM_fnc_hashSetNet;
+	} forEach _activeTurretsObjects;
 } forEach _updOps;
 missionNamespace setVariable ["CFM_operatorsToUpdate", []];
 _updOps

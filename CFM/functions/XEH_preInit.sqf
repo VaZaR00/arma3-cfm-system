@@ -10,5 +10,4 @@ call FUNC(XEH_prep);
 #endif
 
 call CFM_fnc_initCBAEvents;
-call CFM_fnc_classSystemCompile;
 call CFM_fnc_init;

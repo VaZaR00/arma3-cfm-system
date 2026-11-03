@@ -754,17 +754,18 @@ CLASS(Turret)
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 
-		private _res = _monitorsOnTurret pushBackUnique _monitor;
-		SET_SELFVARG(_monitorsOnTurret);
-		
-		_res
+		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
+		[_selfObj, _varName, _monitor, true, false] call CFM_fnc_pushBackGlobal;
+		_monitorsOnTurret = _selfObj getVariable [_varName, []];
+
+		_monitorsOnTurret find _monitor
 	};
 	METHOD("removeMonitor") {
 		params[["_monitor", objNull]];
 
-		_monitorsOnTurret = _monitorsOnTurret - [_monitor];
-
-		SET_SELFVARG(_monitorsOnTurret);
+		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
+		[_selfObj, _varName, _monitor, false, false] call CFM_fnc_removeFromArrayGlobal;
+		_monitorsOnTurret = _selfObj getVariable [_varName, []];
 
 		true	
 	};

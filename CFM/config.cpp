@@ -6,7 +6,9 @@ class CfgPatches {
 		author = "Vazar";
 		requiredAddons[] = {
 			"A3_Functions_F",
-			"cba_common"
+			"cba_common",
+			"CFM_EFL",
+			"CFM_OOP"
 		};
 		units[] = {};
 		weapons[] = {};

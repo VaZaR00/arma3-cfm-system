@@ -510,12 +510,7 @@ CFUNC(initCameraObjectEHs) = {
 	_turretIndex = TURRET_INDEX(_turretIndex);
 
 	// Register operator and turret on the camera object
-	private _registeredTurrets = _cameraObject getVariable ["CFM_registeredTurrets", []];
-	private _turrData = [_operator, _turretIndex];
-	if !(_turrData in _registeredTurrets) then {
-		_registeredTurrets pushBackUnique _turrData;
-		_cameraObject setVariable ["CFM_registeredTurrets", _registeredTurrets];
-	};
+	[_cameraObject, "CFM_registeredTurrets", [_operator, _turretIndex], true, false] call FUNC(pushBack);
 
 	// If camera object is already destroyed, disable turret immediately
 	if ([_cameraObject] call FUNC(isCameraObjectDestroyed)) exitWith {

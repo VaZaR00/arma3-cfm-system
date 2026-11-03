@@ -1,6 +1,7 @@
 #include "defines.hpp"
 
 #define LGVAR _logic GV 
+#undef BOOL
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
 #define SELECT_DEF(var, def) (call {private _val = (LGVAR [var, def]); if (_val isEqualTo -1) then {-1} else {_val isEqualTo 1}})
 

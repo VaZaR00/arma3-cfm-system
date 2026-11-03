@@ -8,17 +8,17 @@
 
 params["_obj", ["_pointParams", []]];
 
-// _pointParams: [_memPoint, [_addArr, [_dir, _up], _setArr]]
+// _pointParams: [_memPoint, [_addArr, [_dir, _up], _setArr], _lod]
 
-_pointParams params [["_memPoint", ""], ["_alignment", []]];
+_pointParams params [["_memPoint", ""], ["_alignment", []], ["_lod", "Memory"]];
 
 private _doAlign = !(_alignment isEqualTo []);
 private _pointOffset = if (_doAlign) then {
-	[_obj, _memPoint, _alignment] call CFM_fnc_memoryPointAlignment;
+	[_obj, _memPoint, _alignment, _lod] call CFM_fnc_memoryPointAlignment;
 } else {
 	[
-        _obj selectionPosition [_memPoint, "Memory"],
-        _obj selectionVectorDirAndUp [_memPoint, "Memory"]
+        _obj selectionPosition [_memPoint, _lod],
+        _obj selectionVectorDirAndUp [_memPoint, _lod]
     ]
 };
 [

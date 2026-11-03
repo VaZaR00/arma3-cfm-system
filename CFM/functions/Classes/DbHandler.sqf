@@ -166,8 +166,7 @@ SINGLETON_CLASS(DbHandler)
 				""
 			};
 			_uidStr = UI_RENDER_ID_STR + str _nextId;
-			_idsHash set [_nextId, _monitor];
-			missionNamespace setVariable ["CFM_MonitorsUIds", _idsHash];
+			[missionNamespace, "CFM_MonitorsUIds", _nextId, _monitor, false] call CFM_fnc_hashSet;
 		};
 		_uidStr
 	};
@@ -185,8 +184,7 @@ SINGLETON_CLASS(DbHandler)
 				""
 			};
 			_r2tStr = RENDER_TARGET_STR + str _nextId;
-			_idsHash set [_nextId, _monitor];
-			missionNamespace setVariable ["CFM_MonitorsR2Ts", _idsHash];
+			[missionNamespace, "CFM_MonitorsR2Ts", _nextId, _monitor, false] call CFM_fnc_hashSet;
 		};
 		_r2tStr
 	};

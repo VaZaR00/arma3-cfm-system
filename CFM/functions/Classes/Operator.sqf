@@ -300,9 +300,10 @@ SINGLETON_CLASS(Operator)
 			};
 		};
 		if (IS_OBJ(_cameraObject)) then {
-			[_selfObj, TURRET_INDEX(_turretIndex), _cameraObject] call CFM_fnc_initCameraObjectEHs;
+			[_selfObj, "CFM_cameraObjects", TURRET_INDEX(_turretIndex), _cameraObject, [true, [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], ["CFM_fnc_initCameraObjectEHs", true]]] call CFM_fnc_hashSetGlobal;
+		} else {
+			[_selfObj, "CFM_cameraObjects", TURRET_INDEX(_turretIndex), false] call CFM_fnc_deleteAtGlobal;
 		};
-		["CFM_" + "addCameraObjectToOperator", [_selfObj, TURRET_INDEX(_turretIndex), _cameraObject], true] call CFM_fnc_remoteEvent;
 		if (!(_this isEqualType [])) then {_this = [_this]};
 		_this = [_selfObj, _turretIndex] + (_this select [2, (count _this - 2) max 0]);
 		private _turretInstanceId = TURRET_INSTANCE_ID(_turretIndex);
@@ -314,7 +315,7 @@ SINGLETON_CLASS(Operator)
 			["Init", _this] CALL_TURRET_INSTANCE(_turretIndex);
 		};
 		if (_turretInstanceId <= 0) exitWith {};
-		["CFM_" + "addTurretInstanceToOperator", [_selfObj, _turretIndex, [_turretInstanceId, _turretObject]], true] call CFM_fnc_remoteEvent;
+		[_selfObj, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject]] call CFM_fnc_hashSetGlobal;
 	};
 	METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];
@@ -441,21 +442,21 @@ SINGLETON_CLASS(Operator)
 	METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
 
-		_activeTurretsObjects deleteAt _turretIndex;
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		[_selfObj, "CFM_activeTurretsObjects", _turretIndex, false, _targets, false] call CFM_fnc_deleteAtNet;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
-		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
-		_selfObj setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 	};
 	METHOD("addActiveTurret") {
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
 
 		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _selfObj}) exitWith {false};
 
-		_activeTurretsObjects set [_turretIndex, _turretObject];
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		[_selfObj, "CFM_activeTurretsObjects", _turretIndex, _turretObject, false, _targets, false] call CFM_fnc_hashSetNet;
 		_hasActiveTurretsObjects = _hasActiveTurretsObjects max 0;
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects + 1) max 0;
-		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
-		_selfObj setVariable ["CFM_activeTurretsObjects", _activeTurretsObjects, ACTIVE_VIEWERS_AND_SELF(false)];
+		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 		true
 	};
 	METHOD("moveCamera") {
@@ -497,24 +498,15 @@ SINGLETON_CLASS(Operator)
 
 		private _disTurrs = _selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets];
 		if (_turretIndex in _disTurrs) exitWith {false};
-		_disabledTurrets = +_disTurrs;
-		_disabledTurrets pushBackUnique _turretIndex;
+		[_selfObj, "CFM_disabledTurrets", _turretIndex, true, false] call CFM_fnc_pushBack;
+		_disabledTurrets = _selfObj getVariable ["CFM_disabledTurrets", []];
 
 		// mark turret instance as disabled (instance is kept, not deleted)
 		["setDisabled", [true]] CALL_TURRET_INSTANCE(_turretIndex);
 
-		private _initAll = _selfObj getVariable ["CFM_allTurrets", _allTurrets];
-		if (_initAll isEqualTo []) then {
-			_initAll = _selfObj getVariable ["CFM_turrets", _turrets];
-		};
-		_allTurrets = +_initAll;
-
-		_turrets = _allTurrets select {!((TURRET_INDEX(_x)) in _disabledTurrets)};
+		[_selfObj, "CFM_turrets", _turretIndex, false, false] call CFM_fnc_removeFromArray;
+		_turrets = _selfObj getVariable ["CFM_turrets", []];
 		_opHasTurrets = (count _turrets) > 1;
-
-		_selfObj setVariable ["CFM_allTurrets", _allTurrets];
-		_selfObj setVariable ["CFM_disabledTurrets", _disabledTurrets];
-		_selfObj setVariable ["CFM_turrets", _turrets];
 		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
 
 		// Handle monitors viewing this disabled turret
@@ -528,18 +520,14 @@ SINGLETON_CLASS(Operator)
 
 		private _disTurrs = _selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets];
 		if !(_turretIndex in _disTurrs) exitWith {false};
-		_disabledTurrets = _disTurrs select {_x isNotEqualTo _turretIndex};
+		[_selfObj, "CFM_disabledTurrets", _turretIndex, false, false] call CFM_fnc_removeFromArray;
+		_disabledTurrets = _selfObj getVariable ["CFM_disabledTurrets", []];
 
 		["setDisabled", [false]] CALL_TURRET_INSTANCE(_turretIndex);
 
-		private _initAll = _selfObj getVariable ["CFM_allTurrets", _allTurrets];
-		_allTurrets = +_initAll;
-
-		_turrets = _allTurrets select {!((TURRET_INDEX(_x)) in _disabledTurrets)};
+		[_selfObj, "CFM_turrets", _turretIndex, true, false] call CFM_fnc_pushBack;
+		_turrets = _selfObj getVariable ["CFM_turrets", []];
 		_opHasTurrets = (count _turrets) > 1;
-
-		_selfObj setVariable ["CFM_disabledTurrets", _disabledTurrets];
-		_selfObj setVariable ["CFM_turrets", _turrets];
 		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
 		true
 	};
