@@ -6,6 +6,6 @@
 
 #include "defines.hpp" 
 
-params [["_monitor", 0], ["_zoomAdd", 0], ["_zoomSet", -1]];
+params [["_monitor", 0], ["_zoomAdd", 0], ["_zoomSet", -1], ["_isContinuous", false]];
 
-["zoom", [_zoomAdd, _zoomSet]] CALL_OBJCLASS("Monitor", _monitor);
+["zoom", [_zoomAdd, _zoomSet, _isContinuous]] CALL_OBJCLASS("Monitor", _monitor);

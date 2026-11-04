@@ -551,7 +551,70 @@ CFUNC(initCameraObjectEHs) = {
 	true
 };
 
-// CONTINUOUS CAMERA MOVEMENT
+// CONTINUOUS CAMERA MOVEMENT & ZOOM
+CFUNC(ensureContinuousKeyUpEH) = {
+	if ((missionNamespace getVariable ["CFM_contCamKeyUpEH", -1]) != -1) exitWith {};
+	private _disp = findDisplay 46;
+	if (isNull _disp) exitWith {};
+	private _eh = _disp displayAddEventHandler ["KeyUp", {
+		params ["_displayOrControl", "_key"];
+		if (missionNamespace getVariable ["CFM_isContinuousMoving", false]) then {
+			private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
+			private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
+			private _changed = false;
+			{
+				if (_x) then {
+					private _kInfo = _info param [_forEachIndex, []];
+					if (_kInfo isNotEqualTo []) then {
+						_kInfo params [["_dik", -1], ["_reqShift", false], ["_reqCtrl", false], ["_reqAlt", false]];
+						if (
+							(_key == _dik) ||
+							{_reqShift && {_key in [42, 54]}} ||
+							{_reqCtrl && {_key in [29, 157]}} ||
+							{_reqAlt && {_key in [56, 184]}}
+						) then {
+							_held set [_forEachIndex, false];
+							_info set [_forEachIndex, []];
+							_changed = true;
+						};
+					};
+				};
+			} forEach _held;
+			if (_changed && {!(true in _held)}) then {
+				call CFM_fnc_stopContinuousCameraMove;
+			};
+		};
+		if (missionNamespace getVariable ["CFM_isContinuousZooming", false]) then {
+			private _heldZ = missionNamespace getVariable ["CFM_heldZoomDirs", [false, false]];
+			private _infoZ = missionNamespace getVariable ["CFM_heldZoomKeyInfo", [[], []]];
+			private _changedZ = false;
+			{
+				if (_x) then {
+					private _kInfo = _infoZ param [_forEachIndex, []];
+					if (_kInfo isNotEqualTo []) then {
+						_kInfo params [["_dik", -1], ["_reqShift", false], ["_reqCtrl", false], ["_reqAlt", false]];
+						if (
+							(_key == _dik) ||
+							{_reqShift && {_key in [42, 54]}} ||
+							{_reqCtrl && {_key in [29, 157]}} ||
+							{_reqAlt && {_key in [56, 184]}}
+						) then {
+							_heldZ set [_forEachIndex, false];
+							_infoZ set [_forEachIndex, []];
+							_changedZ = true;
+						};
+					};
+				};
+			} forEach _heldZ;
+			if (_changedZ && {!(true in _heldZ)}) then {
+				call CFM_fnc_stopContinuousZoom;
+			};
+		};
+		false
+	}];
+	missionNamespace setVariable ["CFM_contCamKeyUpEH", _eh];
+};
+
 CFUNC(stopContinuousCameraMove) = {
 	private _lastOp = missionNamespace getVariable ["CFM_contMoveLastOp", objNull];
 	private _lastTurr = missionNamespace getVariable ["CFM_contMoveLastTurr", [-1]];
@@ -570,41 +633,7 @@ CFUNC(handleContinuousCameraMove) = {
 	private _dirIdx = CAMERA_MOVE_DIRECTIONS find _direction;
 	if (_dirIdx == -1) exitWith {false};
 
-	if ((missionNamespace getVariable ["CFM_contCamKeyUpEH", -1]) == -1) then {
-		private _disp = findDisplay 46;
-		if (!isNull _disp) then {
-			private _eh = _disp displayAddEventHandler ["KeyUp", {
-				params ["_displayOrControl", "_key"];
-				if !(missionNamespace getVariable ["CFM_isContinuousMoving", false]) exitWith {false};
-				private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
-				private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
-				private _changed = false;
-				{
-					if (_x) then {
-						private _kInfo = _info param [_forEachIndex, []];
-						if (_kInfo isNotEqualTo []) then {
-							_kInfo params [["_dik", -1], ["_reqShift", false], ["_reqCtrl", false], ["_reqAlt", false]];
-							if (
-								(_key == _dik) ||
-								{_reqShift && {_key in [42, 54]}} ||
-								{_reqCtrl && {_key in [29, 157]}} ||
-								{_reqAlt && {_key in [56, 184]}}
-							) then {
-								_held set [_forEachIndex, false];
-								_info set [_forEachIndex, []];
-								_changed = true;
-							};
-						};
-					};
-				} forEach _held;
-				if (_changed && {!(true in _held)}) then {
-					call CFM_fnc_stopContinuousCameraMove;
-				};
-				false
-			}];
-			missionNamespace setVariable ["CFM_contCamKeyUpEH", _eh];
-		};
-	};
+	call FUNC(ensureContinuousKeyUpEH);
 
 	private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
 	private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
@@ -723,6 +752,108 @@ CFUNC(updateContinuousCameraMove) = {
 	if ((_horizontal == 0) && {_vertical == 0}) exitWith {};
 
 	["moveCamera", [_turretIndex, [_horizontal, _vertical], true], false] CALL_OBJCLASS("Operator", _operator);
+};
+
+CFUNC(stopContinuousZoom) = {
+	private _lastMon = missionNamespace getVariable ["CFM_contZoomLastMon", objNull];
+	missionNamespace setVariable ["CFM_heldZoomDirs", [false, false]];
+	missionNamespace setVariable ["CFM_heldZoomKeyInfo", [[], []]];
+	missionNamespace setVariable ["CFM_isContinuousZooming", false];
+	missionNamespace setVariable ["CFM_contZoomLastMon", objNull];
+	if (IS_OBJ(_lastMon)) then {
+		["syncContinuousZoom", []] CALL_OBJCLASS("Monitor", _lastMon);
+	};
+};
+
+CFUNC(handleContinuousZoom) = {
+	params [["_dir", 0], ["_isDown", false], ["_keyArgs", []]];
+
+	private _dirIdx = if (_dir > 0) then {0} else {if (_dir < 0) then {1} else {-1}};
+	if (_dirIdx == -1) exitWith {false};
+
+	call FUNC(ensureContinuousKeyUpEH);
+
+	private _held = missionNamespace getVariable ["CFM_heldZoomDirs", [false, false]];
+	private _info = missionNamespace getVariable ["CFM_heldZoomKeyInfo", [[], []]];
+
+	if (_isDown) then {
+		private _monitor = GET_MON;
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {false};
+		if (
+			(_monitor getVariable ["CFM_currentOperatorIsDrone", false]) &&
+			{!(MGVAR ["CFM_canChangeZoomOnDrones", true])}
+		) exitWith {false};
+
+		_held set [_dirIdx, true];
+		if (_keyArgs isEqualType [] && {count _keyArgs >= 5}) then {
+			_info set [_dirIdx, [_keyArgs select 1, _keyArgs select 2, _keyArgs select 3, _keyArgs select 4]];
+		};
+		missionNamespace setVariable ["CFM_heldZoomDirs", _held];
+		missionNamespace setVariable ["CFM_heldZoomKeyInfo", _info];
+		missionNamespace setVariable ["CFM_isContinuousZooming", true];
+		true
+	} else {
+		_held set [_dirIdx, false];
+		_info set [_dirIdx, []];
+		missionNamespace setVariable ["CFM_heldZoomDirs", _held];
+		missionNamespace setVariable ["CFM_heldZoomKeyInfo", _info];
+		if !(true in _held) then {
+			call CFM_fnc_stopContinuousZoom;
+		};
+		false
+	};
+};
+
+CFUNC(updateContinuousZoom) = {
+	if !(missionNamespace getVariable ["CFM_isContinuousZooming", false]) exitWith {};
+	if !(MGVAR ["CFM_continuousCameraZoom", false]) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+	if (dialog || {!isNull findDisplay 49}) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+
+	private _held = missionNamespace getVariable ["CFM_heldZoomDirs", [false, false]];
+	if !(true in _held) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+
+	private _monitor = GET_MON;
+	if !(IS_OBJ(_monitor)) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+	if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+	if (
+		(_monitor getVariable ["CFM_currentOperatorIsDrone", false]) &&
+		{!(MGVAR ["CFM_canChangeZoomOnDrones", true])}
+	) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+
+	private _lastMon = missionNamespace getVariable ["CFM_contZoomLastMon", objNull];
+	if (IS_OBJ(_lastMon) && {_lastMon isNotEqualTo _monitor}) then {
+		["syncContinuousZoom", []] CALL_OBJCLASS("Monitor", _lastMon);
+	};
+	missionNamespace setVariable ["CFM_contZoomLastMon", _monitor];
+
+	private _dir = 0;
+	if (_held select 0) then { _dir = _dir + 1; };
+	if (_held select 1) then { _dir = _dir - 1; };
+	if (_dir == 0) exitWith {};
+
+	private _curZoom = _monitor getVariable ["CFM_zoom", 1];
+	if !(_curZoom isEqualType 1) then { _curZoom = 1; };
+	private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
+	if ((_dir > 0) && {_curZoom >= _zoomMax}) exitWith {};
+	if ((_dir < 0) && {_curZoom <= 1}) exitWith {};
+
+	private _dt = diag_deltaTime min 0.1;
+	private _zoomStep = _dir * 2.0 * _dt;
+
+	[_monitor, _zoomStep, -1, true] call FUNC(zoom);
 };
 
 // EFL WRAPPERS

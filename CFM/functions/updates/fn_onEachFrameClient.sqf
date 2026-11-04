@@ -116,6 +116,7 @@ if !(_player getVariable ["CFM_isActiveViewer", false]) then {
 
 // ----- CONTINUOUS CAMERA MOVEMENT ----
 call CFM_fnc_updateContinuousCameraMove;
+call CFM_fnc_updateContinuousZoom;
 // -------------------------------------
 
 // ---------- UPDATE MONITORS ----------

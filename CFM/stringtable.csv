@@ -22,6 +22,8 @@ STR_CFM_CameraMoveSensitivity,"Camera Move Sensitivity","Чутливість р
 STR_CFM_DESC_CameraMoveSensitivity,"Rotation speed when turning the camera manually via keybinds","Швидкість повороту камери під час ручного керування клавішами","Скорость поворота камеры при ручном управлении клавишами"
 STR_CFM_ContinuousCameraMove,"Continuous Camera Movement","Безперервний рух камери","Непрерывное движение камеры"
 STR_CFM_DESC_ContinuousCameraMove,"Hold movement keys to rotate camera continuously instead of step-by-step (snapping)","Безперервне обертання камери під час затискання клавіш замість покрокового (snapping)","Непрерывное вращение камеры при зажатии клавиш вместо пошагового (snapping)"
+STR_CFM_ContinuousCameraZoom,"Continuous Camera Zoom","Безперервний зум камери","Непрерывный зум камеры"
+STR_CFM_DESC_ContinuousCameraZoom,"Hold zoom keys to zoom in/out continuously instead of step-by-step","Безперервна зміна зуму під час затискання клавіш замість покрокової","Непрерывное изменение зума при зажатии клавиш вместо пошагового"
 STR_CFM_CameraRotationTightness,"Camera Rotation Tightness","Жорсткість обертання камери","Жесткость вращения камеры"
 STR_CFM_DESC_CameraRotationTightness,"Camera rotation smoothing speed (lower = smoother, higher = snappier)","Швидкість згладжування повороту камери (менше — плавніше, більше — різкіше)","Скорость сглаживания поворота камеры (меньше — плавнее, больше — резче)"
 STR_CFM_CameraZoomTightness,"Camera Zoom Tightness","Жорсткість зуму камери","Жесткость зума камеры"

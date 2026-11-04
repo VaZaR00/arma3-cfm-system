@@ -503,23 +503,31 @@ SINGLETON_CLASS(Monitor)
 		_menuHndl
 	};
 	METHOD("zoom") {
-		params [["_zoomAdd", 0], ["_zoomSet", -1]]; 
+		params [["_zoomAdd", 0], ["_zoomSet", -1], ["_isContinuous", false, [false]]]; 
 
-		if ((_zoomAdd isEqualTo 1) && {_maxZoomed}) exitWith {_zoom};
+		if ((_zoomAdd isEqualType 1) && {(_zoomAdd > 0) && _maxZoomed}) exitWith {_zoom};
 
 		private _maxZoomed = false;
 		private _newzoom = if (_zoomAdd isEqualType 1) then {
+			private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
 			private _newzoom = if (_zoomSet isEqualTo -1) then {
 				private _zoom = _monitor getVariable ['CFM_zoom', 1];
 				if !(_zoom isEqualType 1) then {
 					_zoom = 1;
 				};
-				(_zoom + _zoomAdd) max 1;
+				if (!_isContinuous && {(_zoom % 1) != 0}) then {
+					if (_zoomAdd > 0) then {
+						(floor _zoom) + _zoomAdd
+					} else {
+						(ceil _zoom) + _zoomAdd
+					};
+				} else {
+					_zoom + _zoomAdd
+				};
 			} else {
 				_zoomSet
 			};
-
-			private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
+			_newzoom = (_newzoom max 1) min _zoomMax;
 
 			_maxZoomed = _newzoom >= _zoomMax;
 
@@ -530,7 +538,15 @@ SINGLETON_CLASS(Monitor)
 		};
 
 		private _fov = if (_newzoom isEqualType 1) then {
-			_zoomTable getOrDefault [_newzoom, 1/_newzoom];
+			private _zLow = floor _newzoom;
+			private _zHigh = ceil _newzoom;
+			private _fovLow = _zoomTable getOrDefault [_zLow, 1 / (_zLow max 1)];
+			if (_zLow == _zHigh) then {
+				_fovLow
+			} else {
+				private _fovHigh = _zoomTable getOrDefault [_zHigh, 1 / (_zHigh max 1)];
+				_fovLow + (_fovHigh - _fovLow) * (_newzoom - _zLow)
+			};
 		} else {_newzoom};
 
 		if (_zoomAdd isEqualTo "reset") then {
@@ -539,16 +555,46 @@ SINGLETON_CLASS(Monitor)
 			_maxZoomed = false;
 		};
 
-		private _syncGlobal = !_isHandMonitor;
-		_monitor setVariable ['CFM_maxZoomed', _maxZoomed, _syncGlobal];
-		_monitor setVariable ["CFM_zoom", _newzoom, _syncGlobal];
-		_monitor setVariable ["CFM_zoomFov", _fov, _syncGlobal];
-		_monitor setVariable ["CFM_doUpdateCamera", true, _syncGlobal];
-		if (_isVehTablet) then {
-			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		if (_isContinuous) then {
+			_monitor setVariable ['CFM_maxZoomed', _maxZoomed];
+			_monitor setVariable ["CFM_zoom", _newzoom];
+			_monitor setVariable ["CFM_zoomFov", _fov];
+			_monitor setVariable ["CFM_doUpdateCamera", true];
+
+			if ((diag_tickTime - (_monitor getVariable ["CFM_contZoomLastNetSync", 0])) >= 0.1) then {
+				_monitor setVariable ["CFM_contZoomLastNetSync", diag_tickTime];
+				if (!_isHandMonitor) then {
+					_monitor setVariable ['CFM_maxZoomed', _maxZoomed, true];
+					_monitor setVariable ["CFM_zoom", _newzoom, true];
+					_monitor setVariable ["CFM_zoomFov", _fov, true];
+					_monitor setVariable ["CFM_doUpdateCamera", true, true];
+				};
+			};
+		} else {
+			private _syncGlobal = !_isHandMonitor;
+			_monitor setVariable ['CFM_maxZoomed', _maxZoomed, _syncGlobal];
+			_monitor setVariable ["CFM_zoom", _newzoom, _syncGlobal];
+			_monitor setVariable ["CFM_zoomFov", _fov, _syncGlobal];
+			_monitor setVariable ["CFM_doUpdateCamera", true, _syncGlobal];
+			if (_isVehTablet) then {
+				["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+			};
 		};
 
 		_newzoom
+	};
+	METHOD("syncContinuousZoom") {
+		private _syncGlobal = !_isHandMonitor;
+		if (_syncGlobal) then {
+			_monitor setVariable ['CFM_maxZoomed', _monitor getVariable ['CFM_maxZoomed', false], true];
+			_monitor setVariable ["CFM_zoom", _monitor getVariable ["CFM_zoom", 1], true];
+			_monitor setVariable ["CFM_zoomFov", _monitor getVariable ["CFM_zoomFov", 1], true];
+			_monitor setVariable ["CFM_doUpdateCamera", true, true];
+		};
+		if (_isVehTablet) then {
+			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+		};
+		true
 	};
 	METHOD("nextTurret") {
 		private _syncGlobal = !_isHandMonitor;

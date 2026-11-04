@@ -15,6 +15,7 @@
 ["CFM_fullscreenIsPip",  "CHECKBOX",  [CFM_STR_FULLSCREEN_IS_PIP, CFM_STR_DESC_FULLSCREEN_IS_PIP], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_cameraMoveSensitivity",  "SLIDER",  [CFM_STR_CAMERA_MOVE_SENSITIVITY, CFM_STR_DESC_CAMERA_MOVE_SENSITIVITY], CFM_CATEGORY, [0, 50, 5, 1, false], 1] call CBA_fnc_addSetting;
 ["CFM_continuousCameraMove",  "CHECKBOX",  [CFM_STR_CONTINUOUS_CAMERA_MOVE, CFM_STR_DESC_CONTINUOUS_CAMERA_MOVE], CFM_CATEGORY, true] call CBA_fnc_addSetting;
+["CFM_continuousCameraZoom",  "CHECKBOX",  [CFM_STR_CONTINUOUS_CAMERA_ZOOM, CFM_STR_DESC_CONTINUOUS_CAMERA_ZOOM], CFM_CATEGORY, true] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessOffset",  "EDITBOX",  [CFM_STR_CAMERA_ROTATION_TIGHTNESS, CFM_STR_DESC_CAMERA_ROTATION_TIGHTNESS], CFM_CATEGORY, "5", 1] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessZoom",  "EDITBOX",  [CFM_STR_CAMERA_ZOOM_TIGHTNESS, CFM_STR_DESC_CAMERA_ZOOM_TIGHTNESS], CFM_CATEGORY, "10", 1] call CBA_fnc_addSetting;
 ["CFM_canInterceptUAVcontrol",  "CHECKBOX",  [CFM_STR_CAN_INTERCEPT_UAV_CONTROL, CFM_STR_DESC_CAN_INTERCEPT_UAV_CONTROL], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
@@ -28,8 +29,8 @@
 
 [CFM_CATEGORY, "CFM_enterFullScreenKey", [CFM_STR_ENTER_FULLSCREEN_MODE, CFM_STR_DESC_ENTER_FULLSCREEN_MODE], {call CFM_fnc_enterFullscreenKeybind}, "", [DIK_F, [true, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_exitFullScreenKey", [CFM_STR_EXIT_FULLSCREEN_MODE, CFM_STR_DESC_EXIT_FULLSCREEN_MODE], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_zoomInKey", [CFM_STR_ZOOM_IN, CFM_STR_DESC_ZOOM_IN], {call CFM_fnc_zoomInKeybind}, "", [52, [false, true, false]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_zoomOutKey", [CFM_STR_ZOOM_OUT, CFM_STR_DESC_ZOOM_OUT], {call CFM_fnc_zoomOutKeybind}, "", [51, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_zoomInKey", [CFM_STR_ZOOM_IN, CFM_STR_DESC_ZOOM_IN], {[true, _this] call CFM_fnc_zoomInKeybind}, {[false, _this] call CFM_fnc_zoomInKeybind}, [52, [false, true, false]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_zoomOutKey", [CFM_STR_ZOOM_OUT, CFM_STR_DESC_ZOOM_OUT], {[true, _this] call CFM_fnc_zoomOutKeybind}, {[false, _this] call CFM_fnc_zoomOutKeybind}, [51, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_resetZoomKey", [CFM_STR_RESET_ZOOM, CFM_STR_DESC_RESET_ZOOM], {call CFM_fnc_zoomResetKeybind}, "", [54, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_operatorZoomKey", [CFM_STR_USE_OPERATOR_ZOOM, CFM_STR_DESC_USE_OPERATOR_ZOOM], {call CFM_fnc_zoomOperatorKeybind}, "", [53, [false, true, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_takeUavControlKey", [CFM_STR_TAKE_UAV_CONTROL, CFM_STR_DESC_TAKE_UAV_CONTROL], {call CFM_fnc_takeUavCtrlKeybind}, "", [53, [false, false, true]]] call CBA_fnc_addKeybind;
