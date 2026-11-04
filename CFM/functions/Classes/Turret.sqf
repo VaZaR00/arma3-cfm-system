@@ -808,7 +808,9 @@ CLASS(Turret)
 				_selfObj setVariable ["CFM_contGunnerTargetUp", _newUp];
 				_selfObj setVariable ["CFM_contGunnerLastTime", diag_tickTime];
 
-				private _lockPos = _selfObj modelToWorldVisualWorld (vectorNormalized _newDir);
+				private _speed = vectorMagnitude (velocity _selfObj);
+				private _lockDist = (MGVAR ["CFM_turretLockDistMax", 1500]) max (_speed * (MGVAR ["CFM_turretLockDistCoef", 100]));
+				private _lockPos = _selfObj modelToWorldVisualWorld ((vectorNormalized _newDir) vectorMultiply _lockDist);
 				_selfObj lockCameraTo [_lockPos, [_turretIndex]];
 
 				_currentCameraMoves = [_initialDirUp, [_newDir, _newUp]] call CFM_fnc_calculateCurrentCameraMoves;
@@ -907,7 +909,9 @@ CLASS(Turret)
 			private _newDirUp = [_dir, _up, _vertical, _horizontal] call CFM_fnc_transformTurret;
 			private _newDir = _newDirUp param [0, _dir];
 			private _newUp = _newDirUp param [1, _up];
-			private _lockPos = (_selfObj modelToWorldVisualWorld (vectorNormalized _newDir));
+			private _speed = vectorMagnitude (velocity _selfObj);
+			private _lockDist = (MGVAR ["CFM_turretLockDistMax", 1500]) max (_speed * (MGVAR ["CFM_turretLockDistCoef", 100]));
+			private _lockPos = (_selfObj modelToWorldVisualWorld ((vectorNormalized _newDir) vectorMultiply _lockDist));
 			private _prevCamLook = [_selfObj, [_turretIndex]] call CFM_fnc_getTurretCameraLock;
 
 			_selfObj lockCameraTo [_lockPos, [_turretIndex]];
