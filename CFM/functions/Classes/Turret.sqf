@@ -516,7 +516,7 @@ CLASS(Turret)
 		true
 	};
 	METHOD("moveCamera") {
-		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_isDroneFeed) exitWith {
 			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
@@ -666,7 +666,12 @@ CLASS(Turret)
 		if (_isDroneFeed) exitWith {
 			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
 			private _acc = _selfObj getVariable [_accVar, [0, 0]];
-			if (!(_acc isEqualTo [0, 0]) && !(local _operator)) then {
+			private _canExecHere = if (_turretIndex isEqualTo 0) then {
+				(_operator turretLocal [_turretIndex]) || {local _operator}
+			} else {
+				local _operator
+			};
+			if (!(_acc isEqualTo [0, 0]) && !_canExecHere) then {
 				_selfObj setVariable [_accVar, [0, 0]];
 				private _isGunnerTurret = _turretIndex isEqualTo 0;
 				private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
@@ -706,7 +711,7 @@ CLASS(Turret)
 		true
 	};
 	METHOD("moveDroneCamera") {
-		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
@@ -717,7 +722,17 @@ CLASS(Turret)
 			false
 		};
 
-		if !(local _operator) exitWith {
+		// gunner camera is controlled where the turret is local (may differ from vehicle locality), pilot camera where the vehicle is local
+		private _canExecHere = if (_isGunnerTurret) then {
+			(_operator turretLocal [_turretIndex]) || {local _operator}
+		} else {
+			local _operator
+		};
+
+		// event already arrived but turret is not local here - drop it to avoid endless resending loop
+		if (!_canExecHere && {_isRemote}) exitWith {false};
+
+		if !(_canExecHere) exitWith {
 			private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
 			if (isNull _target) then {
 				_target = _operator;
@@ -768,7 +783,11 @@ CLASS(Turret)
 		};
 
 		if (_isContinuous) exitWith {
-			_selfObj setVariable ["CFM_newMove", true];
+			// interrupt only a currently running snapping move, do not leave the flag stuck
+			if !(_selfObj getVariable ["CFM_moveDone", true]) then {
+				_selfObj setVariable ["CFM_newMove", true];
+			};
+			_selfObj setVariable [format ["CFM_contLastInputTime_%1", _instanceIndex], diag_tickTime];
 
 			if (_isGunnerTurret) then {
 				private _lastContTime = _selfObj getVariable ["CFM_contGunnerLastTime", 0];
@@ -794,18 +813,6 @@ CLASS(Turret)
 
 				_currentCameraMoves = [_initialDirUp, [_newDir, _newUp]] call CFM_fnc_calculateCurrentCameraMoves;
 				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
-
-				private _updHandle = _selfObj getVariable ["CFM_contGunnerUpdateHandle", scriptNull];
-				if (isNull _updHandle || {scriptDone _updHandle}) then {
-					_updHandle = [_selfObj, _turretIndex] spawn {
-						params ["_veh", "_tIdx"];
-						while {IS_OBJ(_veh) && {(diag_tickTime - (_veh getVariable ["CFM_contGunnerLastTime", 0])) < 0.5}} do {
-							[_veh, _tIdx, false] call CFM_fnc_updateTurretCamera;
-							sleep 0.01;
-						};
-					};
-					_selfObj setVariable ["CFM_contGunnerUpdateHandle", _updHandle];
-				};
 			} else {
 				private _prevHandle = _selfObj getVariable ["CFM_rotationHandle", scriptNull];
 				if (!isNull _prevHandle && {!scriptDone _prevHandle}) then {
@@ -827,6 +834,41 @@ CLASS(Turret)
 				_currentCameraMoves = [_initialDirUp, [_newCamDir, _newCamUp]] call CFM_fnc_calculateCurrentCameraMoves;
 				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 			};
+			// per-turret moves cache, used for the final sync
+			_selfObj setVariable [format ["CFM_contLastMoves_%1", _instanceIndex], +_currentCameraMoves];
+
+			// background loop: keeps publishing camera vectors while input is active, then does a final forced sync
+			private _finHandle = _selfObj getVariable [format ["CFM_contFinHandle_%1", _instanceIndex], scriptNull];
+			if (isNull _finHandle || {scriptDone _finHandle}) then {
+				_finHandle = [_operator, _selfObj, _turretIndex, _instanceIndex, _isGunnerTurret] spawn {
+					params ["_op", "_obj", "_tIdx", "_instIdx", "_isGun"];
+					private _timeVar = format ["CFM_contLastInputTime_%1", _instIdx];
+					private _updTurr = [-1, _tIdx] select _isGun;
+					while {IS_OBJ(_op) && {(diag_tickTime - (_obj getVariable [_timeVar, 0])) < 0.4}} do {
+						[_op, _updTurr, false, false] call CFM_fnc_updateTurretCamera;
+						sleep 0.01;
+					};
+					if !(IS_OBJ(_op)) exitWith {};
+					[_op, _updTurr, false, false] call CFM_fnc_updateTurretCamera;
+					private _idxStr = TURR_INDX_STR(_updTurr);
+					private _fTargets = ACTIVE_VIEWERS_AND_SELF(false);
+					{
+						private _v = _op getVariable [_x, []];
+						if ((_v isEqualType []) && {count _v == 3}) then {
+							_op setVariable [_x, _v, _fTargets];
+						};
+					} forEach ["CFM_currentTurretDirMS" + _idxStr, "CFM_currentTurretUpMS" + _idxStr];
+					private _moves = _obj getVariable [format ["CFM_contLastMoves_%1", _instIdx], []];
+					if (_moves isNotEqualTo []) then {
+						private _mons = _obj getVariable [format ["CFM_turret_monitorsOnTurret_%1", _instIdx], []];
+						{
+							_x setVariable ["CFM_currentCameraMoves", +_moves, _fTargets];
+						} forEach _mons;
+					};
+				};
+				_selfObj setVariable [format ["CFM_contFinHandle_%1", _instanceIndex], _finHandle];
+			};
+
 
 			SET_SELFVAR(_currentCameraMoves);
 			{
