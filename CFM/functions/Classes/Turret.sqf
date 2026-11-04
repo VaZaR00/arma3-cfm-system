@@ -308,6 +308,7 @@ CLASS(Turret)
 		true
 	};
     METHOD("compilePointParams") {
+		params [["_syncGlobal", true]];
 		_pointParams = switch (_ppType) do {
 			case PP_STATIC: {
 				[_ppPos, _ppDir, _ppUp]
@@ -321,24 +322,33 @@ CLASS(Turret)
 			default {[]};
 		};
 
-		SET_SELFVARG(_pointParams);
+		if (_syncGlobal) then {
+			SET_SELFVARG(_pointParams);
+		} else {
+			SET_SELFVAR(_pointParams);
+		};
 
 		_pointParams
     };
     METHOD("savePointParamVars") {
+		params [["_vars", []], ["_syncGlobal", true]];
+		if (!(_vars isEqualType []) || {(_vars isNotEqualTo []) && {!((_vars#0) isEqualType [])}}) then {
+			_vars = _this;
+			_syncGlobal = true;
+		};
 		{
 			_x params [["_varName", ""], ["_value", nil]];
 			switch (_varName) do {
-				case "_ppPos": {_ppPos = _value; SET_SELFVARG(_ppPos)};
-				case "_ppDir": {_ppDir = _value; SET_SELFVARG(_ppDir)};
-				case "_ppUp": {_ppUp = _value; SET_SELFVARG(_ppUp)};
-				case "_ppMemPoint": {_ppMemPoint = _value; SET_SELFVARG(_ppMemPoint)};
-				case "_ppAddArr": {_ppAddArr = _value; SET_SELFVARG(_ppAddArr)};
-				case "_ppSetArr": {_ppSetArr = _value; SET_SELFVARG(_ppSetArr)};
-				case "_ppLod": {_ppLod = _value; SET_SELFVARG(_ppLod)};
+				case "_ppPos": {_ppPos = _value; if (_syncGlobal) then {SET_SELFVARG(_ppPos)} else {SET_SELFVAR(_ppPos)}};
+				case "_ppDir": {_ppDir = _value; if (_syncGlobal) then {SET_SELFVARG(_ppDir)} else {SET_SELFVAR(_ppDir)}};
+				case "_ppUp": {_ppUp = _value; if (_syncGlobal) then {SET_SELFVARG(_ppUp)} else {SET_SELFVAR(_ppUp)}};
+				case "_ppMemPoint": {_ppMemPoint = _value; if (_syncGlobal) then {SET_SELFVARG(_ppMemPoint)} else {SET_SELFVAR(_ppMemPoint)}};
+				case "_ppAddArr": {_ppAddArr = _value; if (_syncGlobal) then {SET_SELFVARG(_ppAddArr)} else {SET_SELFVAR(_ppAddArr)}};
+				case "_ppSetArr": {_ppSetArr = _value; if (_syncGlobal) then {SET_SELFVARG(_ppSetArr)} else {SET_SELFVAR(_ppSetArr)}};
+				case "_ppLod": {_ppLod = _value; if (_syncGlobal) then {SET_SELFVARG(_ppLod)} else {SET_SELFVAR(_ppLod)}};
 				default {};
 			};
-		} forEach _this;
+		} forEach _vars;
     };
     METHOD("syncPointParamsToMonitors") {
 		private _compiledPointParams = ["compilePointParams"] CALL_SELF;
@@ -355,17 +365,21 @@ CLASS(Turret)
 		} forEach _monitorsOnTurret;
     };
     METHOD("setPointParams") {
-		params[["_params", []]];
+		params[["_params", []], ["_syncGlobal", true]];
 
 		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
 			_params = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
 		};
 
 		private _pointParamsVars = [_ppType, _pointParams, _params, true] call CFM_fnc_validatePointParams;
-		["savePointParamVars", _pointParamsVars] CALL_SELF;
-		_pointParams = ["compilePointParams"] CALL_SELF;
+		["savePointParamVars", [_pointParamsVars, _syncGlobal]] CALL_SELF;
+		_pointParams = ["compilePointParams", [_syncGlobal]] CALL_SELF;
 
-		SET_SELFVARG(_pointParams);
+		if (_syncGlobal) then {
+			SET_SELFVARG(_pointParams);
+		} else {
+			SET_SELFVAR(_pointParams);
+		};
 
 		_pointParams
     };
@@ -502,11 +516,11 @@ CLASS(Turret)
 		true
 	};
 	METHOD("moveCamera") {
-		params[["_axisAngles", [0,0], [[]], 2]];
+		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		if (_isDroneFeed) exitWith {
 			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
-			["moveDroneCamera", [_axisAngles]] SPAWN_SELF
+			["moveDroneCamera", [_axisAngles, _isContinuous]] SPAWN_SELF
 			true
 		};
 
@@ -515,6 +529,7 @@ CLASS(Turret)
 		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
 
 		_axisAngles params [["_horizontal", 0], ["_vertical", 0]];
+		private _syncGlobal = !_isContinuous;
 			
 		private _done = switch (_ppType) do {
 			case PP_STATIC: {
@@ -525,7 +540,7 @@ CLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp]]] CALL_SELF;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal]] CALL_SELF;
 				
 				true
 			};
@@ -538,7 +553,7 @@ CLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp]]] CALL_SELF;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal]] CALL_SELF;
 				
 				true
 			};
@@ -580,7 +595,7 @@ CLASS(Turret)
 					_newUpMS vectorDotProduct _mup
 				];
 
-				_pointParams = ["setPointParams", [[[_memPoint, _lod], _addArr, _dir, _up, _setArr]]] CALL_SELF;
+				_pointParams = ["setPointParams", [[[_memPoint, _lod], _addArr, _dir, _up, _setArr], _syncGlobal]] CALL_SELF;
 
 				true
 			};
@@ -591,8 +606,89 @@ CLASS(Turret)
 
 		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
-		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 
+		if (_isContinuous) then {
+			SET_SELFVAR(_currentCameraMoves);
+			SET_SELFVAR(_pointParams);
+
+			{
+				_x setVariable ["CFM_camDoInterpolation", false];
+				_x setVariable ["CFM_currentCamPointParams", +_pointParams];
+				_x setVariable ["CFM_doUpdateCamera", _doUpdCam];
+				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+				if ((_x getVariable ["CFM_isVehTablet", false]) && hasInterface && {[_x] call CFM_fnc_inVehicleTabletSeatCondition}) then {
+					["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_x);
+				};
+			} forEach _monitorsOnTurret;
+
+			private _syncVar = format ["CFM_contLastNetSync_%1", _instanceIndex];
+			if ((diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1) then {
+				_selfObj setVariable [_syncVar, diag_tickTime];
+				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - [clientOwner];
+				if (_netTargets isNotEqualTo []) then {
+					{
+						if (_x getVariable ["CFM_isVehTablet", false]) then {
+							["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
+						} else {
+							if !(_doInterpolation) then {
+								_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
+							};
+							_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
+							_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
+							_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
+						};
+					} forEach _monitorsOnTurret;
+				};
+			};
+		} else {
+			private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+			{
+				if (_x getVariable ["CFM_isVehTablet", false]) then {
+					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _targets] call CFM_fnc_remoteEvent;
+				} else {
+					if !(_doInterpolation) then {
+						_x setVariable ["CFM_camDoInterpolation", true, _targets];
+					};
+					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
+					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
+				};
+			} forEach _monitorsOnTurret;
+
+			SET_SELFVARG(_currentCameraMoves);
+			SET_SELFVARG(_pointParams);
+		};
+
+		true
+	};
+	METHOD("syncContinuousMove") {
+		if (_isDroneFeed) exitWith {
+			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
+			private _acc = _selfObj getVariable [_accVar, [0, 0]];
+			if (!(_acc isEqualTo [0, 0]) && !(local _operator)) then {
+				_selfObj setVariable [_accVar, [0, 0]];
+				private _isGunnerTurret = _turretIndex isEqualTo 0;
+				private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
+				if (isNull _target) then {_target = _operator};
+				["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _acc, true]], _target] call CBA_fnc_targetEvent;
+			};
+			true
+		};
+
+		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
+
+		SET_SELFVARG(_ppPos);
+		SET_SELFVARG(_ppDir);
+		SET_SELFVARG(_ppUp);
+		SET_SELFVARG(_ppMemPoint);
+		SET_SELFVARG(_ppAddArr);
+		SET_SELFVARG(_ppSetArr);
+		SET_SELFVARG(_ppLod);
+		SET_SELFVARG(_currentCameraMoves);
+		SET_SELFVARG(_pointParams);
+
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 		{
 			if (_x getVariable ["CFM_isVehTablet", false]) then {
@@ -607,13 +703,10 @@ CLASS(Turret)
 			};
 		} forEach _monitorsOnTurret;
 
-		SET_SELFVARG(_currentCameraMoves);
-		SET_SELFVARG(_pointParams);
-
 		true
 	};
 	METHOD("moveDroneCamera") {
-		params[["_axisAngles", [0,0], [[]], 2]];
+		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
 
@@ -629,7 +722,21 @@ CLASS(Turret)
 			if (isNull _target) then {
 				_target = _operator;
 			};
-			["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _axisAngles]], _target] call CBA_fnc_targetEvent;
+			if (_isContinuous) exitWith {
+				private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
+				private _timeVar = format ["CFM_contDroneMoveTime_%1", _instanceIndex];
+				private _acc = _selfObj getVariable [_accVar, [0, 0]];
+				_acc = [(_acc#0) + (_axisAngles#0), (_acc#1) + (_axisAngles#1)];
+				if ((diag_tickTime - (_selfObj getVariable [_timeVar, 0])) >= 0.05) then {
+					_selfObj setVariable [_timeVar, diag_tickTime];
+					_selfObj setVariable [_accVar, [0, 0]];
+					["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _acc, true]], _target] call CBA_fnc_targetEvent;
+				} else {
+					_selfObj setVariable [_accVar, _acc];
+				};
+				true
+			};
+			["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _axisAngles, false]], _target] call CBA_fnc_targetEvent;
 			true
 		};
 
@@ -658,6 +765,85 @@ CLASS(Turret)
 			if (!(_up isEqualType []) || {count _up != 3} || {vectorMagnitude _up == 0}) then {
 				_up = [0,0,1];
 			};
+		};
+
+		if (_isContinuous) exitWith {
+			_selfObj setVariable ["CFM_newMove", true];
+
+			if (_isGunnerTurret) then {
+				private _lastContTime = _selfObj getVariable ["CFM_contGunnerLastTime", 0];
+				private _targetDir = _selfObj getVariable ["CFM_contGunnerTargetDir", []];
+				private _targetUp = _selfObj getVariable ["CFM_contGunnerTargetUp", []];
+				if (
+					((diag_tickTime - _lastContTime) > 0.25) ||
+					{!(_targetDir isEqualType []) || {count _targetDir != 3} || {vectorMagnitude _targetDir == 0}}
+				) then {
+					_targetDir = _dir;
+					_targetUp = _up;
+				};
+
+				private _newDirUp = [_targetDir, _targetUp, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newDir = _newDirUp param [0, _targetDir];
+				private _newUp = _newDirUp param [1, _targetUp];
+				_selfObj setVariable ["CFM_contGunnerTargetDir", _newDir];
+				_selfObj setVariable ["CFM_contGunnerTargetUp", _newUp];
+				_selfObj setVariable ["CFM_contGunnerLastTime", diag_tickTime];
+
+				private _lockPos = _selfObj modelToWorldVisualWorld (vectorNormalized _newDir);
+				_selfObj lockCameraTo [_lockPos, [_turretIndex]];
+
+				_currentCameraMoves = [_initialDirUp, [_newDir, _newUp]] call CFM_fnc_calculateCurrentCameraMoves;
+				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
+
+				private _updHandle = _selfObj getVariable ["CFM_contGunnerUpdateHandle", scriptNull];
+				if (isNull _updHandle || {scriptDone _updHandle}) then {
+					_updHandle = [_selfObj, _turretIndex] spawn {
+						params ["_veh", "_tIdx"];
+						while {IS_OBJ(_veh) && {(diag_tickTime - (_veh getVariable ["CFM_contGunnerLastTime", 0])) < 0.5}} do {
+							[_veh, _tIdx, false] call CFM_fnc_updateTurretCamera;
+							sleep 0.01;
+						};
+					};
+					_selfObj setVariable ["CFM_contGunnerUpdateHandle", _updHandle];
+				};
+			} else {
+				private _prevHandle = _selfObj getVariable ["CFM_rotationHandle", scriptNull];
+				if (!isNull _prevHandle && {!scriptDone _prevHandle}) then {
+					terminate _prevHandle;
+				};
+
+				private _prevCamDir = getPilotCameraDirection _selfObj;
+				if (!(_prevCamDir isEqualType []) || {count _prevCamDir != 3} || {vectorMagnitude _prevCamDir == 0}) then {
+					_prevCamDir = _dir;
+				};
+				private _prevCamUp = _prevCamDir call CFM_fnc_getVectorUpFromDir;
+				private _newDirUp = [_prevCamDir, _prevCamUp, _vertical, _horizontal] call CFM_fnc_transformTurret;
+				private _newCamDir = _newDirUp param [0, _prevCamDir];
+				private _newCamUp = _newDirUp param [1, _prevCamUp];
+
+				_selfObj setPilotCameraDirection _newCamDir;
+				[_selfObj, -1, false] call CFM_fnc_updateTurretCamera;
+
+				_currentCameraMoves = [_initialDirUp, [_newCamDir, _newCamUp]] call CFM_fnc_calculateCurrentCameraMoves;
+				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
+			};
+
+			SET_SELFVAR(_currentCameraMoves);
+			{
+				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+			} forEach _monitorsOnTurret;
+
+			private _syncVar = format ["CFM_contDroneLastNetSync_%1", _instanceIndex];
+			if ((diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1) then {
+				_selfObj setVariable [_syncVar, diag_tickTime];
+				private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+				{
+					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
+				} forEach _monitorsOnTurret;
+				SET_SELFVARG(_currentCameraMoves);
+			};
+
+			true
 		};
 
 		_currentCameraMoves = [_initialDirUp, [_dir, _up]] call CFM_fnc_calculateCurrentCameraMoves;

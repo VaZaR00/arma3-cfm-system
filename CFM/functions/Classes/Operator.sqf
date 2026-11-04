@@ -462,14 +462,19 @@ SINGLETON_CLASS(Operator)
 		true
 	};
 	METHOD("moveCamera") {
-		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2]];
+		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
-		["moveCamera", [_axisAngles]] CALL_TURRET_INSTANCE(_turret);
+		["moveCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
 	};
 	METHOD("moveDroneCamera") {
-		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2]];
+		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
-		["moveDroneCamera", [_axisAngles]] CALL_TURRET_INSTANCE(_turret);
+		["moveDroneCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
+	};
+	METHOD("syncContinuousMove") {
+		params[["_turret", -1]];
+
+		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
 	};
 	METHOD("setOperatorSides") {
 		params[["_sides", civilian], ["_global", true]];

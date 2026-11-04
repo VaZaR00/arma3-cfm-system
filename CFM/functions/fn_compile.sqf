@@ -551,6 +551,180 @@ CFUNC(initCameraObjectEHs) = {
 	true
 };
 
+// CONTINUOUS CAMERA MOVEMENT
+CFUNC(stopContinuousCameraMove) = {
+	private _lastOp = missionNamespace getVariable ["CFM_contMoveLastOp", objNull];
+	private _lastTurr = missionNamespace getVariable ["CFM_contMoveLastTurr", [-1]];
+	missionNamespace setVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
+	missionNamespace setVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
+	missionNamespace setVariable ["CFM_isContinuousMoving", false];
+	missionNamespace setVariable ["CFM_contMoveLastOp", objNull];
+	if (IS_OBJ(_lastOp)) then {
+		["syncContinuousMove", [_lastTurr], false] CALL_OBJCLASS("Operator", _lastOp);
+	};
+};
+
+CFUNC(handleContinuousCameraMove) = {
+	params [["_direction", ""], ["_isDown", false], ["_keyArgs", []]];
+
+	private _dirIdx = CAMERA_MOVE_DIRECTIONS find _direction;
+	if (_dirIdx == -1) exitWith {false};
+
+	if ((missionNamespace getVariable ["CFM_contCamKeyUpEH", -1]) == -1) then {
+		private _disp = findDisplay 46;
+		if (!isNull _disp) then {
+			private _eh = _disp displayAddEventHandler ["KeyUp", {
+				params ["_displayOrControl", "_key"];
+				if !(missionNamespace getVariable ["CFM_isContinuousMoving", false]) exitWith {false};
+				private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
+				private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
+				private _changed = false;
+				{
+					if (_x) then {
+						private _kInfo = _info param [_forEachIndex, []];
+						if (_kInfo isNotEqualTo []) then {
+							_kInfo params [["_dik", -1], ["_reqShift", false], ["_reqCtrl", false], ["_reqAlt", false]];
+							if (
+								(_key == _dik) ||
+								{_reqShift && {_key in [42, 54]}} ||
+								{_reqCtrl && {_key in [29, 157]}} ||
+								{_reqAlt && {_key in [56, 184]}}
+							) then {
+								_held set [_forEachIndex, false];
+								_info set [_forEachIndex, []];
+								_changed = true;
+							};
+						};
+					};
+				} forEach _held;
+				if (_changed && {!(true in _held)}) then {
+					call CFM_fnc_stopContinuousCameraMove;
+				};
+				false
+			}];
+			missionNamespace setVariable ["CFM_contCamKeyUpEH", _eh];
+		};
+	};
+
+	private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
+	private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
+
+	if (_isDown) then {
+		private _monitor = GET_MON;
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		if !(_monitor getVariable ["CFM_currentCameraCanMove", false]) exitWith {false};
+		private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+		if !(IS_OBJ(_camera)) exitWith {false};
+
+		_held set [_dirIdx, true];
+		if (_keyArgs isEqualType [] && {count _keyArgs >= 5}) then {
+			_info set [_dirIdx, [_keyArgs select 1, _keyArgs select 2, _keyArgs select 3, _keyArgs select 4]];
+		};
+		missionNamespace setVariable ["CFM_heldCameraMoveDirs", _held];
+		missionNamespace setVariable ["CFM_heldCameraMoveKeyInfo", _info];
+		missionNamespace setVariable ["CFM_isContinuousMoving", true];
+		true
+	} else {
+		_held set [_dirIdx, false];
+		_info set [_dirIdx, []];
+		missionNamespace setVariable ["CFM_heldCameraMoveDirs", _held];
+		missionNamespace setVariable ["CFM_heldCameraMoveKeyInfo", _info];
+		if !(true in _held) then {
+			call CFM_fnc_stopContinuousCameraMove;
+		};
+		false
+	};
+};
+
+CFUNC(updateContinuousCameraMove) = {
+	if !(missionNamespace getVariable ["CFM_isContinuousMoving", false]) exitWith {};
+	if !(MGVAR ["CFM_continuousCameraMove", false]) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+	if (dialog || {!isNull findDisplay 49}) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+
+	private _held = missionNamespace getVariable ["CFM_heldCameraMoveDirs", [false, false, false, false]];
+	if !(true in _held) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+
+	private _monitor = GET_MON;
+	if !(IS_OBJ(_monitor)) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+
+	private _canMove = _monitor getVariable ["CFM_currentCameraCanMove", false];
+	if !(_canMove isEqualTo true) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+
+	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+	if (!IS_OBJ(_camera) || {!IS_OBJ(_operator)}) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+
+	private _turretIndex = _monitor getVariable ["CFM_currentTurret", [-1]];
+	private _lastOp = missionNamespace getVariable ["CFM_contMoveLastOp", objNull];
+	private _lastTurr = missionNamespace getVariable ["CFM_contMoveLastTurr", [-1]];
+	if (IS_OBJ(_lastOp) && {(_lastOp isNotEqualTo _operator) || {_lastTurr isNotEqualTo _turretIndex}}) then {
+		["syncContinuousMove", [_lastTurr], false] CALL_OBJCLASS("Operator", _lastOp);
+	};
+	missionNamespace setVariable ["CFM_contMoveLastOp", _operator];
+	missionNamespace setVariable ["CFM_contMoveLastTurr", _turretIndex];
+
+	private _currZoom = _monitor getVariable ["CFM_zoomFov", 1];
+	if !(_currZoom isEqualType 1) then {
+		_currZoom = _operator getVariable ["CFM_prevZoomLocalFov", getObjectFov _operator];
+	};
+
+	private _sensitivity = MGVAR ["CFM_cameraMoveSensitivity", 5];
+	private _dt = diag_deltaTime min 0.1;
+	// Continuous rotation speed in degrees/sec: sensitivity * 6 * zoomFov (at default sensitivity 5 -> 30 deg/s * zoomFov)
+	private _baseStep = _sensitivity * 6 * _currZoom * _dt;
+	if (_baseStep <= 0) exitWith {};
+
+	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [85, 85, 180, 180]];
+	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", [0, 0, 0, 0]];
+
+	private _vertical = 0;
+	private _horizontal = 0;
+
+	{
+		if (_x) then {
+			private _dirIdx = _forEachIndex;
+			private _dirRestriction = _movementRestrictions param [_dirIdx, 0];
+			if (_dirRestriction >= 1) then {
+				private _curMove = _currentCameraMoves param [_dirIdx, 0];
+				private _step = _baseStep;
+				if (_dirRestriction < 180) then {
+					if (_curMove >= _dirRestriction) then {
+						_step = 0;
+					} else {
+						if ((_curMove + _step) > _dirRestriction) then {
+							_step = _dirRestriction - _curMove;
+						};
+					};
+				};
+				if (_step > 0) then {
+					switch (_dirIdx) do {
+						case 0: { _vertical = _vertical + _step; };   // up
+						case 1: { _vertical = _vertical - _step; };   // down
+						case 2: { _horizontal = _horizontal + _step; }; // left
+						case 3: { _horizontal = _horizontal - _step; }; // right
+					};
+				};
+			};
+		};
+	} forEach _held;
+
+	if ((_horizontal == 0) && {_vertical == 0}) exitWith {};
+
+	["moveCamera", [_turretIndex, [_horizontal, _vertical], true], false] CALL_OBJCLASS("Operator", _operator);
+};
+
 // EFL WRAPPERS
 if (!(isNil {FUNC(remoteExec)}) && {isFinal FUNC(remoteExec)}) exitWith {};
 

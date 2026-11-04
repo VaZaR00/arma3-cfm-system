@@ -33,6 +33,7 @@ private _newMove = (_currentCameraMove + _step);
 
 if ((_currentCameraMove < _directionRestriction) && {_newMove > _directionRestriction}) then {
     _newMove = _directionRestriction; // snap to max
+    _step = _directionRestriction - _currentCameraMove;
 };
 
 if (_directionRestriction < 1) exitWith {false};

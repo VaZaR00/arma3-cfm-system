@@ -14,6 +14,7 @@
 ["CFM_allHandMonitorsAreDisplays",  "CHECKBOX",  [CFM_STR_ALL_HAND_MONITORS_FULLSCREEN, CFM_STR_DESC_ALL_HAND_MONITORS_FULLSCREEN], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_fullscreenIsPip",  "CHECKBOX",  [CFM_STR_FULLSCREEN_IS_PIP, CFM_STR_DESC_FULLSCREEN_IS_PIP], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_cameraMoveSensitivity",  "SLIDER",  [CFM_STR_CAMERA_MOVE_SENSITIVITY, CFM_STR_DESC_CAMERA_MOVE_SENSITIVITY], CFM_CATEGORY, [0, 50, 5, 1, false], 1] call CBA_fnc_addSetting;
+["CFM_continuousCameraMove",  "CHECKBOX",  [CFM_STR_CONTINUOUS_CAMERA_MOVE, CFM_STR_DESC_CONTINUOUS_CAMERA_MOVE], CFM_CATEGORY, true] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessOffset",  "EDITBOX",  [CFM_STR_CAMERA_ROTATION_TIGHTNESS, CFM_STR_DESC_CAMERA_ROTATION_TIGHTNESS], CFM_CATEGORY, "5", 1] call CBA_fnc_addSetting;
 ["CFM_camInterpolation_tightnessZoom",  "EDITBOX",  [CFM_STR_CAMERA_ZOOM_TIGHTNESS, CFM_STR_DESC_CAMERA_ZOOM_TIGHTNESS], CFM_CATEGORY, "10", 1] call CBA_fnc_addSetting;
 ["CFM_canInterceptUAVcontrol",  "CHECKBOX",  [CFM_STR_CAN_INTERCEPT_UAV_CONTROL, CFM_STR_DESC_CAN_INTERCEPT_UAV_CONTROL], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
@@ -40,7 +41,7 @@
 [CFM_CATEGORY, "CFM_fixAllMonitorsFeedKey", [CFM_STR_FIX_RESET_ALL_MONITORS, CFM_STR_DESC_FIX_RESET_ALL_MONITORS], {[] call CFM_fnc_fixFeedKeybind}, "", [33, [false, false, true]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_turnOnOffKey", [CFM_STR_TOGGLE_MONITOR_LOCAL, CFM_STR_DESC_TOGGLE_MONITOR_LOCAL], {call CFM_fnc_turnOnOffMonitorLocalKeybind}, "", [20, [false, true, false]]] call CBA_fnc_addKeybind;
 
-[CFM_CATEGORY, "CFM_cameraTurnUpKey", [CFM_STR_TURN_CAMERA_UP, CFM_STR_DESC_TURN_CAMERA_UP], {call CFM_fnc_cameraTurnUpKeybind}, "", [72, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnDownKey", [CFM_STR_TURN_CAMERA_DOWN, CFM_STR_DESC_TURN_CAMERA_DOWN], {call CFM_fnc_cameraTurnDownKeybind}, "", [80, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnRightKey", [CFM_STR_TURN_CAMERA_RIGHT, CFM_STR_DESC_TURN_CAMERA_RIGHT], {call CFM_fnc_cameraTurnRightKeybind}, "", [77, [false, false, true]]] call CBA_fnc_addKeybind;
-[CFM_CATEGORY, "CFM_cameraTurnLeftKey", [CFM_STR_TURN_CAMERA_LEFT, CFM_STR_DESC_TURN_CAMERA_LEFT], {call CFM_fnc_cameraTurnLeftKeybind}, "", [75, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnUpKey", [CFM_STR_TURN_CAMERA_UP, CFM_STR_DESC_TURN_CAMERA_UP], {[true, _this] call CFM_fnc_cameraTurnUpKeybind}, {[false, _this] call CFM_fnc_cameraTurnUpKeybind}, [72, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnDownKey", [CFM_STR_TURN_CAMERA_DOWN, CFM_STR_DESC_TURN_CAMERA_DOWN], {[true, _this] call CFM_fnc_cameraTurnDownKeybind}, {[false, _this] call CFM_fnc_cameraTurnDownKeybind}, [80, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnRightKey", [CFM_STR_TURN_CAMERA_RIGHT, CFM_STR_DESC_TURN_CAMERA_RIGHT], {[true, _this] call CFM_fnc_cameraTurnRightKeybind}, {[false, _this] call CFM_fnc_cameraTurnRightKeybind}, [77, [false, false, true]]] call CBA_fnc_addKeybind;
+[CFM_CATEGORY, "CFM_cameraTurnLeftKey", [CFM_STR_TURN_CAMERA_LEFT, CFM_STR_DESC_TURN_CAMERA_LEFT], {[true, _this] call CFM_fnc_cameraTurnLeftKeybind}, {[false, _this] call CFM_fnc_cameraTurnLeftKeybind}, [75, [false, false, true]]] call CBA_fnc_addKeybind;

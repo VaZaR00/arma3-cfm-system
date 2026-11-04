@@ -59,8 +59,8 @@
 ["CFM_moveDroneCamera", {
     LOG_CBA_EVENT
 	params["_turret", "_args"];
-	_args params [["_turretInstanceIndex", -1], ["_axisAngles", [0,0]]];
-	["moveDroneCamera", [_axisAngles]] SPAWN_OBJINSTANCE("Turret", _turretInstanceIndex, _turret);
+	_args params [["_turretInstanceIndex", -1], ["_axisAngles", [0,0]], ["_isContinuous", false]];
+	["moveDroneCamera", [_axisAngles, _isContinuous]] SPAWN_OBJINSTANCE("Turret", _turretInstanceIndex, _turret);
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_mavicDroppedGren", {

@@ -114,6 +114,10 @@ if !(_player getVariable ["CFM_isActiveViewer", false]) then {
 };
 // -------------------------------------
 
+// ----- CONTINUOUS CAMERA MOVEMENT ----
+call CFM_fnc_updateContinuousCameraMove;
+// -------------------------------------
+
 // ---------- UPDATE MONITORS ----------
 private _optimizeDistance = GET_OPTIMIZE_DIST;
 private _doOptimize = _optimizeDistance > 0;
