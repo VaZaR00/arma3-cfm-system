@@ -6,6 +6,15 @@
 
 #include "defines.hpp" 
 
+// periodically re-check turrets locality on every machine (incl. server): turret locality can change
+// without any event (e.g. remote control released -> turret goes back to vehicle owner)
+if ((diag_tickTime - (missionNamespace getVariable ["CFM_lastLocalTurretsCheck", 0])) >= (MGVAR ["CFM_AdditionalLocalTurretsCheckInterval", 1])) then {
+	missionNamespace setVariable ["CFM_lastLocalTurretsCheck", diag_tickTime];
+	if ((missionNamespace getVariable ["CFM_ActiveOperators", []]) isNotEqualTo []) then {
+		[] call CFM_fnc_updateActiveOperatorsLocalTurrets;
+	};
+};
+
 private _localOps = missionNamespace getVariable ["CFM_LocalActiveOperators", []];
 
 private _localityChanged = false;
