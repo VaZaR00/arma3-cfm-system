@@ -8,4 +8,5 @@
 
 params["_target"];
 if (missionNamespace getVariable ['CFM_isInPIPFullScreen', false]) exitWith {true};
+if (isRemoteControlling PLAYER_) exitWith {false};
 focusOn != PLAYER_
