@@ -9,6 +9,7 @@
 #define FUNC_PRE_START preStart = 1;
 #define FUNC_PATH_JOIN(path) ADDON_PATH\##path
 #define FUNC_PATH(path) STR(FUNC_PATH_JOIN(path))
+#define CALL_FUNC_XEH(f) STR(call compileScript ['FUNC_PATH_JOIN(f)'])
 #define PREF_ PREFX##_
 #define SPREF_ STR(PREF_)
 #define PREF_FNC PREFX##_fnc_
@@ -23,6 +24,9 @@
 #define PREF_QVAR(s) (PREF_VAR + s)
 #define RC_PREF(s) (PREF_CLAS + s)
 #define VAR_PREFIX (if (isNil "_ADDON_PREFX") then {SPREFX} else {_ADDON_PREFX})
+
+
+#define CFUNC(f) _cFuncs pushBack [STR(DOUBLE(_,f)), STR(FUNC(f))]; private DOUBLE(_,f)
 
 
 #define FN_FUNC_CFG(name) class name {file = FUNC_PATH(TRIPLE(fn_,name,.sqf));DO_FUNC_RECOMPILE};

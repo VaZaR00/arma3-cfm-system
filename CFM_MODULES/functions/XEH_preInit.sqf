@@ -1,6 +1,8 @@
 
 #include "defines.hpp"
 
-// #ifdef ADDON
-// call FUNC(XEH_prep);
+// #ifndef ADDON
+// call FUNC(XEH_preStart);
+// #else
+// call compileScript [FUNC_PATH(XEH_prep.sqf)];
 // #endif
