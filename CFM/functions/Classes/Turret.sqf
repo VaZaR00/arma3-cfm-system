@@ -142,33 +142,19 @@ CLASS(Turret)
 		};
 
 		// NVG AND TI
-		if ((_setNvgAndTi isEqualTo []) || (_setNvgAndTi isEqualTo true)) then {
-			if (_setNvgAndTi isEqualTo false) then {
-				_tiParams = [];
+		if (_setNvgAndTi isEqualType []) then {
+			_nvgParam = _setNvgAndTi param [0, -1];
+			_tiParams = _setNvgAndTi param [1, -1];
+		} else {
+			if (_setNvgAndTi isEqualType false) then {
 				_nvgParam = false;
-			} else {
-				_setNvgAndTi params [["_setNvgParam", false], ["_setTiParam", []]];
-				// NVG
-				if (_setNvgParam isEqualType false) then {
-					_nvgParam = _setNvgParam;
-				};
-				// TI
-				if (_setTiParam isEqualType []) exitWith {
-					private _validTIs = values CFM_tiModesTable; 
-					_setTiParam = _setTiParam select {
-						_x in _validTIs;
-					};
-					if (_setTiParam isEqualTo []) exitWith {};
-					_tiParams = +_setTiParam;
-				};
-				if (_setTiParam isEqualTo false) then {
-					_tiParams = [];
-				};
-				if (_setTiParam isEqualTo true) then {
-					_tiParams = +[2];
-				};
+				_tiParams = false;
 			};
 		};
+
+		([_operator, _turretIndex, _nvgParam, _tiParams] call CFM_fnc_setupNvgAndTI) params [["_finalTi", []], ["_finalNvg", false]];
+		_tiParams = _finalTi;
+		_nvgParam = _finalNvg;
 
 		// IS LOCAL TURRET
 		_isLocal = [_operator] call CFM_fnc_doCheckTurretLocality;

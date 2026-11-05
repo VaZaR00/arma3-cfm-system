@@ -45,8 +45,8 @@ SINGLETON_CLASS(Monitor)
 	FIELD ["_monitorCanSwitchTi", false];
 	FIELD ["_currentPiPEffect", 0];
 	FIELD ["_isInNvg", false];
-	FIELD ["_currentTiTable", createHashMap];
-	FIELD ["_currentNvgParam", createHashMap];
+	FIELD ["_currentTiTable", []];
+	FIELD ["_currentNvgParam", []];
 	FIELD ["_zoom", 1, ["", 1]];
 	FIELD ["_zoomFov", 1, ["", 1]];
 	FIELD ["_zoomMax", 1];
@@ -627,17 +627,15 @@ SINGLETON_CLASS(Monitor)
 		};
 	};
 	METHOD("switchTi") { 
-		private _currentTurret = _selfObj getVariable ["CFM_currentTurret", [-1]];
-		private _tiModes = _currentTiTable getOrDefault [TURRET_INDEX(_currentTurret), [0]];
-		private _newEffect = if !(_currentPiPEffect in _tiModes) then {
-			_tiModes#0;
+		private _newEffect = if !(_currentPiPEffect in _currentTiTable) then {
+			_currentTiTable#0;
 		} else {
-			private _i = _tiModes find _currentPiPEffect;
+			private _i = _currentTiTable find _currentPiPEffect;
 			private _newI = _i + 1;
-			if (_newI >= (count _tiModes)) exitWith {
+			if (_newI >= (count _currentTiTable)) exitWith {
 				0;
 			};
-			_tiModes select _newI;
+			_currentTiTable select _newI;
 		};
 		if (isNil "_newEffect") exitWith {};
 		if !(_newEffect isEqualType 1) exitWith {};

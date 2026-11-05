@@ -11,7 +11,7 @@ HAND_MON_CONDITION
 IS_MONITOR_ON
 (_target getVariable ['CFM_feedActive', false]) && {
 	(_target getVariable ['CFM_monitorCanSwitchNvg', false]) && {
-		!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#0) && {
+		!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull])) param [0, false]) && {
 			(
 				(_target getVariable ['CFM_currentNvgParam', false])
 			)

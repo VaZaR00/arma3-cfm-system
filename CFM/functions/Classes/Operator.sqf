@@ -115,61 +115,19 @@ SINGLETON_CLASS(Operator)
 			_operator setVariable ["CFM_isStaticCam", _isStaticCam, _global];
 		};
 
-		// NVG AND TI
-		_hasTInNvg params ["_ti", "_nvg"];
-		if !(_ti isEqualType true) then {
-			_ti = true;
-		};
-		if !(_nvg isEqualType true) then {
-			_nvg = true;
-		};
-		([_operator] call CFM_fnc_setupNvgAndTI) params [["_tiTable", createHashMap], ["_nvgTable", createHashMap], ["_canSwitchTi", false], ["_canSwitchNvg", false]];
-		_canSwitchTi = _ti && _canSwitchTi;
-		_canSwitchNvg = _nvg && _canSwitchNvg;
+		// TURRETS
+		["DefineTurretsParams", [_turrets]] CALL_SELF;
+
+		// NVG AND TI INIT
+		_canSwitchTi = _operator getVariable ["CFM_canSwitchTi", false];
+		_canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", false];
+		_tiTable = _operator getVariable ["CFM_tiTable", createHashMap];
+		_nvgTable = _operator getVariable ["CFM_nvgTable", createHashMap];
 		_operator setVariable ["CFM_tiTable", _tiTable, _global];
 		_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
 
-
-		// TURRETS
-		["DefineTurretsParams", [_turrets]] CALL_SELF;
-
-
-		// CHECK NVG TI
-		private _turrets = _selfObj getVariable ["CFM_turrets", []];
-		private _turrCount = count _turrets;
-		if (_turrCount == 1) then {
-			// if turrets is one and nvg and ti are two we set ti and nvg for any ti/nvg table turr have it
-			private _turr = _turrets#0;
-			private _turrIndex = TURRET_INDEX(_turr);
-			if (_turrIndex isEqualTo -1) then {
-				// TI
-				call {
-					private _tiForDriver = _tiTable get _turrIndex;
-					if (isNil "_tiForDriver") exitWith {};
-					if (count _tiForDriver != 0) exitWith {};
-					private _tiForGunner = _tiTable get 0;
-					if (isNil "_tiForGunner") exitWith {};
-					if (count _tiForGunner == 0) exitWith {};
-					_tiForGunner = +_tiForGunner;
-					_tiTable = createHashMap;
-					_tiTable set [-1, _tiForGunner];
-				};
-				// NVG
-				call {
-					private _nvgForDriver = _nvgTable get _turrIndex;
-					if (isNil "_nvgForDriver") exitWith {};
-					if (_nvgForDriver isEqualTo true) exitWith {};
-					private _nvgForGunner = _nvgTable get 0;
-					if (isNil "_nvgForGunner") exitWith {};
-					if (_nvgForDriver isEqualTo false) exitWith {};
-					_nvgForGunner = +_nvgForGunner;
-					_nvgTable = createHashMap;
-					_nvgTable set [-1, _nvgForGunner];
-				};
-			};
-		};
 
 		// SIDE
 		private _defaultSide = [(getNumber (configFile >> "CfgVehicles" >> _objClass >> "side"))] call BIS_fnc_sideType;
@@ -354,8 +312,8 @@ SINGLETON_CLASS(Operator)
 		private _callerLocal = IS_OBJ(_caller) && {(local _caller)};
 
 		_selfObj setVariable ["CFM_isFeeding", true];
-		_monitor setVariable ["CFM_monitorCanSwitchNvg", _canSwitchNvg];
-		_monitor setVariable ["CFM_monitorCanSwitchTi", _canSwitchTi];
+		_monitor setVariable ["CFM_monitorCanSwitchNvg", _selfObj getVariable ["CFM_canSwitchNvg", false]];
+		_monitor setVariable ["CFM_monitorCanSwitchTi", _selfObj getVariable ["CFM_canSwitchTi", false]];
 		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
 		_monitor setVariable ["CFM_currentCameraType", _cameraType];
 		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];

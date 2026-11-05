@@ -1,148 +1,202 @@
 #include "defines.hpp"
 
-#define LGVAR _logic GV 
+#define LGVAR _logic GV
 #undef BOOL
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 
-private _logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
-private _units = [_this,1,[],[[]]] call BIS_fnc_param;
-private _activated = [_this,2,true,[true]] call BIS_fnc_param;
+params [
+	["_logic", objNull, [objNull]],
+	["_units", [], [[]]],
+	["_activated", true, [true]]
+];
 
-if !(_activated) exitWith {};
-if (is3DEN) exitWith {};
+if (!_activated || {is3DEN}) exitWith {};
 
 [_logic] spawn {
-	params["_logic"];
+	params ["_logic"];
 
-	private _isJustTurret = BOOL("isCameraTurret", 0);
+	if (BOOL("isCameraTurret", 0)) exitWith {};
 
-	if (_isJustTurret) exitWith {};
-
-	sleep 0.1;	
+	sleep 0.1;
 
 	private _sidesStr = LGVAR ["cameraSides", ""];
-	private _sides = (_sidesStr splitString SPLIT_CHARACTERS) apply {
-		private _compile = call compile _x;
-		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
-			false
-		} else {
-			_compile
+	private _sideMap = createHashMapFromArray [
+		["west", west], ["blufor", west],
+		["east", east], ["opfor", east],
+		["independent", independent], ["resistance", independent], ["guer", independent],
+		["civilian", civilian], ["civ", civilian],
+		["sidelogic", sideLogic], ["sideempty", sideEmpty], ["sideambientlife", sideAmbientLife]
+	];
+
+	private _sides = [];
+	{
+		private _s = _sideMap get (toLower trim _x);
+		if (!isNil "_s") then {
+			_sides pushBackUnique _s;
 		};
-	};
-	_sides = _sides select {_x isEqualType west};
+	} forEach (_sidesStr splitString SPLIT_CHARACTERS);
 
 	if (_sides isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] WARN
+		format ["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] WARN;
 	};
 
-	private _proccessArrayString = {
-		params["_l", "_offsetsStr", ['_isOffset', true]];
-		private _res = [];
+	private _fnc_processArrayString = {
+		params ["_l", "_offsetsStr", ["_isOffset", true]];
 		private _trimmed = trim (toLower _offsetsStr);
-		private _isThis = ((_trimmed isEqualTo "this") || {_isOffset && {_trimmed isEqualTo ""}});
-		if (_isOffset && {_isThis}) then {
-			_res = [getPosASL _l, [vectorDir _l, vectorUp _l]];
+		private _isThis = (_trimmed isEqualTo "this") || {_isOffset && {_trimmed isEqualTo ""}};
+		
+		if (_isOffset && {_isThis}) exitWith {
+			[getPosASL _l, [vectorDir _l, vectorUp _l]]
 		};
-		if (!_isThis && {!(_trimmed isEqualTo "")}) then {
+
+		private _res = [];
+		if (!_isThis && {_trimmed isNotEqualTo ""}) then {
 			_res = call compile _offsetsStr;
+			if (isNil "_res") then { _res = []; };
 		};
-		if (isNil "_res") then {
-			_res = [];
-		};
+
 		if (_res isEqualTo []) exitWith {[]};
 		if (_res isEqualType []) exitWith {+_res};
 		_res
 	};
-	private _proccessCameraParams = {
-		params["_logic"];
 
-		private _name = LGVAR ["cameraName", ""];
+	#include "fnc_parseTurretsSetting.sqf"
 
+	private _fnc_processCameraParams = {
+		params ["_camLogic", ["_turretIndex", -1], ["_setNvgAndTi", [-1, -1]]];
+
+		private _name = _camLogic getVariable ["cameraName", ""];
 		if (_name isEqualTo "") then {
-			// generate ID
-			private _hash = hashValue _logic;
-			private _nums = toArray _hash;
+			private _nums = toArray (hashValue _camLogic);
 			private _num = 0;
-			_nums apply {_num = _num + _x};
-			_num = _num * (_nums#0);
+			{ _num = _num + _x; } forEach _nums;
+			_num = _num * (_nums param [0, 1]);
 			_name = "Camera ID: " + str _num;
 		};
 
-		private _camObj = MGVAR [trim (LGVAR ["cameraObject", ""]), objNull];
-		private _hasNvg = BOOL("cameraHasNvg", 1);
-		private _hasTi = BOOL("cameraHasTI", 1);
-		private _canMoveCam = (toLower (trim (LGVAR ["cameraCanMoveCamera", ""]))) call {
-			if (_this isEqualTo "true") exitWith {true};
-			if (_this isEqualTo "false" || {_this isEqualTo ""}) exitWith {false};
-			private _canMoveCamArr = _this splitString SPLIT_CHARACTERS;
-			_canMoveCamArr = _canMoveCamArr apply {parseNumber _x};
-			if (_canMoveCamArr isEqualTo []) exitWith {false};
-			_canMoveCamArr resize [4, 0];
-			_canMoveCamArr
+		private _camObj = MGVAR [trim (_camLogic getVariable ["cameraObject", ""]), objNull];
+		private _canMoveStr = toLower trim (_camLogic getVariable ["cameraCanMoveCamera", ""]);
+		private _canMoveCam = call {
+			if (_canMoveStr isEqualTo "true") exitWith {true};
+			if (_canMoveStr in ["false", ""]) exitWith {false};
+			private _arr = (_canMoveStr splitString SPLIT_CHARACTERS) apply {parseNumber _x};
+			if (_arr isEqualTo []) exitWith {false};
+			_arr resize [4, 0];
+			_arr
 		};
-		private _smoothZoom = BOOL("cameraSmoothZoom", 1);
-		private _turretIndexStr = trim (LGVAR ["turretIndex", ""]);
-		private _turretIndex = if (
-			!(_turretIndexStr isEqualTo "") && {
-				private _idx = parseNumber _turretIndexStr;
-				((_idx == 0) && (_turretIndexStr isEqualTo "0")) || (_idx != 0)
-			}
-		) then {parseNumber _turretIndexStr} else {nil};
-		private _zoomParamsStr = (LGVAR ["zoomParams", ""]);
-		private _zoomParams = [_logic, _zoomParamsStr, false] call _proccessArrayString;
+
+		private _smoothZoom = OBJ_BOOL(_camLogic, "cameraSmoothZoom", 1);
+		private _zoomParamsStr = _camLogic getVariable ["zoomParams", ""];
+		private _zoomParams = [_camLogic, _zoomParamsStr, false] call _fnc_processArrayString;
 
 		[
 			_camObj,
 			_canMoveCam,
 			_turretIndex,
 			_zoomParams,
-			[_hasNvg, _hasTi],
+			_setNvgAndTi,
 			_name,
 			_smoothZoom
 		]
 	};
 
-	private _params = _logic call _proccessCameraParams;
-
-	private _offsetsStr = LGVAR ["cameraTurretsCustom", "this"];
-	private _mainOffset = [_logic, _offsetsStr] call _proccessArrayString;
-	if (isNil "_mainOffset") then {
-		_mainOffset = [];
+	private _fnc_parseTurretIdx = {
+		params ["_str"];
+		private _trimmed = trim _str;
+		if (_trimmed isEqualTo "") exitWith {nil};
+		private _num = parseNumber _trimmed;
+		if (_num != 0 || {_trimmed isEqualTo "0"}) exitWith {_num};
+		nil
 	};
+
+	// Определение индексов турелей статической камеры
+	private _mainTurrIdx = [LGVAR ["turretIndex", ""]] call _fnc_parseTurretIdx;
+	if (isNil "_mainTurrIdx") then { _mainTurrIdx = -1; };
+	private _allTurrets = [_mainTurrIdx];
+
+	private _staticCamModuleClass = toLower "CFM_Module_Camera";
+	private _syncedModules = (synchronizedObjects _logic) select {
+		(toLower typeOf _x) isEqualTo _staticCamModuleClass && {OBJ_BOOL(_x, "isCameraTurret", 0)}
+	};
+
+	// Используем массив пар [_moduleObj, _sIdx], так как OBJECT не может быть ключом в HashMap
+	private _syncedPairs = [];
+
+	{
+		private _sIdx = [_x getVariable ["turretIndex", ""]] call _fnc_parseTurretIdx;
+		if (isNil "_sIdx") then {
+			_sIdx = 0;
+			while {_sIdx in _allTurrets} do { _sIdx = _sIdx + 1; };
+		};
+		_allTurrets pushBackUnique _sIdx;
+		_syncedPairs pushBack [_x, _sIdx];
+	} forEach _syncedModules;
+
+	// Парсинг настроек NVG и TI для всех турелей
+	private _nvgStr = _logic getVariable ["cameraHasNvg", "-1"];
+	private _tiStr = _logic getVariable ["cameraHasTI", "-1"];
+	private _nvgMap = [_nvgStr, false, _allTurrets, false] call _parseTurretsSetting;
+	private _tiMap = [_tiStr, true, _allTurrets, false] call _parseTurretsSetting;
+
+	private _fnc_isOverrideValid = {
+		params ["_val"];
+		if !(_val isEqualType "") exitWith {true};
+		!(toLower (trim _val) in ["", "-1", "default"])
+	};
+
+	// Применение переопределений с синхронизированных модулей турелей
+	{
+		_x params ["_syncMod", "_sIdx"];
+		
+		private _sNvg = _syncMod getVariable ["cameraHasNvg", "-1"];
+		if ([_sNvg] call _fnc_isOverrideValid) then {
+			private _parsedSNvg = [_sNvg, false, [_sIdx], true] call _parseTurretsSetting;
+			_nvgMap set [_sIdx, _parsedSNvg get _sIdx];
+		};
+
+		private _sTi = _syncMod getVariable ["cameraHasTI", "-1"];
+		if ([_sTi] call _fnc_isOverrideValid) then {
+			private _parsedSTi = [_sTi, true, [_sIdx], true] call _parseTurretsSetting;
+			_tiMap set [_sIdx, _parsedSTi get _sIdx];
+		};
+	} forEach _syncedPairs;
+
+	// Обработка основного модуля
+	private _offsetsStr = LGVAR ["cameraTurretsCustom", "this"];
+	private _mainOffset = [_logic, _offsetsStr] call _fnc_processArrayString;
+	if (isNil "_mainOffset") then { _mainOffset = []; };
+
 	private _offsets = [];
-	if !(_mainOffset isEqualTo []) then {
+	private _mainNvgTi = [_nvgMap getOrDefault [_mainTurrIdx, -1], _tiMap getOrDefault [_mainTurrIdx, -1]];
+	private _params = [_logic, _mainTurrIdx, _mainNvgTi] call _fnc_processCameraParams;
+
+	if (_mainOffset isNotEqualTo []) then {
 		_offsets pushBack ([_mainOffset] + _params);
 	};
 
-	private _staticCamModuleClass = (tolower "CFM_Module_Camera");
-	private _syncedModules = (synchronizedObjects _logic) select {(tolower typeOf _x) isEqualTo _staticCamModuleClass};
-
+	// Обработка синхронизированных модулей
 	{
-		// skip if its not set as turret
-		if !(OBJ_BOOL(_x, "isCameraTurret", 0)) then {continue};
+		_x params ["_syncMod", "_sIdx"];
+		private _turrOffsetsStr = _syncMod getVariable ["cameraTurretsCustom", "this"];
+		private _turrOffsets = [_syncMod, _turrOffsetsStr] call _fnc_processArrayString;
+		if (isNil "_turrOffsets" || {_turrOffsets isEqualTo []}) then { continue };
 
-		private _turrOffsetsStr = _x getVariable ["cameraTurretsCustom", "this"];
-		private _turrOffsets = [_x, _turrOffsetsStr] call _proccessArrayString;
-		if (isNil "_turrOffsets" || {_turrOffsets isEqualTo []}) then {continue};
-		private _turrParams = _x call _proccessCameraParams;
-		private _turrArgs = [_turrOffsets] + _turrParams;
-		_offsets pushBack _turrArgs;
-	} forEach _syncedModules;
+		private _sNvgTi = [_nvgMap getOrDefault [_sIdx, -1], _tiMap getOrDefault [_sIdx, -1]];
+		private _turrParams = [_syncMod, _sIdx, _sNvgTi] call _fnc_processCameraParams;
+		_offsets pushBack ([_turrOffsets] + _turrParams);
+	} forEach _syncedPairs;
 
 	if (_offsets isEqualTo []) exitWith {
-		format["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] WARN
+		format ["CFM_fnc_initModuleCamera: ZERO OFFSETS GIVEN. Offset string: '%1'. Synced modules: '%2'", _offsetsStr, _syncedModules] WARN;
 	};
-
-	private _hasTi = BOOL("cameraHasTI", 1);
-	private _hasNvg = BOOL("cameraHasNvg", 1);
 
 	[
 		_params param [5, ""],
 		_offsets,
 		_sides,
 		_params param [0, objNull],
-		[_hasTi, _hasNvg],
+		[-1, -1],
 		[
 			_params param [1, -1],
 			_params param [6, -1]
