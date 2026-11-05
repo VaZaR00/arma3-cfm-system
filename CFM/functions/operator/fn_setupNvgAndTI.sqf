@@ -12,7 +12,6 @@ params [
 	["_nvgParam", -1],
 	["_tiParam", -1]
 ];
-["SNT 1", _NIL(_turretIndex), _this] RLOG
 
 _turretIdx = TURRET_INDEX(_turretIdx);
 
@@ -165,7 +164,5 @@ if (IS_OBJ(_operator)) then {
 };
 
 _finalTi = _finalTi - [0];
-
-["SNT 2", _NIL(_turretIndex), [_finalTi, _finalNvg]] RLOG
 
 [_finalTi, _finalNvg]
