@@ -58,3 +58,4 @@ STR_CFM_Module_DESC_zoomParams, "Zoom parameters (number - max zoom. List of zoo
 STR_CFM_Module_Yes, "Yes", "Так", "Да"
 STR_CFM_Module_No, "No", "Ні", "Нет"
 STR_CFM_Module_Default, "Default", "За замовчуванням", "По умолчанию"
+STR_CFM_MODULE_3DEN_TOOL_setCameraModuleOnEdenCamera, "Set Camera Module on view point", "Встановити модуль камери на місці погляду", "Установить модуль камеры на месте взгляда"

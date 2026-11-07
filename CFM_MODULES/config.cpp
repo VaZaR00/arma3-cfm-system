@@ -24,3 +24,4 @@ class CfgPatches {
 #include "includes\cfgRemoteExec.hpp"
 #include "includes\configIncludes.hpp"
 #include "includes\ExtendedEventHandlers.hpp"
+#include "includes\display3DEN.hpp"
