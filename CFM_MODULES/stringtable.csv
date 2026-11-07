@@ -31,6 +31,8 @@ STR_CFM_Module_monitorCanTurnOffLocal, "Can Turn Off/On Locally", "Можна в
 STR_CFM_Module_DESC_monitorCanTurnOffLocal, "Allow pausing/resuming the monitor feed locally", "Дозволити локальне вимкнення/увімкнення трансляції на моніторі", "Разрешить локальное выключение/включение трансляции на мониторе"
 STR_CFM_Module_monitorHasPassword, "Can Set Password", "Можна встановлювати пароль", "Можно устанавливать пароль"
 STR_CFM_Module_DESC_monitorHasPassword, "Allow protecting this monitor with a password", "Дозволити захист монітора паролем", "Разрешить защиту монитора паролем"
+STR_CFM_Module_ScreenResolution, "Screen Resolution", "Роздільна здатність екрана", "Разрешение экрана"
+STR_CFM_Module_DESC_ScreenResolution, "Monitor screen aspect ratio or resolution (e.g. '1:1', '4:3', '16:9', '1:1 500', or '700x500'). Leave empty for class preset.", "Співвідношення сторін або роздільна здатність екрана монітора (напр. '1:1', '4:3', '16:9', '1:1 500' або '700x500'). Залиште порожнім для пресета класу.", "Соотношение сторон или разрешение экрана монитора (напр. '1:1', '4:3', '16:9', '1:1 500' или '700x500'). Оставьте пустым для пресета класса."
 STR_CFM_Module_isCameraTurret, "Is Just Turret/Camera", "Лише турель/камера", "Только турель/камера"
 STR_CFM_Module_DESC_isCameraTurret, "Use this module as an additional turret/camera synced to a main Camera module", "Використовувати цей модуль як додаткову турель/камеру, синхронізовану з основним модулем Камери", "Использовать этот модуль как дополнительную турель/камеру, синхронизированную с основным модулем Камеры"
 STR_CFM_Module_cameraMemoryPoint, "Memory Point", "Точка прив'язки", "Точка привязки"

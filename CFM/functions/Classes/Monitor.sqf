@@ -61,6 +61,7 @@ SINGLETON_CLASS(Monitor)
 	FIELD ["_canSetPassword", true];
 	FIELD ["_password", ""];
 	FIELD ["_passwordAccess", []];
+	FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
 
 	METHOD("Init") { 
 		// should be executed globaly
@@ -79,7 +80,8 @@ SINGLETON_CLASS(Monitor)
 			["_canConnectDrone", true],
 			["_canFix", true],
 			["_canTurnOffLocal", true],
-			["_canSetPassword", true]
+			["_canSetPassword", true],
+			["_screenResolutionSet", ""]
 		]; 
 
 		if !(IS_OBJ(_monitor)) exitWith {false};
@@ -142,6 +144,13 @@ SINGLETON_CLASS(Monitor)
 		if ((_monitor getVariable ["CFM_isMonitorSet", false]) && {_feedActive}) then {
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
+
+		private _parsedScreenRes = [_screenResolutionSet] call CFM_fnc_parseScreenResolution;
+		if (_parsedScreenRes isEqualTo []) then {
+			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
+		};
+		_screenResolution = _parsedScreenRes;
+		_monitor setVariable ["CFM_screenResolution", _screenResolution];
 		
 		if (_local) then {
 			// in veh tablet
@@ -205,6 +214,16 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_isMonitorSet", true];
 
 		true
+	};
+	METHOD("setScreenResolution") {
+		params [["_screenResolutionSet", ""]];
+		private _parsedScreenRes = [_screenResolutionSet] call CFM_fnc_parseScreenResolution;
+		if (_parsedScreenRes isEqualTo []) then {
+			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
+		};
+		_screenResolution = _parsedScreenRes;
+		_monitor setVariable ["CFM_screenResolution", _screenResolution, !_isLocal];
+		_screenResolution
 	};
 	METHOD("startFeed") {  
 		params [["_operator", objNull], ["_turret", []], ["_reset", false]];

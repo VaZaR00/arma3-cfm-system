@@ -3,8 +3,8 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 	idc=-1;
 	x=0;
 	y=0;
-	w=EVAL_UI(( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
-	h=EVAL_UI(( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+	w=EVAL_UI(fnc_width(2.5));
+	h=EVAL_UI(fnc_height(1.5));
 	class controls
 	{
 		class WhiteBackGround: ctrlStaticBackGround
@@ -13,17 +13,17 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 			colorBackGround[]={1,1,1,1};
 			x=0;
 			y=0;
-			w=EVAL_UI(( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
-			h=EVAL_UI(( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			w=EVAL_UI(fnc_width(2.5));
+			h=EVAL_UI(fnc_height(1.5));
 		};
 		class TopBackGround: ctrlStaticBackGround
 		{
 			idc=-1;
 			colorBackGround[]={0,0,0,1};
-			x=EVAL_UI(( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
-			y=EVAL_UI(( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-			w=EVAL_UI(( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
-			h=EVAL_UI(( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			x=EVAL_UI(fnc_width(0.1));
+			y=EVAL_UI(fnc_height(0.1));
+			w=EVAL_UI(fnc_width(2.5) - 2 * fnc_width(0.1));
+			h=EVAL_UI(fnc_height(1.5) - 2 * fnc_height(0.1));
 		};
 		class MainText: ctrlStructuredText
 		{
@@ -34,11 +34,11 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 				align="center";
 				valign="middle";
 			};
-			size=EVAL_UI(( ( 1.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			size=EVAL_UI(fnc_height(1.0));
 			x=0;
-			y=EVAL_UI(( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) / 2 - ( ( 1.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) / 2);
-			w=EVAL_UI(( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
-			h=EVAL_UI(( ( 1.0 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			y=EVAL_UI(fnc_height(1.5) / 2 - fnc_height(1.0) / 2);
+			w=EVAL_UI(fnc_width(2.5));
+			h=EVAL_UI(fnc_height(1.0));
 		};
 	};
 };
@@ -48,7 +48,7 @@ class Zala16_UI_BaseBox: ctrlControlsGroupNoScrollBars
 	x=0;
 	y=0;
 	w=0;
-	h=EVAL_UI(( ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+	h=EVAL_UI(fnc_height(1.4));
 	class controls
 	{
 		class BackGround: ctrlStaticBackGround
@@ -58,7 +58,7 @@ class Zala16_UI_BaseBox: ctrlControlsGroupNoScrollBars
 			x=0;
 			y=0;
 			w=0;
-			h=EVAL_UI(( ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			h=EVAL_UI(fnc_height(1.4));
 		};
 		class Text: ctrlStructuredText
 		{
@@ -68,11 +68,11 @@ class Zala16_UI_BaseBox: ctrlControlsGroupNoScrollBars
 				font="EtelkaMonospacePro";
 			};
 			shadow=0;
-			size=EVAL_UI(( 1.2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+			size=EVAL_UI(fnc_height(1.2));
 			x=0;
 			y=0;
 			w=0;
-			h=EVAL_UI(( ( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
+			h=EVAL_UI(fnc_height(1.4));
 		};
 	};
 };

@@ -11,150 +11,150 @@ class CFM_Zala421_Interface_Driver
         class CoordinateBox: InfoBox_Base
         {
             idc=825;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-            w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + fnc_width(8) + fnc_width(1) + fnc_width(0.5));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5));
+            w=EVAL_UI(fnc_width(12));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(12) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=825;
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_coord_mainText', _this # 0]";
                     text="3535.85, 4887.42, 500";
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
             };
         };
         class BatteryBox: InfoBox_Base
         {
             idc=987;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 2*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-            w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + fnc_width(8) + fnc_width(12) + fnc_width(1) + 2 * fnc_width(0.5));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5));
+            w=EVAL_UI(fnc_width(8));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(8));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(8) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=987;
                     text="BATTERY: 100";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_fuel_mainText', _this # 0]";
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(8));
                 };
             };
         };
         class AltitudeBox: InfoBox_Base
         {
             idc=956;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + 2*( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 3*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-            w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + 2 * fnc_width(8) + fnc_width(12) + fnc_width(1) + 3 * fnc_width(0.5));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5));
+            w=EVAL_UI(fnc_width(8));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(8));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(8) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=956;
                     text="ALT: 19";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_alt_mainText', _this # 0]";
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(8));
                 };
             };
         };
         class StatusBox: InfoBox_Base
         {
             idc=125;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + 3*( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + 4*( 0.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-            w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + 3 * fnc_width(8) + fnc_width(12) + fnc_width(1) + 4 * fnc_width(0.5));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5));
+            w=EVAL_UI(fnc_width(12));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(12) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=125;
                     text="STATUS: OPERATIONAL";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_status_mainText', _this # 0]";
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
             };
         };
         class DroneSpeedBox: InfoBox_Base
         {
             idc=127;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ));
-            w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + fnc_width(8) + fnc_width(1) - fnc_width(12));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5));
+            w=EVAL_UI(fnc_width(12));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(12) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=127;
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_droneSpeed_mainText', _this # 0]";
                     text="СКОРОСТЬ: 120 КМ/Ч";
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
             };
         };
         class PitchBox: InfoBox_Base
         {
             idc=121;
-            x=EVAL_UI(( STATIC_SZ_X + ( 5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( ( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ) + ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) + ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(( STATIC_SZ_Y + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) - ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) )  + ( ( 1.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) ) + ( 0.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + fnc_width(5)) + fnc_width(2.5) + fnc_width(8) + fnc_width(1) - fnc_width(12));
+            y=EVAL_UI((STATIC_SZ_Y + fnc_height(2)) - fnc_height(1.5) + fnc_height(1.5) + fnc_height(0.4));
+            w=EVAL_UI(fnc_width(12));
             class controls: controls
             {
                 class WhiteBackGround: WhiteBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
                 class TopBackGround: TopBackGround
                 {
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - 2*( ( 0.1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) ));
+                    w=EVAL_UI(fnc_width(12) - 2 * fnc_width(0.1));
                 };
                 class MainText: MainText
                 {
                     idc=121;
                     text="ТАНГАЖ: 75 г.";
                     onLoad="uiNameSpace setVariable ['DB_zala421_HUD_pitch_mainText', _this # 0]";
-                    w=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+                    w=EVAL_UI(fnc_width(12));
                 };
             };
         };

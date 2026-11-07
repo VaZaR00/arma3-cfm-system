@@ -89,6 +89,7 @@ class CfgVehicles
             PARAMETER_SELECT(monitorCanFix, 1)
             PARAMETER_SELECT(monitorCanTurnOffLocal, 1)
             PARAMETER_SELECT(monitorHasPassword, 1)
+            PARAMETER(ScreenResolution, "STRING", "")
         };
     };
     class CFM_Module_Camera: Module_F

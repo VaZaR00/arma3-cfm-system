@@ -99,6 +99,10 @@ SINGLETON_CLASS(DisplayHandler)
 	METHOD("setupDisplay") {
 		params[["_reset", false]];
 
+		private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
+		uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+		missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 		_monitor setObjectTexture [0, format["#(rgb,%1,%1,1)ui(RscDisplayMainDisplayCFM,%2)", _size, _monitorUid]];  
 
@@ -175,6 +179,18 @@ SINGLETON_CLASS(DisplayHandler)
 
 		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
 
+		private _prevCreateLock = missionNamespace getVariable ["CFM_creatingUiDisplayScript", scriptNull];
+		if (!isNull _prevCreateLock && {!(scriptDone _prevCreateLock)}) then {
+			waitUntil {scriptDone _prevCreateLock};
+		};
+		if (!isNil "_thisScript") then {
+			missionNamespace setVariable ["CFM_creatingUiDisplayScript", _thisScript];
+		};
+
+		private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
+		uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+		missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 		_uiDisplayUniqueName = _monitorUid + str _uiIndex;
 		if !(isNull _ctrl) then {
@@ -193,6 +209,7 @@ SINGLETON_CLASS(DisplayHandler)
 		if (isNull _mainDisplay) exitWith {
 			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _selfObj] WARN
 		};
+		_mainDisplay setVariable ["CFM_screenResolution", _screenRes];
 		_monitor setVariable ["CFM_uiDisplayUniqueName", _uiDisplayUniqueName];
 		_monitor setVariable ["CFM_uiIndex", _uiIndex + 1];
 		_monitor setVariable ["CFM_mainDisplay", _mainDisplay];
@@ -288,6 +305,10 @@ SINGLETON_CLASS(DisplayHandler)
 		params[["_set", false], ["_currentUIDisplayRenderClass", ""], ["_currentUIDisplayRenderClassInit", ""]];
 		_set = _set && {!(_currentUIDisplayRenderClass isEqualTo "")};
 		if (_set) then {
+			private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
+			uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+			missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+
 			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(%2,%3)", _size, _currentUIDisplayRenderClass, _uiCtrlUIDisplayName]);
 		} else {

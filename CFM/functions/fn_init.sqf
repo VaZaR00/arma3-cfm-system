@@ -2,6 +2,7 @@
 
 CFM_updateEachFrame = true;
 CFM_initSetDefPointAlignments = false;
+CFM_initSetDefScreenResolutions = true;
 
 if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;
@@ -69,6 +70,11 @@ if (hasInterface) then {
 // default point alignments
 if (CFM_initSetDefPointAlignments) then {
 	0 call CFM_fnc_setupDefPointAlignments;
+};
+
+// default screen resolutions
+if (CFM_initSetDefScreenResolutions) then {
+	0 call CFM_fnc_setupDefScreenResolutions;
 };
 
 CFM_max_zoom_gopro = 2;

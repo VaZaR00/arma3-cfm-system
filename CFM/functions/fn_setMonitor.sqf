@@ -25,6 +25,7 @@
 		14. _canFix [bool] - if has "fix feed" action
 		15. _canTurnOffLocal [bool] - if has "turn off/on local" action
 		16. _canSetPassword [bool] - if monitor can have a password set
+		17. _screenResolution [string / Array[number, number]] - monitor screen resolution or aspect ratio (e.g. "1:1", "4:3", "1:1 500", "700x500", [500, 500])
 */
 
 #include "defines.hpp"

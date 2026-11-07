@@ -66,6 +66,22 @@ CFUNC(setupDefPointAlignments) = {
 	CFM_initDefPointAlignmentsSet = true;
 	_pointSetDef
 };
+CFUNC(setupDefScreenResolutions) = {
+	private _resSetDef = parsingNamespace getVariable ["CFM_classesScreenResolutionSet", createHashMap];
+	private _patternsDef = parsingNamespace getVariable ["CFM_screenResolutionPatterns", []];
+	if (_resSetDef isEqualTo createHashMap) then {
+		[] call FUNC(initDefaultScreenResolutions);
+		_resSetDef = parsingNamespace getVariable ["CFM_classesScreenResolutionSet", createHashMap];
+		_patternsDef = parsingNamespace getVariable ["CFM_screenResolutionPatterns", []];
+		missionNamespace setVariable ["CFM_classesScreenResolutionSet", _resSetDef];
+		missionNamespace setVariable ["CFM_screenResolutionPatterns", _patternsDef];
+	} else {
+		missionNamespace setVariable ["CFM_classesScreenResolutionSet", _resSetDef];
+		missionNamespace setVariable ["CFM_screenResolutionPatterns", _patternsDef];
+	};
+	CFM_initDefScreenResolutionsSet = true;
+	_resSetDef
+};
 
 CFUNC(getCrewSeatKey) = {
 	params [["_crewEntry", []]];
@@ -855,6 +871,20 @@ CFUNC(updateContinuousZoom) = {
 
 	[_monitor, _zoomStep, -1, true] call FUNC(zoom);
 };
+
+{
+	_x params ["_shortName", "_fullName"];
+	private _fn = missionNamespace getVariable [_fullName, {}];
+	missionNamespace setVariable [_shortName, _fn];
+	uiNamespace setVariable [_shortName, _fn];
+} forEach [
+	["fnc_width", "CFM_fnc_width"],
+	["fnc_height", "CFM_fnc_height"],
+	["fnc_pixelW", "CFM_fnc_pixelW"],
+	["fnc_pixelH", "CFM_fnc_pixelH"],
+	["fnc_posX", "CFM_fnc_posX"],
+	["fnc_posY", "CFM_fnc_posY"]
+];
 
 // EFL WRAPPERS
 if (!(isNil {FUNC(remoteExec)}) && {isFinal FUNC(remoteExec)}) exitWith {};

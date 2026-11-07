@@ -1,8 +1,8 @@
 // ============================================================================
-// STATIC UI GRID FOR CUSTOM RESOLUTION
+// DYNAMIC UI GRID FOR CUSTOM MONITOR RESOLUTION
 // ============================================================================
 
-// UI GRID SIZE
+// Default UI GRID SIZE
 #define UI_SIZE_W 512
 #define UI_SIZE_H UI_SIZE_W 
 
@@ -18,12 +18,20 @@
 #define STATIC_SZ_W 1
 #define STATIC_SZ_H 1
 
-// Replacements for pixelW and pixelH (Fixed size of a single pixel in a UI_SIZE grid)
-#define STATIC_PIXEL_W ((1 / UI_SIZE_W))
-#define STATIC_PIXEL_H ((1 / UI_SIZE_H))
+// Dynamic pixelW and pixelH (Calculated from the monitor's ScreenResolution)
+#define fnc_pixelW (call CFM_fnc_pixelW)
+#define fnc_pixelH (call CFM_fnc_pixelH)
+#define STATIC_PIXEL_W fnc_pixelW
+#define STATIC_PIXEL_H fnc_pixelH
 
-// Replacement for pixelGridNoUIScale (Fixes the grid cell size to 4 pixels)
+// Replacement for pixelGridNoUIScale
 // This prevents UI distortion regardless of the player's "Interface Size" game settings
 #define STATIC_GRID_SCALE 7
+
+// Dynamic UI dimension and position helpers
+#define fnc_width(VAL) ((VAL) call CFM_fnc_width)
+#define fnc_height(VAL) ((VAL) call CFM_fnc_height)
+#define fnc_posX(VAL) ((VAL) call CFM_fnc_posX)
+#define fnc_posY(VAL) ((VAL) call CFM_fnc_posY)
 
 // ============================================================================

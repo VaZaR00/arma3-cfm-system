@@ -23,10 +23,10 @@ class RscCFM_ArmaFPV_Dialog
         class CommunicationGroup: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI((STATIC_SZ_Y) + ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) - fnc_width(6) - fnc_width(2));
+            y=EVAL_UI((STATIC_SZ_Y) + fnc_height(6));
+            w=EVAL_UI(fnc_width(6));
+            h=EVAL_UI(fnc_height(2));
             class controls
             {
                 class CommunicationPicture: ctrlStaticPicture
@@ -35,9 +35,9 @@ class RscCFM_ArmaFPV_Dialog
                     text="\fpv_ua\pictures\100.paa";
                     onLoad="uiNameSpace setVariable [""ArmaFPV_SignalPicture"", _this # 0];";
                     x=0;
-                    y=EVAL_UI(0.0 + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
-                    w=EVAL_UI(( 3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
-                    h=EVAL_UI(( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    y=EVAL_UI(0.0 + fnc_height(2) / 2 - fnc_height(1) / 2);
+                    w=EVAL_UI(fnc_width(3) / 2);
+                    h=EVAL_UI(fnc_height(1));
                 };
                 class CommunicationText: ctrlStructuredText
                 {
@@ -50,22 +50,22 @@ class RscCFM_ArmaFPV_Dialog
                         shadow=1;
                     };
                     shadow=0;
-                    size=EVAL_UI(( 1.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    size=EVAL_UI(fnc_height(1.8));
                     text="27";
                     x=0;
                     y=0;
-                    w=EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-                    h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    w=EVAL_UI(fnc_width(6));
+                    h=EVAL_UI(fnc_height(2));
                 };
             };
         };
         class BatteryGroup: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + fnc_width(2));
+            y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - fnc_height(2) - fnc_height(8));
+            w=EVAL_UI(fnc_width(8));
+            h=EVAL_UI(fnc_height(2));
             class controls
             {
                 class BatteryPicture: ctrlStaticPicture
@@ -75,8 +75,8 @@ class RscCFM_ArmaFPV_Dialog
                     text="\fpv_ua\pictures\A100.paa";
                     x=0;
                     y=0;
-                    w=EVAL_UI(( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-                    h=EVAL_UI(( 1.8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    w=EVAL_UI(fnc_width(1));
+                    h=EVAL_UI(fnc_height(1.8));
                 };
                 class BatteryText: ctrlStructuredText
                 {
@@ -89,22 +89,22 @@ class RscCFM_ArmaFPV_Dialog
                         shadow=1;
                     };
                     shadow=0;
-                    size=EVAL_UI(( 1.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    size=EVAL_UI(fnc_height(1.3));
                     text="3.79 v";
                     x=0;
-                    y=EVAL_UI(( 0.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-                    w=EVAL_UI(( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-                    h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    y=EVAL_UI(fnc_height(0.3));
+                    w=EVAL_UI(fnc_width(8));
+                    h=EVAL_UI(fnc_height(2));
                 };
             };
         };
         class OnTime_Group: ctrlControlsGroupNoScrollBars
         {
             idc=-1;
-            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) - ( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) - ( 8 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 10 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 2.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) - fnc_width(6) - fnc_width(2));
+            y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - fnc_height(2) - fnc_height(8));
+            w=EVAL_UI(fnc_width(10));
+            h=EVAL_UI(fnc_height(2.5));
             class controls
             {
                 class OnTime_Picture: ctrlStaticPicture
@@ -113,8 +113,8 @@ class RscCFM_ArmaFPV_Dialog
                     text="\fpv_ua\pictures\mn.paa";
                     x=0;
                     y=0;
-                    w=EVAL_UI(( 6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
-                    h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    w=EVAL_UI(fnc_width(6) / 2);
+                    h=EVAL_UI(fnc_height(2));
                 };
                 class OnTime_Text: ctrlStructuredText
                 {
@@ -127,12 +127,12 @@ class RscCFM_ArmaFPV_Dialog
                         shadow=1;
                     };
                     shadow=0;
-                    size=EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    size=EVAL_UI(fnc_height(1.4));
                     text="03:38";
                     x=0;
-                    y=EVAL_UI(( 0.3 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-                    w=EVAL_UI(( 6.5 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-                    h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+                    y=EVAL_UI(fnc_height(0.3));
+                    w=EVAL_UI(fnc_width(6.5));
+                    h=EVAL_UI(fnc_height(2));
                 };
             };
         };
@@ -140,23 +140,23 @@ class RscCFM_ArmaFPV_Dialog
         {
             idc=-1;
             text="\fpv_ua\pictures\PRICEL.paa";
-            x=EVAL_UI(0.5 - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
-            y=EVAL_UI(0.5 - ( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 + ( 1.25 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 2 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI(0.5 - fnc_width(2) / 2);
+            y=EVAL_UI(0.5 - fnc_height(2) / 2 + fnc_height(1.25));
+            w=EVAL_UI(fnc_width(2));
+            h=EVAL_UI(fnc_height(2));
         };
         class V_Line_Left: ctrlStaticPicture
         {
             idc=-1;
             text="\fpv_ua\pictures\horiz_empty.paa";
-            x=EVAL_UI(0.5 + ( 10 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            y=EVAL_UI(0.5 - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2);
-            w=EVAL_UI(( 1 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI(0.5 + fnc_width(10));
+            y=EVAL_UI(0.5 - fnc_height(12) / 2);
+            w=EVAL_UI(fnc_width(1));
+            h=EVAL_UI(fnc_height(12));
         };
         class V_Line_Right: V_Line_Left
         {
-            x=EVAL_UI(0.5 - ( 10 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
+            x=EVAL_UI(0.5 - fnc_width(10));
         };
         class MainText: ctrlStructuredText
         {
@@ -168,22 +168,22 @@ class RscCFM_ArmaFPV_Dialog
                 shadow=1;
             };
             shadow=0;
-            size=EVAL_UI(( 1.4 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            size=EVAL_UI(fnc_height(1.4));
             onLoad="uiNameSpace setVariable [""ArmaFPV_MainText"", _this # 0];";
             text="";
-            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2*(STATIC_SZ_W * 0.15)) / 2 - ( 20 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )) / 2);
-            y=EVAL_UI(0.5 - ( 12 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )) / 2 - ( 1.6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
-            w=EVAL_UI(( 20 * ( STATIC_GRID_SCALE * STATIC_PIXEL_W * 2 )));
-            h=EVAL_UI(( 1.6 * ( STATIC_GRID_SCALE * STATIC_PIXEL_H * 2 )));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2 - fnc_width(20) / 2);
+            y=EVAL_UI(0.5 - fnc_height(12) / 2 - fnc_height(1.6));
+            w=EVAL_UI(fnc_width(20));
+            h=EVAL_UI(fnc_height(1.6));
         };
         class AzimuthCompass: ctrlStaticPicture
         {
             idc=-1;
             text="\fpv_ua\pictures\vert.paa";
-            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ((STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2) - ((16 * (STATIC_GRID_SCALE * STATIC_PIXEL_W * 2)) / 2));
-            y=EVAL_UI(STATIC_SZ_Y + (0.5 * (STATIC_GRID_SCALE * STATIC_PIXEL_H * 2)));
-            w=EVAL_UI((16 * (STATIC_GRID_SCALE * STATIC_PIXEL_W * 2)));
-            h=EVAL_UI((1.3 * (STATIC_GRID_SCALE * STATIC_PIXEL_H * 2)));
+            x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ((STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2) - (fnc_width(16) / 2));
+            y=EVAL_UI(STATIC_SZ_Y + fnc_height(0.5));
+            w=EVAL_UI(fnc_width(16));
+            h=EVAL_UI(fnc_height(1.3));
         };
     };
 		class controlsBackground

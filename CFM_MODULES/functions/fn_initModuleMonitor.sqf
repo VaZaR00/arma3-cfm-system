@@ -97,6 +97,7 @@ if (is3DEN) exitWith {};
 		BOOL("monitorCanConnectDrone", 1),
 		BOOL("monitorCanFix", 1),
 		BOOL("monitorCanTurnOffLocal", 1),
-		BOOL("monitorHasPassword", 1)
+		BOOL("monitorHasPassword", 1),
+		LGVAR ["ScreenResolution", ""]
 	] call CFM_fnc_setMonitor;
 };

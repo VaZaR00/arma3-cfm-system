@@ -16,6 +16,12 @@
 #define DEFAULT_PIP_SETTINGS [[0.3, 1, 0.8], [0.3, 0, 0.8]]
 #define DEFAULT_PIP_SETTINGS_STR STR(DEFAULT_PIP_SETTINGS)
 
+// -- UI Screen Resolution defaults --
+#define DEFAULT_UI_SIZE_W 512
+#define DEFAULT_UI_SIZE_H 512
+#define DEFAULT_SCREEN_RESOLUTION [DEFAULT_UI_SIZE_W, DEFAULT_UI_SIZE_H]
+#define DEFAULT_UI_GRID_SCALE 7
+
 // -- Timing and interpolation --
 #define DO_CAM_INTERPOLATION false
 #define SET_LOCAL_CAM_VECTORS_TIMEOUT 0.05
