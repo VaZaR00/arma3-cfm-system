@@ -506,7 +506,11 @@ CLASS(Turret)
 
 		if (_isDroneFeed) exitWith {
 			if !(missionNamespace getVariable ["CFM_canMoveDroneCameras", false]) exitWith {false};
-			["moveDroneCamera", [_axisAngles, _isContinuous]] SPAWN_SELF
+			if (_isContinuous) then {
+				["moveDroneCamera", [_axisAngles, true]] CALL_SELF;
+			} else {
+				["moveDroneCamera", [_axisAngles, false]] SPAWN_SELF;
+			};
 			true
 		};
 
@@ -558,8 +562,8 @@ CLASS(Turret)
 				private _upW = _selfObj vectorModelToWorldVisual _upMS;
 				// transform dirup world
 				private _tarnsDirUp = [_dirW, _upW, _vertical, _horizontal] call CFM_fnc_transformTurret;
-				private _tarnsDir = _tarnsDirUp param [0, _dir];
-				private _tarnsUp = _tarnsDirUp param [1, _up];
+				private _tarnsDir = _tarnsDirUp param [0, _dirW];
+				private _tarnsUp = _tarnsDirUp param [1, _upW];
 				// transformed dirup in model space
 				private _newDirMS = _selfObj vectorWorldToModelVisual _tarnsDir;
 				private _newUpMS = _selfObj vectorWorldToModelVisual _tarnsUp;
@@ -593,6 +597,7 @@ CLASS(Turret)
 		_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 
 		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
+		private _localDoUpdCam = [true, +_pointParams] select _isStaticCam;
 
 		if (_isContinuous) then {
 			SET_SELFVAR(_currentCameraMoves);
@@ -600,8 +605,9 @@ CLASS(Turret)
 
 			{
 				_x setVariable ["CFM_camDoInterpolation", false];
+				_x setVariable ["CFM_cam_prevSetPos", nil];
 				_x setVariable ["CFM_currentCamPointParams", +_pointParams];
-				_x setVariable ["CFM_doUpdateCamera", _doUpdCam];
+				_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
 				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
 				if ((_x getVariable ["CFM_isVehTablet", false]) && hasInterface && {[_x] call CFM_fnc_inVehicleTabletSeatCondition}) then {
 					["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_x);
@@ -609,9 +615,9 @@ CLASS(Turret)
 			} forEach _monitorsOnTurret;
 
 			private _syncVar = format ["CFM_contLastNetSync_%1", _instanceIndex];
-			if ((diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1) then {
+			if (isMultiplayer && {(diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1}) then {
 				_selfObj setVariable [_syncVar, diag_tickTime];
-				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - [clientOwner];
+				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]});
 				if (_netTargets isNotEqualTo []) then {
 					{
 						if (_x getVariable ["CFM_isVehTablet", false]) then {
@@ -669,30 +675,45 @@ CLASS(Turret)
 
 		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
 
-		SET_SELFVARG(_ppPos);
-		SET_SELFVARG(_ppDir);
-		SET_SELFVARG(_ppUp);
-		SET_SELFVARG(_ppMemPoint);
-		SET_SELFVARG(_ppAddArr);
-		SET_SELFVARG(_ppSetArr);
-		SET_SELFVARG(_ppLod);
-		SET_SELFVARG(_currentCameraMoves);
-		SET_SELFVARG(_pointParams);
+		if (isMultiplayer) then {
+			SET_SELFVARG(_ppPos);
+			SET_SELFVARG(_ppDir);
+			SET_SELFVARG(_ppUp);
+			SET_SELFVARG(_ppMemPoint);
+			SET_SELFVARG(_ppAddArr);
+			SET_SELFVARG(_ppSetArr);
+			SET_SELFVARG(_ppLod);
+			SET_SELFVARG(_currentCameraMoves);
+			SET_SELFVARG(_pointParams);
+		};
 
-		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
-		private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
+		private _localDoUpdCam = [true, +_pointParams] select _isStaticCam;
 		{
-			if (_x getVariable ["CFM_isVehTablet", false]) then {
-				["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _targets] call CFM_fnc_remoteEvent;
-			} else {
-				if !(_doInterpolation) then {
-					_x setVariable ["CFM_camDoInterpolation", true, _targets];
-				};
-				_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
-				_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
-				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
-			};
+			_x setVariable ["CFM_camDoInterpolation", _doInterpolation];
+			_x setVariable ["CFM_cam_prevSetPos", nil];
+			_x setVariable ["CFM_currentCamPointParams", +_pointParams];
+			_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
+			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
 		} forEach _monitorsOnTurret;
+
+		private _netTargets = if (isMultiplayer) then {
+			(ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]})
+		} else {[]};
+		if (_netTargets isNotEqualTo []) then {
+			private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
+			{
+				if (_x getVariable ["CFM_isVehTablet", false]) then {
+					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
+				} else {
+					if !(_doInterpolation) then {
+						_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
+					};
+					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
+					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
+					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
+				};
+			} forEach _monitorsOnTurret;
+		};
 
 		true
 	};
@@ -724,6 +745,12 @@ CLASS(Turret)
 				_target = _operator;
 			};
 			if (_isContinuous) exitWith {
+				_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
+				SET_SELFVAR(_currentCameraMoves);
+				{
+					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+				} forEach _monitorsOnTurret;
+
 				private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
 				private _timeVar = format ["CFM_contDroneMoveTime_%1", _instanceIndex];
 				private _acc = _selfObj getVariable [_accVar, [0, 0]];
@@ -780,9 +807,12 @@ CLASS(Turret)
 				private _targetDir = _selfObj getVariable ["CFM_contGunnerTargetDir", []];
 				private _targetUp = _selfObj getVariable ["CFM_contGunnerTargetUp", []];
 				if (
-					((diag_tickTime - _lastContTime) > 0.25) ||
+					(((diag_tickTime - _lastContTime) > 1) && {[_targetDir, _dir, 0.05] call CFM_fnc_compareVectors || {(diag_tickTime - _lastContTime) > 3}}) ||
 					{!(_targetDir isEqualType []) || {count _targetDir != 3} || {vectorMagnitude _targetDir == 0}}
 				) then {
+					[_operator, _turretIndex, false, true] call CFM_fnc_updateTurretCamera;
+					_dir = _selfObj getVariable [_dirVarName, _dir];
+					_up = _selfObj getVariable [_upVarName, _up];
 					_targetDir = _dir;
 					_targetUp = _up;
 				};
@@ -798,6 +828,7 @@ CLASS(Turret)
 				private _lockDist = (MGVAR ["CFM_turretLockDistMax", 1500]) max (_speed * (MGVAR ["CFM_turretLockDistCoef", 100]));
 				private _lockPos = _selfObj modelToWorldVisualWorld ((vectorNormalized _newDir) vectorMultiply _lockDist);
 				_selfObj lockCameraTo [_lockPos, [_turretIndex]];
+				[_operator, _turretIndex, false, true] call CFM_fnc_updateTurretCamera;
 
 				_currentCameraMoves = [_initialDirUp, [_newDir, _newUp]] call CFM_fnc_calculateCurrentCameraMoves;
 				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
@@ -807,17 +838,26 @@ CLASS(Turret)
 					terminate _prevHandle;
 				};
 
-				private _prevCamDir = getPilotCameraDirection _selfObj;
-				if (!(_prevCamDir isEqualType []) || {count _prevCamDir != 3} || {vectorMagnitude _prevCamDir == 0}) then {
-					_prevCamDir = _dir;
+				private _lastPilotContTime = _selfObj getVariable ["CFM_contPilotLastTime", 0];
+				private _prevCamDir = _selfObj getVariable ["CFM_contPilotTargetDir", []];
+				if (
+					((diag_tickTime - _lastPilotContTime) > 0.25) ||
+					{!(_prevCamDir isEqualType []) || {count _prevCamDir != 3} || {vectorMagnitude _prevCamDir == 0}}
+				) then {
+					_prevCamDir = getPilotCameraDirection _selfObj;
+					if (!(_prevCamDir isEqualType []) || {count _prevCamDir != 3} || {vectorMagnitude _prevCamDir == 0}) then {
+						_prevCamDir = _dir;
+					};
 				};
 				private _prevCamUp = _prevCamDir call CFM_fnc_getVectorUpFromDir;
 				private _newDirUp = [_prevCamDir, _prevCamUp, _vertical, _horizontal] call CFM_fnc_transformTurret;
 				private _newCamDir = _newDirUp param [0, _prevCamDir];
 				private _newCamUp = _newDirUp param [1, _prevCamUp];
+				_selfObj setVariable ["CFM_contPilotTargetDir", _newCamDir];
+				_selfObj setVariable ["CFM_contPilotLastTime", diag_tickTime];
 
 				_selfObj setPilotCameraDirection _newCamDir;
-				[_selfObj, -1, false] call CFM_fnc_updateTurretCamera;
+				[_selfObj, -1, false, true] call CFM_fnc_updateTurretCamera;
 
 				_currentCameraMoves = [_initialDirUp, [_newCamDir, _newCamUp]] call CFM_fnc_calculateCurrentCameraMoves;
 				_currentCameraMoves = [_currentCameraMoves, [0, 0], _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
@@ -833,25 +873,27 @@ CLASS(Turret)
 					private _timeVar = format ["CFM_contLastInputTime_%1", _instIdx];
 					private _updTurr = [-1, _tIdx] select _isGun;
 					while {IS_OBJ(_op) && {(diag_tickTime - (_obj getVariable [_timeVar, 0])) < 0.4}} do {
-						[_op, _updTurr, false, false] call CFM_fnc_updateTurretCamera;
+						[_op, _updTurr, false, true] call CFM_fnc_updateTurretCamera;
 						sleep 0.01;
 					};
 					if !(IS_OBJ(_op)) exitWith {};
 					[_op, _updTurr, false, false] call CFM_fnc_updateTurretCamera;
-					private _idxStr = TURR_INDX_STR(_updTurr);
-					private _fTargets = ACTIVE_VIEWERS_AND_SELF(false);
-					{
-						private _v = _op getVariable [_x, []];
-						if ((_v isEqualType []) && {count _v == 3}) then {
-							_op setVariable [_x, _v, _fTargets];
-						};
-					} forEach ["CFM_currentTurretDirMS" + _idxStr, "CFM_currentTurretUpMS" + _idxStr];
-					private _moves = _obj getVariable [format ["CFM_contLastMoves_%1", _instIdx], []];
-					if (_moves isNotEqualTo []) then {
-						private _mons = _obj getVariable [format ["CFM_turret_monitorsOnTurret_%1", _instIdx], []];
+					if (isMultiplayer) then {
+						private _idxStr = TURR_INDX_STR(_updTurr);
+						private _fTargets = ACTIVE_VIEWERS_AND_SELF(false);
 						{
-							_x setVariable ["CFM_currentCameraMoves", +_moves, _fTargets];
-						} forEach _mons;
+							private _v = _op getVariable [_x, []];
+							if ((_v isEqualType []) && {count _v == 3}) then {
+								_op setVariable [_x, _v, _fTargets];
+							};
+						} forEach ["CFM_currentTurretDirMS" + _idxStr, "CFM_currentTurretUpMS" + _idxStr];
+						private _moves = _obj getVariable [format ["CFM_contLastMoves_%1", _instIdx], []];
+						if (_moves isNotEqualTo []) then {
+							private _mons = _obj getVariable [format ["CFM_turret_monitorsOnTurret_%1", _instIdx], []];
+							{
+								_x setVariable ["CFM_currentCameraMoves", +_moves, _fTargets];
+							} forEach _mons;
+						};
 					};
 				};
 				_selfObj setVariable [format ["CFM_contFinHandle_%1", _instanceIndex], _finHandle];
@@ -864,12 +906,14 @@ CLASS(Turret)
 			} forEach _monitorsOnTurret;
 
 			private _syncVar = format ["CFM_contDroneLastNetSync_%1", _instanceIndex];
-			if ((diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1) then {
+			if (isMultiplayer && {(diag_tickTime - (_selfObj getVariable [_syncVar, 0])) >= 0.1}) then {
 				_selfObj setVariable [_syncVar, diag_tickTime];
-				private _targets = ACTIVE_VIEWERS_AND_SELF(false);
-				{
-					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
-				} forEach _monitorsOnTurret;
+				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]});
+				if (_netTargets isNotEqualTo []) then {
+					{
+						_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
+					} forEach _monitorsOnTurret;
+				};
 				SET_SELFVARG(_currentCameraMoves);
 			};
 

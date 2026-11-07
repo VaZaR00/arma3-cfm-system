@@ -18,11 +18,6 @@ if !((_operator getVariable ["CFM_operatorSet", false]) isEqualTo true) exitWith
 private _turretIndex = TURRET_INDEX(_turret);
 private _turrIdxStr = TURR_INDX_STR(_turretIndex);
 
-if (isMultiplayer && {_useCooldown && {
-	private _prevTimeSet = _operator getVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, 0];
-	(diag_tickTime - _prevTimeSet) < SET_LOCAL_CAM_VECTORS_TIMEOUT;
-}}) exitWith {2};
-
 private _turretsInstances = _operator getVariable ["CFM_turretsInstances", createHashMap];
 
 if !(_turretIndex in _turretsInstances) exitWith {3};
@@ -47,8 +42,13 @@ private _currDirMS = _operator vectorWorldToModelVisual _dir;
 private _currUpMS = _operator vectorWorldToModelVisual _up;
 // private _currPosMS = _operator worldToModelVisual (ASLToAGL _pos);
 
+private _canSyncNet = !isMultiplayer || {!_useCooldown || {
+	private _prevTimeSet = _operator getVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, 0];
+	(diag_tickTime - _prevTimeSet) >= SET_LOCAL_CAM_VECTORS_TIMEOUT
+}};
+
 private _updated = false;
-private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+private _targets = if (_canSyncNet && isMultiplayer) then {ACTIVE_VIEWERS_AND_SELF(false)} else {false};
 if ((_currDirMS isEqualType []) && {count _currDirMS == 3} && {!(_currDirMS isEqualTo _prevDir)}) then {
 	_updated = true;
 	_operator setVariable [_dirVarName, _currDirMS, _targets];
@@ -64,6 +64,8 @@ if ((_currUpMS isEqualType []) && {count _currUpMS == 3} && {!(_currUpMS isEqual
 if (cameraOn isEqualTo _operator) then {
 	[_operator] call CFM_fnc_updateOperatorZoom;
 };
-_operator setVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, diag_tickTime];
+if (_canSyncNet && _updated) then {
+	_operator setVariable ["CFM_prevTimeSetLocalCamVector" + _turrIdxStr, diag_tickTime];
+};
 
 _updated

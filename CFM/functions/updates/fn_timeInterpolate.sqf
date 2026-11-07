@@ -21,7 +21,7 @@ if (_targetValue isEqualType []) exitWith {
 };
 if (_targetValue isEqualType 1) exitWith {
 	private _newValue = _prevValue + ((_targetValue - _prevValue) * _interpFactor);
-	if ((abs (_targetFov - _newFov)) < DO_INTERPOLATE_TOLERANCE) then {
+	if ((abs (_targetValue - _newValue)) < DO_INTERPOLATE_TOLERANCE) then {
 		_newValue = _targetValue;
 	};
 	_newValue

@@ -90,6 +90,11 @@ if (_doInterpolation) then {
 	// _monitor setVariable ["CFM_camInterp_lastPos", _newPos];
 	_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
 	_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
+} else {
+	if (IS_OBJ(_monitor)) then {
+		_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
+		_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
+	};
 };
 if (_smoothZoom) then {
 	private _interpTightnessZoomVal = 0.01 max VALIDATE_NUM_VAR("CFM_camInterpolation_tightnessZoom", "10");
@@ -101,6 +106,10 @@ if (_smoothZoom) then {
 	private _lastFov = _monitor getVariable ["CFM_camInterp_lastFov", _fov];
 	_newFov = [_lastFov, _fov, _interpTightnessZoom] call CFM_fnc_timeInterpolate;
 	_monitor setVariable ["CFM_camInterp_lastFov", _newFov];
+} else {
+	if (IS_OBJ(_monitor)) then {
+		_monitor setVariable ["CFM_camInterp_lastFov", _newFov];
+	};
 };
 if (_camExists && _doSetCam) then {
 	_cam setPosASL _newPos;
