@@ -10,6 +10,4 @@
 private _val = if (_this isEqualType 0) then {_this} else {_this param [0, 0]};
 private _origin = if (_this isEqualType []) then {_this param [1, 0]} else {0};
 
-time RLOG
-
 _origin + (_val call CFM_fnc_width)
