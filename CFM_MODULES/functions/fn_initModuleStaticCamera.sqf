@@ -78,11 +78,12 @@ if (!_activated || {is3DEN}) exitWith {};
 		private _camObj = MGVAR [trim (_camLogic getVariable ["cameraObject", ""]), objNull];
 		private _canMoveStr = toLower trim (_camLogic getVariable ["cameraCanMoveCamera", ""]);
 		private _canMoveCam = call {
-			if (_canMoveStr isEqualTo "true") exitWith {true};
-			if (_canMoveStr in ["false", ""]) exitWith {false};
+			if (_canMoveStr in ["true", ""/* FOR STATIC CAMERA SPECIFICLY DEFAULT EMPTY IS TRUE */]) exitWith {true};
+			if (_canMoveStr in ["false", "0"]) exitWith {false};
 			private _arr = (_canMoveStr splitString SPLIT_CHARACTERS) apply {parseNumber _x};
 			if (_arr isEqualTo []) exitWith {false};
 			_arr resize [4, 0];
+			if (_arr isEqualTo [0,0,0,0]) exitWith {false};
 			_arr
 		};
 

@@ -114,7 +114,7 @@ class CfgVehicles
             PARAMETER(cameraObject, "STRING", "")
             PARAMETER(cameraTIParams, "STRING", "")
             PARAMETER(cameraNVGParams, "STRING", "")
-            PARAMETER(cameraCanMoveCamera, "STRING", "false")
+            PARAMETER(cameraCanMoveCamera, "STRING", "")
             PARAMETER_SELECT(cameraSmoothZoom, 1)
             PARAMETER(turretIndex, "STRING", "")
             PARAMETER(zoomParams, "STRING", "")
