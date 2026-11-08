@@ -5,11 +5,12 @@ class RscCFM_ArmaFPV_Dialog
     duration=9.9999997e+037;
     movingEnable="false";
     enableSimulation="true";
+    onLoad="[_this select 0, 'RscCFM_ArmaFPV_Dialog'] call (missionNamespace getVariable ['CFM_fnc_repositionControls', {}]);";
     class controls
     {
         class LeftLine: RscText
         {
-            idc=-1;
+            idc=1101;
             x=EVAL_UI(STATIC_SZ_X);
             y=EVAL_UI(STATIC_SZ_Y);
             w=EVAL_UI((STATIC_SZ_W * 0.15));
@@ -18,11 +19,12 @@ class RscCFM_ArmaFPV_Dialog
         };
         class RightLine: LeftLine
         {
+            idc=1102;
             x=EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - (STATIC_SZ_W * 0.15));
         };
         class CommunicationGroup: ctrlControlsGroupNoScrollBars
         {
-            idc=-1;
+            idc=1103;
             x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) - fnc_width(6) - fnc_width(2));
             y=EVAL_UI((STATIC_SZ_Y) + fnc_height(6));
             w=EVAL_UI(fnc_width(6));
@@ -61,7 +63,7 @@ class RscCFM_ArmaFPV_Dialog
         };
         class BatteryGroup: ctrlControlsGroupNoScrollBars
         {
-            idc=-1;
+            idc=1104;
             x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + fnc_width(2));
             y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - fnc_height(2) - fnc_height(8));
             w=EVAL_UI(fnc_width(8));
@@ -100,7 +102,7 @@ class RscCFM_ArmaFPV_Dialog
         };
         class OnTime_Group: ctrlControlsGroupNoScrollBars
         {
-            idc=-1;
+            idc=1105;
             x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + (STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) - fnc_width(6) - fnc_width(2));
             y=EVAL_UI((STATIC_SZ_Y) + (STATIC_SZ_H) - fnc_height(2) - fnc_height(8));
             w=EVAL_UI(fnc_width(10));
@@ -109,7 +111,7 @@ class RscCFM_ArmaFPV_Dialog
             {
                 class OnTime_Picture: ctrlStaticPicture
                 {
-                    idc=-1;
+                    idc=1106;
                     text="\fpv_ua\pictures\mn.paa";
                     x=0;
                     y=0;
@@ -138,7 +140,7 @@ class RscCFM_ArmaFPV_Dialog
         };
         class Center_target: ctrlStaticPicture
         {
-            idc=-1;
+            idc=1107;
             text="\fpv_ua\pictures\PRICEL.paa";
             x=EVAL_UI(0.5 - fnc_width(2) / 2);
             y=EVAL_UI(0.5 - fnc_height(2) / 2 + fnc_height(1.25));
@@ -147,7 +149,7 @@ class RscCFM_ArmaFPV_Dialog
         };
         class V_Line_Left: ctrlStaticPicture
         {
-            idc=-1;
+            idc=1108;
             text="\fpv_ua\pictures\horiz_empty.paa";
             x=EVAL_UI(0.5 + fnc_width(10));
             y=EVAL_UI(0.5 - fnc_height(12) / 2);
@@ -156,11 +158,12 @@ class RscCFM_ArmaFPV_Dialog
         };
         class V_Line_Right: V_Line_Left
         {
+            idc=1109;
             x=EVAL_UI(0.5 - fnc_width(10));
         };
         class MainText: ctrlStructuredText
         {
-            idc=-1;
+            idc=1110;
             class Attributes
             {
                 font="VCROSDMono";
@@ -178,7 +181,7 @@ class RscCFM_ArmaFPV_Dialog
         };
         class AzimuthCompass: ctrlStaticPicture
         {
-            idc=-1;
+            idc=1111;
             text="\fpv_ua\pictures\vert.paa";
             x=EVAL_UI((STATIC_SZ_X + (STATIC_SZ_W * 0.15)) + ((STATIC_SZ_W - 2 * (STATIC_SZ_W * 0.15)) / 2) - (fnc_width(16) / 2));
             y=EVAL_UI(STATIC_SZ_Y + fnc_height(0.5));

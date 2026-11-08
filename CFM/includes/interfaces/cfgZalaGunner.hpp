@@ -3,7 +3,7 @@ class CFM_Zala421_Interface_Gunner
 {
     idd=2357;
     duration=1e+010;
-    onLoad="uiNameSpace setVariable ['CFM_DB_zala421HUD_display_gunner', _this # 0]";
+    onLoad="uiNameSpace setVariable ['CFM_DB_zala421HUD_display_gunner', _this # 0]; [_this select 0, 'CFM_Zala421_Interface_Gunner'] call (missionNamespace getVariable ['CFM_fnc_repositionControls', {}]);";
     class controls
     {
         class Square_X: Zala16_UI_BaseBox
@@ -17,10 +17,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1237;
                     w=EVAL_UI(fnc_width(8));
                 };
                 class Text: Text
                 {
+                    idc=2237;
                     text="РљР’ X";
                     w=EVAL_UI(fnc_width(8));
                 };
@@ -37,10 +39,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1825;
                     w=EVAL_UI(fnc_width(8));
                 };
                 class Text: Text
                 {
+                    idc=2825;
                     text="РљР’ Y";
                     w=EVAL_UI(fnc_width(8));
                 };
@@ -57,10 +61,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1836;
                     w=EVAL_UI(fnc_width(8));
                 };
                 class Text: Text
                 {
+                    idc=2836;
                     text="Р›РђР—Р•Р ";
                     w=EVAL_UI(fnc_width(8));
                 };
@@ -77,10 +83,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1369;
                     w=EVAL_UI(fnc_width(8));
                 };
                 class Text: Text
                 {
+                    idc=2369;
                     text="РЎРљРћР ";
                     w=EVAL_UI(fnc_width(8));
                 };
@@ -97,10 +105,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1241;
                     w=EVAL_UI(fnc_width(6));
                 };
                 class Text: Text
                 {
+                    idc=2241;
                     text="Р’Р«РЎ";
                     w=EVAL_UI(fnc_width(6));
                 };
@@ -117,10 +127,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1398;
                     w=EVAL_UI(fnc_width(6));
                 };
                 class Text: Text
                 {
+                    idc=2398;
                     text="РљРЈР РЎ";
                     w=EVAL_UI(fnc_width(6));
                 };
@@ -137,10 +149,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1375;
                     w=EVAL_UI(fnc_width(4));
                 };
                 class Text: Text
                 {
+                    idc=2375;
                     text="Рў";
                     w=EVAL_UI(fnc_width(4));
                 };
@@ -157,10 +171,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1203;
                     w=EVAL_UI(fnc_width(6.5));
                 };
                 class Text: Text
                 {
+                    idc=2203;
                     text="14/05/19";
                     w=EVAL_UI(fnc_width(6.5));
                 };
@@ -177,10 +193,12 @@ class CFM_Zala421_Interface_Gunner
             {
                 class BackGround: BackGround
                 {
+                    idc=1265;
                     w=EVAL_UI(fnc_width(6.5));
                 };
                 class Text: Text
                 {
+                    idc=2265;
                     text="02:22:41";
                     w=EVAL_UI(fnc_width(6.5));
                 };

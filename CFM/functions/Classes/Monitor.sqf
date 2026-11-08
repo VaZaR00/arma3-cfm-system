@@ -147,6 +147,10 @@ SINGLETON_CLASS(Monitor)
 
 		private _parsedScreenRes = [_screenResolutionSet] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
+			private _existingRes = _monitor getVariable ["CFM_screenResolution", _monitor getVariable ["ScreenResolution", ""]];
+			_parsedScreenRes = [_existingRes] call CFM_fnc_parseScreenResolution;
+		};
+		if (_parsedScreenRes isEqualTo []) then {
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
 		};
 		_screenResolution = _parsedScreenRes;
@@ -223,6 +227,9 @@ SINGLETON_CLASS(Monitor)
 		};
 		_screenResolution = _parsedScreenRes;
 		_monitor setVariable ["CFM_screenResolution", _screenResolution, !_isLocal];
+		if (_feedActive) then {
+			[_selfObj] spawn CFM_fnc_resetFeed;
+		};
 		_screenResolution
 	};
 	METHOD("startFeed") {  

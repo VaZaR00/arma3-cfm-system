@@ -217,6 +217,10 @@ PREP(pixelW)
 PREP(pixelH)
 PREP(posX)
 PREP(posY)
+PREP(parseControlFormula)
+PREP(parseDisplayConfig)
+PREP(parseAllDisplaysConfigs)
+PREP(repositionControls)
 
 // -- Category UITexture\fpvUI --
 FOLDER_PATH(UITexture\fpvUI)

@@ -1,6 +1,6 @@
 class InfoBox_Base: ctrlControlsGroupNoScrollBars
 {
-	idc=-1;
+	idc=1200;
 	x=0;
 	y=0;
 	w=EVAL_UI(fnc_width(2.5));
@@ -9,7 +9,7 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 	{
 		class WhiteBackGround: ctrlStaticBackGround
 		{
-			idc=-1;
+			idc=1201;
 			colorBackGround[]={1,1,1,1};
 			x=0;
 			y=0;
@@ -18,7 +18,7 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 		};
 		class TopBackGround: ctrlStaticBackGround
 		{
-			idc=-1;
+			idc=1202;
 			colorBackGround[]={0,0,0,1};
 			x=EVAL_UI(fnc_width(0.1));
 			y=EVAL_UI(fnc_height(0.1));
@@ -27,7 +27,7 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 		};
 		class MainText: ctrlStructuredText
 		{
-			idc=-1;
+			idc=1203;
 			class Attributes
 			{
 				font="PuristaLight";
@@ -44,7 +44,7 @@ class InfoBox_Base: ctrlControlsGroupNoScrollBars
 };
 class Zala16_UI_BaseBox: ctrlControlsGroupNoScrollBars
 {
-	idc=-1;
+	idc=1300;
 	x=0;
 	y=0;
 	w=0;
@@ -53,7 +53,7 @@ class Zala16_UI_BaseBox: ctrlControlsGroupNoScrollBars
 	{
 		class BackGround: ctrlStaticBackGround
 		{
-			idc=-1;
+			idc=1301;
 			colorBackGround[]={0,0,0,0.69999999};
 			x=0;
 			y=0;

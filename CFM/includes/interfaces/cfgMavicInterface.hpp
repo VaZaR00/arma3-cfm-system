@@ -4,11 +4,12 @@ class RscCFM_Mavic_Interface
 {
 	idd = 1589;
 	duration = 2;
+	onLoad = "[_this select 0, 'RscCFM_Mavic_Interface'] call (missionNamespace getVariable ['CFM_fnc_repositionControls', {}]);";
 	class controls
 	{
 		class Camera_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1001;
 			text = "\mavik\interface\main\camera.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) / 2 - fnc_width(2.0) / 2 - fnc_width(1.5));
 			y = EVAL_UI(STATIC_SZ_Y + STATIC_SZ_H - fnc_height(2.0) - fnc_height(1.3));
@@ -17,7 +18,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Settings_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1002;
 			text = "\mavik\interface\main\dots.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) / 2 - fnc_width(2.0) / 2 - fnc_width(1.5));
 			y = EVAL_UI(STATIC_SZ_Y + fnc_height(1.3));
@@ -26,7 +27,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Exit_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1003;
 			text = "\mavik\interface\main\triangle.paa";
 			x = EVAL_UI(STATIC_SZ_X + fnc_width(1.5));
 			y = EVAL_UI(STATIC_SZ_Y + fnc_height(1.3));
@@ -35,7 +36,7 @@ class RscCFM_Mavic_Interface
 		};
 		class FlightMode_Text: ctrlStructuredText
 		{
-			idc = -1;
+			idc = 1004;
 			text = "$STR_mavic_fligtMode";
 			x = EVAL_UI(STATIC_SZ_X + fnc_width(1.5) + fnc_width(2.0) + fnc_width(3.0));
 			y = EVAL_UI(STATIC_SZ_Y + fnc_height(1.3) + fnc_height(0.3));
@@ -56,7 +57,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Cross: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1005;
 			text = "\mavik\interface\main\kross.paa";
 			x = EVAL_UI(0.5 - fnc_width(5.0) / 2);
 			y = EVAL_UI(0.5 - fnc_height(5.0) / 2);
@@ -65,7 +66,7 @@ class RscCFM_Mavic_Interface
 		};
 		class MapTriangle_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1006;
 			text = "\mavik\interface\main\maptriangle.paa";
 			x = EVAL_UI(STATIC_SZ_X + fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.0));
@@ -74,7 +75,7 @@ class RscCFM_Mavic_Interface
 		};
 		class RTH_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1007;
 			text = "\mavik\interface\main\arrow.paa";
 			x = EVAL_UI(STATIC_SZ_X + fnc_width(1.5));
 			y = EVAL_UI(0.5 + fnc_height(2.0));
@@ -83,7 +84,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Record_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1008;
 			text = "\mavik\interface\main\redcircle.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) - fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(3) / 2);
@@ -92,7 +93,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Play_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1009;
 			text = "\mavik\interface\main\play.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) / 2 - fnc_width(2.0) / 2 - fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.0) / 2 + fnc_height(3) + fnc_height(1.3));
@@ -101,7 +102,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Galery_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1010;
 			text = "\mavik\interface\main\galery.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) / 2 - fnc_width(2.0) / 2 - fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.0) / 2 - fnc_height(3) - fnc_height(1.3));
@@ -110,7 +111,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Zoom_Display: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1011;
 			text = "\mavik\interface\zoom\zoom.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) - fnc_width(2.2) - 2 * fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.2) / 2);
@@ -135,7 +136,7 @@ class RscCFM_Mavic_Interface
 		};
 		class MemoryPicture: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1012;
 			text = "\mavik\interface\main\memory.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) - fnc_width(2.2) - 2 * fnc_width(1.5));
 			y = EVAL_UI(STATIC_SZ_Y + STATIC_SZ_H - fnc_height(2.0) - fnc_height(1.3));
@@ -144,7 +145,7 @@ class RscCFM_Mavic_Interface
 		};
 		class AF_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1013;
 			text = "\mavik\interface\zoom\AF.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) - fnc_width(2.2) - 2 * fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.2) / 2 + fnc_height(2.2) + fnc_height(0.05));
@@ -153,7 +154,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Binoc_Button: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1014;
 			text = "\mavik\interface\zoom\binocular.paa";
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(3) - fnc_width(2.2) - 2 * fnc_width(1.5));
 			y = EVAL_UI(0.5 - fnc_height(2.2) / 2 - fnc_height(2.2) - fnc_height(0.3));
@@ -162,7 +163,7 @@ class RscCFM_Mavic_Interface
 		};
 		class UAVInfo_Group: ctrlControlsGroupNoScrollBars
 		{
-			idc = -1;
+			idc = 1015;
 			x = EVAL_UI(STATIC_SZ_X + fnc_width(0.8));
 			y = EVAL_UI(STATIC_SZ_Y + STATIC_SZ_H - fnc_height(3) - fnc_height(0.4));
 			w = EVAL_UI(fnc_width(15));
@@ -171,7 +172,7 @@ class RscCFM_Mavic_Interface
 			{
 				class Map_Picture: ctrlStaticPicture
 				{
-					idc = -1;
+					idc = 1016;
 					text = "\mavik\interface\main\map.paa";
 					x = 0;
 					y = 0;
@@ -180,7 +181,7 @@ class RscCFM_Mavic_Interface
 				};
 				class H_Text: ctrlStructuredText
 				{
-					idc = -1;
+					idc = 1017;
 					x = EVAL_UI(fnc_width(3.0) + fnc_width(0.2));
 					y = EVAL_UI(fnc_height(3) - fnc_height(1.4));
 					w = EVAL_UI(fnc_width(1.4));
@@ -219,7 +220,7 @@ class RscCFM_Mavic_Interface
 				};
 				class D_Text: H_Text
 				{
-					idc = -1;
+					idc = 1018;
 					x = EVAL_UI(fnc_width(3.0) + 4 * fnc_width(1.4) + fnc_width(1.0) - fnc_width(1.4));
 					text = "D";
 				};
@@ -251,7 +252,7 @@ class RscCFM_Mavic_Interface
 		};
 		class StatusInfo_Group: ctrlControlsGroupNoScrollBars
 		{
-			idc = -1;
+			idc = 1019;
 			x = EVAL_UI(STATIC_SZ_X + STATIC_SZ_W - fnc_width(5) - fnc_width(11.2));
 			y = EVAL_UI(STATIC_SZ_Y + fnc_height(1.3));
 			w = EVAL_UI(fnc_width(15));
@@ -312,7 +313,7 @@ class RscCFM_Mavic_Interface
 				};
 				class Sensor: ctrlStaticPicture
 				{
-					idc = -1;
+					idc = 1020;
 					text = "\mavik\interface\main\sensor.paa";
 					x = EVAL_UI(fnc_width(1.5) + fnc_width(3.2) + fnc_width(1.2) + 4 * fnc_width(0.1));
 					y = EVAL_UI(fnc_height(1.5) / 2 - fnc_height(1.2) / 2);
@@ -331,7 +332,7 @@ class RscCFM_Mavic_Interface
 				};
 				class Datchik: ctrlStaticPicture
 				{
-					idc = -1;
+					idc = 1021;
 					text = "\mavik\interface\main\datchik.paa";
 					x = EVAL_UI(fnc_width(1.5) + fnc_width(3.2) + fnc_width(1.2) + 5 * fnc_width(0.1) + 2 * fnc_width(1.2) + fnc_width(0.1));
 					y = EVAL_UI(fnc_height(1.5) / 2 - fnc_height(1.2) / 2);
@@ -353,7 +354,7 @@ class RscCFM_Mavic_Interface
 			{
 				class BackGround: ctrlStaticPicture
 				{
-					idc = -1;
+					idc = 1022;
 					text = "\mavik\interface\detach\big.paa";
 					x = 0;
 					y = 0;
@@ -362,7 +363,7 @@ class RscCFM_Mavic_Interface
 				};
 				class Text: ctrlStructuredText
 				{
-					idc = -1;
+					idc = 1023;
 					class Attributes
 					{
 						align = "center";
@@ -399,7 +400,7 @@ class RscCFM_Mavic_Interface
 		};
 		class Gradient: ctrlStaticPicture
 		{
-			idc = -1;
+			idc = 1490;
 			onLoad = "uiNamespace setVariable [""DB_gradient_control"", _this # 0];";
 			text = "\mavik\interface\signal\gradient.paa";
 			x = EVAL_UI(STATIC_SZ_X);

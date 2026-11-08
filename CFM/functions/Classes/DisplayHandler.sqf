@@ -100,8 +100,9 @@ SINGLETON_CLASS(DisplayHandler)
 		params[["_reset", false]];
 
 		private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
-		uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
-		missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+		private _uiDisplaysMap = uiNamespace getVariable ["CFM_uiDisplayMonitorsMap", createHashMap];
+		_uiDisplaysMap set [_monitorUid, _monitor];
+		uiNamespace setVariable ["CFM_uiDisplayMonitorsMap", _uiDisplaysMap];
 
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 		_monitor setObjectTexture [0, format["#(rgb,%1,%1,1)ui(RscDisplayMainDisplayCFM,%2)", _size, _monitorUid]];  
@@ -116,10 +117,13 @@ SINGLETON_CLASS(DisplayHandler)
 		if (isNull _mainDisplay) exitWith {
 			format["DisplayHandler.setupDisplay: ERROR: can't create main display for monitor: %1", _selfObj] WARN
 		};
+		_mainDisplay setVariable ["CFM_monitor", _monitor];
+		_mainDisplay setVariable ["CFM_screenResolution", _screenRes];
 
 		// control that renders picture of r2t display
 		private _r2tDisplayCtrl = _mainDisplay ctrlCreate ["RscPicture", R2T_DISPLAY_CTRL_ID];
 		private _r2tDisplayName = _monitorUid + "r2t";
+		_uiDisplaysMap set [_r2tDisplayName, _monitor];
 		_r2tDisplayCtrl ctrlSetPosition [0, 0, 1, 1];
 		_r2tDisplayCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(RscDisplayR2TDisplayCFM,%2)", _size, _r2tDisplayName]);
 		_r2tDisplayCtrl ctrlCommit 0;
@@ -134,6 +138,8 @@ SINGLETON_CLASS(DisplayHandler)
 		if (isNull _r2tDisplay) exitWith {
 			format["DisplayHandler.setupDisplay: ERROR: can't create r2t display for monitor: %1", _selfObj] WARN
 		};
+		_r2tDisplay setVariable ["CFM_monitor", _monitor];
+		_r2tDisplay setVariable ["CFM_screenResolution", _screenRes];
 
 		// control that renders r2t picture on r2t display
 		private _r2tDisplayR2TCtrl = _r2tDisplay ctrlCreate ["RscPicture", R2T_CTRL_ID];
@@ -179,20 +185,22 @@ SINGLETON_CLASS(DisplayHandler)
 
 		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
 
-		private _prevCreateLock = missionNamespace getVariable ["CFM_creatingUiDisplayScript", scriptNull];
-		if (!isNull _prevCreateLock && {!(scriptDone _prevCreateLock)}) then {
-			waitUntil {scriptDone _prevCreateLock};
+		private _lockWaitStart = diag_tickTime;
+		waitUntil {
+			!(uiNamespace getVariable ["CFM_creatingUiDisplayLock", false]) ||
+			{(diag_tickTime - _lockWaitStart) > WAIT_FOR_DISPLAY_TIME}
 		};
-		if (!isNil "_thisScript") then {
-			missionNamespace setVariable ["CFM_creatingUiDisplayScript", _thisScript];
-		};
+		uiNamespace setVariable ["CFM_creatingUiDisplayLock", true];
+		uiNamespace setVariable ["CFM_creatingUiMonitor", _monitor];
 
 		private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
-		uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
-		missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
-
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 		_uiDisplayUniqueName = _monitorUid + str _uiIndex;
+
+		private _uiDisplaysMap = uiNamespace getVariable ["CFM_uiDisplayMonitorsMap", createHashMap];
+		_uiDisplaysMap set [_uiDisplayUniqueName, _monitor];
+		uiNamespace setVariable ["CFM_uiDisplayMonitorsMap", _uiDisplaysMap];
+
 		if !(isNull _ctrl) then {
 			_ctrl ctrlSetText (format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]);
 		} else {
@@ -205,10 +213,12 @@ SINGLETON_CLASS(DisplayHandler)
 			{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
 		};
 		_mainDisplay = findDisplay _uiDisplayUniqueName;
+		uiNamespace setVariable ["CFM_creatingUiDisplayLock", false];
 
 		if (isNull _mainDisplay) exitWith {
 			format["DisplayHandler.startRenderingUI: ERROR: can't create main display for monitor: %1", _selfObj] WARN
 		};
+		_mainDisplay setVariable ["CFM_monitor", _monitor];
 		_mainDisplay setVariable ["CFM_screenResolution", _screenRes];
 		_monitor setVariable ["CFM_uiDisplayUniqueName", _uiDisplayUniqueName];
 		_monitor setVariable ["CFM_uiIndex", _uiIndex + 1];
@@ -305,9 +315,9 @@ SINGLETON_CLASS(DisplayHandler)
 		params[["_set", false], ["_currentUIDisplayRenderClass", ""], ["_currentUIDisplayRenderClassInit", ""]];
 		_set = _set && {!(_currentUIDisplayRenderClass isEqualTo "")};
 		if (_set) then {
-			private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
-			uiNamespace setVariable ["CFM_currentUiResolution", _screenRes];
-			missionNamespace setVariable ["CFM_currentUiResolution", _screenRes];
+			private _uiDisplaysMap = uiNamespace getVariable ["CFM_uiDisplayMonitorsMap", createHashMap];
+			_uiDisplaysMap set [_uiCtrlUIDisplayName, _monitor];
+			uiNamespace setVariable ["CFM_uiDisplayMonitorsMap", _uiDisplaysMap];
 
 			private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
 			_displayUiCtrl ctrlSetText (format ["#(rgb,%1,%1,1)ui(%2,%3)", _size, _currentUIDisplayRenderClass, _uiCtrlUIDisplayName]);
@@ -336,6 +346,10 @@ SINGLETON_CLASS(DisplayHandler)
 				{(time - _waitStart) > WAIT_FOR_DISPLAY_TIME}
 			};
 			private _display = findDisplay _uiCtrlUIDisplayName;
+			if !(isNull _display) then {
+				_display setVariable ["CFM_monitor", _selfObj];
+				_display setVariable ["CFM_screenResolution", [_selfObj] call CFM_fnc_getMonitorScreenResolution];
+			};
 
 			_selfObj setVariable ["CFM_uiCtrlCurrentUIDisplay", _display];
 		};

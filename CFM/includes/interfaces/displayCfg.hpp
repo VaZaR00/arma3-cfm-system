@@ -14,7 +14,7 @@ class RscDisplayMainDisplayCFM: RscDisplayEmpty
 class RscDisplayR2TDisplayCFM: RscDisplayEmpty
 {
     idd = 169;
-    onLoad = "_this call (missionNamespace getVariable ['CFM_fnc_onR2TDisplayLoad', {}])";
+    onLoad = "_this call (missionNamespace getVariable ['CFM_fnc_onR2TDisplayLoad', {}]); [_this select 0, 'RscDisplayR2TDisplayCFM'] call (missionNamespace getVariable ['CFM_fnc_repositionControls', {}]);";
     onUnload = "_this call (missionNamespace getVariable ['CFM_fnc_onR2TDisplayUnload', {}])";
 	class controlsBackground
 	{
