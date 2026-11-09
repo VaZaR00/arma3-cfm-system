@@ -145,10 +145,10 @@ SINGLETON_CLASS(Monitor)
 			[_monitor] call CFM_fnc_stopOperatorFeed;
 		};
 
-		private _parsedScreenRes = [_screenResolutionSet] call CFM_fnc_parseScreenResolution;
+		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
 			private _existingRes = _monitor getVariable ["CFM_screenResolution", _monitor getVariable ["ScreenResolution", ""]];
-			_parsedScreenRes = [_existingRes] call CFM_fnc_parseScreenResolution;
+			_parsedScreenRes = [_existingRes, _monitor] call CFM_fnc_parseScreenResolution;
 		};
 		if (_parsedScreenRes isEqualTo []) then {
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
@@ -221,7 +221,7 @@ SINGLETON_CLASS(Monitor)
 	};
 	METHOD("setScreenResolution") {
 		params [["_screenResolutionSet", ""]];
-		private _parsedScreenRes = [_screenResolutionSet] call CFM_fnc_parseScreenResolution;
+		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
 		};

@@ -2,7 +2,8 @@
     Function: CFM_fnc_repositionControls
     Author: Vazar
     Description:
-        Evaluates cached control formulas for the given display and monitor ScreenResolution,
+        Evaluates cached control formulas for the given display and monitor ScreenResolution
+        (including optional {scaleX, scaleY} viewport scaling and corner anchor),
         and repositions/resizes all controls of the display on load.
 */
 
@@ -47,6 +48,18 @@ if (isNil "_controlsCache" || {count _controlsCache == 0}) then {
 if (isNil "_controlsCache" || {count _controlsCache == 0}) exitWith {false};
 
 private _res = [_display] call CFM_fnc_getMonitorScreenResolution;
+private _scaleArr = _res param [2, DEFAULT_UI_SCALE];
+if (!(_scaleArr isEqualType []) || {count _scaleArr < 2}) then {
+	_scaleArr = DEFAULT_UI_SCALE;
+};
+_scaleArr params [["_sx", 1], ["_sy", 1]];
+if (_sx == 0) then {_sx = 1};
+if (_sy == 0) then {_sy = 1};
+
+private _absX = abs _sx;
+private _absY = abs _sy;
+private _offsetX = if (_sx < 0) then {1 - _absX} else {0};
+private _offsetY = if (_sy < 0) then {1 - _absY} else {0};
 
 private _fnc_applyCtrl = {
 	params ["_idc", "_ctrlData"];
@@ -79,6 +92,16 @@ private _fnc_applyCtrl = {
 	private _newW = if (!isNil "_wCode") then {call _wCode} else {_curW};
 	private _newH = if (!isNil "_hCode") then {call _hCode} else {_curH};
 
+	if (_parentIdc < 0) then {
+		_newX = _offsetX + (_newX * _absX);
+		_newY = _offsetY + (_newY * _absY);
+	} else {
+		_newX = _newX * _absX;
+		_newY = _newY * _absY;
+	};
+	_newW = _newW * _absX;
+	_newH = _newH * _absY;
+
 	_ctrl ctrlSetPosition [_newX, _newY, _newW, _newH];
 
 	private _sizeCode = _ctrlData get "size";
@@ -88,7 +111,7 @@ private _fnc_applyCtrl = {
 	if (!isNil "_sizeCode") then {
 		private _newSize = call _sizeCode;
 		if (!isNil "_newSize" && {_newSize isEqualType 0}) then {
-			_ctrl ctrlSetFontHeight _newSize;
+			_ctrl ctrlSetFontHeight (_newSize * _absY);
 		};
 	};
 

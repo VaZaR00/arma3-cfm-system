@@ -26,10 +26,7 @@ private _defaults = [
 				4. [width, height] (e.g. [512, 512])
 		]
 	*/
-	[["tripodscreen_01_large"], "4:3"],
-	[["tripodscreen_01_dual"], "1:1"],
-	[["flattv_01", "pcset_01_screen", "multiscreencomputer"], "16:9"],
-	[["laptop", "ruggedterminal"], "16:9"]
+	[["laptop"], "16:9 1024 {0.88,1}"]
 ];
 
 {
