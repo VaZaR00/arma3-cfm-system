@@ -34,6 +34,7 @@ if (_canRender) then {
 		_monitor setVariable ["CFM_turnedOffLocal", false];
 
     	missionNamespace setVariable ["CFM_isInPIPFullScreen", true];
+		[_monitor] call CFM_fnc_playHandTabletAnim;
 		"[0.9, 0.5, 0.5]"
 	} else {
 		""

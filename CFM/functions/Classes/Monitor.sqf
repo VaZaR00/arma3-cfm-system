@@ -1014,6 +1014,7 @@ SINGLETON_CLASS(Monitor)
 			[_selfObj] call CFM_fnc_turnOffMonitorLocal;
 		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
+		[_selfObj] call CFM_fnc_playHandTabletAnim;
 		_hintText _HINT;
 		// cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
