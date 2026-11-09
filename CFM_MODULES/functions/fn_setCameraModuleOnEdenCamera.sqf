@@ -91,6 +91,7 @@ if (!isNull _module) then {
     [format["Module Position Set"]] call BIS_fnc_3DENNotification;
     
     set3DENSelected [_module];
+    [_module] call CFM_fnc_initCameraVisualizer;
 };
 
 _module

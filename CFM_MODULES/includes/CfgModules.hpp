@@ -70,6 +70,7 @@ class CfgVehicles
         functionPriority = 2;
         isGlobal = 2;
         isTriggerActivated = 0;
+        model = "\a3\data_f\camera.p3d";
 
         class Arguments: ArgumentsBaseUnits
         {
@@ -104,6 +105,8 @@ class CfgVehicles
         functionPriority = 2;
         isGlobal = 0;
         isTriggerActivated = 0;
+        is3DEN = 1;
+        model = "\a3\data_f\camera.p3d";
 
         class Arguments: ArgumentsBaseUnits
         {

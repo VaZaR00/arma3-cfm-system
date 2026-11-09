@@ -6,11 +6,44 @@
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 #define SELECT_DEF(var, def) (call {private _val = (LGVAR [var, def]); if (_val isEqualTo -1) then {-1} else {_val isEqualTo 1}})
 
-params [
-["_logic", objNull, [objNull]],
-["_units", [], [[]]],
-["_activated", true, [true]]
-];
+private _logic = objNull;
+private _activated = true;
+
+if ((_this param [0]) isEqualType "") then {
+	// 3DEN Framework event (is3DEN = 1): [_mode, _input]
+	params [
+		["_mode", "", [""]],
+		["_input", [], [[]]]
+	];
+
+	if (is3DEN) exitWith {
+		if (_mode in ["init", "registeredToWorld3DEN", "attributesChanged3DEN"]) then {
+			private _mod = _input param [0, objNull];
+			if (!isNull _mod) then {
+				[_mod] call CFM_fnc_initCameraVisualizer;
+			};
+		};
+	};
+
+	if (_mode isNotEqualTo "init") exitWith {};
+	_logic = _input param [0, objNull];
+	_activated = _input param [1, true];
+} else {
+	// Standard call: [_logic, _units, _activated]
+	params [
+		["_inLogic", objNull, [objNull]],
+		["_units", [], [[]]],
+		["_inActivated", true, [true]]
+	];
+	_logic = _inLogic;
+	_activated = _inActivated;
+
+	if (is3DEN) exitWith {
+		if (!isNull _logic) then {
+			[_logic] call CFM_fnc_initCameraVisualizer;
+		};
+	};
+};
 
 if (!_activated || {is3DEN}) exitWith {};
 
