@@ -28,7 +28,12 @@ if (_canRender) then {
 			_prevDisp closeDisplay 1;
 		};
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _monitor];
-		private _disp = (findDisplay 46) createDisplay "RscDisplayCFMEmpty";
+		private _disp = if (missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) then {
+			createDialog "RscDisplayCFMEmpty";
+			findDisplay 167
+		} else {
+			(findDisplay 46) createDisplay "RscDisplayCFMEmpty"
+		};
 		uiNamespace setVariable ["CFM_tabletDisplay", _disp];
 		_monitor setVariable ["CFM_tabletDisplayIsOpened", true];
 		_monitor setVariable ["CFM_turnedOffLocal", false];
@@ -46,10 +51,17 @@ if (_canRender) then {
 	private _pipHndl = [_monitor, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
 	_monitor setVariable ["CFM_createPipHndl", _pipHndl];
 } else {
+	if (dialog) then {
+		closeDialog 0;
+	};
 	private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
 	if (!isNull _disp) then {
 		_disp closeDisplay 1;
 		uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
+	};
+	private _fallbackDisp = findDisplay 167;
+	if (!isNull _fallbackDisp) then {
+		_fallbackDisp closeDisplay 1;
 	};
 	_monitor setVariable ["CFM_tabletDisplayIsOpened", false];
 	missionNamespace setVariable ["CFM_isInPIPFullScreen", false];

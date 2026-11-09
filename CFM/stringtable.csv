@@ -18,6 +18,8 @@ STR_CFM_AllHandMonitorsFullscreen,"All hand monitors are fullscreen displays","�
 STR_CFM_DESC_AllHandMonitorsFullscreen,"Always open hand-held tablets in a large fullscreen window instead of a small PIP slot","Завжди відкривати портативні планшети у великому вікні замість малого PIP-слота","Всегда открывать портативные планшеты в большом окне вместо малого PIP-слота"
 STR_CFM_FullscreenIsPip,"Fullscreen is PIP","Повний екран як PIP","Полный экран как PIP"
 STR_CFM_DESC_FullscreenIsPip,"Open fullscreen mode as a large PIP window without switching player camera","Відкривати повноекранний режим як велике вікно PIP без перемикання камери гравця","Открывать полноэкранный режим как большое окно PIP без переключения камеры игрока"
+STR_CFM_BlockMovementInFullscreen,"Block movement in fullscreen","Блокувати рух у повноекранному режимі","Блокировать движение в полноэкранном режиме"
+STR_CFM_DESC_BlockMovementInFullscreen,"Block player movement and controls while in fullscreen mode (Dialog vs Display)","Блокувати рух та керування гравця у повноекранному режимі (Діалог замість Дисплея)","Блокировать движение и управление игрока в полноэкранном режиме (Диалог вместо Дисплея)"
 STR_CFM_CameraMoveSensitivity,"Camera Move Sensitivity","Чутливість руху камери","Чувствительность движения камеры"
 STR_CFM_DESC_CameraMoveSensitivity,"Rotation speed when turning the camera manually via keybinds","Швидкість повороту камери під час ручного керування клавішами","Скорость поворота камеры при ручном управлении клавишами"
 STR_CFM_ContinuousCameraMove,"Continuous Camera Movement","Безперервний рух камери","Непрерывное движение камеры"

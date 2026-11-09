@@ -970,7 +970,11 @@ SINGLETON_CLASS(Monitor)
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
 		if (_onTempCam) then {
-			createDialog "RscDisplayCFMEmpty";
+			if (missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) then {
+				createDialog "RscDisplayCFMEmpty";
+			} else {
+				(findDisplay 46) createDisplay "RscDisplayCFMEmpty";
+			};
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
 			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _monitorR2Tid];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
@@ -1060,6 +1064,10 @@ SINGLETON_CLASS(Monitor)
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
 		missionNamespace setVariable ["CFM_currentFullScreenCam", nil];
 		missionNamespace setVariable ["CFM_r2tOfFullScreenCam", nil];
+		private _fullDisp = findDisplay 167;
+		if (!isNull _fullDisp) then {
+			_fullDisp closeDisplay 1;
+		};
 		true
 	};
 	METHOD("getOperatorInfo") {

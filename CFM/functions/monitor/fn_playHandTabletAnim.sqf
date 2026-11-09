@@ -16,6 +16,8 @@
 
 #include "defines.hpp"
 
+if !(missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) exitWith {};
+
 params [["_monitor", objNull, [objNull]]];
 
 if !(IS_OBJ(_monitor)) exitWith { false };
