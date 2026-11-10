@@ -12,12 +12,35 @@ private _activated = [_this,2,true,[true]] call BIS_fnc_param;
 if !(_activated) exitWith {};
 if (is3DEN) exitWith {};
 
-[_logic] spawn {
-	params["_logic"];
+[_logic, _units] spawn {
+	params ["_logic", ["_units", []]];
 
 	sleep 0.1;	
 
+	if (_logic getVariable ["CFM_monInitExecuted", false]) exitWith {};
+	_logic setVariable ["CFM_monInitExecuted", true];
+
+	private _fnc_getTarget = {
+		params ["_l"];
+		private _tgt = _l getVariable ["bis_fnc_curatorAttachObject_object", objNull];
+		if (!isNull _tgt) exitWith {_tgt};
+		_tgt = attachedTo _l;
+		if (!isNull _tgt) exitWith {_tgt};
+		private _att = attachedObjects _l;
+		if (_att isNotEqualTo []) exitWith {_att select 0};
+		objNull
+	};
+
 	private _syncedObjs = (synchronizedObjects _logic);
+	private _target = [_logic] call _fnc_getTarget;
+	if (IS_OBJ(_target) && {!(_target isKindOf "Logic")}) then {
+		_syncedObjs pushBackUnique _target;
+	};
+	{
+		if (IS_OBJ(_x) && {!(_x isKindOf "Logic")}) then {
+			_syncedObjs pushBackUnique _x;
+		};
+	} forEach _units;
 
 	private _monitorsStr = LGVAR ["monitorObject", ""];
 	{
@@ -42,7 +65,8 @@ if (is3DEN) exitWith {};
 		format["CFM_fnc_initModuleMonitor: ZERO MONITORS. Synced objects given: %1", _syncedObjs] WARN
 	};
 
-	private _sidesStr = LGVAR ["monitorSides", ""];
+	private _sidesStr = LGVAR ["monitorSides", "west"];
+	if (_sidesStr isEqualTo "") then { _sidesStr = "west"; };
 	private _sides = (_sidesStr splitString SPLIT_CHARACTERS) apply {
 		private _compile = call compile _x;
 		if ((isNil "_compile") || {!(_compile isEqualType west)}) then {
@@ -65,8 +89,8 @@ if (is3DEN) exitWith {};
 	private _allowedOpsTypesStr = LGVAR ["allowedOperatorsTypes", ""];
 	private _allowedOperatorsTypes = (_allowedOpsTypesStr splitString (SPLIT_CHARACTERS + """'[]")) select {!(_x isEqualTo "")};
 
-	if ((_sides isEqualTo []) && (_allowedOperators isEqualTo []) && (_allowedOperatorsTypes isEqualTo [])) exitWith {
-		format["CFM_fnc_initModuleMonitor: NO SIDES OR ALLOWED OPERATORS GIVEN. Side string: %1", _sidesStr] WARN
+	if ((_sides isEqualTo []) && (_allowedOperators isEqualTo []) && (_allowedOperatorsTypes isEqualTo [])) then {
+		_sides = [west];
 	};
 
 	private _vehSeatsStr = trim (LGVAR ["vehicleTabletSeats", ""]);

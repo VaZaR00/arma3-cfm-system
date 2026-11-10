@@ -42,7 +42,7 @@ class CfgFactionClasses
 {
 	class CFM
 	{
-		displayName="Camera System";
+		displayName=SSTR(categoryName);
 		priority=0;
 		side=7;
 	};
@@ -61,8 +61,12 @@ class CfgVehicles
     class CFM_Module_Monitor: Module_F
     {
         scope = 2;
+        scopeCurator = 0;
+        curatorCanAttach = 1;
+        curatorCost = 0;
+        isDisposable = 1;
         author = "Vazar";
-        displayName = "Monitor";
+        displayName = SSTR(moduleMonitorName);
         category = "CFM";
         function = "CFM_fnc_initModuleMonitor";
         icon = "\A3\modules_f\data\portraitStrategicMapImage_ca.paa";
@@ -70,7 +74,6 @@ class CfgVehicles
         functionPriority = 2;
         isGlobal = 2;
         isTriggerActivated = 0;
-        model = "\a3\data_f\camera.p3d";
 
         class Arguments: ArgumentsBaseUnits
         {
@@ -93,18 +96,13 @@ class CfgVehicles
             PARAMETER(ScreenResolution, "STRING", "")
         };
     };
-    class CFM_Module_Camera: Module_F
+    class CFM_Module_Camera: CFM_Module_Monitor
     {
-        scope = 2;
-        author = "Vazar";
-        displayName = "Camera";
-        category = "CFM";
+        displayName = SSTR(moduleCameraName);
         function = "CFM_fnc_initModuleOperator";
         icon = "IconCamera";
         portrait = "IconCamera";
-        functionPriority = 2;
         isGlobal = 0;
-        isTriggerActivated = 0;
         is3DEN = 1;
         model = "\a3\data_f\camera.p3d";
 

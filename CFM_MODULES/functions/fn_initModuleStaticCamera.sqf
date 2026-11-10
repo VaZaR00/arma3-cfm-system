@@ -5,22 +5,43 @@
 #define BOOL(var, def) ((LGVAR [var, def]) isEqualTo 1)
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 
-params [
-	["_logic", objNull, [objNull]],
-	["_units", [], [[]]],
-	["_activated", true, [true]]
-];
+private _logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
+private _units = [_this,1,[],[[]]] call BIS_fnc_param;
+private _activated = [_this,2,true,[true]] call BIS_fnc_param;
 
 if (!_activated || {is3DEN}) exitWith {};
 
-[_logic] spawn {
-	params ["_logic"];
+[_logic, _units] spawn {
+	params ["_logic", ["_units", []]];
 
 	if (BOOL("isCameraTurret", 0)) exitWith {};
 
 	sleep 0.1;
 
-	private _sidesStr = LGVAR ["cameraSides", ""];
+	if (_logic getVariable ["CFM_staticInitExecuted", false]) exitWith {};
+	_logic setVariable ["CFM_staticInitExecuted", true];
+
+	private _fnc_getTarget = {
+		params ["_l"];
+		private _tgt = _l getVariable ["bis_fnc_curatorAttachObject_object", objNull];
+		if (!isNull _tgt) exitWith {_tgt};
+		_tgt = attachedTo _l;
+		if (!isNull _tgt) exitWith {_tgt};
+		private _att = attachedObjects _l;
+		if (_att isNotEqualTo []) exitWith {_att select 0};
+		objNull
+	};
+
+	private _target = [_logic] call _fnc_getTarget;
+	if (isNull _target && {_units isNotEqualTo []}) then {
+		private _u = _units select 0;
+		if (IS_OBJ(_u) && {!(_u isKindOf "Logic")}) then {
+			_target = _u;
+		};
+	};
+
+	private _sidesStr = LGVAR ["cameraSides", "west"];
+	if (_sidesStr isEqualTo "") then { _sidesStr = "west"; };
 	private _sideMap = createHashMapFromArray [
 		["west", west], ["blufor", west],
 		["east", east], ["opfor", east],
@@ -37,8 +58,8 @@ if (!_activated || {is3DEN}) exitWith {};
 		};
 	} forEach (_sidesStr splitString SPLIT_CHARACTERS);
 
-	if (_sides isEqualTo []) exitWith {
-		format ["CFM_fnc_initModuleOperator: NO SIDES GIVEN. Side string: %1", _sidesStr] WARN;
+	if (_sides isEqualTo []) then {
+		_sides = [west];
 	};
 
 	private _fnc_processArrayString = {
@@ -76,6 +97,9 @@ if (!_activated || {is3DEN}) exitWith {};
 		};
 
 		private _camObj = MGVAR [trim (_camLogic getVariable ["cameraObject", ""]), objNull];
+		if (isNull _camObj && {!isNull _target}) then {
+			_camObj = _target;
+		};
 		private _canMoveStr = toLower trim (_camLogic getVariable ["cameraCanMoveCamera", ""]);
 		private _canMoveCam = call {
 			if (_canMoveStr in ["true", ""/* FOR STATIC CAMERA SPECIFICLY DEFAULT EMPTY IS TRUE */]) exitWith {true};

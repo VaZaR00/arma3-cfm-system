@@ -11,7 +11,10 @@ class CfgPatches {
 			"CFM"
 #endif
 		};
-		units[] = {};
+		units[] = {
+			"CFM_Module_Monitor",
+			"CFM_Module_Camera"
+		};
 		weapons[] = {};
         skipWhenMissingDependencies = 1;
 	};
@@ -19,9 +22,9 @@ class CfgPatches {
 
 #ifdef FINAL
 #include "includes\CfgFunctions.hpp"
+#include "includes\ExtendedEventHandlers.hpp"
 #endif
 
 #include "includes\cfgRemoteExec.hpp"
 #include "includes\configIncludes.hpp"
-#include "includes\ExtendedEventHandlers.hpp"
 #include "includes\display3DEN.hpp"
