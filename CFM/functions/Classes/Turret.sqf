@@ -103,7 +103,6 @@ GLOBAL CLASS(Turret)
 				private _c = (count _setZoomTable) - 1;
 				for "_i" from 0 to _c do {
 					private _val = _setZoomTable#_i;
-					if (_val isEqualType []) then {_val = [_val]};
 					_val params [["_zoom", 1], ["_fov", -1]];
 					if (_zoom < 1) then {
 						_fov = _zoom;
