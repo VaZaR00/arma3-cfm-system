@@ -7,49 +7,49 @@
 #define UP_CTRL_ID 959
 #define EFFECT_CTRL_ID 825
 
-SINGLETON_CLASS(DisplayHandler)
+LOCAL SINGLETON_CLASS(DisplayHandler)
 
 	SET_SELF_VAR("_monitor");
 
-	FIELD ["_monitorUid", ""];
-	FIELD ["_monitorR2Tid", ""];
-	FIELD ["_originalTexture", ""];
-	FIELD ["_mainDisplay", displayNull];
-	FIELD ["_r2tDisplayName", ""];
-	FIELD ["_r2tDisplay", displayNull];
-	FIELD ["_r2tDisplayCtrl", controlNull];
-	FIELD ["_displayUiCtrl", controlNull];
-	FIELD ["_uiCtrlCurrentUIDisplay", displayNull];
-	FIELD ["_uiCtrlUIDisplayName", ""];
-	FIELD ["_uiCtrlCurrentUIDisplayClass", ""];
-	FIELD ["_displayUpLayerCtrl", controlNull];
-	FIELD ["_r2tDisplayR2TCtrl", controlNull];
-	FIELD ["_effectsLayersControls", []];
-	FIELD ["_effectsLayersCount", 0];
-	FIELD ["_turnedOffLocal", false];
-	FIELD ["_isHandMonitor", false];
+	PRIVATE LOCAL FIELD ["_monitorUid", ""];
+	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
+	PRIVATE LOCAL FIELD ["_originalTexture", ""];
+	PRIVATE LOCAL FIELD ["_mainDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_r2tDisplayName", ""];
+	PRIVATE LOCAL FIELD ["_r2tDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_r2tDisplayCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_displayUiCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_uiCtrlCurrentUIDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_uiCtrlUIDisplayName", ""];
+	PRIVATE LOCAL FIELD ["_uiCtrlCurrentUIDisplayClass", ""];
+	PRIVATE LOCAL FIELD ["_displayUpLayerCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_r2tDisplayR2TCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_effectsLayersControls", []];
+	PRIVATE LOCAL FIELD ["_effectsLayersCount", 0];
+	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
+	PRIVATE LOCAL FIELD ["_isHandMonitor", false];
 	
-	FIELD ["_uiIndex", 0];
-	FIELD ["_uiDisplayUniqueName", ""];
+	PRIVATE LOCAL FIELD ["_uiIndex", 0];
+	PRIVATE LOCAL FIELD ["_uiDisplayUniqueName", ""];
 
-	FIELD ["_connectedOperator", objNull];
-	FIELD ["_currentUiClasname", ""];
-	FIELD ["_uiParams", []];
-	FIELD ["_currentPiPEffect", 0];
-	FIELD ["_currentFeedIsDisplay", false];
-	FIELD ["_currentOperatorSignalFunction", {1}];
-	FIELD ["_currentOperatorInterfaceFunction", {}];
-	FIELD ["_currentOperatorInterfaceClass", {}];
-	FIELD ["_currentOperatorEffectsFunction", {}];
-	FIELD ["_currentUIDisplayRenderClass", ""];
+	PRIVATE LOCAL FIELD ["_connectedOperator", objNull];
+	PRIVATE LOCAL FIELD ["_currentUiClasname", ""];
+	PRIVATE LOCAL FIELD ["_uiParams", []];
+	PRIVATE LOCAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE LOCAL FIELD ["_currentFeedIsDisplay", false];
+	PRIVATE LOCAL FIELD ["_currentOperatorSignalFunction", {1}];
+	PRIVATE LOCAL FIELD ["_currentOperatorInterfaceFunction", {}];
+	PRIVATE LOCAL FIELD ["_currentOperatorInterfaceClass", {}];
+	PRIVATE LOCAL FIELD ["_currentOperatorEffectsFunction", {}];
+	PRIVATE LOCAL FIELD ["_currentUIDisplayRenderClass", ""];
 
-	METHOD("Init") {
+	LOCAL METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");
 		_monitor setVariable ["CFM_monitorUid", _monitorUid];
 		_monitorR2Tid = ["createMonitorR2TId", _monitor] CALL_CLASS("DbHandler");
 		_monitor setVariable ["CFM_monitorR2Tid", _monitorR2Tid];
 	};
-	METHOD("startRendering") {
+	LOCAL METHOD("startRendering") {
 		params[["_reset", false], ["_uiParams", []]];
 
 		if (!hasInterface) exitWith {};
@@ -66,7 +66,7 @@ SINGLETON_CLASS(DisplayHandler)
 			["startRenderingR2T", _reset] CALL_SELF;
 		};
 	};
-	METHOD("stopRendering") {
+	LOCAL METHOD("stopRendering") {
 		params[["_reset", false]];
 
 		if (!hasInterface) exitWith {};
@@ -81,7 +81,7 @@ SINGLETON_CLASS(DisplayHandler)
 			["clearVariables", _reset] CALL_SELF;
 		};
 	};
-	METHOD("clearVariables") {
+	LOCAL METHOD("clearVariables") {
 		params[["_reset", false]];
 		_monitor setVariable ["CFM_mainDisplay", nil];
 		if !(_reset) then {
@@ -96,7 +96,7 @@ SINGLETON_CLASS(DisplayHandler)
 		};
 	};
 	//----------- UI render version -----------
-	METHOD("setupDisplay") {
+	LOCAL METHOD("setupDisplay") {
 		params[["_reset", false]];
 
 		private _screenRes = [_monitor] call CFM_fnc_getMonitorScreenResolution;
@@ -180,7 +180,7 @@ SINGLETON_CLASS(DisplayHandler)
 
 		["stopRenderingUI"] CALL_SELF;
 	};
-	METHOD("startRenderingUI") {
+	LOCAL METHOD("startRenderingUI") {
 		params[["_reset", false], ["_ctrl", controlNull], ["_uiParamsSet", []]];
 
 		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
@@ -239,7 +239,7 @@ SINGLETON_CLASS(DisplayHandler)
 		
 		[_monitor, _monitor getVariable ["CFM_currentPiPEffect", _currentPiPEffect]] call CFM_fnc_setMonitorPiPEffect;
 	};
-	METHOD("stopRenderingUI") {
+	LOCAL METHOD("stopRenderingUI") {
 		params[["_reset", true]];
 
 		/*
@@ -261,17 +261,17 @@ SINGLETON_CLASS(DisplayHandler)
 		["stopRenderingR2T"] CALL_SELF;
 		["clearVariables", _reset] CALL_SELF;
 	};
-	METHOD("updateDisplays") {
+	LOCAL METHOD("updateDisplays") {
 		displayUpdate _mainDisplay;
 		displayUpdate _r2tDisplay;
 		displayUpdate _uiCtrlCurrentUIDisplay;
 	};
-	METHOD("renderInterface") {
+	LOCAL METHOD("renderInterface") {
 		params[["_operator", _connectedOperator]];
 
 	};
 	// set renders
-	METHOD("setSignalInterfaceEffectFuncs") {
+	LOCAL METHOD("setSignalInterfaceEffectFuncs") {
 		params[["_signalFuncName", ""], ["_effectFuncName", ""], ["_interfaceFuncName", ""]];
 
 		private _set = false;
@@ -301,7 +301,7 @@ SINGLETON_CLASS(DisplayHandler)
 		};
 		_set
 	};
-	METHOD("setRenderR2TDisplay") {
+	LOCAL METHOD("setRenderR2TDisplay") {
 		params[["_set", false]];
 		if (_set) then {
 			private _size = missionNamespace getVariable ["CFM_r2tSize", 512];
@@ -311,7 +311,7 @@ SINGLETON_CLASS(DisplayHandler)
 		};
 		_r2tDisplayR2TCtrl ctrlCommit 0;
 	};
-	METHOD("setRenderInterfaceDisplay") {
+	LOCAL METHOD("setRenderInterfaceDisplay") {
 		params[["_set", false], ["_currentUIDisplayRenderClass", ""], ["_currentUIDisplayRenderClassInit", ""]];
 		_set = _set && {!(_currentUIDisplayRenderClass isEqualTo "")};
 		if (_set) then {
@@ -356,13 +356,13 @@ SINGLETON_CLASS(DisplayHandler)
 
 		_displayUiCtrl ctrlCommit 0;
 	};
-	METHOD("resetRenderEffects") {
+	LOCAL METHOD("resetRenderEffects") {
 		{
 			_x ctrlSetText ("");
 			_x ctrlCommit 0;
 		} forEach _effectsLayersControls;
 	};
-	METHOD("setRenderUpLayer") {
+	LOCAL METHOD("setRenderUpLayer") {
 		params[["_set", false]];
 		if (_set) then {
 			["setOriginalTexture"] CALL_SELF;
@@ -371,22 +371,22 @@ SINGLETON_CLASS(DisplayHandler)
 			_displayUiCtrl ctrlCommit 0;
 		};
 	};
-	METHOD("setOriginalTexture") {
+	LOCAL METHOD("setOriginalTexture") {
 		_displayUpLayerCtrl ctrlSetText _originalTexture;
 		_displayUpLayerCtrl ctrlCommit 0;
 	};
 	//----------- R2T render version -----------
-	METHOD("startRenderingR2T") {
+	LOCAL METHOD("startRenderingR2T") {
 		params[["_reset", false]];
 
 		["setR2TTexture", [true, _monitorR2Tid]] CALL_SELF;
 		
 		[_monitor, _monitor getVariable ["CFM_currentPiPEffect", _currentPiPEffect]] call CFM_fnc_setMonitorPiPEffect;
 	};
-	METHOD("stopRenderingR2T") {
+	LOCAL METHOD("stopRenderingR2T") {
 		["setR2TTexture", [false]] CALL_SELF;
 	};
-	METHOD("setR2TTexture") {
+	LOCAL METHOD("setR2TTexture") {
 		params[["_render", true], ["_r2t", ""], ["_turnOff", false]];
 
 		// if !(hasInterface) exitWith {};
@@ -407,7 +407,7 @@ SINGLETON_CLASS(DisplayHandler)
 		};
 	};
 	//-------------------------------------
-	METHOD("toggleMonitorLocal") {
+	LOCAL METHOD("toggleMonitorLocal") {
 		params[["_on", true, [true]]];
 
 		_monitor setVariable ["CFM_turnedOffLocal", !_on];

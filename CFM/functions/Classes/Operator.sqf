@@ -2,49 +2,48 @@
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
 
-SINGLETON_CLASS(Operator)
+GLOBAL SINGLETON_CLASS(Operator)
 
 	SET_SELF_VAR("_operator");
 
-	FIELD ["_canSwitchTi", false];
-	FIELD ["_canSwitchNvg", false];
-	FIELD ["_opHasTurrets", false];
-	FIELD ["_turrets", [DRIVER_TURRET_PATH]];
-	FIELD ["_allTurrets", []];
-	FIELD ["_disabledTurrets", []];
-	FIELD ["_cameraType", ""];
-	FIELD ["_operatorName", ""];
-	FIELD ["_operatorId", -1];
-	FIELD ["_hasGoPro", false];
-	FIELD ["_canFeed", false];
-	FIELD ["_canMoveCameraByDefault", false];
-	FIELD ["_cameraMoveRestrictionsByDefault", []]; // [degrees up, degrees down, degrees left, degrees right]
-	FIELD ["_cameraZoomSmoothDefault", false]; 
-	FIELD ["_classType", ""];
-	FIELD ["_objClass", ""];
-	FIELD ["_monitorsSet", createHashMap];
-	FIELD ["_tiTable", createHashMap];
-	FIELD ["_nvgTable", createHashMap];
-	FIELD ["_operatorSet", false];
-	FIELD ["_isFeeding", false];
-	FIELD ["_isDroneFeed", false];	
-	FIELD ["_isMavic", false];	
-	FIELD ["_isFPV", false];	
-	FIELD ["_staticCamOffset", NULL_VECTOR];	
-	FIELD ["_isStaticCam", false];	
-	FIELD ["_opSides", []];	
-	FIELD ["_cameraObjects", createHashMap];	
-	FIELD ["_turretsInstances", createHashMap];	
-	FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
-	FIELD ["_hasActiveTurretsObjects", -1];
-	FIELD ["_activeTurretsObjects", createHashMap];
+	PUBLIC GLOBAL FIELD ["_canSwitchTi", false];
+	PUBLIC GLOBAL FIELD ["_canSwitchNvg", false];
+	PRIVATE GLOBAL FIELD ["_opHasTurrets", false];
+	PUBLIC GLOBAL FIELD ["_turrets", [DRIVER_TURRET_PATH]];
+	PRIVATE GLOBAL FIELD ["_allTurrets", []];
+	PRIVATE GLOBAL FIELD ["_disabledTurrets", []];
+	PRIVATE GLOBAL FIELD ["_cameraType", ""];
+	PUBLIC GLOBAL FIELD ["_operatorName", ""];
+	PRIVATE GLOBAL FIELD ["_operatorId", -1];
+	PRIVATE GLOBAL FIELD ["_hasGoPro", false];
+	PUBLIC GLOBAL FIELD ["_canFeed", false];
+	PRIVATE GLOBAL FIELD ["_canMoveCameraByDefault", false];
+	PRIVATE GLOBAL FIELD ["_cameraMoveRestrictionsByDefault", []]; // [degrees up, degrees down, degrees left, degrees right]
+	PRIVATE GLOBAL FIELD ["_cameraZoomSmoothDefault", false]; 
+	PRIVATE GLOBAL FIELD ["_classType", ""];
+	PRIVATE GLOBAL FIELD ["_objClass", ""];
+	PRIVATE GLOBAL FIELD ["_monitorsSet", createHashMap];
+	PUBLIC GLOBAL FIELD ["_tiTable", createHashMap];
+	PUBLIC GLOBAL FIELD ["_nvgTable", createHashMap];
+	PRIVATE GLOBAL FIELD ["_operatorSet", false];
+	PRIVATE GLOBAL FIELD ["_isFeeding", false];
+	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];	
+	PRIVATE GLOBAL FIELD ["_isMavic", false];	
+	PRIVATE GLOBAL FIELD ["_isFPV", false];	
+	PRIVATE GLOBAL FIELD ["_staticCamOffset", NULL_VECTOR];	
+	PRIVATE GLOBAL FIELD ["_isStaticCam", false];	
+	PUBLIC GLOBAL FIELD ["_opSides", []];	
+	PRIVATE GLOBAL FIELD ["_cameraObjects", createHashMap];	
+	PRIVATE GLOBAL FIELD ["_turretsInstances", createHashMap];	
+	PRIVATE GLOBAL FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
+	PRIVATE GLOBAL FIELD ["_hasActiveTurretsObjects", -1];
+	PRIVATE GLOBAL FIELD ["_activeTurretsObjects", createHashMap];
 
 
 	// PP - point params types
 	#define TimeToMoveSmoothCoef 0.2
 
-	METHOD("Init") {
-		// should be executed globaly
+	SE METHOD("Init") {
 		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
 		private _global = SET_VARS_INIT_GLOBAL;
@@ -170,7 +169,7 @@ SINGLETON_CLASS(Operator)
 
 		true
 	};
-	METHOD("DefineTurretsParams") {
+	SE METHOD("DefineTurretsParams") {
 		params[["_turretsParamsInit", []]];
 		
 		if (_turretsParamsInit isEqualTo []) then {
@@ -229,7 +228,7 @@ SINGLETON_CLASS(Operator)
 
 		_turretsInstances
 	};
-	METHOD("setTurretParams") {
+	SE METHOD("setTurretParams") {
 		params [
 			["_turretIndex", -1],
 			["_turretObject", objNull]
@@ -277,33 +276,33 @@ SINGLETON_CLASS(Operator)
 		if (_turretInstanceId <= 0) exitWith {};
 		[_selfObj, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject]] call CFM_fnc_hashSetGlobal;
 	};
-	METHOD("setPointParams") {
+	GE GA METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	METHOD("setPPTurret") {
+	GE GA METHOD("setPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	METHOD("getPPTurret") {
+	GE GA METHOD("getPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_def", nil]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["getPPParam", [_ppParam, _NIL(_def)], _NIL(_def)] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	METHOD("setDefaultPointAlignment") {
+	GE GA METHOD("setDefaultPointAlignment") {
 		{
 			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
 		} forEach _turrets;
 	};
-	METHOD("monitorConnected") {
+	GE METHOD("monitorConnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull], ["_reset", false]];
 
@@ -320,17 +319,17 @@ SINGLETON_CLASS(Operator)
 
 		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_SELF;
 	};
-	METHOD("monitorConnectedLocalOperator") {
+	GE LA METHOD("monitorConnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_SELF;
 	};
-	METHOD("monitorDisconnected") {
+	GE METHOD("monitorDisconnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
 	};
-	METHOD("monitorDisconnectedLocalOperator") {
+	GE LA METHOD("monitorDisconnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["removeMonitor", [_monitor, _turret]] CALL_SELF;
@@ -338,17 +337,17 @@ SINGLETON_CLASS(Operator)
 			["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		};
 	};
-	METHOD("TurretChanged") {
+	GE METHOD("TurretChanged") {
 		params["_monitor", ["_turret", [-1]], ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
 		["TurretChanged", [_monitor, _global, _globalUpdOp, _reset]] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("TurretChangedLocalOperator") {
+	GE LA METHOD("TurretChangedLocalOperator") {
 		params["_monitor", ["_turret", [-1]]];
 
 		["TurretChangedLocalOperator", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("NextTurret") {
+	GE METHOD("NextTurret") {
 		params["_monitor", ["_currentTurret", [-1]]];
 
 		private _curTurrIndex = TURRET_INDEX(_currentTurret);
@@ -377,17 +376,17 @@ SINGLETON_CLASS(Operator)
 
 		_nextTurretIndex
 	};
-	METHOD("addMonitor") {
+	GE LA METHOD("addMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["addMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("removeMonitor") {
+	GE LA METHOD("removeMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("checkIfFeedsToAnyMonitor") {
+	GE GA METHOD("checkIfFeedsToAnyMonitor") {
 		private _feeds = false;
 		{
 			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
@@ -399,7 +398,7 @@ SINGLETON_CLASS(Operator)
 		} forEach _turretsInstances;
 		_feeds
 	};
-	METHOD("removeActiveTurret") {
+	SE METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
 
 		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
@@ -407,7 +406,7 @@ SINGLETON_CLASS(Operator)
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
 		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 	};
-	METHOD("addActiveTurret") {
+	SE METHOD("addActiveTurret") {
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
 
 		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _selfObj}) exitWith {false};
@@ -419,22 +418,22 @@ SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 		true
 	};
-	METHOD("moveCamera") {
+	GE LA METHOD("moveCamera") {
 		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		["moveCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("moveDroneCamera") {
+	GE LA METHOD("moveDroneCamera") {
 		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		["moveDroneCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("syncContinuousMove") {
+	GE LA METHOD("syncContinuousMove") {
 		params[["_turret", -1]];
 
 		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
 	};
-	METHOD("setOperatorSides") {
+	GE GA METHOD("setOperatorSides") {
 		params[["_sides", civilian], ["_global", true]];
 
 		if !(_sides isEqualType []) then {
@@ -448,7 +447,7 @@ SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opSides", _sides, _global];
 		true
 	};
-	METHOD("getOperatorName") {
+	LE GA METHOD("getOperatorName") {
 		params[["_turret", -1]];
 
 		private _curTurrIndex = TURRET_INDEX(_turret);
@@ -457,7 +456,7 @@ SINGLETON_CLASS(Operator)
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName
 	};
-	METHOD("disableTurret") {
+	LE GA METHOD("disableTurret") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -479,7 +478,7 @@ SINGLETON_CLASS(Operator)
 
 		true
 	};
-	METHOD("enableTurret") {
+	LE GA METHOD("enableTurret") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -496,11 +495,11 @@ SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
 		true
 	};
-	METHOD("isTurretDisabled") {
+	LE GA METHOD("isTurretDisabled") {
 		params[["_turretIndex", -1]];
 		(TURRET_INDEX(_turretIndex)) in (_selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets])
 	};
-	METHOD("handleDisabledTurretViewers") {
+	LE GA METHOD("handleDisabledTurretViewers") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 

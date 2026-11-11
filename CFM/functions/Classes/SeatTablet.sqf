@@ -1,20 +1,20 @@
-CLASS(SeatTablet)
+GLOBAL CLASS(SeatTablet)
 
 	SET_SELF_VAR("_monitor");
 	SET_VARS_PREFIX("_seatTablet");
 
-	FIELD ["_seatKey", ""];
-	FIELD ["_connectedOperator", objNull];
-	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
-	FIELD ["_zoom", 1, ["", 1]];
-	FIELD ["_zoomFov", 1, ["", 1]];
-	FIELD ["_maxZoomed", false];
-	FIELD ["_currentPiPEffect", 0];
-	FIELD ["_isInNvg", false];
-	FIELD ["_turnedOffLocal", false];
-	FIELD ["_pipSlot", PIP_SLOT_RIGHT];
+	PRIVATE GLOBAL FIELD ["_seatKey", ""];
+	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
+	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
+	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
+	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
+	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE GLOBAL FIELD ["_isInNvg", false];
+	PUBLIC LOCAL FIELD ["_turnedOffLocal", false];
+	PRIVATE GLOBAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
 
-	METHOD("Init") {
+	GE LA METHOD("Init") {
 		[
 			["_seatKey", ""]
 		] NP_PARAMS;
@@ -25,7 +25,7 @@ CLASS(SeatTablet)
 		true
 	};
 
-	METHOD("applyToMonitor") {
+	LE GA METHOD("applyToMonitor") {
 		private _turrIdx = TURRET_INDEX(_currentTurret);
 		if ([PLAYER_] call CFM_fnc_isPipVisible) then {
 			_pipSlot = [_monitor, _pipSlot] call CFM_fnc_getFreePipSlot;
@@ -44,7 +44,7 @@ CLASS(SeatTablet)
 		true
 	};
 
-	METHOD("saveFromMonitor") {
+	GE GA METHOD("saveFromMonitor") {
 		if !(IS_OBJ(_connectedOperator)) exitWith {false};
 		private _monOp = _monitor getVariable ["CFM_connectedOperator", objNull];
 		if (IS_OBJ(_monOp) && {!(_monOp isEqualTo _connectedOperator)}) exitWith {false};
@@ -70,7 +70,7 @@ CLASS(SeatTablet)
 		true
 	};
 
-	METHOD("connect") {
+	GE GA LOCAL METHOD("connect") {
 		params ["_op", ["_initTurrIdx", -1], ["_caller", objNull]];
 		if !(IS_OBJ(_op)) exitWith {false};
 
@@ -122,7 +122,7 @@ CLASS(SeatTablet)
 		true
 	};
 
-	METHOD("disconnect") {
+	GE GA LOCAL METHOD("disconnect") {
 		params [["_caller", objNull]];
 		private _prevOp = _connectedOperator;
 		private _prevTurr = _currentTurret;
@@ -163,7 +163,7 @@ CLASS(SeatTablet)
 		true
 	};
 
-	METHOD("activateSeat") {
+	GE GA LOCAL METHOD("activateSeat") {
 		if !(hasInterface) exitWith {false};
 		if (IS_OBJ(_connectedOperator)) then {
 			if !([_connectedOperator, _monitor] call CFM_fnc_operatorCondition) exitWith {
@@ -184,7 +184,7 @@ CLASS(SeatTablet)
 		};
 	};
 
-	METHOD("deactivateSeat") {
+	GE GA LOCAL METHOD("deactivateSeat") {
 		if !(hasInterface) exitWith {false};
 		if ((_monitor getVariable ["CFM_feedActive", false]) && {IS_OBJ(_connectedOperator)}) then {
 			["saveFromMonitor"] CALL_SELF;

@@ -1,4 +1,4 @@
-CLASS(Turret)
+GLOBAL CLASS(Turret)
 
     SET_SELF_VAR("_turret");
     SET_VARS_PREFIX("_turret");
@@ -47,7 +47,7 @@ CLASS(Turret)
 
 	#define TimeToMoveSmoothCoef 0.2
     
-    METHOD("Init") {
+    SERVER METHOD("Init") {
 		[
 			["_operator", objNull], 
 			["_turretIndex", -1], 
@@ -293,7 +293,7 @@ CLASS(Turret)
 		};
 		true
 	};
-    METHOD("compilePointParams") {
+    LE GE GA METHOD("compilePointParams") {
 		params [["_syncGlobal", true]];
 		_pointParams = switch (_ppType) do {
 			case PP_STATIC: {
@@ -316,7 +316,7 @@ CLASS(Turret)
 
 		_pointParams
     };
-    METHOD("savePointParamVars") {
+    LE GE GA METHOD("savePointParamVars") {
 		params [["_vars", []], ["_syncGlobal", true]];
 		if (!(_vars isEqualType []) || {(_vars isNotEqualTo []) && {!((_vars#0) isEqualType [])}}) then {
 			_vars = _this;
@@ -336,7 +336,7 @@ CLASS(Turret)
 			};
 		} forEach _vars;
     };
-    METHOD("syncPointParamsToMonitors") {
+    GE GA LOCAL METHOD("syncPointParamsToMonitors") {
 		private _compiledPointParams = ["compilePointParams"] CALL_SELF;
 		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
@@ -350,7 +350,7 @@ CLASS(Turret)
 			};
 		} forEach _monitorsOnTurret;
     };
-    METHOD("setPointParams") {
+    LE GE GA METHOD("setPointParams") {
 		params[["_params", []], ["_syncGlobal", true]];
 
 		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
@@ -369,7 +369,7 @@ CLASS(Turret)
 
 		_pointParams
     };
-	METHOD("setPPParam") {
+	GE GA LOCAL METHOD("setPPParam") {
 		params[["_ppParam", ""], ["_value", nil]];
 
 		private _params = switch (_ppType) do {
@@ -408,7 +408,7 @@ CLASS(Turret)
 
 		true
 	};
-	METHOD("getPPParam") {
+	LE GA LOCAL METHOD("getPPParam") {
 		params[["_ppParam", ""], ["_def", nil]];
 
 		switch (_ppParam) do {
@@ -422,10 +422,10 @@ CLASS(Turret)
 			default {_NIL(_def)};
 		}
 	};
-	METHOD("setDefaultPointAlignment") {
+	GE GA LOCAL METHOD("setDefaultPointAlignment") {
 		[_selfObj, _turretIndex, -1] call CFM_fnc_setPointAlignment;
 	};
-	METHOD("TurretChanged") {
+	GE GA LOCAL METHOD("TurretChanged") {
 		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
 		if (_disabled) exitWith {false};
@@ -483,7 +483,7 @@ CLASS(Turret)
 
 		true
 	};
-	METHOD("TurretChangedLocalOperator") {
+	GE LA METHOD("TurretChangedLocalOperator") {
 		params["_monitor"];
 
 		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
@@ -501,7 +501,7 @@ CLASS(Turret)
 
 		true
 	};
-	METHOD("moveCamera") {
+	GE LA METHOD("moveCamera") {
 		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_isDroneFeed) exitWith {
@@ -654,7 +654,7 @@ CLASS(Turret)
 
 		true
 	};
-	METHOD("syncContinuousMove") {
+	GE LA METHOD("syncContinuousMove") {
 		if (_isDroneFeed) exitWith {
 			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
 			private _acc = _selfObj getVariable [_accVar, [0, 0]];
@@ -717,7 +717,7 @@ CLASS(Turret)
 
 		true
 	};
-	METHOD("moveDroneCamera") {
+	GE LA METHOD("moveDroneCamera") {
 		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
@@ -1011,7 +1011,7 @@ CLASS(Turret)
 		
 		true
 	};
-	METHOD("addMonitor") {
+	GE GA LOCAL METHOD("addMonitor") {
 		params[["_monitor", objNull]];
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
@@ -1022,7 +1022,7 @@ CLASS(Turret)
 
 		_monitorsOnTurret find _monitor
 	};
-	METHOD("removeMonitor") {
+	GE GA LOCAL METHOD("removeMonitor") {
 		params[["_monitor", objNull]];
 
 		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
@@ -1031,16 +1031,16 @@ CLASS(Turret)
 
 		true	
 	};
-	METHOD("getTurretName") {
+	LOCAL METHOD("getTurretName") {
 		_turretName
 	};
-	METHOD("setDisabled") {
+	LE GA METHOD("setDisabled") {
 		params[["_state", true]];
 		_disabled = _state;
 		SET_SELFVAR(_disabled);
 		true
 	};
-	METHOD("isDisabled") {
+	LOCAL METHOD("isDisabled") {
 		_disabled
 	};
 CLASS_END

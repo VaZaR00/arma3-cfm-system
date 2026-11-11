@@ -2,9 +2,9 @@
 #define NEXT_ID_FIND_TRIES 30
 #define ITER_VAR_RMT_EXEC_DO_JIP false
 
-SINGLETON_CLASS(DbHandler)
+GLOBAL SINGLETON_CLASS(DbHandler)
 
-	METHOD("Init") {
+	GLOBAL METHOD("Init") {
 		if !(isNil "CFM_inited") exitWith {};
 		// local variables
 		CFM_goPro_zoomTable = createHashMapFromArray [[2, 0.25]];
@@ -28,8 +28,7 @@ SINGLETON_CLASS(DbHandler)
 			missionNamespace setVariable ["CFM_OperatorsIds", createHashMap];
 		};
 	};
-	METHOD("setOperator") {
-		// should be only server
+	SERVER METHOD("setOperator") {
 		params[["_operator", objNull], ["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
 		if (isNil "_operator") exitWith {80};
@@ -82,53 +81,53 @@ SINGLETON_CLASS(DbHandler)
 
 		true
 	};
-	METHOD("setupMonitorDisplay") {
+	LE GA METHOD("setupMonitorDisplay") {
 		params["_monitor"];
 
 		if !(IS_OBJ(_monitor)) exitWith {};
 
 		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
 	};
-	METHOD("addToList") {
+	LOCAL METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_unique", true]];
 			
 		[missionNamespace, _listName, _NIL(_obj), _unique, true] call CFM_fnc_pushBack;
 	};
-	METHOD("removeFromList") {
+	LOCAL METHOD("removeFromList") {
 		params["_obj", ["_listName", ""], ["_pop", false]];
 			
 		[missionNamespace, _listName, _NIL(_obj), _pop, true] call CFM_fnc_removeFromArray;
 	};
-	METHOD("addToHashMap") {
+	LOCAL METHOD("addToHashMap") {
 		params["_key", ["_val", nil], ["_varName", ""]];
 		
 		[missionNamespace, _varName, _key, _NIL(_val), true] call CFM_fnc_hashSet;
 	};
-	METHOD("addCameraToPool") {
+	LE LA METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
 		if !(IS_OBJ(_cam)) exitWith {-1};
 		["addToList", [_cam, "CFM_CameraPool"]] CALL_SELF;
 	};
-	METHOD("removeCameraFromPool") {
+	LE LA METHOD("removeCameraFromPool") {
 		params["_cam"];
 		["removeFromList", [_cam, "CFM_CameraPool"]] CALL_SELF;
 	};
-	METHOD("addMonitor") {
+	GE LA METHOD("addMonitor") {
 		params["_monitor", ["_global", true]];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["CFM_" + "addMonitor", _monitor, _global] call CFM_fnc_remoteEvent;
 	};
-	METHOD("addOperator") {
+	GE LA METHOD("addOperator") {
 		params["_operator", ["_global", true]];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["setOperatorId", [_operator]] CALL_SELF;
 		["CFM_" + "addOperator", _operator, _global] call CFM_fnc_remoteEvent;
 	};
-	METHOD("removeOperator") {
+	GE LA METHOD("removeOperator") {
 		params["_operator", ["_global", false]];
 		["CFM_" + "removeOperator", _operator, _global] call CFM_fnc_remoteEvent;
 	};
-	METHOD("setOperatorId") {
+	LOCAL METHOD("setOperatorId") {
 		private _res = -1;
 		isNil {
 			params["_operator"];
@@ -152,7 +151,7 @@ SINGLETON_CLASS(DbHandler)
 		};
 		_res
 	};
-	METHOD("createMonitorUId") {
+	LOCAL METHOD("createMonitorUId") {
 		private _uidStr = "";
 		isNil {
 			params["_monitor"];
@@ -170,7 +169,7 @@ SINGLETON_CLASS(DbHandler)
 		};
 		_uidStr
 	};
-	METHOD("createMonitorR2TId") {
+	LOCAL METHOD("createMonitorR2TId") {
 		private _r2tStr = "";
 		isNil {
 			params["_monitor"];
@@ -188,27 +187,27 @@ SINGLETON_CLASS(DbHandler)
 		};
 		_r2tStr
 	};
-	METHOD("addActiveMonitor") {
+	LE GA METHOD("addActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_SELF;
 	};
-	METHOD("removeActiveMonitor") {
+	LE GA METHOD("removeActiveMonitor") {
 		params["_monitor"];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_SELF;
 	};
-	METHOD("addActiveOperator") {
+	GE LA METHOD("addActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["CFM_" + "addActiveOperator", _operator, 0] call CFM_fnc_remoteEvent;
 	};
-	METHOD("removeActiveOperator") {
+	GE LA METHOD("removeActiveOperator") {
 		params["_operator"];
 		if !(IS_OBJ(_operator)) exitWith {-1};
 		["CFM_" + "removeActiveOperator", _operator, 0] call CFM_fnc_remoteEvent;
 	};
-	METHOD("addActiveViewer") {
+	GE LA METHOD("addActiveViewer") {
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {-1};
 		if (_player getVariable ["CFM_isActiveViewer", false]) exitWith {-2};
@@ -222,7 +221,7 @@ SINGLETON_CLASS(DbHandler)
 		CFM_makeCamDataSync = true;
 		["CFM_makeCamDataSync", [true, [clientOwner]]] call CFM_fnc_publicVariableServer;
 	};
-	METHOD("removeActiveViewer") {
+	GE LA METHOD("removeActiveViewer") {
 		params["_player"];
 		if !(IS_OBJ(_player)) exitWith {false};
 		if !(_player getVariable ["CFM_isActiveViewer", false]) exitWith {false};
@@ -235,7 +234,7 @@ SINGLETON_CLASS(DbHandler)
 		["CFM_" + "removeActiveViewer", _ownerId, 0] call CFM_fnc_remoteEvent;
 		true
 	};
-	METHOD("monitorAddActiveViewer") {
+	GE LA METHOD("monitorAddActiveViewer") {
 		params[["_monitor", objNull], ["_player", objNull]];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		if !(IS_OBJ(_player)) exitWith {-1};
@@ -246,7 +245,7 @@ SINGLETON_CLASS(DbHandler)
 		};
 		["CFM_" + "monitorAddActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
-	METHOD("monitorRemoveActiveViewer") {
+	GE LA METHOD("monitorRemoveActiveViewer") {
 		params[["_monitor", objNull], ["_player", objNull]];
 		if !(IS_OBJ(_monitor)) exitWith {-1};
 		if !(IS_OBJ(_player)) exitWith {false};
@@ -258,13 +257,13 @@ SINGLETON_CLASS(DbHandler)
 		};
 		["CFM_" + "monitorRemoveActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
-	METHOD("nextR2Tindex") {
+	LOCAL METHOD("nextR2Tindex") {
 		private _current = missionNamespace getVariable ["CFM_R2T_index", 0];
 		private _next = _current + 1;
 		missionNamespace setVariable ["CFM_R2T_index", _next];
 		_next
 	};
-	METHOD("safeGenerateId") {
+	LOCAL METHOD("safeGenerateId") {
 		// safe id generation
 		params["_idsHash"];
 		private _ids = keys _idsHash;
@@ -286,7 +285,7 @@ SINGLETON_CLASS(DbHandler)
 		if (_id in _ids) exitWith {-1};
 		_id
 	};
-	METHOD("updateActionPriority") {
+	LOCAL METHOD("updateActionPriority") {
 		private _currentPriority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _next = _currentPriority - 0.1;
 		if (_next < 10) then {
@@ -295,13 +294,13 @@ SINGLETON_CLASS(DbHandler)
 		PLAYER_ setVariable ["CFM_currentActionsPriority", _next];
 		_next
 	};
-	METHOD("createDummyForStaticCam") {
+	SERVER METHOD("createDummyForStaticCam") {
 		// execute only on server, because of JIP sync and to avoid creating multiple dummies on different machines
 		private _dummyObj = createVehicle [DUMMY_CLASSNAME, [0,0,0]];
 		["addDummy", [_dummyObj]] CALL_SELF;
 		_dummyObj
 	};
-	METHOD("addDummy") {
+	LE GA METHOD("addDummy") {
 		params["_dummyObj"];
 		["addToList", [_dummyObj, "CFM_DummyObjs"]] CALL_SELF;
 	};

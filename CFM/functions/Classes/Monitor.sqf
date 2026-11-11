@@ -1,69 +1,69 @@
 
 #define OPERATOR_INFO_TEXT_DEF format["<t color='#0d6aff'>%1</t>", CFM_STR_OPERATOR_INFO_TITLE]
 
-SINGLETON_CLASS(Monitor)
+GLOBAL SINGLETON_CLASS(Monitor)
 	
 	SET_SELF_VAR("_monitor");
 
-	FIELD ["_radius", ACTION_RADIUS];
-	FIELD ["_monitorSides", []];
-	FIELD ["_turnedOffLocal", false];
-	FIELD ["_originalTexture", ""];
-	FIELD ["_menuActive", false];
-	FIELD ["_isHandMonitor", false];
-	FIELD ["_isHandMonitorDisplay", false];
-	FIELD ["_isLocal", false];
-	FIELD ["_actionCaller", objNull];
-	FIELD ["_mainActions", []];
-	FIELD ["_operatorInfoActionId", -1];
-	FIELD ["_currentMenuObj", objNull];
-	FIELD ["_targetInActionsConditions", "_target"];
-	FIELD ["_monitorUid", ""];
-	FIELD ["_monitorR2Tid", ""];
-	FIELD ["_allowedOperators", [], [objNull, []]];
-	FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
+	PRIVATE LOCAL FIELD ["_radius", ACTION_RADIUS];
+	PUBLIC GLOBAL FIELD ["_monitorSides", []];
+	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
+	PUBLIC GLOBAL FIELD ["_originalTexture", ""];
+	PRIVATE LOCAL FIELD ["_menuActive", false];
+	PRIVATE GLOBAL FIELD ["_isHandMonitor", false];
+	PRIVATE GLOBAL FIELD ["_isHandMonitorDisplay", false];
+	PRIVATE LOCAL FIELD ["_isLocal", false];
+	PRIVATE LOCAL FIELD ["_actionCaller", objNull];
+	PRIVATE LOCAL FIELD ["_mainActions", []];
+	PRIVATE LOCAL FIELD ["_operatorInfoActionId", -1];
+	PRIVATE LOCAL FIELD ["_currentMenuObj", objNull];
+	PRIVATE GLOBAL FIELD ["_targetInActionsConditions", "_target"];
+	PRIVATE LOCAL FIELD ["_monitorUid", ""];
+	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
+	PUBLIC GLOBAL FIELD ["_allowedOperators", [], [objNull, []]];
+	PUBLIC GLOBAL FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
 
 	// in veh tablet
-	FIELD ["_vehicleTabletSeats", []];
-	FIELD ["_isVehTablet", false];
-	FIELD ["_seatTabletsInstances", createHashMap];
+	PUBLIC GLOBAL FIELD ["_vehicleTabletSeats", []];
+	PRIVATE GLOBAL FIELD ["_isVehTablet", false];
+	PRIVATE GLOBAL FIELD ["_seatTabletsInstances", createHashMap];
 
-	FIELD ["_currentTurret", DRIVER_TURRET_PATH];
-	FIELD ["_connectedOperator", objNull];
-	FIELD ["_connectedTurretObject", objNull];
-	FIELD ["_activeMonitorViewers", [2]];
-	FIELD ["_feedActive", false];
-	FIELD ["_currentCameraType", ""];
-	FIELD ["_currentFeedCam", objNull];
-	FIELD ["_currentOpHasTurrets", false];
-	FIELD ["_currentCameraSmoothZoom", true];
-	FIELD ["_currentCameraIsStatic", false];
-	FIELD ["_currentCameraCanMove", false];
-	FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
-	FIELD ["_currentCameraMoveRestrictions", []];
-	FIELD ["_monitorCanSwitchNvg", false];
-	FIELD ["_monitorCanSwitchTi", false];
-	FIELD ["_currentPiPEffect", 0];
-	FIELD ["_isInNvg", false];
-	FIELD ["_currentTiTable", []];
-	FIELD ["_currentNvgParam", []];
-	FIELD ["_zoom", 1, ["", 1]];
-	FIELD ["_zoomFov", 1, ["", 1]];
-	FIELD ["_zoomMax", 1];
-	FIELD ["_zoomTable", createHashMap];
-	FIELD ["_turretLocal", false];
-	FIELD ["_maxZoomed", false];
-	FIELD ["_currentOperatorIsDrone", false];
-	FIELD ["_canFullScreen", false];
-	FIELD ["_cameraPosFunc", {}];
-	FIELD ["_currentCamPointParams", []];
-	FIELD ["_camDoInterpolation", false];
-	FIELD ["_canSetPassword", true];
-	FIELD ["_password", ""];
-	FIELD ["_passwordAccess", []];
-	FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
+	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
+	PRIVATE GLOBAL FIELD ["_connectedTurretObject", objNull];
+	PRIVATE SERVER FIELD ["_activeMonitorViewers", [2]];
+	PRIVATE GLOBAL FIELD ["_feedActive", false];
+	PRIVATE GLOBAL FIELD ["_currentCameraType", ""];
+	PRIVATE LOCAL FIELD ["_currentFeedCam", objNull];
+	PRIVATE GLOBAL FIELD ["_currentOpHasTurrets", false];
+	PUBLIC GLOBAL FIELD ["_currentCameraSmoothZoom", true];
+	PRIVATE GLOBAL FIELD ["_currentCameraIsStatic", false];
+	PUBLIC GLOBAL FIELD ["_currentCameraCanMove", false];
+	PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
+	PUBLIC GLOBAL FIELD ["_currentCameraMoveRestrictions", []];
+	PUBLIC GLOBAL FIELD ["_monitorCanSwitchNvg", false];
+	PUBLIC GLOBAL FIELD ["_monitorCanSwitchTi", false];
+	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE GLOBAL FIELD ["_isInNvg", false];
+	PRIVATE GLOBAL FIELD ["_currentTiTable", []];
+	PRIVATE GLOBAL FIELD ["_currentNvgParam", []];
+	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
+	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
+	PUBLIC GLOBAL FIELD ["_zoomMax", 1];
+	PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
+	PRIVATE LOCAL FIELD ["_turretLocal", false];
+	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
+	PRIVATE GLOBAL FIELD ["_currentOperatorIsDrone", false];
+	PUBLIC GLOBAL FIELD ["_canFullScreen", false];
+	PRIVATE GLOBAL FIELD ["_cameraPosFunc", {}];
+	PRIVATE GLOBAL FIELD ["_currentCamPointParams", []];
+	PRIVATE GLOBAL FIELD ["_camDoInterpolation", false];
+	PUBLIC GLOBAL FIELD ["_canSetPassword", true];
+	PUBLIC GLOBAL FIELD ["_password", ""];
+	PUBLIC GLOBAL FIELD ["_passwordAccess", []];
+	PUBLIC GLOBAL FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
 
-	METHOD("Init") { 
+	GLOBAL METHOD("Init") { 
 		// should be executed globaly
 		params [
 			["_sides", []],
@@ -219,7 +219,7 @@ SINGLETON_CLASS(Monitor)
 
 		true
 	};
-	METHOD("setScreenResolution") {
+	GE GA METHOD("setScreenResolution") {
 		params [["_screenResolutionSet", ""]];
 		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
@@ -232,7 +232,7 @@ SINGLETON_CLASS(Monitor)
 		};
 		_screenResolution
 	};
-	METHOD("startFeed") {  
+	GLOBAL METHOD("startFeed") {  
 		params [["_operator", objNull], ["_turret", []], ["_reset", false]];
 
 		private _monitor = _selfObj;
@@ -301,7 +301,7 @@ SINGLETON_CLASS(Monitor)
 
 		true
 	}; 
-	METHOD("stopFeed") {
+	GLOBAL METHOD("stopFeed") {
 		params[["_reset", false], ["_isOptimize", false]];
 		if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _selfObj) then {
 			closeDialog 1;
@@ -333,7 +333,7 @@ SINGLETON_CLASS(Monitor)
 			};
 		};
 	};
-	METHOD("clearVariables") {
+	LOCAL METHOD("clearVariables") {
 		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
 		_monitor setVariable ["CFM_monitorCanSwitchTi", nil];
 		_monitor setVariable ["CFM_currentOpHasTurrets", nil];
@@ -372,7 +372,7 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_waitingForStartOperator", nil];
 		_monitor setVariable ["CFM_waitingForStartTurret", nil];
 	};
-	METHOD("DefineSeatTablets") {
+	GE LA METHOD("DefineSeatTablets") {
 		private _fullCrew = fullCrew [_monitor, "", true];
 		{
 			if ([_monitor, _x] call CFM_fnc_isCrewSeatAllowed) then {
@@ -384,7 +384,7 @@ SINGLETON_CLASS(Monitor)
 		} forEach _fullCrew;
 		_monitor getVariable ["CFM_seatTabletsInstances", createHashMap]
 	};
-	METHOD("setSeatTablet") {
+	GE LA METHOD("setSeatTablet") {
 		params [["_seatKey", ""]];
 		if (_seatKey isEqualTo "") exitWith {-1};
 		private _seatInstanceId = SEAT_TABLET_INSTANCE_ID(_monitor, _seatKey);
@@ -399,7 +399,7 @@ SINGLETON_CLASS(Monitor)
 		[_monitor, "CFM_seatTabletsInstances", _seatKey, _seatInstanceId] call CFM_fnc_hashSetGlobal;
 		_seatInstanceId
 	};
-	METHOD("connect") {
+	GE GA LOCAL METHOD("connect") {
 		params["_op", ["_caller", objNull]];
 		_selfObj setVariable ['CFM_actionCaller', _caller];
 		private _initTurret = (_op getVariable ["CFM_turrets", DRIVER_TURRET_PATH]) param [0, DRIVER_TURRET_PATH];
@@ -423,7 +423,7 @@ SINGLETON_CLASS(Monitor)
 		[_selfObj] call CFM_fnc_monitorCloseMenu;
 		true
 	};
-	METHOD("disconnect") {
+	GE GA LOCAL METHOD("disconnect") {
 		params[["_caller", objNull]];
 		_selfObj setVariable ['CFM_actionCaller', _caller];
 		if (_isVehTablet) exitWith {
@@ -433,7 +433,7 @@ SINGLETON_CLASS(Monitor)
 		["CFM_syncMonitorState", [netId _selfObj, "", false], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
 		[_selfObj] call CFM_fnc_monitorCloseMenu;
 	};
-	METHOD("loadMenu") {
+	LOCAL METHOD("loadMenu") {
 		params[["_caller", objNull], ["_target", _selfObj]];
 		if !([_selfObj] call CFM_fnc_hasMonitorPasswordAccess) exitWith {
 			[_selfObj, "enter", _caller, _target] call CFM_fnc_openPasswordDialog;
@@ -445,7 +445,7 @@ SINGLETON_CLASS(Monitor)
 			["loadMenuScrollMenu", [_caller, _target]] CALL_SELF;
 		};
 	};
-	METHOD("loadMenuScrollMenu") { 
+	LOCAL METHOD("loadMenuScrollMenu") { 
 		params [["_caller", objNull], ["_target", _selfObj], ["_targetStr", _targetInActionsConditions]]; 
 		private _targetStr = _targetInActionsConditions;
 		private _ops = [_selfObj] call CFM_fnc_getActiveOperators; 
@@ -528,7 +528,7 @@ SINGLETON_CLASS(Monitor)
 		_target setVariable ['CFM_menuHndl', _menuHndl];
 		_menuHndl
 	};
-	METHOD("zoom") {
+	GE GA METHOD("zoom") {
 		params [["_zoomAdd", 0], ["_zoomSet", -1], ["_isContinuous", false, [false]]]; 
 
 		if ((_zoomAdd isEqualType 1) && {(_zoomAdd > 0) && _maxZoomed}) exitWith {_zoom};
@@ -609,7 +609,7 @@ SINGLETON_CLASS(Monitor)
 
 		_newzoom
 	};
-	METHOD("syncContinuousZoom") {
+	GE GA METHOD("syncContinuousZoom") {
 		private _syncGlobal = !_isHandMonitor;
 		if (_syncGlobal) then {
 			_monitor setVariable ['CFM_maxZoomed', _monitor getVariable ['CFM_maxZoomed', false], true];
@@ -622,7 +622,7 @@ SINGLETON_CLASS(Monitor)
 		};
 		true
 	};
-	METHOD("nextTurret") {
+	GE GA METHOD("nextTurret") {
 		private _syncGlobal = !_isHandMonitor;
 		_monitor setVariable ["CFM_currentPiPEffect", 0, _syncGlobal];
 		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
@@ -636,7 +636,7 @@ SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_doUpdatePip", true, true];
 		["TurretChanged", [_monitor, _turret, false, true], true] REMOTE_EXEC_OBJCLASS("Operator", _connectedOperator);
 	};
-	METHOD("switchNvg") { 
+	GE GA METHOD("switchNvg") { 
 		private _newEffect = 0;
 		if (_currentPiPEffect != 1) then {
 			_newEffect = 1;
@@ -652,7 +652,7 @@ SINGLETON_CLASS(Monitor)
 			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
 		};
 	};
-	METHOD("switchTi") { 
+	GE GA METHOD("switchTi") { 
 		private _newEffect = if !(_currentPiPEffect in _currentTiTable) then {
 			_currentTiTable#0;
 		} else {
@@ -673,13 +673,13 @@ SINGLETON_CLASS(Monitor)
 			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
 		};
 	};
-	METHOD("addActionsToActionsList") {
+	LOCAL METHOD("addActionsToActionsList") {
 		private _savedActions = _selfObj getVariable ["CFM_mainActions", []];
 		_savedActions append _this;
 		_selfObj setVariable ["CFM_mainActions", _savedActions];
 		_savedActions
 	};
-	METHOD("addMenuActions") {
+	LOCAL METHOD("addMenuActions") {
 		params[["_radius", ACTION_RADIUS], ["_target", _targetInActionsConditions]];
 		
 		private _actions = [];
@@ -800,7 +800,7 @@ SINGLETON_CLASS(Monitor)
 	
 		["addActionsToActionsList", _actions] CALL_SELF;
 	};
-	METHOD("addOptionalActions") {
+	LOCAL METHOD("addOptionalActions") {
 		params [
 			["_radius", ACTION_RADIUS],
 			["_canZoom", true],
@@ -936,7 +936,7 @@ SINGLETON_CLASS(Monitor)
 		};
 		["addActionsToActionsList", _actions] CALL_SELF;
 	};
-	METHOD("monitorEnterFullScreen") {
+	LOCAL METHOD("monitorEnterFullScreen") {
 		if !([_selfObj] call CFM_fnc_enterFullScreenActionCondition) exitWith {false};
 		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _selfObj];
 		if (missionNamespace getVariable ["CFM_fullscreenIsPip", false]) exitWith {
@@ -1023,7 +1023,7 @@ SINGLETON_CLASS(Monitor)
 		// cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
 	};
-	METHOD("monitorExitFullScreen") {
+	LOCAL METHOD("monitorExitFullScreen") {
 		if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {
 			private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
 			if (!isNull _disp) then {
@@ -1070,7 +1070,7 @@ SINGLETON_CLASS(Monitor)
 		};
 		true
 	};
-	METHOD("getOperatorInfo") {
+	LOCAL METHOD("getOperatorInfo") {
 		private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
 		private _dist = _selfObj distance _connectedOperator;
 		private _grid = mapGridPosition _connectedOperator;
@@ -1094,7 +1094,7 @@ SINGLETON_CLASS(Monitor)
 
 		_infoStr _HINT;
 	};
-	METHOD("setOperatorInfo") {
+	LE GA METHOD("setOperatorInfo") {
 		params[["_set", false], ["_operator", _connectedOperator]];
 		private _infoStr = if (_set && {IS_OBJ(_operator)}) then {
 			private _currentTurret = _selfObj getVariable ["CFM_currentTurret", _currentTurret];
@@ -1124,7 +1124,7 @@ SINGLETON_CLASS(Monitor)
 
 		_infoStr
 	};
-	METHOD("switchUAV") {
+	LOCAL METHOD("switchUAV") {
 		if !(_currentOperatorIsDrone) exitWith {
 			CFM_STR_CURRENT_FEED_NOT_UAV _HINT
 			false

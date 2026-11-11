@@ -1,5 +1,5 @@
 
-SINGLETON_CLASS(CameraManager)
+LOCAL SINGLETON_CLASS(CameraManager)
 
 	/*
 		Operator's camerasSet: [monitor, camera, params:[operator, turret, zoom, turretLocal]]
