@@ -6,9 +6,9 @@
 #define OBJ_BOOL(obj, var, def) ((obj getVariable [var, def]) isEqualTo 1)
 #define SELECT_DEF(var, def) (call {private _val = (LGVAR [var, def]); if (_val isEqualTo -1) then {-1} else {_val isEqualTo 1}})
 
-private _logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
-private _units = [_this,1,[],[[]]] call BIS_fnc_param;
-private _activated = [_this,2,true,[true]] call BIS_fnc_param;
+private _logic = objNull;
+private _units = [];
+private _activated = false;
 
 if ((_this param [0]) isEqualType "") then {
 	// 3DEN Framework event (is3DEN = 1): [_mode, _input]
@@ -24,18 +24,34 @@ if ((_this param [0]) isEqualType "") then {
 				[_mod] call CFM_fnc_initCameraVisualizer;
 			};
 		};
+		if (_mode isEqualTo "unregisteredFromWorld3DEN") then {
+			private _mod = _input param [0, objNull];
+			if (!isNull _mod && {!isNil "CFM_cameraVisualizerList"}) then {
+				private _existingIdx = CFM_cameraVisualizerList findIf { (_x select 0) isEqualTo _mod };
+				if (_existingIdx != -1) then {
+					private _vis = (CFM_cameraVisualizerList select _existingIdx) select 1;
+					if (!isNull _vis) then { deleteVehicle _vis; };
+					CFM_cameraVisualizerList deleteAt _existingIdx;
+				};
+			};
+		};
 	};
 
 	if (_mode isNotEqualTo "init") exitWith {};
 	_logic = _input param [0, objNull];
 	_activated = _input param [1, true];
 } else {
+	_logic = [_this,0,objNull,[objNull]] call BIS_fnc_param;
+	_units = [_this,1,[],[[]]] call BIS_fnc_param;
+	_activated = [_this,2,true,[true]] call BIS_fnc_param;
 	if (is3DEN) exitWith {
 		if (!isNull _logic) then {
 			[_logic] call CFM_fnc_initCameraVisualizer;
 		};
 	};
 };
+
+_activated = _activated && {IS_OBJ(_logic)};
 
 if (!_activated || {is3DEN}) exitWith {};
 

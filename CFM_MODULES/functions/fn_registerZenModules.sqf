@@ -24,7 +24,7 @@ if (_category isEqualTo "") then { _category = "CFM Camera System"; };
         params ["_pos", "_target"];
         ["CFM_Module_Camera", _pos, _target] call CFM_fnc_openZenModuleDialog;
     },
-    "IconCamera"
+    "a3\ui_f\data\gui\cfg\keyframeanimation\iconcamera_ca.paa"
 ] call zen_custom_modules_fnc_register;
 
 // 2. Monitor Module

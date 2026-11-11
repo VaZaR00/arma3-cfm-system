@@ -3,6 +3,7 @@
 #define SSTR_DESC_N(s) $##STR_PREF##DESC_##s
 #define SSTR(s) STR(SSTR_N(s))
 #define SSTR_DESC(s) STR(SSTR_DESC_N(s))
+#define USE_IN_ZEN 1
 
 #define PARAMETER(paramName, type, default) class paramName \
 { \
@@ -10,6 +11,7 @@
     description = SSTR_DESC(paramName); \
     typeName = type; \
     defaultValue = default; \
+    useInZen = USE_IN_ZEN; \
 };
 
 #define PARAMETER_SELECT(paramName, default) class paramName \
@@ -18,6 +20,7 @@
     description = SSTR_DESC(paramName); \
     typeName = "NUMBER"; \
     defaultValue = default; \
+    useInZen = USE_IN_ZEN; \
     class values \
     { \
         class Yes    {name = SSTR(Yes); value = 1;}; \
@@ -30,6 +33,7 @@
     description = SSTR_DESC(paramName); \
     typeName = "NUMBER"; \
     defaultValue = default; \
+    useInZen = USE_IN_ZEN; \
     class values \
     { \
         class Default   {name = SSTR(Default); value = -1;}; \
@@ -108,7 +112,10 @@ class CfgVehicles
 
         class Arguments: ArgumentsBaseUnits
         {
+            #define USE_IN_ZEN 0
+            PARAMETER_SELECT(showEdenVisualizer, 1)
             PARAMETER_SELECT(isCameraTurret, 0) // if true this module is proccesed as turret of synced static cam module
+            #define USE_IN_ZEN 1
             PARAMETER(cameraName, "STRING", "")
             PARAMETER(cameraSides, "STRING", "west")
             PARAMETER(cameraTurretsCustom, "STRING", "")

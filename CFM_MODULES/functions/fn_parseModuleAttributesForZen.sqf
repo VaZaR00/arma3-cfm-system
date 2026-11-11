@@ -18,7 +18,7 @@
                 If empty: Array of results for default modules.
 */
 
-params [["_moduleClass", "", [""]]];
+params [["_moduleClass", "", [""]], ["_checkUseInZen", true]];
 
 // If called without class name, parse default CFM modules
 if (_moduleClass isEqualTo "") exitWith {
@@ -54,6 +54,8 @@ private _argTypes = [];
     
     // Skip base/meta classes
     if (_argName in ["Units", "ModuleDescription"]) then { continue };
+
+    if (_checkUseInZen && {(getNumber(_argCfg >> "useInZen")) isEqualTo 0}) then { continue };
 
     private _displayName = getText (_argCfg >> "displayName");
     if (_displayName select [0, 1] isEqualTo "$") then {

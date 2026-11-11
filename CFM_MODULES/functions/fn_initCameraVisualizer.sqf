@@ -5,6 +5,7 @@
 
 	Description:
 		Creates a local simple object visualization for the camera module in 3DEN editor
+		if the "3DEN show object" checkbox attribute is enabled,
 		and maintains a single EachFrame event handler to update its position and orientation.
 
 	Parameters:
@@ -21,6 +22,49 @@ if (!is3DEN) exitWith { objNull };
 params [["_module", objNull, [objNull]]];
 
 if (isNull _module) exitWith { objNull };
+
+// Вспомогательная функция для безопасного определения истинности флага
+private _fnc_isTrue = {
+	params ["_val"];
+	if (_val isEqualType true) exitWith { _val };
+	if (_val isEqualType 0) exitWith { _val isEqualTo 1 };
+	if (_val isEqualType "") exitWith { (toLower _val) in ["true", "1"] };
+	false
+};
+
+// Проверяем флаг "3DEN show object" (showEdenVisualizer)
+private _showVisualizer = false;
+private _var = _module getVariable ["showEdenVisualizer", nil];
+if (isNil "_var") then {
+	_var = _module getVariable ["CFM_Module_Camera_showEdenVisualizer", nil];
+};
+
+if (!isNil "_var") then {
+	_showVisualizer = [_var] call _fnc_isTrue;
+} else {
+	private _attr = _module get3DENAttribute "showEdenVisualizer";
+	if (_attr isEqualTo [] || {isNil { _attr select 0 }}) then {
+		_attr = _module get3DENAttribute "CFM_Module_Camera_showEdenVisualizer";
+	};
+	if (_attr isNotEqualTo [] && {!isNil { _attr select 0 }}) then {
+		_showVisualizer = [_attr select 0] call _fnc_isTrue;
+	};
+};
+
+// Если флаг выключен — если объект уже существовал, удаляем его и выходим
+if (!_showVisualizer) exitWith {
+	if (!isNil "CFM_cameraVisualizerList") then {
+		private _existingIdx = CFM_cameraVisualizerList findIf { (_x select 0) isEqualTo _module };
+		if (_existingIdx != -1) then {
+			private _vis = (CFM_cameraVisualizerList select _existingIdx) select 1;
+			if (!isNull _vis) then {
+				deleteVehicle _vis;
+			};
+			CFM_cameraVisualizerList deleteAt _existingIdx;
+		};
+	};
+	objNull
+};
 
 if (isNil "CFM_cameraVisualizerList") then {
 	CFM_cameraVisualizerList = [];
@@ -62,7 +106,7 @@ if (isNull _visObj) exitWith {
 _visObj enableSimulation false;
 _visObj disableCollisionWith _module;
 _visObj setPosASL _pos;
-_visObj setObjectScale CFM_cameraVisualizerScale; // Масштабируем визуализатор, чтобы он был меньше 
+_visObj setObjectScale CFM_cameraVisualizerScale; // Масштабируем визуализатор, чтобы он был меньше
 _visObj setVectorDirAndUp [vectorDirVisual _module, vectorUpVisual _module];
 
 CFM_cameraVisualizerList pushBack [_module, _visObj];
@@ -102,13 +146,25 @@ if (CFM_cameraVisualizerHandler isEqualTo -1) then {
 				};
 				_toRemove pushBack _forEachIndex;
 			} else {
-				if (isNull _vis) then {
+				// Проверяем, не выключен ли флаг в реальном времени
+				private _enabled = _mod getVariable ["showEdenVisualizer", nil];
+				if (isNil "_enabled") then {
+					_enabled = _mod getVariable ["CFM_Module_Camera_showEdenVisualizer", nil];
+				};
+				if (!isNil "_enabled" && {!((_enabled isEqualType true && {_enabled}) || {(_enabled isEqualType 0 && {_enabled == 1})} || {(_enabled isEqualType "" && {(toLower _enabled) in ["true", "1"]})})}) then {
+					if (!isNull _vis) then {
+						deleteVehicle _vis;
+					};
 					_toRemove pushBack _forEachIndex;
 				} else {
-					// Синхронизируем положение и направление с модулем в реальном времени
-					_vis setPosASL (_mod modelToWorldVisualWorld [0, 0, 0]);
-					_vis setVectorDirAndUp [vectorDirVisual _mod, vectorUpVisual _mod];
-					_vis setObjectScale CFM_cameraVisualizerScale;
+					if (isNull _vis) then {
+						_toRemove pushBack _forEachIndex;
+					} else {
+						// Синхронизируем положение и направление с модулем в реальном времени
+						_vis setPosASL (_mod modelToWorldVisualWorld [0, 0, 0]);
+						_vis setVectorDirAndUp [vectorDirVisual _mod, vectorUpVisual _mod];
+						_vis setObjectScale CFM_cameraVisualizerScale;
+					};
 				};
 			};
 		} forEach _list;

@@ -64,3 +64,5 @@ STR_CFM_MODULE_3DEN_TOOL_setCameraModuleOnEdenCamera, "Set Camera Module on view
 STR_CFM_Module_categoryName, "CFM Camera System", "Система камер CFM", "Система камер CFM"
 STR_CFM_Module_moduleMonitorName, "Monitor", "Монітор", "Монитор"
 STR_CFM_Module_moduleCameraName, "Camera", "Камера", "Камера"
+STR_CFM_Module_showEdenVisualizer, "3DEN show object", "3DEN показувати об'єкт", "3DEN показывать объект"
+STR_CFM_Module_DESC_showEdenVisualizer, "Show 3D camera object in 3DEN editor to visualize orientation", "Показувати 3D-модель камери в редакторі 3DEN для візуалізації орієнтації", "Показывать 3D-модель камеры в редакторе 3DEN для визуализации ориентации"
