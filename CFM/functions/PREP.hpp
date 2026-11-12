@@ -144,6 +144,7 @@ PREP(getDefaultScreenResolution)
 PREP(setDefaultScreenResolution)
 PREP(setScreenResolution)
 PREP(getMonitorScreenResolution)
+PREP(monitorGrantAccess)
 
 // -- Category operator --
 FOLDER_PATH(operator)

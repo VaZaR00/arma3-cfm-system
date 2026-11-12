@@ -113,7 +113,7 @@ private _onConfirm = {
 		case "enter": {
 			if (_input isEqualTo _currentPass) then {
 				_display closeDisplay 1;
-				[_monitor, "CFM_passwordAccess", _plrId, true, false, !_isLocal, !_isLocal] call CFM_fnc_pushBackNet;
+				[_monitor, _plrId] call CFM_fnc_monitorGrantAccess;
 				CFM_STR_PASSWORD_ACCEPTED _HINT;
 				if !(_monitor getVariable ["CFM_feedActive", false]) then {
 					["loadMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _monitor);

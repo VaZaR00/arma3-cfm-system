@@ -11,6 +11,8 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PUBLIC GLOBAL FIELD ["_originalTexture", ""];
 	PUBLIC GLOBAL FIELD ["_allowedOperators", [], [objNull, []]];
 	PUBLIC GLOBAL FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
+	PUBLIC GLOBAL FIELD ["_canFullScreen", false];
+	PUBLIC GLOBAL FIELD ["_canSetPassword", true];
 	PRIVATE LOCAL FIELD ["_isLocal", false];
 	PRIVATE LOCAL FIELD ["_radius", ACTION_RADIUS];
 	PRIVATE GLOBAL FIELD ["_isHandMonitor", false];
@@ -20,17 +22,21 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE GLOBAL FIELD ["_targetInActionsConditions", "_target"];
 	PRIVATE LOCAL FIELD ["_monitorUid", ""];
 	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
+	PRIVATE GLOBAL FIELD ["_password", ""];
+	PRIVATE GLOBAL FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
 	// veh tablet config
-	PUBLIC GLOBAL FIELD ["_vehicleTabletSeats", []];
+	PRIVATE GLOBAL FIELD ["_vehicleTabletSeats", []];
 	PRIVATE GLOBAL FIELD ["_seatTabletsInstances", createHashMap];
 	PRIVATE GLOBAL FIELD ["_isVehTablet", false];
 	// -----------------------------------------------
 
 	// -----------------------------------------------
-	// monitor state
-	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
-	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	// state vars
+	PRIVATE GLOBAL FIELD ["_passwordAccess", []];
+	PRIVATE GLOBAL FIELD ["_connectedOperator", objNull];
+	PRIVATE GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	PRIVATE GLOBAL FIELD ["_feedActive", false];
+	PRIVATE GLOBAL FIELD ["_currentCamPointParams", []];
 	PRIVATE SERVER FIELD ["_activeMonitorViewers", [2]];
 	PRIVATE LOCAL FIELD ["_currentFeedCam", objNull];
 	PRIVATE LOCAL FIELD ["_menuActive", false];
@@ -52,10 +58,10 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE GLOBAL FIELD ["_currentTiTable", []];
 
 	// Zoom
-	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
-	PUBLIC GLOBAL FIELD ["_zoomMax", 1];
-	PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
 	PUBLIC GLOBAL FIELD ["_currentCameraSmoothZoom", true];
+	PRIVATE GLOBAL FIELD ["_zoom", 1, ["", 1]];
+	PRIVATE GLOBAL FIELD ["_zoomMax", 1];
+	PRIVATE GLOBAL FIELD ["_zoomTable", createHashMap];
 	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
 	
@@ -67,7 +73,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE GLOBAL FIELD ["_camDoInterpolation", false];
 
 	// other turret params
-	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE GLOBAL FIELD ["_currentPiPEffect", 0];
 	PRIVATE LOCAL FIELD ["_turretLocal", false];
 	PRIVATE GLOBAL FIELD ["_cameraPosFunc", {}];
 	PRIVATE GLOBAL FIELD ["_connectedTurretObject", objNull];
@@ -77,13 +83,6 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE GLOBAL FIELD ["_currentOpHasTurrets", false];
 	PRIVATE GLOBAL FIELD ["_currentCameraType", ""];
 	// -----------------------------------------------
-
-	PRIVATE GLOBAL FIELD ["_currentCamPointParams", []];
-	PUBLIC GLOBAL FIELD ["_canFullScreen", false];
-	PUBLIC GLOBAL FIELD ["_canSetPassword", true];
-	PUBLIC GLOBAL FIELD ["_password", ""];
-	PUBLIC GLOBAL FIELD ["_passwordAccess", []];
-	PUBLIC GLOBAL FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
 
 	//----------- Internal -----------
 	PRIVATE GLOBAL METHOD("Init") { 
@@ -335,6 +334,12 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		[_monitor, "CFM_seatTabletsInstances", _seatKey, _seatInstanceId] call CFM_fnc_hashSetGlobal;
 		_seatInstanceId
 	};
+	PUBLIC GE GA METHOD("grantAccess") {
+		params["_plrId"];
+		if !(_plrId isEqualType "") exitWith {};
+		if (_plrId isEqualTo "") exitWith {};
+		[_monitor, "CFM_passwordAccess", _plrId, true, false, !_isLocal, !_isLocal] call CFM_fnc_pushBackNet;
+	};
 	//----------- State set -----------
 	PUBLIC LE GA GLOBAL METHOD("startFeed") {  
 		params [["_operator", objNull], ["_turret", []], ["_reset", false]];
@@ -558,6 +563,14 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
 		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
 		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
+	};
+	PUBLIC GE GA METHOD("setTurret") {
+		params[["_turretIndex", -1]];
+		private _syncGlobal = !_isHandMonitor;
+		_monitor setVariable ["CFM_currentPiPEffect", 0, _syncGlobal];
+		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
+		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
+		["feedTurretToMonitor", [_monitor, _turretIndex]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
 	PUBLIC GE GA METHOD("switchNvg") { 
 		private _newEffect = 0;
