@@ -10,7 +10,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 	// operator config
 	PUBLIC GLOBAL FIELD ["_operatorName", ""];
 	PRIVATE GLOBAL FIELD ["_operatorId", -1];
-	PUBLIC GLOBAL FIELD ["_opSides", []];
+	PRIVATE GLOBAL FIELD ["_opSides", []];
 	PUBLIC GLOBAL FIELD ["_canFeed", false];
 	PRIVATE GLOBAL FIELD ["_classType", ""];
 	PRIVATE GLOBAL FIELD ["_objClass", ""];
@@ -31,7 +31,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 	// -----------------------------------------------
 	// turrets config & instances
-	PUBLIC GLOBAL FIELD ["_turrets", [DRIVER_TURRET_PATH]];
+	PRIVATE GLOBAL FIELD ["_turrets", [DRIVER_TURRET_PATH]];
 	PRIVATE GLOBAL FIELD ["_allTurrets", []];
 	PRIVATE GLOBAL FIELD ["_disabledTurrets", []];
 	PRIVATE GLOBAL FIELD ["_opHasTurrets", false];
@@ -331,7 +331,8 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opSides", _sides, _global];
 		true
 	};
-	PRIVATE SE METHOD("setTurretParams") {
+	PUBLIC SE METHOD("setTurretParams") {
+		// _this: TURRET.INIT params
 		params [
 			["_turretIndex", -1],
 			["_turretObject", objNull]
@@ -461,15 +462,31 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		};
 		private _nextTurretIndex = _turretsIndexes select _nextIndex;
 
+		private _done = ["feedTurretToMonitor", [_monitor, _nextTurretIndex]] CALL_SELF;
+
+		if !(_done) exitWith {_curTurrIndex};
+
+		_nextTurretIndex
+	};
+	PRIVATE GE METHOD("feedTurretToMonitor") {
+		params["_monitor", ["_turret", [-1]]];
+
+		private _turretIdx = TURRET_INDEX(_turret);
+
+		private _activeTurrs = _selfObj getVariable ["CFM_turrets", _turrets];
+		private _turretsIndexes = _activeTurrs apply {TURRET_INDEX(_x)};
+
+		if !(_turretIdx in _turretsIndexes) exitWith {false};
+
 		private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
 		private _monIsLocal = (_monitor getVariable ["CFM_isLocal", false]) || _isVehTablet;
 		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, _monIsLocal);
-		["TurretChanged", [_monitor, [_nextTurretIndex], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+		["TurretChanged", [_monitor, [_turretIdx], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 		if (_isVehTablet && !isServer) then {
-			["TurretChangedLocalOperator", [_monitor, [_nextTurretIndex]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+			["TurretChangedLocalOperator", [_monitor, [_turretIdx]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 		};
 
-		_nextTurretIndex
+		true
 	};
 	PRIVATE SE METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
