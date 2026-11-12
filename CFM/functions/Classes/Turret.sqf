@@ -78,6 +78,7 @@ PUBLIC GLOBAL CLASS(Turret)
 
 	#define TimeToMoveSmoothCoef 0.2
     
+	//----------- Internal -----------
     PRIVATE SERVER METHOD("Init") {
 		[
 			["_operator", objNull], 
@@ -323,6 +324,69 @@ PUBLIC GLOBAL CLASS(Turret)
 		};
 		true
 	};
+	PRIVATE GE LA METHOD("syncContinuousMove") {
+		if (_isDroneFeed) exitWith {
+			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
+			private _acc = _selfObj getVariable [_accVar, [0, 0]];
+			private _canExecHere = if (_turretIndex isEqualTo 0) then {
+				(_operator turretLocal [_turretIndex]) || {local _operator}
+			} else {
+				local _operator
+			};
+			if (!(_acc isEqualTo [0, 0]) && !_canExecHere) then {
+				_selfObj setVariable [_accVar, [0, 0]];
+				private _isGunnerTurret = _turretIndex isEqualTo 0;
+				private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
+				if (isNull _target) then {_target = _operator};
+				["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _acc, true]], _target] call CBA_fnc_targetEvent;
+			};
+			true
+		};
+
+		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
+
+		if (isMultiplayer) then {
+			SET_SELFVARG(_ppPos);
+			SET_SELFVARG(_ppDir);
+			SET_SELFVARG(_ppUp);
+			SET_SELFVARG(_ppMemPoint);
+			SET_SELFVARG(_ppAddArr);
+			SET_SELFVARG(_ppSetArr);
+			SET_SELFVARG(_ppLod);
+			SET_SELFVARG(_currentCameraMoves);
+			SET_SELFVARG(_pointParams);
+		};
+
+		private _localDoUpdCam = [true, +_pointParams] select _isStaticCam;
+		{
+			_x setVariable ["CFM_camDoInterpolation", _doInterpolation];
+			_x setVariable ["CFM_cam_prevSetPos", nil];
+			_x setVariable ["CFM_currentCamPointParams", +_pointParams];
+			_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
+			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+		} forEach _monitorsOnTurret;
+
+		private _netTargets = if (isMultiplayer) then {
+			(ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]})
+		} else {[]};
+		if (_netTargets isNotEqualTo []) then {
+			private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
+			{
+				if (_x getVariable ["CFM_isVehTablet", false]) then {
+					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
+				} else {
+					if !(_doInterpolation) then {
+						_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
+					};
+					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
+					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
+					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
+				};
+			} forEach _monitorsOnTurret;
+		};
+
+		true
+	};
     PRIVATE LE GE GA METHOD("compilePointParams") {
 		params [["_syncGlobal", true]];
 		_pointParams = switch (_ppType) do {
@@ -380,6 +444,7 @@ PUBLIC GLOBAL CLASS(Turret)
 			};
 		} forEach _monitorsOnTurret;
     };
+	//----------- Config set -----------
     PUBLIC LE GE GA METHOD("setPointParams") {
 		params[["_params", []], ["_syncGlobal", true]];
 
@@ -438,6 +503,10 @@ PUBLIC GLOBAL CLASS(Turret)
 
 		true
 	};
+	PUBLIC GE GA LOCAL METHOD("setDefaultPointAlignment") {
+		[_selfObj, _turretIndex, -1] call CFM_fnc_setPointAlignment;
+	};
+	//----------- Config get -----------
 	PUBLIC LE GA LOCAL METHOD("getPPParam") {
 		params[["_ppParam", ""], ["_def", nil]];
 
@@ -452,9 +521,10 @@ PUBLIC GLOBAL CLASS(Turret)
 			default {_NIL(_def)};
 		}
 	};
-	PUBLIC GE GA LOCAL METHOD("setDefaultPointAlignment") {
-		[_selfObj, _turretIndex, -1] call CFM_fnc_setPointAlignment;
+	PRIVATE LOCAL METHOD("getTurretName") {
+		_turretName
 	};
+	//----------- State control -----------
 	PRIVATE GE GA LOCAL METHOD("TurretChanged") {
 		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
@@ -529,6 +599,33 @@ PUBLIC GLOBAL CLASS(Turret)
 			[_operator, _turretIndex, _selfObj] call CFM_fnc_addActiveTurret;
 		};
 
+		true
+	};
+	PRIVATE GE GA LOCAL METHOD("addMonitor") {
+		params[["_monitor", objNull]];
+
+		if !(IS_OBJ(_monitor)) exitWith {-1};
+
+		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
+		[_selfObj, _varName, _monitor, true, false] call CFM_fnc_pushBackGlobal;
+		_monitorsOnTurret = _selfObj getVariable [_varName, []];
+
+		_monitorsOnTurret find _monitor
+	};
+	PRIVATE GE GA LOCAL METHOD("removeMonitor") {
+		params[["_monitor", objNull]];
+
+		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
+		[_selfObj, _varName, _monitor, false, false] call CFM_fnc_removeFromArrayGlobal;
+		_monitorsOnTurret = _selfObj getVariable [_varName, []];
+
+		true	
+	};
+	//----------- State set -----------
+	PUBLIC LE GA METHOD("setDisabled") {
+		params[["_state", true]];
+		_disabled = _state;
+		SET_SELFVAR(_disabled);
 		true
 	};
 	PRIVATE GE LA METHOD("moveCamera") {
@@ -680,69 +777,6 @@ PUBLIC GLOBAL CLASS(Turret)
 
 			SET_SELFVARG(_currentCameraMoves);
 			SET_SELFVARG(_pointParams);
-		};
-
-		true
-	};
-	PRIVATE GE LA METHOD("syncContinuousMove") {
-		if (_isDroneFeed) exitWith {
-			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
-			private _acc = _selfObj getVariable [_accVar, [0, 0]];
-			private _canExecHere = if (_turretIndex isEqualTo 0) then {
-				(_operator turretLocal [_turretIndex]) || {local _operator}
-			} else {
-				local _operator
-			};
-			if (!(_acc isEqualTo [0, 0]) && !_canExecHere) then {
-				_selfObj setVariable [_accVar, [0, 0]];
-				private _isGunnerTurret = _turretIndex isEqualTo 0;
-				private _target = if (_isGunnerTurret) then {gunner _operator} else {driver _operator};
-				if (isNull _target) then {_target = _operator};
-				["CFM_moveDroneCamera", [_selfObj, [_instanceIndex, _acc, true]], _target] call CBA_fnc_targetEvent;
-			};
-			true
-		};
-
-		if !(_ppType in [PP_STATIC, PP_VEH_STATIC, PP_VEH_TURRET]) exitWith {false};
-
-		if (isMultiplayer) then {
-			SET_SELFVARG(_ppPos);
-			SET_SELFVARG(_ppDir);
-			SET_SELFVARG(_ppUp);
-			SET_SELFVARG(_ppMemPoint);
-			SET_SELFVARG(_ppAddArr);
-			SET_SELFVARG(_ppSetArr);
-			SET_SELFVARG(_ppLod);
-			SET_SELFVARG(_currentCameraMoves);
-			SET_SELFVARG(_pointParams);
-		};
-
-		private _localDoUpdCam = [true, +_pointParams] select _isStaticCam;
-		{
-			_x setVariable ["CFM_camDoInterpolation", _doInterpolation];
-			_x setVariable ["CFM_cam_prevSetPos", nil];
-			_x setVariable ["CFM_currentCamPointParams", +_pointParams];
-			_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
-			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
-		} forEach _monitorsOnTurret;
-
-		private _netTargets = if (isMultiplayer) then {
-			(ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]})
-		} else {[]};
-		if (_netTargets isNotEqualTo []) then {
-			private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
-			{
-				if (_x getVariable ["CFM_isVehTablet", false]) then {
-					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
-				} else {
-					if !(_doInterpolation) then {
-						_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
-					};
-					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
-					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
-					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
-				};
-			} forEach _monitorsOnTurret;
 		};
 
 		true
@@ -1041,35 +1075,7 @@ PUBLIC GLOBAL CLASS(Turret)
 		
 		true
 	};
-	PRIVATE GE GA LOCAL METHOD("addMonitor") {
-		params[["_monitor", objNull]];
-
-		if !(IS_OBJ(_monitor)) exitWith {-1};
-
-		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
-		[_selfObj, _varName, _monitor, true, false] call CFM_fnc_pushBackGlobal;
-		_monitorsOnTurret = _selfObj getVariable [_varName, []];
-
-		_monitorsOnTurret find _monitor
-	};
-	PRIVATE GE GA LOCAL METHOD("removeMonitor") {
-		params[["_monitor", objNull]];
-
-		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
-		[_selfObj, _varName, _monitor, false, false] call CFM_fnc_removeFromArrayGlobal;
-		_monitorsOnTurret = _selfObj getVariable [_varName, []];
-
-		true	
-	};
-	PRIVATE LOCAL METHOD("getTurretName") {
-		_turretName
-	};
-	PUBLIC LE GA METHOD("setDisabled") {
-		params[["_state", true]];
-		_disabled = _state;
-		SET_SELFVAR(_disabled);
-		true
-	};
+	//----------- State get -----------
 	PUBLIC LOCAL METHOD("isDisabled") {
 		_disabled
 	};

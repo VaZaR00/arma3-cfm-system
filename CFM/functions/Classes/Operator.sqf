@@ -7,7 +7,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 	SET_SELF_VAR("_operator");
 
 	// -----------------------------------------------
-	// operator config & identity
+	// operator config
 	PUBLIC GLOBAL FIELD ["_operatorName", ""];
 	PRIVATE GLOBAL FIELD ["_operatorId", -1];
 	PUBLIC GLOBAL FIELD ["_opSides", []];
@@ -59,6 +59,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 	// PP - point params types
 	#define TimeToMoveSmoothCoef 0.2
 
+	//----------- Internal -----------
 	PRIVATE SE METHOD("Init") {
 		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
@@ -240,6 +241,96 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		_turretsInstances
 	};
+	PRIVATE LE GA METHOD("handleDisabledTurretViewers") {
+		params[["_turretIndex", -1]];
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		private _monitors = missionNamespace getVariable ["CFM_Monitors", []];
+		private _hasOtherTurrets = (_turrets isNotEqualTo []);
+		private _nextTurr = if (_hasOtherTurrets) then {TURRET_INDEX(_turrets select 0)} else {-2};
+
+		{
+			private _mon = _x;
+			if !(IS_OBJ(_mon)) then {continue};
+
+			if (_mon getVariable ["CFM_isVehTablet", false]) then {
+				private _seatInstances = _mon getVariable ["CFM_seatTabletsInstances", createHashMap];
+				{
+					private _seatInstId = _y;
+					private _seatOp = OIVAR(_mon, "SeatTablet", _connectedOperator, _seatInstId, objNull);
+					if (_seatOp isEqualTo _selfObj) then {
+						private _seatTurr = OIVAR(_mon, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
+						_seatTurr = TURRET_INDEX(_seatTurr);
+						if (_seatTurr isEqualTo _turretIndex) then {
+							if (_hasOtherTurrets) then {
+								["connect", [_selfObj, _nextTurr]] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
+								if (hasInterface && {[_mon] call CFM_fnc_inVehicleTabletSeatCondition}) then {
+									["applyToMonitor"] CALL_ACTIVE_SEAT_TABLET(_mon);
+								};
+							} else {
+								["disconnect"] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
+							};
+						};
+					};
+				} forEach _seatInstances;
+			} else {
+				private _connOp = _mon getVariable ["CFM_connectedOperator", objNull];
+				if (_connOp isEqualTo _selfObj) then {
+					private _currTurr = TURRET_INDEX(_mon getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
+					if (_currTurr isEqualTo _turretIndex) then {
+						if (_hasOtherTurrets) then {
+							private _isVehTablet = _mon getVariable ["CFM_isVehTablet", false];
+							private _monIsLocal = (_mon getVariable ["CFM_isLocal", false]) || _isVehTablet;
+							private _targets = MONITOR_VIEWERS_AND_SELF(_mon, _monIsLocal);
+							["TurretChanged", [_mon, [_nextTurr], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+							_mon setVariable ["CFM_currentOpHasTurrets", _opHasTurrets, true];
+						} else {
+							[_mon, _mon] call CFM_fnc_disconnectMonitorFromOperator;
+						};
+					};
+				};
+			};
+		} forEach _monitors;
+	};
+	PRIVATE GE LA METHOD("syncContinuousMove") {
+		params[["_turret", -1]];
+
+		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
+	};
+	//----------- Config set -----------
+	PUBLIC GE GA METHOD("setPointParams") {
+		params[["_turretIndex", -1], ["_params", []]];
+
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
+	};
+	PUBLIC GE GA METHOD("setPPTurret") {
+		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
+
+		_turretIndex = TURRET_INDEX(_turretIndex);
+
+		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
+	};
+	PUBLIC GE GA METHOD("setDefaultPointAlignment") {
+		{
+			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
+		} forEach _turrets;
+	};
+	PUBLIC GE GA METHOD("setOperatorSides") {
+		params[["_sides", civilian], ["_global", true]];
+
+		if !(_sides isEqualType []) then {
+			_sides = [_sides];
+		};
+		_sides = _sides select {_x isEqualType west};
+
+		if (_sides isEqualTo []) exitWith {false};
+
+		_opSides = _sides;
+		_selfObj setVariable ["CFM_opSides", _sides, _global];
+		true
+	};
 	PRIVATE SE METHOD("setTurretParams") {
 		params [
 			["_turretIndex", -1],
@@ -288,20 +379,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		if (_turretInstanceId <= 0) exitWith {};
 		[_selfObj, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject]] call CFM_fnc_hashSetGlobal;
 	};
-	PUBLIC GE GA METHOD("setPointParams") {
-		params[["_turretIndex", -1], ["_params", []]];
-
-		_turretIndex = TURRET_INDEX(_turretIndex);
-
-		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
-	};
-	PUBLIC GE GA METHOD("setPPTurret") {
-		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
-
-		_turretIndex = TURRET_INDEX(_turretIndex);
-
-		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
-	};
+	//----------- Config get -----------
 	PUBLIC GE GA METHOD("getPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_def", nil]];
 
@@ -309,11 +387,16 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		["getPPParam", [_ppParam, _NIL(_def)], _NIL(_def)] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	PUBLIC GE GA METHOD("setDefaultPointAlignment") {
-		{
-			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
-		} forEach _turrets;
+	PUBLIC LE GA METHOD("getOperatorName") {
+		params[["_turret", -1]];
+
+		private _curTurrIndex = TURRET_INDEX(_turret);
+		private _turretName = IDX_TURRET_VAR(_curTurrIndex, _turretName, "");
+		if (isNil "_turretName") exitWith {_operatorName};
+		if (_turretName isEqualTo "") exitWith {_operatorName};
+		_turretName
 	};
+	//----------- State control -----------
 	PRIVATE GE METHOD("monitorConnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull], ["_reset", false]];
@@ -388,28 +471,6 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		_nextTurretIndex
 	};
-	PRIVATE GE LA METHOD("addMonitor") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
-
-		["addMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
-	};
-	PRIVATE GE LA METHOD("removeMonitor") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
-
-		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
-	};
-	PUBLIC GE GA METHOD("checkIfFeedsToAnyMonitor") {
-		private _feeds = false;
-		{
-			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
-			private _monitorsOnTurret = TURRET_VAR(_monitorsOnTurret, []);
-			if (count _monitorsOnTurret > 0) exitWith {
-				_feeds = true;
-				break;
-			};
-		} forEach _turretsInstances;
-		_feeds
-	};
 	PRIVATE SE METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
 
@@ -430,44 +491,17 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 		true
 	};
-	PRIVATE GE LA METHOD("moveCamera") {
-		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+	PRIVATE GE LA METHOD("addMonitor") {
+		params[["_monitor", objNull], ["_turret", [-1]]];
 
-		["moveCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
+		["addMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	PRIVATE GE LA METHOD("moveDroneCamera") {
-		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+	PRIVATE GE LA METHOD("removeMonitor") {
+		params[["_monitor", objNull], ["_turret", [-1]]];
 
-		["moveDroneCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
+		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	PRIVATE GE LA METHOD("syncContinuousMove") {
-		params[["_turret", -1]];
-
-		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
-	};
-	PUBLIC GE GA METHOD("setOperatorSides") {
-		params[["_sides", civilian], ["_global", true]];
-
-		if !(_sides isEqualType []) then {
-			_sides = [_sides];
-		};
-		_sides = _sides select {_x isEqualType west};
-
-		if (_sides isEqualTo []) exitWith {false};
-
-		_opSides = _sides;
-		_selfObj setVariable ["CFM_opSides", _sides, _global];
-		true
-	};
-	PUBLIC LE GA METHOD("getOperatorName") {
-		params[["_turret", -1]];
-
-		private _curTurrIndex = TURRET_INDEX(_turret);
-		private _turretName = IDX_TURRET_VAR(_curTurrIndex, _turretName, "");
-		if (isNil "_turretName") exitWith {_operatorName};
-		if (_turretName isEqualTo "") exitWith {_operatorName};
-		_turretName
-	};
+	//----------- State set -----------
 	PRIVATE LE GA METHOD("disableTurret") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
@@ -507,59 +541,31 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
 		true
 	};
+	PRIVATE GE LA METHOD("moveCamera") {
+		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+
+		["moveCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
+	};
+	PRIVATE GE LA METHOD("moveDroneCamera") {
+		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
+
+		["moveDroneCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
+	};
+	//----------- State get -----------
+	PUBLIC GE GA METHOD("checkIfFeedsToAnyMonitor") {
+		private _feeds = false;
+		{
+			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
+			private _monitorsOnTurret = TURRET_VAR(_monitorsOnTurret, []);
+			if (count _monitorsOnTurret > 0) exitWith {
+				_feeds = true;
+				break;
+			};
+		} forEach _turretsInstances;
+		_feeds
+	};
 	PUBLIC LE GA METHOD("isTurretDisabled") {
 		params[["_turretIndex", -1]];
 		(TURRET_INDEX(_turretIndex)) in (_selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets])
-	};
-	PRIVATE LE GA METHOD("handleDisabledTurretViewers") {
-		params[["_turretIndex", -1]];
-		_turretIndex = TURRET_INDEX(_turretIndex);
-
-		private _monitors = missionNamespace getVariable ["CFM_Monitors", []];
-		private _hasOtherTurrets = (_turrets isNotEqualTo []);
-		private _nextTurr = if (_hasOtherTurrets) then {TURRET_INDEX(_turrets select 0)} else {-2};
-
-		{
-			private _mon = _x;
-			if !(IS_OBJ(_mon)) then {continue};
-
-			if (_mon getVariable ["CFM_isVehTablet", false]) then {
-				private _seatInstances = _mon getVariable ["CFM_seatTabletsInstances", createHashMap];
-				{
-					private _seatInstId = _y;
-					private _seatOp = OIVAR(_mon, "SeatTablet", _connectedOperator, _seatInstId, objNull);
-					if (_seatOp isEqualTo _selfObj) then {
-						private _seatTurr = OIVAR(_mon, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
-						_seatTurr = TURRET_INDEX(_seatTurr);
-						if (_seatTurr isEqualTo _turretIndex) then {
-							if (_hasOtherTurrets) then {
-								["connect", [_selfObj, _nextTurr]] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
-								if (hasInterface && {[_mon] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-									["applyToMonitor"] CALL_ACTIVE_SEAT_TABLET(_mon);
-								};
-							} else {
-								["disconnect"] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
-							};
-						};
-					};
-				} forEach _seatInstances;
-			} else {
-				private _connOp = _mon getVariable ["CFM_connectedOperator", objNull];
-				if (_connOp isEqualTo _selfObj) then {
-					private _currTurr = TURRET_INDEX(_mon getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
-					if (_currTurr isEqualTo _turretIndex) then {
-						if (_hasOtherTurrets) then {
-							private _isVehTablet = _mon getVariable ["CFM_isVehTablet", false];
-							private _monIsLocal = (_mon getVariable ["CFM_isLocal", false]) || _isVehTablet;
-							private _targets = MONITOR_VIEWERS_AND_SELF(_mon, _monIsLocal);
-							["TurretChanged", [_mon, [_nextTurr], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
-							_mon setVariable ["CFM_currentOpHasTurrets", _opHasTurrets, true];
-						} else {
-							[_mon, _mon] call CFM_fnc_disconnectMonitorFromOperator;
-						};
-					};
-				};
-			};
-		} forEach _monitors;
 	};
 CLASS_END

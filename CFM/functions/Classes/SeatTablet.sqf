@@ -28,6 +28,7 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
 	// -----------------------------------------------
 
+	//----------- Internal -----------
 	PRIVATE GE LA METHOD("Init") {
 		[
 			["_seatKey", ""]
@@ -38,7 +39,7 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 
 		true
 	};
-
+	//----------- State control -----------
 	PRIVATE LE GA METHOD("applyToMonitor") {
 		private _turrIdx = TURRET_INDEX(_currentTurret);
 		if ([PLAYER_] call CFM_fnc_isPipVisible) then {
@@ -57,7 +58,6 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		_monitor setVariable ["CFM_pipSlot", _pipSlot];
 		true
 	};
-
 	PRIVATE GE GA METHOD("saveFromMonitor") {
 		if !(IS_OBJ(_connectedOperator)) exitWith {false};
 		private _monOp = _monitor getVariable ["CFM_connectedOperator", objNull];
@@ -83,7 +83,6 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		SET_SELFVARG(_pipSlot);
 		true
 	};
-
 	PUBLIC GE GA LOCAL METHOD("connect") {
 		params ["_op", ["_initTurrIdx", -1], ["_caller", objNull]];
 		if !(IS_OBJ(_op)) exitWith {false};
@@ -135,7 +134,6 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		[_monitor, _op, true, [_initTurrIdx], true, _seatKey] spawn CFM_fnc_syncState;
 		true
 	};
-
 	PUBLIC GE GA LOCAL METHOD("disconnect") {
 		params [["_caller", objNull]];
 		private _prevOp = _connectedOperator;
@@ -176,7 +174,6 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		};
 		true
 	};
-
 	PRIVATE GE GA LOCAL METHOD("activateSeat") {
 		if !(hasInterface) exitWith {false};
 		if (IS_OBJ(_connectedOperator)) then {
@@ -197,7 +194,6 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 			false
 		};
 	};
-
 	PRIVATE GE GA LOCAL METHOD("deactivateSeat") {
 		if !(hasInterface) exitWith {false};
 		if ((_monitor getVariable ["CFM_feedActive", false]) && {IS_OBJ(_connectedOperator)}) then {
@@ -212,5 +208,4 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
 		true
 	};
-
 CLASS_END
