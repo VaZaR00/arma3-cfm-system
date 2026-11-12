@@ -2,7 +2,7 @@
 #define NEXT_ID_FIND_TRIES 30
 #define ITER_VAR_RMT_EXEC_DO_JIP false
 
-GLOBAL SINGLETON_CLASS(DbHandler)
+PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 
 	GLOBAL METHOD("Init") {
 		if !(isNil "CFM_inited") exitWith {};

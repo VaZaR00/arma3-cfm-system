@@ -1,4 +1,4 @@
-GLOBAL CLASS(SeatTablet)
+PUBLIC GLOBAL CLASS(SeatTablet)
 
 	SET_SELF_VAR("_monitor");
 	SET_VARS_PREFIX("_seatTablet");
@@ -14,7 +14,7 @@ GLOBAL CLASS(SeatTablet)
 	PUBLIC LOCAL FIELD ["_turnedOffLocal", false];
 	PRIVATE GLOBAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
 
-	GE LA METHOD("Init") {
+	PRIVATE GE LA METHOD("Init") {
 		[
 			["_seatKey", ""]
 		] NP_PARAMS;
@@ -25,7 +25,7 @@ GLOBAL CLASS(SeatTablet)
 		true
 	};
 
-	LE GA METHOD("applyToMonitor") {
+	PRIVATE LE GA METHOD("applyToMonitor") {
 		private _turrIdx = TURRET_INDEX(_currentTurret);
 		if ([PLAYER_] call CFM_fnc_isPipVisible) then {
 			_pipSlot = [_monitor, _pipSlot] call CFM_fnc_getFreePipSlot;
@@ -44,7 +44,7 @@ GLOBAL CLASS(SeatTablet)
 		true
 	};
 
-	GE GA METHOD("saveFromMonitor") {
+	PRIVATE GE GA METHOD("saveFromMonitor") {
 		if !(IS_OBJ(_connectedOperator)) exitWith {false};
 		private _monOp = _monitor getVariable ["CFM_connectedOperator", objNull];
 		if (IS_OBJ(_monOp) && {!(_monOp isEqualTo _connectedOperator)}) exitWith {false};
@@ -70,7 +70,7 @@ GLOBAL CLASS(SeatTablet)
 		true
 	};
 
-	GE GA LOCAL METHOD("connect") {
+	PUBLIC GE GA LOCAL METHOD("connect") {
 		params ["_op", ["_initTurrIdx", -1], ["_caller", objNull]];
 		if !(IS_OBJ(_op)) exitWith {false};
 
@@ -122,7 +122,7 @@ GLOBAL CLASS(SeatTablet)
 		true
 	};
 
-	GE GA LOCAL METHOD("disconnect") {
+	PUBLIC GE GA LOCAL METHOD("disconnect") {
 		params [["_caller", objNull]];
 		private _prevOp = _connectedOperator;
 		private _prevTurr = _currentTurret;
@@ -163,7 +163,7 @@ GLOBAL CLASS(SeatTablet)
 		true
 	};
 
-	GE GA LOCAL METHOD("activateSeat") {
+	PRIVATE GE GA LOCAL METHOD("activateSeat") {
 		if !(hasInterface) exitWith {false};
 		if (IS_OBJ(_connectedOperator)) then {
 			if !([_connectedOperator, _monitor] call CFM_fnc_operatorCondition) exitWith {
@@ -184,7 +184,7 @@ GLOBAL CLASS(SeatTablet)
 		};
 	};
 
-	GE GA LOCAL METHOD("deactivateSeat") {
+	PRIVATE GE GA LOCAL METHOD("deactivateSeat") {
 		if !(hasInterface) exitWith {false};
 		if ((_monitor getVariable ["CFM_feedActive", false]) && {IS_OBJ(_connectedOperator)}) then {
 			["saveFromMonitor"] CALL_SELF;

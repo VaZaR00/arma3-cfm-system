@@ -5,9 +5,9 @@ LOCAL SINGLETON_CLASS(CameraManager)
 		Operator's camerasSet: [monitor, camera, params:[operator, turret, zoom, turretLocal]]
 	*/
 
-	METHOD("Init") {
+	PRIVATE LOCAL METHOD("Init") {
 	};
-	METHOD("CreateCamera") {
+	PRIVATE LOCAL METHOD("CreateCamera") {
 		params[["_monitor", objNull], ["_renderTarget", ""]];
 		
 		if !(IS_OBJ(_monitor)) exitWith {[objNull, ""]};
@@ -22,15 +22,15 @@ LOCAL SINGLETON_CLASS(CameraManager)
 
 		_cam
 	};
-	METHOD("addCameraToPool") {
+	PRIVATE LOCAL METHOD("addCameraToPool") {
 		params[["_cam", objNull]];
 		["addCameraToPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	METHOD("removeCameraFromPool") {
+	PRIVATE LOCAL METHOD("removeCameraFromPool") {
 		params[["_cam", objNull]];
 		["removeCameraFromPool", [_cam]] CALL_CLASS("DbHandler");
 	};
-	METHOD("destroyCamera") {
+	PRIVATE LOCAL METHOD("destroyCamera") {
 		params[["_cam", objNull], ["_renderTarget", ""]];
 		["removeCameraFromPool", [_cam]] CALL_SELF;
 		if !(IS_OBJ(_cam)) exitWith {false};
@@ -38,7 +38,7 @@ LOCAL SINGLETON_CLASS(CameraManager)
 		camDestroy _cam;
 		true
 	};
-	METHOD("spawnCamera") {
+	PRIVATE LOCAL METHOD("spawnCamera") {
 		params[["_monitor", objNull], ["_renderTarget", ""]];
 
 		if !(IS_VALID_R2T(_renderTarget)) exitWith {objNull};

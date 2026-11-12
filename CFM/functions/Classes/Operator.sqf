@@ -2,7 +2,7 @@
 #define SET_VARS_INIT_GLOBAL true
 #define DO_OVERWRITE_CURRENT_MOVE false
 
-GLOBAL SINGLETON_CLASS(Operator)
+PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 	SET_SELF_VAR("_operator");
 
@@ -43,7 +43,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 	// PP - point params types
 	#define TimeToMoveSmoothCoef 0.2
 
-	SE METHOD("Init") {
+	PRIVATE SE METHOD("Init") {
 		params[["_sides", []], ["_turrets", []], ["_hasTInNvg", [0, 0]], ["_name", ""], ["_params", []]];
 
 		private _global = SET_VARS_INIT_GLOBAL;
@@ -169,7 +169,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 
 		true
 	};
-	SE METHOD("DefineTurretsParams") {
+	PRIVATE SE METHOD("DefineTurretsParams") {
 		params[["_turretsParamsInit", []]];
 		
 		if (_turretsParamsInit isEqualTo []) then {
@@ -228,7 +228,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 
 		_turretsInstances
 	};
-	SE METHOD("setTurretParams") {
+	PRIVATE SE METHOD("setTurretParams") {
 		params [
 			["_turretIndex", -1],
 			["_turretObject", objNull]
@@ -276,33 +276,33 @@ GLOBAL SINGLETON_CLASS(Operator)
 		if (_turretInstanceId <= 0) exitWith {};
 		[_selfObj, "CFM_turretsInstances", _turretIndex, [_turretInstanceId, _turretObject]] call CFM_fnc_hashSetGlobal;
 	};
-	GE GA METHOD("setPointParams") {
+	PUBLIC GE GA METHOD("setPointParams") {
 		params[["_turretIndex", -1], ["_params", []]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	GE GA METHOD("setPPTurret") {
+	PUBLIC GE GA METHOD("setPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	GE GA METHOD("getPPTurret") {
+	PUBLIC GE GA METHOD("getPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_def", nil]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
 		["getPPParam", [_ppParam, _NIL(_def)], _NIL(_def)] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	GE GA METHOD("setDefaultPointAlignment") {
+	PUBLIC GE GA METHOD("setDefaultPointAlignment") {
 		{
 			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
 		} forEach _turrets;
 	};
-	GE METHOD("monitorConnected") {
+	PRIVATE GE METHOD("monitorConnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull], ["_reset", false]];
 
@@ -319,17 +319,17 @@ GLOBAL SINGLETON_CLASS(Operator)
 
 		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_SELF;
 	};
-	GE LA METHOD("monitorConnectedLocalOperator") {
+	PRIVATE GE LA METHOD("monitorConnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_SELF;
 	};
-	GE METHOD("monitorDisconnected") {
+	PRIVATE GE METHOD("monitorDisconnected") {
 		// should be executed globaly
 		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
 	};
-	GE LA METHOD("monitorDisconnectedLocalOperator") {
+	PRIVATE GE LA METHOD("monitorDisconnectedLocalOperator") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["removeMonitor", [_monitor, _turret]] CALL_SELF;
@@ -337,17 +337,17 @@ GLOBAL SINGLETON_CLASS(Operator)
 			["removeActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		};
 	};
-	GE METHOD("TurretChanged") {
+	PRIVATE GE METHOD("TurretChanged") {
 		params["_monitor", ["_turret", [-1]], ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
 		["TurretChanged", [_monitor, _global, _globalUpdOp, _reset]] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE LA METHOD("TurretChangedLocalOperator") {
+	PRIVATE GE LA METHOD("TurretChangedLocalOperator") {
 		params["_monitor", ["_turret", [-1]]];
 
 		["TurretChangedLocalOperator", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE METHOD("NextTurret") {
+	PRIVATE GE METHOD("NextTurret") {
 		params["_monitor", ["_currentTurret", [-1]]];
 
 		private _curTurrIndex = TURRET_INDEX(_currentTurret);
@@ -376,17 +376,17 @@ GLOBAL SINGLETON_CLASS(Operator)
 
 		_nextTurretIndex
 	};
-	GE LA METHOD("addMonitor") {
+	PRIVATE GE LA METHOD("addMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["addMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE LA METHOD("removeMonitor") {
+	PRIVATE GE LA METHOD("removeMonitor") {
 		params[["_monitor", objNull], ["_turret", [-1]]];
 
 		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE GA METHOD("checkIfFeedsToAnyMonitor") {
+	PUBLIC GE GA METHOD("checkIfFeedsToAnyMonitor") {
 		private _feeds = false;
 		{
 			_y params [["_turretInstanceId", -1], ["_turretObject", objNull]];
@@ -398,7 +398,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 		} forEach _turretsInstances;
 		_feeds
 	};
-	SE METHOD("removeActiveTurret") {
+	PRIVATE SE METHOD("removeActiveTurret") {
 		params[["_turretIndex", -1]];
 
 		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
@@ -406,7 +406,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 		_hasActiveTurretsObjects = (_hasActiveTurretsObjects - 1) max 0;
 		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 	};
-	SE METHOD("addActiveTurret") {
+	PRIVATE SE METHOD("addActiveTurret") {
 		params[["_turretIndex", -1], ["_turretObject", objNull]];
 
 		if (!(IS_OBJ(_turretObject)) || {_turretObject isEqualTo _selfObj}) exitWith {false};
@@ -418,22 +418,22 @@ GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_hasActiveTurretsObjects", _hasActiveTurretsObjects, _targets];
 		true
 	};
-	GE LA METHOD("moveCamera") {
+	PRIVATE GE LA METHOD("moveCamera") {
 		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		["moveCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE LA METHOD("moveDroneCamera") {
+	PRIVATE GE LA METHOD("moveDroneCamera") {
 		params[["_turret", -1], ["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]]];
 
 		["moveDroneCamera", [_axisAngles, _isContinuous]] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE LA METHOD("syncContinuousMove") {
+	PRIVATE GE LA METHOD("syncContinuousMove") {
 		params[["_turret", -1]];
 
 		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
 	};
-	GE GA METHOD("setOperatorSides") {
+	PUBLIC GE GA METHOD("setOperatorSides") {
 		params[["_sides", civilian], ["_global", true]];
 
 		if !(_sides isEqualType []) then {
@@ -447,7 +447,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opSides", _sides, _global];
 		true
 	};
-	LE GA METHOD("getOperatorName") {
+	PUBLIC LE GA METHOD("getOperatorName") {
 		params[["_turret", -1]];
 
 		private _curTurrIndex = TURRET_INDEX(_turret);
@@ -456,7 +456,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 		if (_turretName isEqualTo "") exitWith {_operatorName};
 		_turretName
 	};
-	LE GA METHOD("disableTurret") {
+	PRIVATE LE GA METHOD("disableTurret") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -478,7 +478,7 @@ GLOBAL SINGLETON_CLASS(Operator)
 
 		true
 	};
-	LE GA METHOD("enableTurret") {
+	PRIVATE LE GA METHOD("enableTurret") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
@@ -495,11 +495,11 @@ GLOBAL SINGLETON_CLASS(Operator)
 		_selfObj setVariable ["CFM_opHasTurrets", _opHasTurrets];
 		true
 	};
-	LE GA METHOD("isTurretDisabled") {
+	PUBLIC LE GA METHOD("isTurretDisabled") {
 		params[["_turretIndex", -1]];
 		(TURRET_INDEX(_turretIndex)) in (_selfObj getVariable ["CFM_disabledTurrets", _disabledTurrets])
 	};
-	LE GA METHOD("handleDisabledTurretViewers") {
+	PRIVATE LE GA METHOD("handleDisabledTurretViewers") {
 		params[["_turretIndex", -1]];
 		_turretIndex = TURRET_INDEX(_turretIndex);
 

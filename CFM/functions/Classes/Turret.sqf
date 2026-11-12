@@ -1,53 +1,53 @@
-GLOBAL CLASS(Turret)
+PUBLIC GLOBAL CLASS(Turret)
 
     SET_SELF_VAR("_turret");
     SET_VARS_PREFIX("_turret");
 
-    FIELD ["_operator", objNull];
-    FIELD ["_objClass", ""];
-	FIELD ["_isDroneFeed", false];	
-	FIELD ["_isMavic", false];	
-	FIELD ["_isFPV", false];
-	FIELD ["_hasGoPro", false];
-	FIELD ["_isStaticCam", false];
-	FIELD ["_disabled", false];
-	FIELD ["_classType", ""];
-    FIELD ["_turretObject", objNull];
-    FIELD ["_turretIndex", -1];
-    FIELD ["_zoomTable", createHashMap];
-    FIELD ["_smoothZoom", true];
-    FIELD ["_tiParams", []];
-    FIELD ["_nvgParam", false];
-    FIELD ["_isLocal", false];
-    FIELD ["_camPosFunc", CAM_POS_FUNC_DEF];
-    FIELD ["_doInterpolation", false];
-    FIELD ["_ppType", PP_NONE];
-    FIELD ["_pointParams", []];
-    FIELD ["_ppPos", []];
-    FIELD ["_ppDir", DEF_DIR];
-    FIELD ["_ppUp", DEF_UP];
-    FIELD ["_ppMemPoint", ""];
-    FIELD ["_ppAddArr", [0,0,0]];
-    FIELD ["_ppSetArr", [-1,-1,-1]];
-    FIELD ["_ppLod", "Memory"];
-    FIELD ["_canMoveCamera", false];
-    FIELD ["_currentCameraMoves", [0,0,0,0]];
-    FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
-    FIELD ["_initialDirUp", [DEF_DIR, DEF_UP]];
-    FIELD ["_turretName", ""];
-    FIELD ["_signalFunc", {1}];
-    FIELD ["_effectFunc", {}];
-    FIELD ["_interfaceFunc", {}];
-    FIELD ["_interfaceClass", ""];
-    FIELD ["_initInterfaceFunc", {}];
-    FIELD ["_currentCamMove", [0,0,0,0]];
-    FIELD ["_monitorsSet", []];
-    FIELD ["_hasActiveTurretsObjects", -1];
-    FIELD ["_monitorsOnTurret", []];
+    PRIVATE GLOBAL FIELD ["_operator", objNull];
+    PRIVATE GLOBAL FIELD ["_objClass", ""];
+	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];	
+	PRIVATE GLOBAL FIELD ["_isMavic", false];	
+	PRIVATE GLOBAL FIELD ["_isFPV", false];
+	PRIVATE GLOBAL FIELD ["_hasGoPro", false];
+	PRIVATE GLOBAL FIELD ["_isStaticCam", false];
+	PRIVATE GLOBAL FIELD ["_disabled", false];
+	PRIVATE GLOBAL FIELD ["_classType", ""];
+    PRIVATE GLOBAL FIELD ["_turretObject", objNull];
+    PRIVATE GLOBAL FIELD ["_turretIndex", -1];
+    PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
+    PUBLIC GLOBAL FIELD ["_smoothZoom", true];
+    PUBLIC GLOBAL FIELD ["_tiParams", []];
+    PUBLIC GLOBAL FIELD ["_nvgParam", false];
+    PRIVATE GLOBAL FIELD ["_isLocal", false];
+    PRIVATE GLOBAL FIELD ["_camPosFunc", CAM_POS_FUNC_DEF];
+    PRIVATE GLOBAL FIELD ["_doInterpolation", false];
+    PRIVATE GLOBAL FIELD ["_ppType", PP_NONE];
+    PRIVATE GLOBAL FIELD ["_pointParams", []];
+    PRIVATE GLOBAL FIELD ["_ppPos", []];
+    PRIVATE GLOBAL FIELD ["_ppDir", DEF_DIR];
+    PRIVATE GLOBAL FIELD ["_ppUp", DEF_UP];
+    PRIVATE GLOBAL FIELD ["_ppMemPoint", ""];
+    PRIVATE GLOBAL FIELD ["_ppAddArr", [0,0,0]];
+    PRIVATE GLOBAL FIELD ["_ppSetArr", [-1,-1,-1]];
+    PRIVATE GLOBAL FIELD ["_ppLod", "Memory"];
+    PUBLIC GLOBAL FIELD ["_canMoveCamera", false];
+    PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0,0,0,0]];
+    PUBLIC GLOBAL FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
+    PRIVATE GLOBAL FIELD ["_initialDirUp", [DEF_DIR, DEF_UP]];
+    PRIVATE GLOBAL FIELD ["_turretName", ""];
+    PUBLIC GLOBAL FIELD ["_signalFunc", {1}];
+    PUBLIC GLOBAL FIELD ["_effectFunc", {}];
+    PUBLIC GLOBAL FIELD ["_interfaceFunc", {}];
+    PUBLIC GLOBAL FIELD ["_interfaceClass", ""];
+    PUBLIC GLOBAL FIELD ["_initInterfaceFunc", {}];
+    PRIVATE GLOBAL FIELD ["_currentCamMove", [0,0,0,0]];
+    PRIVATE GLOBAL FIELD ["_monitorsSet", []];
+    PRIVATE GLOBAL FIELD ["_hasActiveTurretsObjects", -1];
+    PRIVATE GLOBAL FIELD ["_monitorsOnTurret", []];
 
 	#define TimeToMoveSmoothCoef 0.2
     
-    SERVER METHOD("Init") {
+    PRIVATE SERVER METHOD("Init") {
 		[
 			["_operator", objNull], 
 			["_turretIndex", -1], 
@@ -292,7 +292,7 @@ GLOBAL CLASS(Turret)
 		};
 		true
 	};
-    LE GE GA METHOD("compilePointParams") {
+    PRIVATE LE GE GA METHOD("compilePointParams") {
 		params [["_syncGlobal", true]];
 		_pointParams = switch (_ppType) do {
 			case PP_STATIC: {
@@ -315,7 +315,7 @@ GLOBAL CLASS(Turret)
 
 		_pointParams
     };
-    LE GE GA METHOD("savePointParamVars") {
+    PRIVATE LE GE GA METHOD("savePointParamVars") {
 		params [["_vars", []], ["_syncGlobal", true]];
 		if (!(_vars isEqualType []) || {(_vars isNotEqualTo []) && {!((_vars#0) isEqualType [])}}) then {
 			_vars = _this;
@@ -335,7 +335,7 @@ GLOBAL CLASS(Turret)
 			};
 		} forEach _vars;
     };
-    GE GA LOCAL METHOD("syncPointParamsToMonitors") {
+    PRIVATE GE GA LOCAL METHOD("syncPointParamsToMonitors") {
 		private _compiledPointParams = ["compilePointParams"] CALL_SELF;
 		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
@@ -349,7 +349,7 @@ GLOBAL CLASS(Turret)
 			};
 		} forEach _monitorsOnTurret;
     };
-    LE GE GA METHOD("setPointParams") {
+    PUBLIC LE GE GA METHOD("setPointParams") {
 		params[["_params", []], ["_syncGlobal", true]];
 
 		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
@@ -368,7 +368,7 @@ GLOBAL CLASS(Turret)
 
 		_pointParams
     };
-	GE GA LOCAL METHOD("setPPParam") {
+	PUBLIC GE GA LOCAL METHOD("setPPParam") {
 		params[["_ppParam", ""], ["_value", nil]];
 
 		private _params = switch (_ppType) do {
@@ -407,7 +407,7 @@ GLOBAL CLASS(Turret)
 
 		true
 	};
-	LE GA LOCAL METHOD("getPPParam") {
+	PUBLIC LE GA LOCAL METHOD("getPPParam") {
 		params[["_ppParam", ""], ["_def", nil]];
 
 		switch (_ppParam) do {
@@ -421,10 +421,10 @@ GLOBAL CLASS(Turret)
 			default {_NIL(_def)};
 		}
 	};
-	GE GA LOCAL METHOD("setDefaultPointAlignment") {
+	PUBLIC GE GA LOCAL METHOD("setDefaultPointAlignment") {
 		[_selfObj, _turretIndex, -1] call CFM_fnc_setPointAlignment;
 	};
-	GE GA LOCAL METHOD("TurretChanged") {
+	PRIVATE GE GA LOCAL METHOD("TurretChanged") {
 		params["_monitor", ["_global", true], ["_globalUpdOp", true], ["_reset", false]];
 
 		if (_disabled) exitWith {false};
@@ -482,7 +482,7 @@ GLOBAL CLASS(Turret)
 
 		true
 	};
-	GE LA METHOD("TurretChangedLocalOperator") {
+	PRIVATE GE LA METHOD("TurretChangedLocalOperator") {
 		params["_monitor"];
 
 		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
@@ -500,7 +500,7 @@ GLOBAL CLASS(Turret)
 
 		true
 	};
-	GE LA METHOD("moveCamera") {
+	PRIVATE GE LA METHOD("moveCamera") {
 		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_isDroneFeed) exitWith {
@@ -653,7 +653,7 @@ GLOBAL CLASS(Turret)
 
 		true
 	};
-	GE LA METHOD("syncContinuousMove") {
+	PRIVATE GE LA METHOD("syncContinuousMove") {
 		if (_isDroneFeed) exitWith {
 			private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
 			private _acc = _selfObj getVariable [_accVar, [0, 0]];
@@ -716,7 +716,7 @@ GLOBAL CLASS(Turret)
 
 		true
 	};
-	GE LA METHOD("moveDroneCamera") {
+	PRIVATE GE LA METHOD("moveDroneCamera") {
 		params[["_axisAngles", [0,0], [[]], 2], ["_isContinuous", false, [false]], ["_isRemote", false, [false]]];
 
 		if (_axisAngles isEqualTo [0,0]) exitWith {false};
@@ -1010,7 +1010,7 @@ GLOBAL CLASS(Turret)
 		
 		true
 	};
-	GE GA LOCAL METHOD("addMonitor") {
+	PRIVATE GE GA LOCAL METHOD("addMonitor") {
 		params[["_monitor", objNull]];
 
 		if !(IS_OBJ(_monitor)) exitWith {-1};
@@ -1021,7 +1021,7 @@ GLOBAL CLASS(Turret)
 
 		_monitorsOnTurret find _monitor
 	};
-	GE GA LOCAL METHOD("removeMonitor") {
+	PRIVATE GE GA LOCAL METHOD("removeMonitor") {
 		params[["_monitor", objNull]];
 
 		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
@@ -1030,16 +1030,16 @@ GLOBAL CLASS(Turret)
 
 		true	
 	};
-	LOCAL METHOD("getTurretName") {
+	PRIVATE LOCAL METHOD("getTurretName") {
 		_turretName
 	};
-	LE GA METHOD("setDisabled") {
+	PUBLIC LE GA METHOD("setDisabled") {
 		params[["_state", true]];
 		_disabled = _state;
 		SET_SELFVAR(_disabled);
 		true
 	};
-	LOCAL METHOD("isDisabled") {
+	PUBLIC LOCAL METHOD("isDisabled") {
 		_disabled
 	};
 CLASS_END
