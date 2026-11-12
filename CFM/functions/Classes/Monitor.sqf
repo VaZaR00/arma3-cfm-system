@@ -5,59 +5,81 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	
 	SET_SELF_VAR("_monitor");
 
-	PRIVATE LOCAL FIELD ["_radius", ACTION_RADIUS];
+	// -----------------------------------------------
+	// monitor config
 	PUBLIC GLOBAL FIELD ["_monitorSides", []];
-	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
 	PUBLIC GLOBAL FIELD ["_originalTexture", ""];
-	PRIVATE LOCAL FIELD ["_menuActive", false];
+	PUBLIC GLOBAL FIELD ["_allowedOperators", [], [objNull, []]];
+	PUBLIC GLOBAL FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
+	PRIVATE LOCAL FIELD ["_isLocal", false];
+	PRIVATE LOCAL FIELD ["_radius", ACTION_RADIUS];
 	PRIVATE GLOBAL FIELD ["_isHandMonitor", false];
 	PRIVATE GLOBAL FIELD ["_isHandMonitorDisplay", false];
-	PRIVATE LOCAL FIELD ["_isLocal", false];
-	PRIVATE LOCAL FIELD ["_actionCaller", objNull];
-	PRIVATE LOCAL FIELD ["_mainActions", []];
 	PRIVATE LOCAL FIELD ["_operatorInfoActionId", -1];
-	PRIVATE LOCAL FIELD ["_currentMenuObj", objNull];
+	PRIVATE LOCAL FIELD ["_mainActions", []];
 	PRIVATE GLOBAL FIELD ["_targetInActionsConditions", "_target"];
 	PRIVATE LOCAL FIELD ["_monitorUid", ""];
 	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
-	PUBLIC GLOBAL FIELD ["_allowedOperators", [], [objNull, []]];
-	PUBLIC GLOBAL FIELD ["_allowedOperatorsTypes", [], ["", 1, []]];
-
-	// in veh tablet
+	// veh tablet config
 	PUBLIC GLOBAL FIELD ["_vehicleTabletSeats", []];
-	PRIVATE GLOBAL FIELD ["_isVehTablet", false];
 	PRIVATE GLOBAL FIELD ["_seatTabletsInstances", createHashMap];
+	PRIVATE GLOBAL FIELD ["_isVehTablet", false];
+	// -----------------------------------------------
 
-	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	// -----------------------------------------------
+	// monitor state
 	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
-	PRIVATE GLOBAL FIELD ["_connectedTurretObject", objNull];
-	PRIVATE SERVER FIELD ["_activeMonitorViewers", [2]];
+	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
 	PRIVATE GLOBAL FIELD ["_feedActive", false];
-	PRIVATE GLOBAL FIELD ["_currentCameraType", ""];
+	PRIVATE SERVER FIELD ["_activeMonitorViewers", [2]];
 	PRIVATE LOCAL FIELD ["_currentFeedCam", objNull];
-	PRIVATE GLOBAL FIELD ["_currentOpHasTurrets", false];
-	PUBLIC GLOBAL FIELD ["_currentCameraSmoothZoom", true];
-	PRIVATE GLOBAL FIELD ["_currentCameraIsStatic", false];
-	PUBLIC GLOBAL FIELD ["_currentCameraCanMove", false];
-	PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
-	PUBLIC GLOBAL FIELD ["_currentCameraMoveRestrictions", []];
+	PRIVATE LOCAL FIELD ["_menuActive", false];
+	PRIVATE LOCAL FIELD ["_currentMenuObj", objNull];
+	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
+	PRIVATE LOCAL FIELD ["_actionCaller", objNull];
+	// -----------------------------------------------
+
+
+	// -----------------------------------------------
+	// Parameters below are temporary for current feed, changing them here doesn't save it on Turret
+	// NVG
 	PUBLIC GLOBAL FIELD ["_monitorCanSwitchNvg", false];
-	PUBLIC GLOBAL FIELD ["_monitorCanSwitchTi", false];
-	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
 	PRIVATE GLOBAL FIELD ["_isInNvg", false];
+	PRIVATE GLOBAL FIELD ["_currentNvgParam", false];
+
+	// TI
+	PUBLIC GLOBAL FIELD ["_monitorCanSwitchTi", false];
 	PRIVATE GLOBAL FIELD ["_currentTiTable", []];
-	PRIVATE GLOBAL FIELD ["_currentNvgParam", []];
+
+	// Zoom
 	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
-	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PUBLIC GLOBAL FIELD ["_zoomMax", 1];
 	PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
-	PRIVATE LOCAL FIELD ["_turretLocal", false];
+	PUBLIC GLOBAL FIELD ["_currentCameraSmoothZoom", true];
+	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
-	PRIVATE GLOBAL FIELD ["_currentOperatorIsDrone", false];
-	PUBLIC GLOBAL FIELD ["_canFullScreen", false];
-	PRIVATE GLOBAL FIELD ["_cameraPosFunc", {}];
-	PRIVATE GLOBAL FIELD ["_currentCamPointParams", []];
+	
+	// Movement
+	PUBLIC GLOBAL FIELD ["_currentCameraCanMove", false];
+	PUBLIC GLOBAL FIELD ["_currentCameraMoveRestrictions", []];
+	PRIVATE GLOBAL FIELD ["_currentCameraIsStatic", false];
+	PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
 	PRIVATE GLOBAL FIELD ["_camDoInterpolation", false];
+
+	// other turret params
+	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE LOCAL FIELD ["_turretLocal", false];
+	PRIVATE GLOBAL FIELD ["_cameraPosFunc", {}];
+	PRIVATE GLOBAL FIELD ["_connectedTurretObject", objNull];
+
+	// operator data
+	PRIVATE GLOBAL FIELD ["_currentOperatorIsDrone", false];
+	PRIVATE GLOBAL FIELD ["_currentOpHasTurrets", false];
+	PRIVATE GLOBAL FIELD ["_currentCameraType", ""];
+	// -----------------------------------------------
+
+	PRIVATE GLOBAL FIELD ["_currentCamPointParams", []];
+	PUBLIC GLOBAL FIELD ["_canFullScreen", false];
 	PUBLIC GLOBAL FIELD ["_canSetPassword", true];
 	PUBLIC GLOBAL FIELD ["_password", ""];
 	PUBLIC GLOBAL FIELD ["_passwordAccess", []];
