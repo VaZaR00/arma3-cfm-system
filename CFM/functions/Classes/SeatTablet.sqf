@@ -3,16 +3,30 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 	SET_SELF_VAR("_monitor");
 	SET_VARS_PREFIX("_seatTablet");
 
+	// -----------------------------------------------
+	// seat tablet config
 	PRIVATE GLOBAL FIELD ["_seatKey", ""];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// seat tablet state
 	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
 	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	PUBLIC LOCAL FIELD ["_turnedOffLocal", false];
+	PRIVATE GLOBAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// Parameters below are saved per seat tablet
+	// NVG & effects
+	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE GLOBAL FIELD ["_isInNvg", false];
+
+	// Zoom
 	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
-	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
-	PRIVATE GLOBAL FIELD ["_isInNvg", false];
-	PUBLIC LOCAL FIELD ["_turnedOffLocal", false];
-	PRIVATE GLOBAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
+	// -----------------------------------------------
 
 	PRIVATE GE LA METHOD("Init") {
 		[

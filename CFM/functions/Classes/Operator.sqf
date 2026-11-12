@@ -6,38 +6,54 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 	SET_SELF_VAR("_operator");
 
-	PUBLIC GLOBAL FIELD ["_canSwitchTi", false];
-	PUBLIC GLOBAL FIELD ["_canSwitchNvg", false];
-	PRIVATE GLOBAL FIELD ["_opHasTurrets", false];
+	// -----------------------------------------------
+	// operator config & identity
+	PUBLIC GLOBAL FIELD ["_operatorName", ""];
+	PRIVATE GLOBAL FIELD ["_operatorId", -1];
+	PUBLIC GLOBAL FIELD ["_opSides", []];
+	PUBLIC GLOBAL FIELD ["_canFeed", false];
+	PRIVATE GLOBAL FIELD ["_classType", ""];
+	PRIVATE GLOBAL FIELD ["_objClass", ""];
+	PRIVATE GLOBAL FIELD ["_cameraType", ""];
+	PRIVATE GLOBAL FIELD ["_hasGoPro", false];
+	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];
+	PRIVATE GLOBAL FIELD ["_isMavic", false];
+	PRIVATE GLOBAL FIELD ["_isFPV", false];
+	PRIVATE GLOBAL FIELD ["_isStaticCam", false];
+	PRIVATE GLOBAL FIELD ["_staticCamOffset", NULL_VECTOR];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// operator state & connections
+	PRIVATE GLOBAL FIELD ["_operatorSet", false];
+	PRIVATE GLOBAL FIELD ["_isFeeding", false];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// turrets config & instances
 	PUBLIC GLOBAL FIELD ["_turrets", [DRIVER_TURRET_PATH]];
 	PRIVATE GLOBAL FIELD ["_allTurrets", []];
 	PRIVATE GLOBAL FIELD ["_disabledTurrets", []];
-	PRIVATE GLOBAL FIELD ["_cameraType", ""];
-	PUBLIC GLOBAL FIELD ["_operatorName", ""];
-	PRIVATE GLOBAL FIELD ["_operatorId", -1];
-	PRIVATE GLOBAL FIELD ["_hasGoPro", false];
-	PUBLIC GLOBAL FIELD ["_canFeed", false];
-	PRIVATE GLOBAL FIELD ["_canMoveCameraByDefault", false];
-	PRIVATE GLOBAL FIELD ["_cameraMoveRestrictionsByDefault", []]; // [degrees up, degrees down, degrees left, degrees right]
-	PRIVATE GLOBAL FIELD ["_cameraZoomSmoothDefault", false]; 
-	PRIVATE GLOBAL FIELD ["_classType", ""];
-	PRIVATE GLOBAL FIELD ["_objClass", ""];
-	PRIVATE GLOBAL FIELD ["_monitorsSet", createHashMap];
-	PUBLIC GLOBAL FIELD ["_tiTable", createHashMap];
-	PUBLIC GLOBAL FIELD ["_nvgTable", createHashMap];
-	PRIVATE GLOBAL FIELD ["_operatorSet", false];
-	PRIVATE GLOBAL FIELD ["_isFeeding", false];
-	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];	
-	PRIVATE GLOBAL FIELD ["_isMavic", false];	
-	PRIVATE GLOBAL FIELD ["_isFPV", false];	
-	PRIVATE GLOBAL FIELD ["_staticCamOffset", NULL_VECTOR];	
-	PRIVATE GLOBAL FIELD ["_isStaticCam", false];	
-	PUBLIC GLOBAL FIELD ["_opSides", []];	
-	PRIVATE GLOBAL FIELD ["_cameraObjects", createHashMap];	
-	PRIVATE GLOBAL FIELD ["_turretsInstances", createHashMap];	
-	PRIVATE GLOBAL FIELD ["_opCameraPosFunc", CAM_POS_FUNC_DEF];
+	PRIVATE GLOBAL FIELD ["_opHasTurrets", false];
+	PRIVATE GLOBAL FIELD ["_turretsInstances", createHashMap];
+	PRIVATE GLOBAL FIELD ["_cameraObjects", createHashMap];
 	PRIVATE GLOBAL FIELD ["_hasActiveTurretsObjects", -1];
 	PRIVATE GLOBAL FIELD ["_activeTurretsObjects", createHashMap];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// optics, movement & defaults
+	// NVG
+	PUBLIC GLOBAL FIELD ["_canSwitchNvg", false];
+
+	// TI
+	PUBLIC GLOBAL FIELD ["_canSwitchTi", false];
+
+	// Zoom & Movement defaults
+	PRIVATE GLOBAL FIELD ["_cameraZoomSmoothDefault", false];
+	PRIVATE GLOBAL FIELD ["_canMoveCameraByDefault", false];
+	PRIVATE GLOBAL FIELD ["_cameraMoveRestrictionsByDefault", []]; // [degrees up, degrees down, degrees left, degrees right]
+	// -----------------------------------------------
 
 
 	// PP - point params types
@@ -120,10 +136,6 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		// NVG AND TI INIT
 		_canSwitchTi = _operator getVariable ["CFM_canSwitchTi", false];
 		_canSwitchNvg = _operator getVariable ["CFM_canSwitchNvg", false];
-		_tiTable = _operator getVariable ["CFM_tiTable", createHashMap];
-		_nvgTable = _operator getVariable ["CFM_nvgTable", createHashMap];
-		_operator setVariable ["CFM_tiTable", _tiTable, _global];
-		_operator setVariable ["CFM_nvgTable", _nvgTable, _global];
 		_operator setVariable ["CFM_canSwitchTi", _canSwitchTi, _global];
 		_operator setVariable ["CFM_canSwitchNvg", _canSwitchNvg, _global];
 

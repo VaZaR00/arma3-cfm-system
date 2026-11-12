@@ -1,49 +1,80 @@
 PUBLIC GLOBAL CLASS(Turret)
 
-    SET_SELF_VAR("_turret");
-    SET_VARS_PREFIX("_turret");
+	SET_SELF_VAR("_turret");
+	SET_VARS_PREFIX("_turret");
 
-    PRIVATE GLOBAL FIELD ["_operator", objNull];
-    PRIVATE GLOBAL FIELD ["_objClass", ""];
-	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];	
-	PRIVATE GLOBAL FIELD ["_isMavic", false];	
+	// -----------------------------------------------
+	// turret config
+	PRIVATE GLOBAL FIELD ["_turretIndex", -1];
+	PRIVATE GLOBAL FIELD ["_turretName", ""];
+	PRIVATE GLOBAL FIELD ["_turretObject", objNull];
+	PRIVATE GLOBAL FIELD ["_operator", objNull];
+	PRIVATE GLOBAL FIELD ["_disabled", false];
+	PRIVATE GLOBAL FIELD ["_isLocal", false];
+	PRIVATE GLOBAL FIELD ["_hasActiveTurretsObjects", -1];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// operator type info
+	PRIVATE GLOBAL FIELD ["_classType", ""];
+	PRIVATE GLOBAL FIELD ["_objClass", ""];
+	PRIVATE GLOBAL FIELD ["_isDroneFeed", false];
+	PRIVATE GLOBAL FIELD ["_isMavic", false];
 	PRIVATE GLOBAL FIELD ["_isFPV", false];
 	PRIVATE GLOBAL FIELD ["_hasGoPro", false];
 	PRIVATE GLOBAL FIELD ["_isStaticCam", false];
-	PRIVATE GLOBAL FIELD ["_disabled", false];
-	PRIVATE GLOBAL FIELD ["_classType", ""];
-    PRIVATE GLOBAL FIELD ["_turretObject", objNull];
-    PRIVATE GLOBAL FIELD ["_turretIndex", -1];
-    PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
-    PUBLIC GLOBAL FIELD ["_smoothZoom", true];
-    PUBLIC GLOBAL FIELD ["_tiParams", []];
-    PUBLIC GLOBAL FIELD ["_nvgParam", false];
-    PRIVATE GLOBAL FIELD ["_isLocal", false];
-    PRIVATE GLOBAL FIELD ["_camPosFunc", CAM_POS_FUNC_DEF];
-    PRIVATE GLOBAL FIELD ["_doInterpolation", false];
-    PRIVATE GLOBAL FIELD ["_ppType", PP_NONE];
-    PRIVATE GLOBAL FIELD ["_pointParams", []];
-    PRIVATE GLOBAL FIELD ["_ppPos", []];
-    PRIVATE GLOBAL FIELD ["_ppDir", DEF_DIR];
-    PRIVATE GLOBAL FIELD ["_ppUp", DEF_UP];
-    PRIVATE GLOBAL FIELD ["_ppMemPoint", ""];
-    PRIVATE GLOBAL FIELD ["_ppAddArr", [0,0,0]];
-    PRIVATE GLOBAL FIELD ["_ppSetArr", [-1,-1,-1]];
-    PRIVATE GLOBAL FIELD ["_ppLod", "Memory"];
-    PUBLIC GLOBAL FIELD ["_canMoveCamera", false];
-    PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0,0,0,0]];
-    PUBLIC GLOBAL FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
-    PRIVATE GLOBAL FIELD ["_initialDirUp", [DEF_DIR, DEF_UP]];
-    PRIVATE GLOBAL FIELD ["_turretName", ""];
-    PUBLIC GLOBAL FIELD ["_signalFunc", {1}];
-    PUBLIC GLOBAL FIELD ["_effectFunc", {}];
-    PUBLIC GLOBAL FIELD ["_interfaceFunc", {}];
-    PUBLIC GLOBAL FIELD ["_interfaceClass", ""];
-    PUBLIC GLOBAL FIELD ["_initInterfaceFunc", {}];
-    PRIVATE GLOBAL FIELD ["_currentCamMove", [0,0,0,0]];
-    PRIVATE GLOBAL FIELD ["_monitorsSet", []];
-    PRIVATE GLOBAL FIELD ["_hasActiveTurretsObjects", -1];
-    PRIVATE GLOBAL FIELD ["_monitorsOnTurret", []];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// optics and zoom
+	// NVG
+	PUBLIC GLOBAL FIELD ["_nvgParam", false];
+
+	// TI
+	PUBLIC GLOBAL FIELD ["_tiParams", []];
+
+	// Zoom
+	PUBLIC GLOBAL FIELD ["_zoomTable", createHashMap];
+	PUBLIC GLOBAL FIELD ["_smoothZoom", true];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// camera movement & interpolation
+	PUBLIC GLOBAL FIELD ["_canMoveCamera", false];
+	PUBLIC GLOBAL FIELD ["_cameraMoveRestrictions", DEF_CAM_MOVE_RESTR];
+	PRIVATE GLOBAL FIELD ["_currentCameraMoves", [0, 0, 0, 0]];
+	PRIVATE GLOBAL FIELD ["_currentCamMove", [0, 0, 0, 0]];
+	PRIVATE GLOBAL FIELD ["_initialDirUp", [DEF_DIR, DEF_UP]];
+	PRIVATE GLOBAL FIELD ["_doInterpolation", false];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// camera positioning & point params (PP)
+	PRIVATE GLOBAL FIELD ["_camPosFunc", CAM_POS_FUNC_DEF];
+	PRIVATE GLOBAL FIELD ["_pointParams", []];
+	PRIVATE GLOBAL FIELD ["_ppType", PP_NONE];
+	PRIVATE GLOBAL FIELD ["_ppPos", []];
+	PRIVATE GLOBAL FIELD ["_ppDir", DEF_DIR];
+	PRIVATE GLOBAL FIELD ["_ppUp", DEF_UP];
+	PRIVATE GLOBAL FIELD ["_ppMemPoint", ""];
+	PRIVATE GLOBAL FIELD ["_ppAddArr", [0, 0, 0]];
+	PRIVATE GLOBAL FIELD ["_ppSetArr", [-1, -1, -1]];
+	PRIVATE GLOBAL FIELD ["_ppLod", "Memory"];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// interface & effects
+	PUBLIC GLOBAL FIELD ["_signalFunc", {1}];
+	PUBLIC GLOBAL FIELD ["_effectFunc", {}];
+	PUBLIC GLOBAL FIELD ["_interfaceFunc", {}];
+	PUBLIC GLOBAL FIELD ["_interfaceClass", ""];
+	PUBLIC GLOBAL FIELD ["_initInterfaceFunc", {}];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// connected monitors
+	PRIVATE GLOBAL FIELD ["_monitorsOnTurret", []];
+	// -----------------------------------------------
 
 	#define TimeToMoveSmoothCoef 0.2
     

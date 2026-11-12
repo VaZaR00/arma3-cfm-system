@@ -11,37 +11,54 @@ PRIVATE LOCAL SINGLETON_CLASS(DisplayHandler)
 
 	SET_SELF_VAR("_monitor");
 
-	FIELD ["_monitorUid", ""];
-	FIELD ["_monitorR2Tid", ""];
-	FIELD ["_originalTexture", ""];
-	FIELD ["_mainDisplay", displayNull];
-	FIELD ["_r2tDisplayName", ""];
-	FIELD ["_r2tDisplay", displayNull];
-	FIELD ["_r2tDisplayCtrl", controlNull];
-	FIELD ["_displayUiCtrl", controlNull];
-	FIELD ["_uiCtrlCurrentUIDisplay", displayNull];
-	FIELD ["_uiCtrlUIDisplayName", ""];
-	FIELD ["_uiCtrlCurrentUIDisplayClass", ""];
-	FIELD ["_displayUpLayerCtrl", controlNull];
-	FIELD ["_r2tDisplayR2TCtrl", controlNull];
-	FIELD ["_effectsLayersControls", []];
-	FIELD ["_effectsLayersCount", 0];
-	FIELD ["_turnedOffLocal", false];
-	FIELD ["_isHandMonitor", false];
-	
-	FIELD ["_uiIndex", 0];
-	FIELD ["_uiDisplayUniqueName", ""];
+	// -----------------------------------------------
+	// display handler config
+	PRIVATE LOCAL FIELD ["_monitorUid", ""];
+	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
+	PRIVATE LOCAL FIELD ["_originalTexture", ""];
+	PRIVATE LOCAL FIELD ["_isHandMonitor", false];
+	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
+	// -----------------------------------------------
 
-	FIELD ["_connectedOperator", objNull];
-	FIELD ["_currentUiClasname", ""];
-	FIELD ["_uiParams", []];
-	FIELD ["_currentPiPEffect", 0];
-	FIELD ["_currentFeedIsDisplay", false];
-	FIELD ["_currentOperatorSignalFunction", {1}];
-	FIELD ["_currentOperatorInterfaceFunction", {}];
-	FIELD ["_currentOperatorInterfaceClass", {}];
-	FIELD ["_currentOperatorEffectsFunction", {}];
-	FIELD ["_currentUIDisplayRenderClass", ""];
+	// -----------------------------------------------
+	// display & UI controls
+	PRIVATE LOCAL FIELD ["_mainDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_displayUiCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_displayUpLayerCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_uiIndex", 0];
+	PRIVATE LOCAL FIELD ["_uiDisplayUniqueName", ""];
+	PRIVATE LOCAL FIELD ["_uiCtrlCurrentUIDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_uiCtrlUIDisplayName", ""];
+	PRIVATE LOCAL FIELD ["_uiCtrlCurrentUIDisplayClass", ""];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// R2T display & controls
+	PRIVATE LOCAL FIELD ["_r2tDisplay", displayNull];
+	PRIVATE LOCAL FIELD ["_r2tDisplayName", ""];
+	PRIVATE LOCAL FIELD ["_r2tDisplayCtrl", controlNull];
+	PRIVATE LOCAL FIELD ["_r2tDisplayR2TCtrl", controlNull];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// effects layers
+	PRIVATE LOCAL FIELD ["_effectsLayersControls", []];
+	PRIVATE LOCAL FIELD ["_effectsLayersCount", 0];
+	// -----------------------------------------------
+
+	// -----------------------------------------------
+	// feed & operator UI state
+	PRIVATE LOCAL FIELD ["_connectedOperator", objNull];
+	PRIVATE LOCAL FIELD ["_currentFeedIsDisplay", false];
+	PRIVATE LOCAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE LOCAL FIELD ["_currentUiClasname", ""];
+	PRIVATE LOCAL FIELD ["_uiParams", []];
+	PRIVATE LOCAL FIELD ["_currentUIDisplayRenderClass", ""];
+	PRIVATE LOCAL FIELD ["_currentOperatorSignalFunction", {1}];
+	PRIVATE LOCAL FIELD ["_currentOperatorInterfaceFunction", {}];
+	PRIVATE LOCAL FIELD ["_currentOperatorInterfaceClass", {}];
+	PRIVATE LOCAL FIELD ["_currentOperatorEffectsFunction", {}];
+	// -----------------------------------------------
 
 	METHOD("Init") {
 		_monitorUid = ["createMonitorUId", _monitor] CALL_CLASS("DbHandler");

@@ -147,14 +147,6 @@ if (_isNvgDefault || {_isTiDefault}) then {
 };
 
 if (IS_OBJ(_operator)) then {
-	private _tiTable = _operator getVariable ["CFM_tiTable", createHashMap];
-	_tiTable set [_turretIdx, _finalTi];
-	_operator setVariable ["CFM_tiTable", _tiTable];
-
-	private _nvgTable = _operator getVariable ["CFM_nvgTable", createHashMap];
-	_nvgTable set [_turretIdx, _finalNvg];
-	_operator setVariable ["CFM_nvgTable", _nvgTable];
-
 	if (_finalTi isNotEqualTo []) then {
 		_operator setVariable ["CFM_canSwitchTi", true];
 	};
