@@ -1,4 +1,4 @@
-PUBLIC GLOBAL CLASS(SeatTablet)
+PRIVATE GLOBAL CLASS(SeatTablet)
 
 	SET_SELF_VAR("_monitor");
 	SET_VARS_PREFIX("_seatTablet");
@@ -10,20 +10,20 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 
 	// -----------------------------------------------
 	// seat tablet state
-	PUBLIC GLOBAL FIELD ["_connectedOperator", objNull];
-	PUBLIC GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
-	PUBLIC LOCAL FIELD ["_turnedOffLocal", false];
+	PRIVATE GLOBAL FIELD ["_connectedOperator", objNull];
+	PRIVATE GLOBAL FIELD ["_currentTurret", DRIVER_TURRET_PATH];
+	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
 	PRIVATE GLOBAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
 	// -----------------------------------------------
 
 	// -----------------------------------------------
 	// Parameters below are saved per seat tablet
 	// NVG & effects
-	PUBLIC GLOBAL FIELD ["_currentPiPEffect", 0];
+	PRIVATE GLOBAL FIELD ["_currentPiPEffect", 0];
 	PRIVATE GLOBAL FIELD ["_isInNvg", false];
 
 	// Zoom
-	PUBLIC GLOBAL FIELD ["_zoom", 1, ["", 1]];
+	PRIVATE GLOBAL FIELD ["_zoom", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
 	// -----------------------------------------------
@@ -83,7 +83,7 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		SET_SELFVARG(_pipSlot);
 		true
 	};
-	PUBLIC GE GA LOCAL METHOD("connect") {
+	PRIVATE GE GA LOCAL METHOD("connect") {
 		params ["_op", ["_initTurrIdx", -1], ["_caller", objNull]];
 		if !(IS_OBJ(_op)) exitWith {false};
 
@@ -134,7 +134,7 @@ PUBLIC GLOBAL CLASS(SeatTablet)
 		[_monitor, _op, true, [_initTurrIdx], true, _seatKey] spawn CFM_fnc_syncState;
 		true
 	};
-	PUBLIC GE GA LOCAL METHOD("disconnect") {
+	PRIVATE GE GA LOCAL METHOD("disconnect") {
 		params [["_caller", objNull]];
 		private _prevOp = _connectedOperator;
 		private _prevTurr = _currentTurret;
