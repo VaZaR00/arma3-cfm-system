@@ -7,74 +7,96 @@
 #include "defines.hpp" 
 
 
-params ["_mNetId", "_oNetId", ["_start", true], ["_turret", nil], ["_isOptimize", false], ["_seatKey", ""]];
+params ["_mNetId", "_oNetId", ["_start", true], ["_turret", nil], ["_isOptimize", false], ["_instIdArg", -1]];
 
-private _monitor = if (_mNetId isEqualType "") then {objectFromNetId _mNetId} else {_mNetId};
+private _monitor = objNull;
+private _instId = _instIdArg;
+if (_mNetId isEqualType []) then {
+	_mNetId params [["_mTarget", objNull], ["_mId", -1]];
+	_monitor = if (_mTarget isEqualType "") then {objectFromNetId _mTarget} else {_mTarget};
+	if (_instId < 1) then {_instId = _mId};
+} else {
+	_monitor = if (_mNetId isEqualType "") then {objectFromNetId _mNetId} else {_mNetId};
+	if (_instId < 1 && {IS_OBJ(_monitor)}) then {
+		_instId = [_monitor] call CFM_fnc_getSelectedMonitorInstance;
+		if (_instId < 1) then {
+			_instId = ((keys (_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap])) param [0, -1]);
+		};
+	};
+};
 private _operator = if (_oNetId isEqualType "") then {objectFromNetId _oNetId} else {_oNetId};
 
-if !(IS_OBJ(_monitor)) exitWith {};
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
 if (_start && {!(IS_OBJ(_operator))}) exitWith {};
+private _monPair = [_monitor, _instId];
 
 if (isServer && !_isOptimize) then {
-	private _monIsLocal = _monitor getVariable ["CFM_isLocal", false];
+	private _monIsLocal = MON_GVAR(_monitor, _instId, "CFM_isLocal", false);
 	if (_start) then {
-		private _initTurr = _monitor getVariable ["CFM_waitingForStartTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret}];
-		_monitor setVariable ["CFM_connectedOperator", _operator, !_monIsLocal];
-		_monitor setVariable ["CFM_waitingForStartTurret", _initTurr, !_monIsLocal];
-		["CFM_operatorMonitorConnected", [_operator, _monitor, _initTurr], _operator] call CBA_fnc_targetEvent;
+		private _initTurr = MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret});
+		MON_SVARG(_monitor, _instId, "CFM_connectedOperator", _operator, !_monIsLocal);
+		MON_SVARG(_monitor, _instId, "CFM_waitingForStartTurret", _initTurr, !_monIsLocal);
+		["CFM_operatorMonitorConnected", [_operator, _monPair, _initTurr], _operator] call CBA_fnc_targetEvent;
 	} else {
-		_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-		_monitor setVariable ["CFM_connectedOperator", nil, !_monIsLocal];
-		_monitor setVariable ["CFM_waitingForStartTurret", nil, !_monIsLocal];
-		["CFM_operatorMonitorDisconnected", [_operator, _monitor], _operator] call CBA_fnc_targetEvent;
+		_operator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
+		MON_SVARG(_monitor, _instId, "CFM_connectedOperator", nil, !_monIsLocal);
+		MON_SVARG(_monitor, _instId, "CFM_waitingForStartTurret", nil, !_monIsLocal);
+		["CFM_operatorMonitorDisconnected", [_operator, _monPair], _operator] call CBA_fnc_targetEvent;
 	};
 };
 
-private _waitVar = "CFM_waitingForStart" + _seatKey;
+private _waitVar = MON_VAR_NAME("CFM_waitingForStart", _instId);
 private _isWaiting = _monitor getVariable [_waitVar, false];
 
 if (_isWaiting && _start) exitWith {
-	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
+	MON_SVAR(_monitor, _instId, "CFM_waitingForStartOperator", _operator);
 	if !(isNil "_turret") then {
-		_monitor setVariable ["CFM_waitingForStartTurret", _turret];
+		MON_SVAR(_monitor, _instId, "CFM_waitingForStartTurret", _turret);
 	};
 };
 
 _monitor setVariable [_waitVar, _start];
+private _localSkipOnly = false;
 
 if (_start && {hasInterface}) then {
-	_monitor setVariable ["CFM_waitingForStartOperator", _operator];
-	if (!isNil "_turret" && {(!(_seatKey isEqualTo "")) || {isNil {_monitor getVariable "CFM_waitingForStartTurret"}}}) then {
-		_monitor setVariable ["CFM_waitingForStartTurret", _turret];
+	MON_SVAR(_monitor, _instId, "CFM_waitingForStartOperator", _operator);
+	if (!isNil "_turret" && {!(MON_GVAR(_monitor, _instId, "CFM_seatKey", "") isEqualTo "") || {isNil {_monitor getVariable (MON_VAR_NAME("CFM_waitingForStartTurret", _instId))}}}) then {
+		MON_SVAR(_monitor, _instId, "CFM_waitingForStartTurret", _turret);
 	};
 	waitUntil {
 		private _cond = call {
 			_start = _monitor getVariable [_waitVar, true];
 			if !(_start) exitWith {true};
-			if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!(_seatKey isEqualTo "")}) then {
-				if !((PLAYER_ getVariable ["CFM_activeSeatKey", ""]) isEqualTo _seatKey) exitWith {
-					_start = false;
-					true
-				};
-			};
 			if !(isPipEnabled) exitWith {false};
 			if !(_monitor getVariable ["CFM_isMonitorSet", false]) exitWith {false};
-			_operator = _monitor getVariable ["CFM_waitingForStartOperator", objNull];
+			if !(MON_GVAR(_monitor, _instId, "CFM_isMonitorInstanceSet", false)) exitWith {false};
+
+			private _isVehSeatTablet = MON_GVAR(_monitor, _instId, "CFM_isVehSeatTablet", false);
+			private _seatKey = MON_GVAR(_monitor, _instId, "CFM_seatKey", "");
+			private _texSel = MON_GVAR(_monitor, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
+			private _inReqSeat = !_isVehSeatTablet || {_seatKey isEqualTo ""} || {
+				(PLAYER_ in _monitor) && {(([_monitor, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey)}
+			};
+			private _needSeatForRender = (_texSel < 0) || {!(missionNamespace getVariable ["CFM_renderSeatTextureOutOfSeat", true])};
+			if (_isVehSeatTablet && {_needSeatForRender} && {!_inReqSeat}) exitWith {
+				_start = false;
+				_localSkipOnly = true;
+				true
+			};
+
+			_operator = MON_GVAR(_monitor, _instId, "CFM_waitingForStartOperator", objNull);
 			if !(IS_OBJ(_operator)) exitWith {
 				_start = false;
 				true
 			};
-			_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH]];
+			_turret = MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", MON_GVAR(_monitor, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH));
 			if !(_operator getVariable ["CFM_operatorSet", false]) exitWith {false};
-			if (_monitor getVariable ["CFM_isVehTablet", false]) exitWith {
-				(PLAYER_ getVariable ["CFM_activeSeatKey", ""]) isEqualTo _seatKey
-			};
+			if (_isVehSeatTablet && {_inReqSeat}) exitWith {true};
+			if (MON_GVAR(_monitor, _instId, "CFM_isHandMonitor", false)) exitWith {true};
+
 			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
-			private _dist = _monitor distance PLAYER_;
-			private _isClose = _dist < _optimizeDistance;
-			if (_isClose) exitWith {true};
-			_isClose
+			(_monitor distance PLAYER_) < _optimizeDistance
 		};
 		if (_cond) exitWith {true};
 		sleep 1;
@@ -82,19 +104,23 @@ if (_start && {hasInterface}) then {
 	};
 };
 if (_start && {IS_OBJ(_operator)}) then {
-	if (_monitor getVariable ["CFM_feedActive", false]) then {
-		[_monitor, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+	if (MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) then {
+		[_monPair, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
 	};
-	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!(_seatKey isEqualTo "")}) then {
-		["applyToMonitor"] CALL_SEAT_TABLET_INSTANCE(_monitor, _seatKey);
-	};
-	_turret = _monitor getVariable ["CFM_waitingForStartTurret", _monitor getVariable ["CFM_currentTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret}]];
-	[_monitor, _operator, _turret, _isOptimize] call CFM_fnc_startOperatorFeed;
+	_turret = MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", MON_GVAR(_monitor, _instId, "CFM_currentTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret}));
+	[_monPair, _operator, _turret, _isOptimize] call CFM_fnc_startOperatorFeed;
 } else {
-	if (_monitor getVariable ["CFM_feedActive", false]) then {
-		[_monitor, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+	private _feedActive = MON_GVAR(_monitor, _instId, "CFM_feedActive", false);
+	if (_localSkipOnly) then {
+		if (_feedActive) then {
+			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+		};
 	} else {
-		["clearVariables"] CALL_OBJCLASS("Monitor", _monitor);
+		if (_feedActive) then {
+			[_monPair, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+		} else {
+			["clearVariables"] CALL_MON_INST(_monitor, _instId);
+		};
 	};
 };
 _monitor setVariable [_waitVar, false];

@@ -38,6 +38,9 @@ if (_generalUpdate) then {
 		missionNamespace setVariable ["CFM_lastControlledUnit", _controlledUnit];
 		// for remote controlled menu handling
 		_prevUnit setVariable ['CFM_menuActive', false];
+		if (hasInterface) then {
+			[_player, _prevUnit] call CFM_fnc_monitorCloseMenu;
+		};
 		_player setVariable ['CFM_menuActive', false];
 	};
 };

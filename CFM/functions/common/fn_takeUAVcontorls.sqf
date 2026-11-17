@@ -7,13 +7,15 @@
 #include "defines.hpp" 
 
 
-params [["_monitor", objNull]];
+params [["_monArg", objNull]];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
 
 if !(focusOn isEqualTo player) exitWith {
 	CFM_STR_CANT_TAKE_UAV_CONTROLS_REMOTE _HINT
 };
 
-private _drone = _monitor getVariable ["CFM_connectedOperator", objNull];
+private _drone = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
 private _errtext = CFM_STR_CANT_CONNECT_TO_DRONE;
 
 if !(IS_OBJ(_drone)) exitWith {};
@@ -28,7 +30,7 @@ if (!_canHack && !_sameSide) exitWith {
 };
 if (!_sameSide) exitWith {
 	// do hack
-	[_drone, _playerSide, true, _monitor, false, true] spawn CFM_fnc_hackDrone;
+	[_drone, _playerSide, true, [_monitor, _instId], false, true] spawn CFM_fnc_hackDrone;
 };
 
 private _dDriver = driver _drone;
@@ -36,7 +38,7 @@ private _dGunner = gunner _drone;
 
 private _bot = _dDriver;
 private _turretName = "DRIVER";
-private _currTurret = _monitor getVariable ["CFM_currentTurret", DRIVER_TURRET_PATH];
+private _currTurret = MON_GVAR(_monitor, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH);
 if (_currTurret isEqualTo GUNNER_TURRET_PATH) then {
 	_bot = _dGunner;
 	if (isNull _bot) then {

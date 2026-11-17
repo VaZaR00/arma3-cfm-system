@@ -6,8 +6,9 @@
 
 #include "defines.hpp" 
 
-params["_target"];
+params["_target", ["_instId", -1]];
+RESOLVE_ACTION_INST
 HAND_MON_CONDITION
-if !(_target getVariable ["CFM_canSetPassword", false]) exitWith {false};
-if ((_target getVariable ["CFM_password", ""]) isEqualTo "") exitWith {false};
-(_target getVariable ["CFM_menuActive", false]) || (_target getVariable ["CFM_feedActive", false])
+if !(MON_GVAR(_target, _instId, "CFM_canSetPassword", false)) exitWith {false};
+if ((MON_GVAR(_target, _instId, "CFM_password", "")) isEqualTo "") exitWith {false};
+(MON_GVAR(_target, _instId, "CFM_menuActive", false)) || (MON_GVAR(_target, _instId, "CFM_feedActive", false))

@@ -1,11 +1,19 @@
-
 #define OPERATOR_INFO_TEXT_DEF format["<t color='#0d6aff'>%1</t>", CFM_STR_OPERATOR_INFO_TITLE]
 
-PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
-	
+PUBLIC GLOBAL CLASS(Monitor)
+
 	SET_SELF_VAR("_monitor");
+	SET_VARS_PREFIX("");
 
 	// -----------------------------------------------
+	// instance identity & mode config
+	PUBLIC GLOBAL FIELD ["_textureSelection", NO_TEXTURE_SELECTION];
+	PUBLIC GLOBAL FIELD ["_seatKey", ""];
+	PUBLIC GLOBAL FIELD ["_isVehSeatTablet", false];
+	PUBLIC GLOBAL FIELD ["_isHandTablet", false];
+	PRIVATE LOCAL FIELD ["_displayHandlerId", -1];
+	PRIVATE LOCAL FIELD ["_isMonitorInstanceSet", false];
+
 	// monitor config
 	PUBLIC GLOBAL FIELD ["_monitorSides", []];
 	PUBLIC GLOBAL FIELD ["_originalTexture", ""];
@@ -24,10 +32,6 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE LOCAL FIELD ["_monitorR2Tid", ""];
 	PRIVATE GLOBAL FIELD ["_password", ""];
 	PRIVATE GLOBAL FIELD ["_screenResolution", DEFAULT_SCREEN_RESOLUTION];
-	// veh tablet config
-	PRIVATE GLOBAL FIELD ["_vehicleTabletSeats", []];
-	PRIVATE GLOBAL FIELD ["_seatTabletsInstances", createHashMap];
-	PRIVATE GLOBAL FIELD ["_isVehTablet", false];
 	// -----------------------------------------------
 
 	// -----------------------------------------------
@@ -43,11 +47,11 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE LOCAL FIELD ["_currentMenuObj", objNull];
 	PRIVATE LOCAL FIELD ["_turnedOffLocal", false];
 	PRIVATE LOCAL FIELD ["_actionCaller", objNull];
+	PRIVATE LOCAL FIELD ["_pipSlot", PIP_SLOT_RIGHT];
 	// -----------------------------------------------
 
-
 	// -----------------------------------------------
-	// Parameters below are temporary for current feed, changing them here doesn't save it on Turret
+	// Parameters below are temporary for current feed
 	// NVG
 	PUBLIC GLOBAL FIELD ["_monitorCanSwitchNvg", false];
 	PRIVATE GLOBAL FIELD ["_isInNvg", false];
@@ -64,7 +68,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	PRIVATE GLOBAL FIELD ["_zoomTable", createHashMap];
 	PRIVATE GLOBAL FIELD ["_zoomFov", 1, ["", 1]];
 	PRIVATE GLOBAL FIELD ["_maxZoomed", false];
-	
+
 	// Movement
 	PUBLIC GLOBAL FIELD ["_currentCameraCanMove", false];
 	PUBLIC GLOBAL FIELD ["_currentCameraMoveRestrictions", []];
@@ -85,226 +89,255 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 	// -----------------------------------------------
 
 	//----------- Internal -----------
-	PRIVATE GLOBAL METHOD("Init") { 
-		// should be executed globaly
+	PRIVATE GLOBAL METHOD("Init") {
 		params [
+			["_instanceSpec", []],
+			["_commonArgs", []],
+			["_isLocalArg", false]
+		];
+
+		if !(IS_OBJ(_monitor)) exitWith {false};
+
+		_instanceSpec params [
+			["_texSelArg", 0],
+			["_seatKeyArg", ""],
+			["_isVehSeatArg", false],
+			["_isHandArg", false]
+		];
+
+		_commonArgs params [
 			["_sides", []],
 			["_allowedOperatorsSet", []],
 			["_allowedOperatorsTypesSet", []],
-			["_isHandMonitorDisplay", false],
-			["_vehicleTabletSeatsSet", -1],
-			["_isVehTabletSet", -1],
+			["_isHandMonitorDisplaySet", false],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true],
 			["_canSwitchTurret", true],
 			["_canZoom", true],
-			["_canFullScreen", true],
+			["_canFullScreenSet", true],
 			["_canConnectDrone", true],
 			["_canFix", true],
 			["_canTurnOffLocal", true],
-			["_canSetPassword", true],
+			["_canSetPasswordSet", true],
 			["_screenResolutionSet", ""]
-		]; 
+		];
 
-		if !(IS_OBJ(_monitor)) exitWith {false};
-			
+		if (_isHandArg && {!(_monitor isEqualTo PLAYER_)}) exitWith {false};
 
-		private _reset = if (isNil "_reset") then {false} else {_reset};
-		if (!_reset && {((_monitor getVariable ["CFM_isMonitorSet", false]) isEqualTo true)}) exitWith {false};
+		_textureSelection = _texSelArg;
+		_seatKey = _seatKeyArg;
+		_isVehSeatTablet = _isVehSeatArg;
+		_isHandTablet = _isHandArg;
+		_isLocal = _isLocalArg || _isHandTablet;
+		_isHandMonitor = _isHandTablet || (_isVehSeatTablet && {_textureSelection < 0});
 
-		private _isPlayer = (_monitor isEqualTo PLAYER_) || {(_monitor isKindOf "Man")};
-		private _local = local _monitor;
-
-		// Hand monitors are local
-		if (_isPlayer && !_local) exitWith {false};
-
-		_isHandMonitor = _isPlayer;
-
-		if (_isHandMonitor) then {
-			// if hand monitor then wait for terminal
-			waitUntil {
-				sleep 2;
-				_selfObj call CFM_fnc_hasUAVterminal;
-			};
-			// upd actions to remote controlled uav units
-			_selfObj spawn {
-				private _plr = _this;
-				while {alive _plr} do {
-					sleep 1;
-					if !(isPipEnabled) then {continue};
-					private _unit = focusOn;
-					if !(_unit isEqualTo _plr) then {
-						private _unitIsSet = _unit getVariable ["CFM_actionsSet", false];
-						if (_unitIsSet) exitWith {};
-						if ((_unit getVariable ["CFM_isMonitorSet", false]) isEqualTo true) exitWith {
-							_unit setVariable ["CFM_actionsSet", true];
-						};
-						if !((vehicle _unit) call CFM_fnc_isUAV) exitWith {
-							_unit setVariable ["CFM_actionsSet", true];
-						};
-						[_plr, _unit] call CFM_fnc_copyMenuActionsToObj;
-					};
-				};
-			};
-		};
-		_isVehTablet = if (_isVehTabletSet isEqualType true) then {_isVehTabletSet} else {
-			(_selfObj isKindOf "LandVehicle") || {(_selfObj isKindOf "Air")};
-		};
-		_isLocal = _isHandMonitor;
-		_isHandMonitor = _isVehTablet || _isHandMonitor;
-
-		private _monitorTextures = [""];
-		if (!_isVehTablet && {
+		private _monitorTextures = [];
+		if (_textureSelection >= 0) then {
 			_monitorTextures = getObjectTextures _monitor;
-			private _hasTextureSelection = count (_monitorTextures) > 0;
-			!_isHandMonitor && !(_hasTextureSelection)
-		}) exitWith {
-			format["CLASS Monitor init: Object '%1' has no texture selections!", _monitor] WARN;
+		};
+		if (_textureSelection >= 0 && {_textureSelection >= (count _monitorTextures)}) exitWith {
+			format["CLASS Monitor init: Object '%1' has no texture selection %2!", _monitor, _textureSelection] WARN;
 			false
 		};
-		
-		if ((_monitor getVariable ["CFM_isMonitorSet", false]) && {_feedActive}) then {
-			[_monitor] call CFM_fnc_stopOperatorFeed;
+
+		if (MON_GVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false) && {_feedActive}) then {
+			[[_monitor, _instanceIndex]] call CFM_fnc_stopOperatorFeed;
 		};
 
 		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
-			private _existingRes = _monitor getVariable ["CFM_screenResolution", _monitor getVariable ["ScreenResolution", ""]];
+			private _existingRes = MON_GVAR(_monitor, _instanceIndex, "CFM_screenResolution", _monitor getVariable ["ScreenResolution" I ""]);
 			_parsedScreenRes = [_existingRes, _monitor] call CFM_fnc_parseScreenResolution;
 		};
 		if (_parsedScreenRes isEqualTo []) then {
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
 		};
 		_screenResolution = _parsedScreenRes;
-		_monitor setVariable ["CFM_screenResolution", _screenResolution];
-		
-		if (_local) then {
-			// in veh tablet
-			_vehicleTabletSeatsSet = if (_vehicleTabletSeatsSet isEqualType []) then {_vehicleTabletSeatsSet} else {
-				// default seats
-				[["driver"],["commander"],["gunner"],["turret",[-1]],["turret",[0]],["turret",[1]],["turret",[0,0]],["turret",[0,1]],["turret",[1,0]]];
-			};
-			_monitor setVariable ["CFM_isVehTablet", _isVehTablet, !_isLocal];
-			_monitor setVariable ["CFM_vehicleTabletSeats", _vehicleTabletSeatsSet, !_isLocal];
 
-			private _originalTexture = (_monitorTextures) select 0;
-			_originalTexture = if (isNil "_originalTexture") then {""} else {_originalTexture};
-			_monitor setVariable ["CFM_originalTexture", _originalTexture, !_isLocal]; 
+		_originalTexture = if (_textureSelection >= 0) then {
+			private _tex = _monitorTextures param [_textureSelection, ""];
+			if (isNil "_tex") then {""} else {_tex}
+		} else {""};
 
-			["addMonitor", [_monitor, !_isLocal]] CALL_CLASS("DbHandler");
-			_monitor setVariable ["CFM_isHandMonitor", _isHandMonitor, true];
-			_monitor setVariable ["CFM_isLocal", _isLocal, true];
+		if !(_sides isEqualType []) then {_sides = [_sides]};
+		_sides = _sides select {_x isEqualType west};
 
-			if !(_sides isEqualType []) then {
-				_sides = [_sides];
-			};
-			_sides = _sides select {_x isEqualType west};
-			if (count _sides == 0) then {_sides = []};
+		if !(_allowedOperatorsSet isEqualType []) then {_allowedOperatorsSet = [_allowedOperatorsSet]};
+		_allowedOperatorsSet = _allowedOperatorsSet select {_x isEqualType objNull};
 
-			_monitor setVariable ["CFM_monitorSides", _sides, !_isLocal];
-			_monitor setVariable ["CFM_canFullScreen", _canFullScreen, !_isLocal];
-			_monitor setVariable ["CFM_isHandMonitorDisplay", _isHandMonitor && _isHandMonitorDisplay];
+		if !(_allowedOperatorsTypesSet isEqualType []) then {_allowedOperatorsTypesSet = [_allowedOperatorsTypesSet]};
+		_allowedOperatorsTypesSet = _allowedOperatorsTypesSet select {(_x isEqualType "") || {(_x isEqualType 1)}};
 
-			if !(_allowedOperatorsSet isEqualType []) then {_allowedOperatorsSet = [_allowedOperatorsSet]};
-			_allowedOperatorsSet = _allowedOperatorsSet select {_x isEqualType objNull};
-			_monitor setVariable ["CFM_allowedOperators", _allowedOperatorsSet, !_isLocal];
-			if !(_allowedOperatorsTypesSet isEqualType []) then {_allowedOperatorsTypesSet = [_allowedOperatorsTypesSet]};
-			_allowedOperatorsTypesSet = _allowedOperatorsTypesSet select {(_x isEqualType "") || {(_x isEqualType 1)}};
-			_monitor setVariable ["CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, !_isLocal];
-			_monitor setVariable ["CFM_canSetPassword", _canSetPassword && {!_isHandMonitor || _isVehTablet}, !_isLocal];
-			if (isNil {_monitor getVariable "CFM_password"}) then {
-				_monitor setVariable ["CFM_password", "", !_isLocal];
-			};
-			if (isNil {_monitor getVariable "CFM_passwordAccess"}) then {
-				_monitor setVariable ["CFM_passwordAccess", [], !_isLocal];
-			};
-			if (_isVehTablet) then {
-				["DefineSeatTablets"] CALL_SELF;
-			};
+		_canFullScreen = _canFullScreenSet;
+		_canSetPassword = _canSetPasswordSet && {!_isHandMonitor || _isVehSeatTablet};
+		_isHandMonitorDisplay = _isHandMonitor && _isHandMonitorDisplaySet;
+
+		// Deterministic local writes first so fast clients have full config before server packets arrive
+		MON_SVAR(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandMonitor", _isHandMonitor);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandMonitorDisplay", _isHandMonitorDisplay);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isLocal", _isLocal);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_monitorSides", _sides);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_allowedOperators", _allowedOperatorsSet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_canFullScreen", _canFullScreen);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_canSetPassword", _canSetPassword);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_screenResolution", _screenResolution);
+
+		if (isNil {MON_GVAR(_monitor, _instanceIndex, "CFM_password", nil)}) then {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_password", "");
+		};
+		if (isNil {MON_GVAR(_monitor, _instanceIndex, "CFM_passwordAccess", nil)}) then {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_passwordAccess", []);
 		};
 
-		private _radius = ACTION_RADIUS;
-		private _menuText = CFM_STR_CAMERA_SYSTEM_MENU;
-		if (_isPlayer) then {
-			_radius = -1;
-			_targetInActionsConditions = "_target call CFM_fnc_getPlayer";
-			_monitor setVariable ["CFM_targetInActionsConditions", _targetInActionsConditions];
+		// Authoritative server sync for JIP / global objects (regardless of vehicle local ownership)
+		if (isServer && {!_isLocal}) then {
+			MON_SVARG(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_seatKey", _seatKey, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_isHandMonitor", _isHandMonitor, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_isLocal", _isLocal, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_monitorSides", _sides, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_allowedOperators", _allowedOperatorsSet, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_allowedOperatorsTypes", _allowedOperatorsTypesSet, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_canFullScreen", _canFullScreen, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_canSetPassword", _canSetPassword, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_screenResolution", _screenResolution, true);
 		};
-		_monitor setVariable ["CFM_actionsRadius", _radius];
 
-		["addMenuActions", [_radius]] CALL_SELF;
-		["addOptionalActions", [_radius, _canZoom, _canConnectDrone, _canFix, _canSwitchTurret, _canTurnOffLocal, _canSwitchNvg, _canSwitchTi]] CALL_SELF;
-		["updateActionPriority"] CALL_CLASS("DbHandler");
-		["setupMonitorDisplay", _monitor] CALL_CLASS("DbHandler");
+		["addMonitor", [[_monitor, _instanceIndex], false]] CALL_CLASS("DbHandler");
 
-		_monitor setVariable ["CFM_isMonitorSet", true];
+		if (_textureSelection >= 0) then {
+			[_monitor, _textureSelection, _instanceIndex] call CFM_fnc_cacheMonitorSelectionPos;
+		};
+
+		_radius = if (_isHandTablet) then {-1} else {ACTION_RADIUS};
+		_targetInActionsConditions = if (_isHandTablet) then {"_target call CFM_fnc_getPlayer"} else {"_target"};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_radius", _radius);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_targetInActionsConditions", _targetInActionsConditions);
+
+		if (hasInterface) then {
+			["addMenuActions", [_radius]] CALL_SELF;
+			["addOptionalActions", [_radius, _canZoom, _canConnectDrone, _canFix, _canSwitchTurret, _canTurnOffLocal, _canSwitchNvg, _canSwitchTi]] CALL_SELF;
+		};
+
+		_displayHandlerId = ["setupMonitorDisplay", [_monitor, _instanceIndex]] CALL_CLASS("DbHandler");
+		SET_SELFVAR(_displayHandlerId);
+
+		_isMonitorInstanceSet = true;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", true);
 
 		true
 	};
-	PRIVATE GE LA METHOD("DefineSeatTablets") {
-		private _fullCrew = fullCrew [_monitor, "", true];
-		{
-			if ([_monitor, _x] call CFM_fnc_isCrewSeatAllowed) then {
-				private _seatKey = [_x] call CFM_fnc_getCrewSeatKey;
-				if !(_seatKey isEqualTo "") then {
-					["setSeatTablet", [_seatKey]] CALL_SELF;
-				};
+
+	PRIVATE GE GA METHOD("activateSeat") {
+		if !(hasInterface) exitWith {false};
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		private _monPair = [_monitor, _instanceIndex];
+		if (IS_OBJ(_connectedOperator)) then {
+			if !([_connectedOperator, _monPair] call CFM_fnc_operatorCondition) exitWith {
+				["disconnect"] CALL_SELF;
+				false
 			};
-		} forEach _fullCrew;
-		_monitor getVariable ["CFM_seatTabletsInstances", createHashMap]
-	};
-	PRIVATE GE GA METHOD("syncContinuousZoom") {
-		private _syncGlobal = !_isHandMonitor;
-		if (_syncGlobal) then {
-			_monitor setVariable ['CFM_maxZoomed', _monitor getVariable ['CFM_maxZoomed', false], true];
-			_monitor setVariable ["CFM_zoom", _monitor getVariable ["CFM_zoom", 1], true];
-			_monitor setVariable ["CFM_zoomFov", _monitor getVariable ["CFM_zoomFov", 1], true];
-			_monitor setVariable ["CFM_doUpdateCamera", true, true];
+			if (_feedActive && {IS_OBJ(_currentFeedCam)}) exitWith {true};
+			if (_isHandMonitor) then {
+				_pipSlot = [_monPair, _pipSlot] call CFM_fnc_getFreePipSlot;
+				MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlot", _pipSlot);
+			};
+			[_monPair, _connectedOperator, true, _currentTurret, true] spawn CFM_fnc_syncState;
+			true
+		} else {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
+			if (_feedActive) then {
+				[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+			};
+			false
 		};
-		if (_isVehTablet) then {
-			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
+	};
+
+	PRIVATE GE GA METHOD("deactivateSeat") {
+		if !(hasInterface) exitWith {false};
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		private _monPair = [_monitor, _instanceIndex];
+		[_monPair] call CFM_fnc_monitorCloseMenu;
+
+		// For seat-bound 3D screens ([seatKey, texSel]), keep local feed running when client setting allows
+		if (!_isHandMonitor && {missionNamespace getVariable ["CFM_renderSeatTextureOutOfSeat", true]}) exitWith {true};
+
+		MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
+		if (MON_GVAR(_monitor, _instanceIndex, "CFM_feedActive", false)) then {
+			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
 		};
 		true
 	};
+
+	PUBLIC GE GA METHOD("syncContinuousZoom") {
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _valMaxZoomed = MON_GVAR(_monitor, _instanceIndex, "CFM_maxZoomed", false);
+		private _valZoom = MON_GVAR(_monitor, _instanceIndex, "CFM_zoom", 1);
+		private _valZoomFov = MON_GVAR(_monitor, _instanceIndex, "CFM_zoomFov", 1);
+		if (_syncGlobal || _isVehSeatTablet) then {
+			private _pub = !_isLocal;
+			MON_SVARG(_monitor, _instanceIndex, "CFM_maxZoomed", _valMaxZoomed, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_zoom", _valZoom, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_zoomFov", _valZoomFov, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdateCamera", true, _pub);
+		};
+		true
+	};
+
 	PRIVATE LOCAL METHOD("clearVariables") {
-		_monitor setVariable ["CFM_monitorCanSwitchNvg", nil];
-		_monitor setVariable ["CFM_monitorCanSwitchTi", nil];
-		_monitor setVariable ["CFM_currentOpHasTurrets", nil];
-		_monitor setVariable ["CFM_cameraType", nil];
-		_monitor setVariable ["CFM_currentTiTable", nil];
-		_monitor setVariable ["CFM_currentNvgParam", nil];
-		_monitor setVariable ["CFM_currentTurret", nil];
-		_monitor setVariable ["CFM_currentPiPEffect", nil];
-		_monitor setVariable ["CFM_currentFeedCam", nil];
-		_monitor setVariable ["CFM_connectedOperator", nil];
-		_monitor setVariable ["CFM_feedActive", nil];
-		_monitor setVariable ["CFM_zoom", nil];
-		_monitor setVariable ["CFM_zoomMax", nil];
-		_monitor setVariable ["CFM_zoomFov", nil];
-		_monitor setVariable ["CFM_maxZoomed", nil];
-		_monitor setVariable ["CFM_turretLocal", nil];
-		_monitor setVariable ["CFM_currentCameraType", nil];
-		_monitor setVariable ["CFM_currentOperatorIsDrone", nil];
-		_monitor setVariable ["CFM_cameraPosFunc", nil];
-		_monitor setVariable ['CFM_menuActive', false];
-		_monitor setVariable ['CFM_actionCaller', nil];
-		_monitor setVariable ['CFM_isInNvg', nil];
-		_monitor setVariable ["CFM_turnedOffLocal", nil]; 
-		_monitor setVariable ["CFM_currentCamPointParams", nil];
-		_monitor setVariable ["CFM_camDoInterpolation", nil];
-		_monitor setVariable ["CFM_currentCameraMoveRestrictions", nil];
-		_monitor setVariable ["CFM_currentCameraMoves", nil];
-		_monitor setVariable ["CFM_currentCameraCanMove", nil];
-		_monitor setVariable ["CFM_currentCameraIsStatic", nil];
-		_monitor setVariable ["CFM_currentCameraSmoothZoom", nil];
-		_monitor setVariable ["CFM_camInterp_lastDir", nil]; // mb rem?
-		_monitor setVariable ["CFM_camInterp_lastUp", nil];
-		_monitor setVariable ["CFM_camInterp_lastFov", nil];
-		_monitor setVariable ["CFM_doUpdateCamera", nil];
-		_monitor setVariable ["CFM_cam_prevSetPos", nil];
-		_monitor setVariable ["CFM_waitingForStartOperator", nil];
-		_monitor setVariable ["CFM_waitingForStartTurret", nil];
+		{
+			MON_SVAR(_monitor, _instanceIndex, _x, nil);
+		} forEach [
+			"CFM_monitorCanSwitchNvg",
+			"CFM_monitorCanSwitchTi",
+			"CFM_currentOpHasTurrets",
+			"CFM_cameraType",
+			"CFM_currentTiTable",
+			"CFM_currentNvgParam",
+			"CFM_currentTurret",
+			"CFM_currentPiPEffect",
+			"CFM_currentFeedCam",
+			"CFM_connectedOperator",
+			"CFM_zoom",
+			"CFM_zoomMax",
+			"CFM_zoomTable",
+			"CFM_zoomFov",
+			"CFM_maxZoomed",
+			"CFM_turretLocal",
+			"CFM_currentCameraType",
+			"CFM_currentOperatorIsDrone",
+			"CFM_cameraPosFunc",
+			"CFM_actionCaller",
+			"CFM_isInNvg",
+			"CFM_turnedOffLocal",
+			"CFM_currentCamPointParams",
+			"CFM_camDoInterpolation",
+			"CFM_currentCameraMoveRestrictions",
+			"CFM_currentCameraMoves",
+			"CFM_currentCameraCanMove",
+			"CFM_currentCameraIsStatic",
+			"CFM_currentCameraSmoothZoom",
+			"CFM_camInterp_lastDir",
+			"CFM_camInterp_lastUp",
+			"CFM_camInterp_lastFov",
+			"CFM_doUpdateCamera",
+			"CFM_cam_prevSetPos",
+			"CFM_waitingForStartOperator",
+			"CFM_waitingForStartTurret"
+		];
+		MON_SVAR(_monitor, _instanceIndex, "CFM_feedActive", nil);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_menuActive", false);
 	};
+
 	//----------- Config set -----------
 	PUBLIC GE GA METHOD("setScreenResolution") {
 		params [["_screenResolutionSet", ""]];
@@ -313,38 +346,26 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
 		};
 		_screenResolution = _parsedScreenRes;
-		_monitor setVariable ["CFM_screenResolution", _screenResolution, !_isLocal];
+		MON_SVARG(_monitor, _instanceIndex, "CFM_screenResolution", _screenResolution, !_isLocal);
 		if (_feedActive) then {
-			[_selfObj] spawn CFM_fnc_resetFeed;
+			[[_selfObj, _instanceIndex]] spawn CFM_fnc_resetFeed;
 		};
 		_screenResolution
 	};
-	PUBLIC GE LA METHOD("setSeatTablet") {
-		params [["_seatKey", ""]];
-		if (_seatKey isEqualTo "") exitWith {-1};
-		private _seatInstanceId = SEAT_TABLET_INSTANCE_ID(_monitor, _seatKey);
-		if (_seatInstanceId <= 0) then {
-			private _seatInstance = ([_monitor, [_seatKey]] NEW_OBJINSTANCE_GLOBAL("SeatTablet", true));
-			_seatInstanceId = _seatInstance param [0, -1];
-			if !(_seatInstanceId isEqualType 1) then {_seatInstanceId = -1};
-		} else {
-			["Init", [_seatKey]] CALL_OBJINSTANCE("SeatTablet", _seatInstanceId, _monitor);
-		};
-		if (_seatInstanceId <= 0) exitWith {-1};
-		[_monitor, "CFM_seatTabletsInstances", _seatKey, _seatInstanceId] call CFM_fnc_hashSetGlobal;
-		_seatInstanceId
-	};
+
 	PUBLIC GE GA METHOD("grantAccess") {
 		params["_plrId"];
 		if !(_plrId isEqualType "") exitWith {};
 		if (_plrId isEqualTo "") exitWith {};
-		[_monitor, "CFM_passwordAccess", _plrId, true, false, !_isLocal, !_isLocal] call CFM_fnc_pushBackNet;
+		[_monitor, MON_VAR_NAME("CFM_passwordAccess", _instanceIndex), _plrId, true, false, !_isLocal, !_isLocal] call CFM_fnc_pushBackNet;
 	};
+
 	//----------- State set -----------
-	PUBLIC LE GA GLOBAL METHOD("startFeed") {  
+	PUBLIC LE GA GLOBAL METHOD("startFeed") {
 		params [["_operator", objNull], ["_turret", []], ["_reset", false]];
 
 		private _monitor = _selfObj;
+		private _monPair = [_monitor, _instanceIndex];
 
 		if !(IS_OBJ(_monitor)) exitWith {[false, "CFM_fnc_startOperatorFeed: Monitor is not an object"]};
 		if !(IS_OBJ(_operator)) exitWith {[false, "CFM_fnc_startOperatorFeed: Operator is not an object"]};
@@ -354,160 +375,222 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		};
 		private _turretIndex = TURRET_INDEX(_turret);
 		_currentTurret = [_turretIndex];
-		_monitor setVariable ["CFM_currentTurret", +_currentTurret];
-		
-		_selfObj setVariable ['CFM_actionCaller', nil];
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentTurret", +_currentTurret);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_actionCaller", nil);
 
-		private _camera = ["spawnCamera", [_monitor, _monitorR2Tid], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
+		private _monR2Tid = MON_GVAR(_monitor, _instanceIndex, "CFM_monitorR2Tid", _monitorR2Tid);
+		private _camera = ["spawnCamera", [_monitor, _monR2Tid], nil, ["NONE", objNull]] CALL_CLASS("CameraManager");
 
 		if (hasInterface && {!(IS_OBJ(_camera))}) exitWith {
-			_monitor setVariable ["CFM_feedActive", false];
-			_selfObj setVariable ["CFM_menuActive", false];
-			format["ERROR: CAN'T CONNECT TO OPERATOR: CAN'T CREATE CAMERA. Monitor: %1 . RenderTarget: %2", _monitor, _monitorR2Tid] WARN;
+			MON_SVAR(_monitor, _instanceIndex, "CFM_feedActive", false);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActive", false);
+			format["ERROR: CAN'T CONNECT TO OPERATOR: CAN'T CREATE CAMERA. Monitor: %1 . RenderTarget: %2", _monPair, _monR2Tid] WARN;
 			false
 		};
 
-		_monitor setVariable ["CFM_currentFeedCam", _camera];
-		_monitor setVariable ["CFM_feedActive", true];
-		_monitor setVariable ["CFM_connectedOperator", _operator];
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentFeedCam", _camera);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_feedActive", true);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_connectedOperator", _operator);
 
-		private _initFov = _monitor getVariable ["CFM_zoomFov", 1];
+		private _initFov = MON_GVAR(_monitor, _instanceIndex, "CFM_zoomFov", 1);
 		if (_initFov isEqualType 1) then {
 			_camera camSetFov _initFov;
 			_camera camCommit 0;
 		};
 
-		["monitorConnected", [_monitor, _turretIndex, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
-		["addActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+		["monitorConnected", [_monPair, _turretIndex, _actionCaller, _reset], "NULL"] CALL_OBJCLASS("Operator", _operator);
+		["addActiveMonitor", [_monPair]] CALL_CLASS("DbHandler");
 
 		["addActiveViewer", [PLAYER_]] CALL_CLASS("DbHandler");
-		["monitorAddActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
+		["monitorAddActiveViewer", [_monPair, PLAYER_]] CALL_CLASS("DbHandler");
 
-		[_currentMenuObj] call CFM_fnc_monitorCloseMenu;
+		[_monPair, _currentMenuObj] call CFM_fnc_monitorCloseMenu;
 
 		if (_isHandMonitor) then {
-			private _prevHndl = _monitor getVariable ["CFM_opCheckHndl", scriptNull];
-			private _opCheckHndl = [_monitor, _operator, _prevHndl] spawn {
-				params["_monitor", "_operator", "_prevHndl"];
+			private _prevHndl = MON_GVAR(_monitor, _instanceIndex, "CFM_opCheckHndl", scriptNull);
+			private _opCheckHndl = [_monitor, _instanceIndex, _operator, _prevHndl] spawn {
+				params["_monitor", "_instId", "_operator", "_prevHndl"];
 				terminate _prevHndl;
 				waitUntil {scriptDone _prevHndl};
+				private _monPair = [_monitor, _instId];
 				private _currentOperator = _operator;
 				private _signalLost = false;
-				while {_monitor getVariable ["CFM_feedActive", false]} do {
-					_currentOperator = _monitor getVariable ["CFM_connectedOperator", objNull];
+				while {MON_GVAR(_monitor, _instId, "CFM_feedActive", false)} do {
+					_currentOperator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
 					if !(_currentOperator isEqualTo _operator) exitWith {break};
-					if !([_operator, _monitor] call CFM_fnc_operatorCondition) exitWith {
+					if !([_operator, _monPair] call CFM_fnc_operatorCondition) exitWith {
 						_signalLost = true;
 						break
 					};
 					sleep 1;
 				};
 				if !(_signalLost) exitWith {};
-				[_monitor, player] call CFM_fnc_disconnectMonitorFromOperator;
+				[_monPair, player] call CFM_fnc_disconnectMonitorFromOperator;
 			};
-			_monitor setVariable ["CFM_opCheckHndl", _opCheckHndl];
+			MON_SVAR(_monitor, _instanceIndex, "CFM_opCheckHndl", _opCheckHndl);
 		};
 
 		true
-	}; 
+	};
+
 	PUBLIC LE GA GLOBAL METHOD("stopFeed") {
 		params[["_reset", false], ["_isOptimize", false]];
-		if ((missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull]) isEqualTo _selfObj) then {
+		private _monPair = [_selfObj, _instanceIndex];
+
+		private _curFullMon = missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]];
+		if (_curFullMon isEqualTo _monPair) then {
 			closeDialog 1;
 			call CFM_fnc_onTempDisplayUnload;
 		};
 		if (!_isOptimize && {IS_OBJ(_connectedOperator)}) then {
-			["monitorDisconnected", [_monitor, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
+			["monitorDisconnected", [_monPair, _currentTurret, _actionCaller]] CALL_OBJCLASS("Operator", _connectedOperator);
 		};
-		_selfObj setVariable ['CFM_actionCaller', nil];
-		["removeActiveMonitor", [_monitor]] CALL_CLASS("DbHandler");
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_actionCaller", nil);
+		["removeActiveMonitor", [_monPair]] CALL_CLASS("DbHandler");
 		["setOperatorInfo", [false]] CALL_SELF;
-		["destroyCamera", [_currentFeedCam, _monitorR2Tid]] CALL_CLASS("CameraManager");
-		["stopRendering", [_reset]] CALL_OBJCLASS("DisplayHandler", _monitor);
+
+		private _monR2Tid = MON_GVAR(_monitor, _instanceIndex, "CFM_monitorR2Tid", _monitorR2Tid);
+		["destroyCamera", [_currentFeedCam, _monR2Tid]] CALL_CLASS("CameraManager");
+
+		if (_displayHandlerId > 0) then {
+			["stopRendering", [_reset]] CALL_DH_INST(_monitor, _displayHandlerId);
+		};
+
 		if (_isOptimize) then {
-			["monitorRemoveActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
-			_monitor setVariable ["CFM_currentFeedCam", nil];
-			_monitor setVariable ["CFM_feedActive", false];
-			_monitor setVariable ["CFM_menuActive", false];
-			_monitor setVariable ["CFM_actionCaller", nil];
-			_monitor setVariable ["CFM_camInterp_lastDir", nil];
-			_monitor setVariable ["CFM_camInterp_lastUp", nil];
-			_monitor setVariable ["CFM_camInterp_lastFov", nil];
-			_monitor setVariable ["CFM_doUpdateCamera", nil];
-			_monitor setVariable ["CFM_cam_prevSetPos", nil];
+			["monitorRemoveActiveViewer", [_monPair, PLAYER_]] CALL_CLASS("DbHandler");
+			MON_SVAR(_monitor, _instanceIndex, "CFM_currentFeedCam", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_feedActive", false);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActive", false);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_actionCaller", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_camInterp_lastDir", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_camInterp_lastUp", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_camInterp_lastFov", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_doUpdateCamera", nil);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_cam_prevSetPos", nil);
 		} else {
 			if !(_reset) then {
-				["monitorRemoveActiveViewer", [_monitor, PLAYER_]] CALL_CLASS("DbHandler");
+				["monitorRemoveActiveViewer", [_monPair, PLAYER_]] CALL_CLASS("DbHandler");
 				["clearVariables"] CALL_SELF;
 			};
 		};
 	};
+
 	PUBLIC GE GA LOCAL METHOD("connect") {
 		params["_op", ["_caller", objNull]];
-		_selfObj setVariable ['CFM_actionCaller', _caller];
+		if !(IS_OBJ(_op)) exitWith {false};
+
+		private _monPair = [_selfObj, _instanceIndex];
+		private _prevOp = _connectedOperator;
+		private _prevTurr = _currentTurret;
+
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_actionCaller", _caller);
+
 		private _initTurret = (_op getVariable ["CFM_turrets", DRIVER_TURRET_PATH]) param [0, DRIVER_TURRET_PATH];
 		private _initTurrIdx = TURRET_INDEX(_initTurret);
-		if (_isVehTablet) exitWith {
-			["connect", [_op, _initTurrIdx, _caller]] CALL_ACTIVE_SEAT_TABLET(_selfObj);
-			[_selfObj] call CFM_fnc_monitorCloseMenu;
-			true
+		private _disabledTurrs = _op getVariable ["CFM_disabledTurrets", []];
+		if (_initTurrIdx in _disabledTurrs) then {
+			private _activeTurrs = _op getVariable ["CFM_turrets", [DRIVER_TURRET_PATH]];
+			_initTurrIdx = TURRET_INDEX(_activeTurrs param [0 I DRIVER_TURRET_PATH]);
 		};
-		if (_isHandMonitor && {!(_selfObj getVariable ["CFM_feedActive", false])}) then {
-			_selfObj setVariable ["CFM_pipSlot", [_selfObj, _selfObj getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]] call CFM_fnc_getFreePipSlot];
+
+		if (_isHandMonitor && {!(MON_GVAR(_selfObj, _instanceIndex, "CFM_feedActive", false))}) then {
+			private _slot = [_monPair, MON_GVAR(_selfObj, _instanceIndex, "CFM_pipSlot", PIP_SLOT_RIGHT)] call CFM_fnc_getFreePipSlot;
+			MON_SVAR(_selfObj, _instanceIndex, "CFM_pipSlot", _slot);
 		};
-		_selfObj setVariable ["CFM_waitingForStartTurret", _initTurrIdx, !_isLocal];
-		_selfObj setVariable ["CFM_currentTurret", [_initTurrIdx], !_isLocal];
-		_selfObj setVariable ["CFM_currentPiPEffect", 0, !_isLocal];
-		_selfObj setVariable ["CFM_isInNvg", false, !_isLocal];
-		_selfObj setVariable ["CFM_zoom", 1, !_isLocal];
-		_selfObj setVariable ["CFM_zoomFov", 1, !_isLocal];
-		_selfObj setVariable ["CFM_maxZoomed", false, !_isLocal];
-		["CFM_syncMonitorState", [netId _selfObj, netId _op, true, _initTurrIdx], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
-		[_selfObj] call CFM_fnc_monitorCloseMenu;
+
+		private _pub = !_isLocal;
+		private _isSeatPip = _isVehSeatTablet && {_textureSelection < 0};
+
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_connectedOperator", _op, _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_waitingForStartTurret", _initTurrIdx, _pub && {!_isSeatPip});
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_currentTurret", [_initTurrIdx], _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_currentPiPEffect", 0, _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_isInNvg", false, _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_zoom", 1, _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_zoomFov", 1, _pub);
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_maxZoomed", false, _pub);
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_turnedOffLocal", false);
+
+		if (_isSeatPip) then {
+			// Seat PiP tablets sync operator notifications to operator owner and run feed only locally for seated client
+			if (IS_OBJ(_prevOp) && {!(_prevOp isEqualTo _op) || {!(TURRET_INDEX(_prevTurr) isEqualTo _initTurrIdx)}}) then {
+				if !([_selfObj, _prevOp, _prevTurr, _instanceIndex] call CFM_fnc_isMonitorUsingOperator) then {
+					["CFM_operatorMonitorDisconnected", [_prevOp, _selfObj, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
+				};
+			};
+			["CFM_operatorMonitorConnected", [_op, _selfObj, [_initTurrIdx]], _op] call CBA_fnc_targetEvent;
+			[_monPair, _op, true, [_initTurrIdx], true] spawn CFM_fnc_syncState;
+		} else {
+			private _jipKey = if (_isLocal) then {false} else {format ["cfm_mon_%1_%2", netId _selfObj, _instanceIndex]};
+			["CFM_syncMonitorState", [[netId _selfObj, _instanceIndex], netId _op, true, _initTurrIdx, false], _pub, _jipKey] call CFM_fnc_remoteEvent;
+		};
+
+		[_monPair] call CFM_fnc_monitorCloseMenu;
 		true
 	};
+
 	PUBLIC GE GA LOCAL METHOD("disconnect") {
 		params[["_caller", objNull]];
-		_selfObj setVariable ['CFM_actionCaller', _caller];
-		if (_isVehTablet) exitWith {
-			["disconnect", [_caller]] CALL_ACTIVE_SEAT_TABLET(_selfObj);
-			[_selfObj] call CFM_fnc_monitorCloseMenu;
+		private _monPair = [_selfObj, _instanceIndex];
+		private _prevOp = _connectedOperator;
+		private _prevTurr = _currentTurret;
+
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_actionCaller", _caller);
+
+		private _isSeatPip = _isVehSeatTablet && {_textureSelection < 0};
+		if (_isSeatPip) then {
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_connectedOperator", objNull, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_currentTurret", DRIVER_TURRET_PATH, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_currentPiPEffect", 0, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_isInNvg", false, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_zoom", 1, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_zoomFov", 1, true);
+			MON_SVARG(_selfObj, _instanceIndex, "CFM_maxZoomed", false, true);
+			MON_SVAR(_selfObj, _instanceIndex, "CFM_turnedOffLocal", false);
+
+			if (IS_OBJ(_prevOp) && {!([_selfObj, _prevOp, _prevTurr, _instanceIndex] call CFM_fnc_isMonitorUsingOperator)}) then {
+				["CFM_operatorMonitorDisconnected", [_prevOp, _selfObj, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
+			};
+
+			MON_SVAR(_selfObj, _instanceIndex, "CFM_waitingForStart", false);
+			if (hasInterface && {MON_GVAR(_selfObj, _instanceIndex, "CFM_feedActive", false)}) then {
+				[_monPair] call CFM_fnc_stopOperatorFeed;
+			} else {
+				["clearVariables"] CALL_SELF;
+			};
+		} else {
+			private _pub = !_isLocal;
+			private _jipKey = if (_isLocal) then {false} else {format ["cfm_mon_%1_%2", netId _selfObj, _instanceIndex]};
+			["CFM_syncMonitorState", [[netId _selfObj, _instanceIndex], "", false, -1, false], _pub, _jipKey] call CFM_fnc_remoteEvent;
 		};
-		["CFM_syncMonitorState", [netId _selfObj, "", false], !_isLocal, netId _selfObj] call CFM_fnc_remoteEvent; 
-		[_selfObj] call CFM_fnc_monitorCloseMenu;
+
+		[_monPair] call CFM_fnc_monitorCloseMenu;
 	};
+
 	PUBLIC GE GA METHOD("zoom") {
-		params [["_zoomAdd", 0], ["_zoomSet", -1], ["_isContinuous", false, [false]]]; 
+		params [["_zoomAdd", 0], ["_zoomSet", -1], ["_isContinuous", false, [false]]];
 
 		if ((_zoomAdd isEqualType 1) && {(_zoomAdd > 0) && _maxZoomed}) exitWith {_zoom};
 
-		private _maxZoomed = false;
+		private _newMaxZoomed = false;
 		private _newzoom = if (_zoomAdd isEqualType 1) then {
-			private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
-			private _newzoom = if (_zoomSet isEqualTo -1) then {
-				private _zoom = _monitor getVariable ['CFM_zoom', 1];
-				if !(_zoom isEqualType 1) then {
-					_zoom = 1;
-				};
-				if (!_isContinuous && {(_zoom % 1) != 0}) then {
-					if (_zoomAdd > 0) then {
-						(floor _zoom) + _zoomAdd
-					} else {
-						(ceil _zoom) + _zoomAdd
-					};
+			private _valZoomMax = MON_GVAR(_monitor, _instanceIndex, "CFM_zoomMax", 1);
+			private _valZoom = if (_zoomSet isEqualTo -1) then {
+				private _z = MON_GVAR(_monitor, _instanceIndex, "CFM_zoom", 1);
+				if !(_z isEqualType 1) then {_z = 1};
+				if (!_isContinuous && {(_z % 1) != 0}) then {
+					if (_zoomAdd > 0) then {(floor _z) + _zoomAdd} else {(ceil _z) + _zoomAdd};
 				} else {
-					_zoom + _zoomAdd
+					_z + _zoomAdd
 				};
 			} else {
 				_zoomSet
 			};
-			_newzoom = (_newzoom max 1) min _zoomMax;
-
-			_maxZoomed = _newzoom >= _zoomMax;
-
-			_newzoom
+			_valZoom = (_valZoom max 1) min _valZoomMax;
+			_newMaxZoomed = _valZoom >= _valZoomMax;
+			_valZoom
 		} else {
-			_maxZoomed = false;
+			_newMaxZoomed = false;
 			_zoomAdd
 		};
 
@@ -526,89 +609,78 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		if (_zoomAdd isEqualTo "reset") then {
 			_fov = 0.9;
 			_newzoom = 1;
-			_maxZoomed = false;
+			_newMaxZoomed = false;
 		};
 
-		if (_isContinuous) then {
-			_monitor setVariable ['CFM_maxZoomed', _maxZoomed];
-			_monitor setVariable ["CFM_zoom", _newzoom];
-			_monitor setVariable ["CFM_zoomFov", _fov];
-			_monitor setVariable ["CFM_doUpdateCamera", true];
+		private _pub = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
 
-			if ((diag_tickTime - (_monitor getVariable ["CFM_contZoomLastNetSync", 0])) >= 0.1) then {
-				_monitor setVariable ["CFM_contZoomLastNetSync", diag_tickTime];
-				if (!_isHandMonitor) then {
-					_monitor setVariable ['CFM_maxZoomed', _maxZoomed, true];
-					_monitor setVariable ["CFM_zoom", _newzoom, true];
-					_monitor setVariable ["CFM_zoomFov", _fov, true];
-					_monitor setVariable ["CFM_doUpdateCamera", true, true];
+		if (_isContinuous) then {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_maxZoomed", _newMaxZoomed);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_zoom", _newzoom);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_zoomFov", _fov);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_doUpdateCamera", true);
+
+			if ((diag_tickTime - (MON_GVAR(_monitor, _instanceIndex, "CFM_contZoomLastNetSync", 0))) >= 0.1) then {
+				MON_SVAR(_monitor, _instanceIndex, "CFM_contZoomLastNetSync", diag_tickTime);
+				if (_pub) then {
+					MON_SVARG(_monitor, _instanceIndex, "CFM_maxZoomed", _newMaxZoomed, true);
+					MON_SVARG(_monitor, _instanceIndex, "CFM_zoom", _newzoom, true);
+					MON_SVARG(_monitor, _instanceIndex, "CFM_zoomFov", _fov, true);
+					MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdateCamera", true, true);
 				};
 			};
 		} else {
-			private _syncGlobal = !_isHandMonitor;
-			_monitor setVariable ['CFM_maxZoomed', _maxZoomed, _syncGlobal];
-			_monitor setVariable ["CFM_zoom", _newzoom, _syncGlobal];
-			_monitor setVariable ["CFM_zoomFov", _fov, _syncGlobal];
-			_monitor setVariable ["CFM_doUpdateCamera", true, _syncGlobal];
-			if (_isVehTablet) then {
-				["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
-			};
+			MON_SVARG(_monitor, _instanceIndex, "CFM_maxZoomed", _newMaxZoomed, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_zoom", _newzoom, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_zoomFov", _fov, _pub);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdateCamera", true, _pub);
 		};
 
 		_newzoom
 	};
+
 	PUBLIC GE GA METHOD("nextTurret") {
-		private _syncGlobal = !_isHandMonitor;
-		_monitor setVariable ["CFM_currentPiPEffect", 0, _syncGlobal];
-		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
-		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
-		["NextTurret", [_monitor, _monitor getVariable ["CFM_currentTurret", -1]]] CALL_OBJCLASS("Operator", _connectedOperator);
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", 0, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
+		["NextTurret", [[_monitor, _instanceIndex], MON_GVAR(_monitor, _instanceIndex, "CFM_currentTurret", -1)]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
+
 	PUBLIC GE GA METHOD("setTurret") {
 		params[["_turretIndex", -1]];
-		private _syncGlobal = !_isHandMonitor;
-		_monitor setVariable ["CFM_currentPiPEffect", 0, _syncGlobal];
-		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
-		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
-		["feedTurretToMonitor", [_monitor, _turretIndex]] CALL_OBJCLASS("Operator", _connectedOperator);
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", 0, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
+		["feedTurretToMonitor", [[_monitor, _instanceIndex], _turretIndex]] CALL_OBJCLASS("Operator", _connectedOperator);
 	};
-	PUBLIC GE GA METHOD("switchNvg") { 
-		private _newEffect = 0;
-		if (_currentPiPEffect != 1) then {
-			_newEffect = 1;
-		};
-		if (_currentPiPEffect == 1) then {
-			_newEffect = 0;
-		};
-		private _syncGlobal = !_isHandMonitor;
-		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, _syncGlobal];
-		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
-		_monitor setVariable ["CFM_isInNvg", _newEffect isEqualTo 1, _syncGlobal];
-		if (_isVehTablet) then {
-			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
-		};
+
+	PUBLIC GE GA METHOD("switchNvg") {
+		private _newEffect = if (_currentPiPEffect != 1) then {1} else {0};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", _newEffect, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", _newEffect isEqualTo 1, _syncGlobal);
 	};
-	PUBLIC GE GA METHOD("switchTi") { 
+
+	PUBLIC GE GA METHOD("switchTi") {
 		private _newEffect = if !(_currentPiPEffect in _currentTiTable) then {
 			_currentTiTable#0;
 		} else {
 			private _i = _currentTiTable find _currentPiPEffect;
 			private _newI = _i + 1;
-			if (_newI >= (count _currentTiTable)) exitWith {
-				0;
-			};
+			if (_newI >= (count _currentTiTable)) exitWith {0};
 			_currentTiTable select _newI;
 		};
 		if (isNil "_newEffect") exitWith {};
 		if !(_newEffect isEqualType 1) exitWith {};
-		private _syncGlobal = !_isHandMonitor;
-		_monitor setVariable ["CFM_currentPiPEffect", _newEffect, _syncGlobal];
-		_monitor setVariable ["CFM_doUpdatePip", true, _syncGlobal];
-		_monitor setVariable ["CFM_isInNvg", false, _syncGlobal];
-		if (_isVehTablet) then {
-			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
-		};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", _newEffect, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
+		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
 	};
+
 	PUBLIC LOCAL METHOD("switchUAV") {
 		if !(_currentOperatorIsDrone) exitWith {
 			CFM_STR_CURRENT_FEED_NOT_UAV _HINT
@@ -637,35 +709,30 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			false
 		};
 
-		// take uav control
-		[_selfObj] spawn CFM_fnc_takeUAVcontorls;
+		private _monPair = [_selfObj, _instanceIndex];
+		[_monPair] spawn CFM_fnc_takeUAVcontorls;
 
-		// wait for taking uav controll
 		private _waitStart = time;
 		waitUntil {
-			(
-				(MGVAR ["CFM_currentControlledUAV", objNull]) isEqualTo _newUav
-			) || {
-				(time - _waitStart) > 2
-			}
+			((MGVAR ["CFM_currentControlledUAV", objNull]) isEqualTo _newUav) ||
+			{(time - _waitStart) > 2}
 		};
 
-		// check if we have taken control of new uav
 		if !((MGVAR ["CFM_currentControlledUAV", objNull]) isEqualTo _newUav) exitWith {
 			CFM_STR_CANT_CONNECT_TO_UAV _HINT
 			false
 		};
 
-		// connect previuos uav to hand monitor
-		[_selfObj, _currentUav, PLAYER_] call CFM_fnc_connectMonitorToOperator;
-
+		[_monPair, _currentUav, PLAYER_] call CFM_fnc_connectMonitorToOperator;
 		true
 	};
+
 	PUBLIC LOCAL METHOD("monitorEnterFullScreen") {
-		if !([_selfObj] call CFM_fnc_enterFullScreenActionCondition) exitWith {false};
-		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _selfObj];
+		private _monPair = [_selfObj, _instanceIndex];
+		if !([_selfObj, _instanceIndex] call CFM_fnc_enterFullScreenActionCondition) exitWith {false};
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _monPair];
 		if (missionNamespace getVariable ["CFM_fullscreenIsPip", false]) exitWith {
-			[_selfObj, true, true] call CFM_fnc_setHandDisplay;
+			[_monPair, true, true] call CFM_fnc_setHandDisplay;
 		};
 		private _unitCam = _currentFeedCam;
 		private _mode = "INTERNAL";
@@ -694,6 +761,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		private _hintText = FULLSCREEN_HINT;
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
+		private _monR2Tid = MON_GVAR(_selfObj, _instanceIndex, "CFM_monitorR2Tid", _monitorR2Tid);
 		if (_onTempCam) then {
 			if (missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) then {
 				createDialog "RscDisplayCFMEmpty";
@@ -701,7 +769,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 				(findDisplay 46) createDisplay "RscDisplayCFMEmpty";
 			};
 			missionNamespace setVariable ["CFM_currentFullScreenCam", _unitCam];
-			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _monitorR2Tid];
+			missionNamespace setVariable ["CFM_r2tOfFullScreenCam", _monR2Tid];
 			_hintText = FULLSCREEN_TEMPCAM_HINT;
 			_unitCam cameraEffect ["internal", "BACK"];
 			showCinemaBorder false;
@@ -710,13 +778,12 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			} else {
 				private _tiMode = (missionNamespace getVariable ["CFM_tiModesTableReverse", createHashMap]) getOrDefault [_currentPiPEffect, -1];
 				if ((_tiMode isEqualType 1) && {!(_tiMode isEqualTo -1)}) then {
-					true setCamUseTI _tiMode; 
+					true setCamUseTI _tiMode;
 				};
 			};
 			if (_isMavic) exitWith {
 				if (MGVAR ["Mavic_showInterface", true]) then {
 					("DB_Mavic_Layer" call BIS_fnc_rscLayer) cutRsc ["Mavic_Interface", "PLAIN"];
-
 					mavic_3dehId = addMissionEventHandler ["Draw3D", { call mavic_fnc_drawHud }];
 				};
 			};
@@ -725,14 +792,11 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			};
 		} else {
 			_unitCam switchCamera _mode;
-			_selfObj spawn {
+			_monPair spawn {
 				private _initPos = getPosASL PLAYER_;
-				private _initDir = getDir PLAYER_;
 				waitUntil {
 					uiSleep 1;
-					!(_initPos isEqualTo (getPosASL PLAYER_)) 
-					// ||
-					// !(_initDir isEqualTo (getDir PLAYER_))
+					!(_initPos isEqualTo (getPosASL PLAYER_))
 				};
 				[_this] call CFM_fnc_exitMonitorFullScreen;
 				sleep 1;
@@ -740,15 +804,16 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			};
 		};
 		if (_isHandMonitor) then {
-			[_selfObj] call CFM_fnc_turnOffMonitorLocal;
+			[_monPair] call CFM_fnc_turnOffMonitorLocal;
 		};
 		missionNamespace setVariable ["CFM_isInFullScreen", true];
-		[_selfObj] call CFM_fnc_playHandTabletAnim;
+		[_monPair] call CFM_fnc_playHandTabletAnim;
 		_hintText _HINT;
-		// cutText [format["<t size='2' color='#ff0000'>%1</t>", _hintText], "PLAIN DOWN", 5, true, true];
 		true
 	};
+
 	PUBLIC LOCAL METHOD("monitorExitFullScreen") {
+		private _monPair = [_selfObj, _instanceIndex];
 		if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {
 			private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
 			if (!isNull _disp) then {
@@ -761,14 +826,15 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		private _onTempCam = missionNamespace getVariable ["CFM_fullScreenOnTempCam", true];
 		private _isMavic = _connectedOperator getVariable ["CFM_isMavic", false];
 		private _isFPV = _connectedOperator getVariable ["CFM_isFPV", false];
+		private _monR2Tid = MON_GVAR(_selfObj, _instanceIndex, "CFM_monitorR2Tid", _monitorR2Tid);
 		if (_onTempCam) then {
-			if (IS_VALID_R2T(_monitorR2Tid)) then {
-				_currentFeedCam cameraEffect ["internal", "back", _monitorR2Tid];
+			if (IS_VALID_R2T(_monR2Tid)) then {
+				_currentFeedCam cameraEffect ["internal", "back", _monR2Tid];
 			} else {
 				_currentFeedCam cameraEffect ["Terminate", "back"];
 				PLAYER_ switchCamera "INTERNAL";
 			};
-			[_selfObj, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
+			[_monPair, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
 			if (_isMavic) exitWith {
 				false call MAVIC_fnc_handleConnect;
 			};
@@ -779,7 +845,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			PLAYER_ switchCamera "INTERNAL";
 		};
 		if (_isHandMonitor) then {
-			[_selfObj] call CFM_fnc_turnOnMonitorLocal;
+			[_monPair] call CFM_fnc_turnOnMonitorLocal;
 		};
 		false setCamUseTI 0;
 		camUseNVG false;
@@ -795,11 +861,12 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 		};
 		true
 	};
+
 	PUBLIC LE GA METHOD("setOperatorInfo") {
 		params[["_set", false], ["_operator", _connectedOperator]];
 		private _infoStr = if (_set && {IS_OBJ(_operator)}) then {
-			private _currentTurret = _selfObj getVariable ["CFM_currentTurret", _currentTurret];
-			private _turrIndex = TURRET_INDEX(_currentTurret);
+			private _curTurret = MON_GVAR(_selfObj, _instanceIndex, "CFM_currentTurret", _currentTurret);
+			private _turrIndex = TURRET_INDEX(_curTurret);
 			private _opName = [_operator, _turrIndex] call CFM_fnc_getOperatorName;
 			private _turrName = if (_currentCameraIsStatic) then {_turrIndex} else {
 				switch (_turrIndex) do {
@@ -821,17 +888,20 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			OPERATOR_INFO_TEXT_DEF
 		};
 
-		_selfObj setUserActionText [_operatorInfoActionId, _infoStr];
+		if (_operatorInfoActionId >= 0) then {
+			_selfObj setUserActionText [_operatorInfoActionId, _infoStr];
+		};
 
 		_infoStr
 	};
+
 	//----------- State get -----------
 	PUBLIC LOCAL METHOD("getOperatorInfo") {
 		private _opName = _connectedOperator getVariable ["CFM_operatorName", ""];
 		private _dist = _selfObj distance _connectedOperator;
 		private _grid = mapGridPosition _connectedOperator;
-		private _currentTurret = _selfObj getVariable ["CFM_currentTurret", _currentTurret];
-		private _turrIndex = TURRET_INDEX(_currentTurret);
+		private _curTurret = MON_GVAR(_selfObj, _instanceIndex, "CFM_currentTurret", _currentTurret);
+		private _turrIndex = TURRET_INDEX(_curTurret);
 		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
 		private _showGrid = missionNamespace getVariable ["CFM_menuShowOperatorGrid", false];
 
@@ -850,11 +920,13 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 
 		_infoStr _HINT;
 	};
+
 	//----------- Menu -----------
 	PRIVATE LOCAL METHOD("loadMenu") {
 		params[["_caller", objNull], ["_target", _selfObj]];
-		if !([_selfObj] call CFM_fnc_hasMonitorPasswordAccess) exitWith {
-			[_selfObj, "enter", _caller, _target] call CFM_fnc_openPasswordDialog;
+		private _monPair = [_selfObj, _instanceIndex];
+		if !([_selfObj, _instanceIndex] call CFM_fnc_hasMonitorPasswordAccess) exitWith {
+			[_monPair, "enter", _caller, _target] call CFM_fnc_openPasswordDialog;
 		};
 		if (missionNamespace getVariable ["CFM_useScrollMenuForConnection", true]) then {
 			["loadMenuScrollMenu", [_caller, _target]] CALL_SELF;
@@ -863,35 +935,32 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			["loadMenuScrollMenu", [_caller, _target]] CALL_SELF;
 		};
 	};
-	PRIVATE LOCAL METHOD("loadMenuScrollMenu") { 
-		params [["_caller", objNull], ["_target", _selfObj], ["_targetStr", _targetInActionsConditions]]; 
-		private _targetStr = _targetInActionsConditions;
-		private _ops = [_selfObj] call CFM_fnc_getActiveOperators; 
-		// private _opsGlobal = [_selfObj] call CFM_fnc_getActiveOperatorsCheckGlobal; 
-		// {
-		// 	_ops pushBackUnique _x;
-		// } forEach _opsGlobal;
+
+	PRIVATE LOCAL METHOD("loadMenuScrollMenu") {
+		params [["_caller", objNull], ["_target", _selfObj], ["_targetStr", _targetInActionsConditions]];
+		_targetStr = _targetInActionsConditions;
+		private _monPair = [_selfObj, _instanceIndex];
+		private _ops = [_monPair] call CFM_fnc_getActiveOperators;
 
 		private _radius = MONITOR_ACTION_RADIUS(_selfObj);
 
 		if (count _ops == 0) then {
 			CFM_STR_NO_ACTIVE_CAMERAS _HINT;
 		};
-		if ((count _ops == 0) && {!(_selfObj getVariable ["CFM_canSetPassword", false])}) exitWith {};
-			
-		private _tempIDs = []; 
+		if ((count _ops == 0) && {!(_canSetPassword)}) exitWith {};
 
+		private _tempIDs = [];
 
-		private _closeID = _target addAction [format["<t color='#ff6600'>   [%1]</t>", CFM_STR_CLOSE_MENU], { 
+		private _closeID = _target addAction [format["<t color='#ff6600'>   [%1]</t>", CFM_STR_CLOSE_MENU], {
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
-			[_monitor] call CFM_fnc_monitorCloseMenu;
-		}, [_selfObj, _self], 11, true,false,"",format["[%1] call CFM_fnc_menuCloseActionCondition", _targetStr], _radius]; 
-		_tempIDs pushBack _closeID; 
+			_p params ["_monitor", "_instId"];
+			[[_monitor, _instId], _target] call CFM_fnc_monitorCloseMenu;
+		}, [_selfObj, _instanceIndex], 11, true, false, "", format["[%1, %2] call CFM_fnc_menuCloseActionCondition", _targetStr, _instanceIndex], _radius];
+		_tempIDs pushBack _closeID;
 
 		private _showDist = missionNamespace getVariable ["CFM_menuShowOperatorDistance", false];
 		private _showGrid = missionNamespace getVariable ["CFM_menuShowOperatorGrid", false];
-		{  
+		{
 			private _parts = [];
 			if (_showDist) then { _parts pushBack format ["[%1 m]", round (_selfObj distance _x)]; };
 			if (_showGrid) then { _parts pushBack format ["[Grid: %1]", mapGridPosition _x]; };
@@ -921,158 +990,173 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 					};
 				};
 			};
-			private _id = _target addAction [format["        <t color='#3e99fa'>[%1]</t>: %2 %3", CFM_STR_CONNECT, _name, _distanceStr], { 
-				params ["_t", "_c", "_i", "_p"]; 
-				_p params ["_m", "_self", "_o"];
-				[_m, _o, _c] call CFM_fnc_connectMonitorToOperator;
-			}, [_selfObj, _self, _x], 10, true,false,"",format["[%1] call CFM_fnc_connectActionCondition", _targetStr], _radius]; 
-			_tempIDs pushBack _id; 
-		} forEach _ops; 
-		
-		_target setVariable ["CFM_tempActions", _tempIDs]; 
-		_selfObj setVariable ['CFM_menuActive', true];
-		_selfObj setVariable ['CFM_currentMenuObj', _target];
+			private _id = _target addAction [format["        <t color='#3e99fa'>[%1]</t>: %2 %3", CFM_STR_CONNECT, _name, _distanceStr], {
+				params ["_t", "_c", "_i", "_p"];
+				_p params ["_m", "_instId", "_o"];
+				[[_m, _instId], _o, _c] call CFM_fnc_connectMonitorToOperator;
+			}, [_selfObj, _instanceIndex, _x], 10, true, false, "", format["[%1, %2] call CFM_fnc_connectActionCondition", _targetStr, _instanceIndex], _radius];
+			_tempIDs pushBack _id;
+		} forEach _ops;
+
+		_target setVariable ["CFM_tempActions", _tempIDs];
+		_selfObj setVariable ["CFM_activeMenuInstance", _instanceIndex];
+		_selfObj setVariable ["CFM_menuActive", true];
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_menuActive", true);
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_currentMenuObj", _target);
 
 		private _prevMenuHndl = _target getVariable ['CFM_menuHndl', scriptNull];
 		if ((_prevMenuHndl isEqualType scriptNull) && {!(scriptDone _prevMenuHndl)}) then {
 			terminate _prevMenuHndl;
 		};
-			
-		private _menuHndl = [_target, _selfObj, _tempIDs] spawn { 
-			params["_target", "_selfObj", "_tempIDs"];
-			waitUntil {sleep 1; !(_selfObj getVariable ['CFM_menuActive', false]) || {(_selfObj distance PLAYER_) > 5} || {(_selfObj getVariable ["CFM_isVehTablet", false]) && {!([_selfObj] call CFM_fnc_inVehicleTabletSeatCondition)}} || {(_selfObj getVariable ["CFM_isHandMonitor", false]) && {!([_selfObj] call CFM_fnc_isSelectedTablet)}} || {!([_selfObj] call CFM_fnc_hasMonitorPasswordAccess)}};
-			[_target] call CFM_fnc_monitorCloseMenu;
-		}; 
+
+		private _menuHndl = [_target, _selfObj, _instanceIndex, _tempIDs] spawn {
+			params["_target", "_selfObj", "_instId", "_tempIDs"];
+			waitUntil {
+				sleep 1;
+				!(MON_GVAR(_selfObj, _instId, "CFM_menuActive", false)) ||
+				{!(([_selfObj] call CFM_fnc_getSelectedMonitorInstance) isEqualTo _instId)} ||
+				{!(_selfObj isEqualTo PLAYER_) && {(_selfObj distance PLAYER_) > (MONITOR_ACTION_RADIUS(_selfObj))}} ||
+				{(MON_GVAR(_selfObj, _instId, "CFM_isVehSeatTablet", false)) && {!([_selfObj, _instId] call CFM_fnc_inVehicleTabletSeatCondition)}} ||
+				{(MON_GVAR(_selfObj, _instId, "CFM_isHandMonitor", false)) && {!([_selfObj, _instId] call CFM_fnc_isSelectedTablet)}} ||
+				{!([_selfObj, _instId] call CFM_fnc_hasMonitorPasswordAccess)}
+			};
+			[[_selfObj, _instId], _target] call CFM_fnc_monitorCloseMenu;
+		};
 		_target setVariable ['CFM_menuHndl', _menuHndl];
 		_menuHndl
 	};
+
 	PRIVATE LOCAL METHOD("addActionsToActionsList") {
-		private _savedActions = _selfObj getVariable ["CFM_mainActions", []];
+		private _savedActions = MON_GVAR(_selfObj, _instanceIndex, "CFM_mainActions", []);
 		_savedActions append _this;
-		_selfObj setVariable ["CFM_mainActions", _savedActions];
+		_mainActions = _savedActions;
+		MON_SVAR(_selfObj, _instanceIndex, "CFM_mainActions", _savedActions);
+		["registerMainActions", _this] CALL_OBJCLASS("MonitorHost", _selfObj);
 		_savedActions
 	};
+
 	PRIVATE LOCAL METHOD("addMenuActions") {
-		params[["_radius", ACTION_RADIUS], ["_target", _targetInActionsConditions]];
-		
+		params[["_radius", ACTION_RADIUS]];
+
 		private _actions = [];
 		private _target = _targetInActionsConditions;
-		private _menuText = CFM_STR_CAMERA_SYSTEM_MENU;
-		private _additionalCondition = if (_isHandMonitor) then {
-			_radius = -1;
-			if (_isVehTablet) exitWith {
-				_menuText = CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU;
-				"true"
-			};
-			_menuText = CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU;
-			"([_target] call CFM_fnc_hasUAVterminal)"
-		} else {"true"};
-		private _priority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
-		private _radius = _selfObj getVariable ["CFM_actionsRadius", _radius];
-		private _name = if !(_isHandMonitor) then {
-			// _menuText = _menuText + ": %1";
-			// getText (configFile >> "CfgVehicles" >> typeOf _selfObj >> "displayName")
+		private _menuText = if (_isHandTablet) then {
+			CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU
 		} else {
+			if (_isVehSeatTablet && {_textureSelection < 0}) then {
+				CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU
+			} else {
+				CFM_STR_CAMERA_SYSTEM_MENU
+			}
+		};
+		private _instTag = if (_isHandTablet) then {
 			""
+		} else {
+			if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
+				if (_textureSelection >= 0) then {
+					format [" [%1 #%2]", _seatKey, _textureSelection]
+				} else {
+					format [" [%1]", _seatKey]
+				}
+			} else {
+				if (_instanceIndex > 1 || {_textureSelection > 0}) then {
+					format [" [#%1]", _instanceIndex]
+				} else {""}
+			}
 		};
 
-		private _actionCheckNewOps = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_CHECK_FOR_NEW_OPERATORS], { 
-			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
+		private _priority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
+		_radius = _selfObj getVariable ["CFM_actionsRadius", _radius];
 
+		private _actionCheckNewOps = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_CHECK_FOR_NEW_OPERATORS], {
+			params ["_target", "_caller", "_", "_p"];
+			_p params ["_monitor", "_instId"];
 			STR_CHECK_FOR_NEW_OPS_ACT _HINT;
-			[_monitor] call CFM_fnc_checkForNewOperators;
-		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_checkNewOpsActionCondition", _target], _radius]; 
+			[[_monitor, _instId]] call CFM_fnc_checkForNewOperators;
+		}, [_selfObj, _instanceIndex], _priority - 1, true, false, "", format["[%1, %2] call CFM_fnc_checkNewOpsActionCondition", _target, _instanceIndex], _radius];
 
-		private _actionSetPassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_SET_PASSWORD], { 
+		private _actionSetPassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_SET_PASSWORD], {
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
+			_p params ["_monitor", "_instId"];
+			[[_monitor, _instId], "set", _caller, _target] call CFM_fnc_openPasswordDialog;
+		}, [_selfObj, _instanceIndex], _priority - 1, true, false, "", format["[%1, %2] call CFM_fnc_setPasswordActionCondition", _target, _instanceIndex], _radius];
 
-			[_monitor, "set", _caller, _target] call CFM_fnc_openPasswordDialog;
-		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_setPasswordActionCondition", _target], _radius]; 
-
-		private _actionChangePassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_CHANGE_PASSWORD], { 
+		private _actionChangePassword = _selfObj addAction [format["<t color='#e6c300'>%1</t>", CFM_STR_CHANGE_PASSWORD], {
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
-
-			[_monitor, "change", _caller, _target] call CFM_fnc_openPasswordDialog;
-		}, [_selfObj, _self], _priority - 1, true, false, "", format["[%1] call CFM_fnc_changePasswordActionCondition", _target], _radius]; 
+			_p params ["_monitor", "_instId"];
+			[[_monitor, _instId], "change", _caller, _target] call CFM_fnc_openPasswordDialog;
+		}, [_selfObj, _instanceIndex], _priority - 1, true, false, "", format["[%1, %2] call CFM_fnc_changePasswordActionCondition", _target, _instanceIndex], _radius];
 
 		_actions append [_actionCheckNewOps, _actionSetPassword, _actionChangePassword];
 
-		private _actionMenu = _selfObj addAction [format["<t color='#00FF00'>%1</t>", format[_menuText, _name]], { 
+		private _actionMenu = _selfObj addAction [format["<t color='#00FF00'>%1%2</t>", _menuText, _instTag], {
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
+			_p params ["_monitor", "_instId"];
+			["loadMenu", [_caller, _target]] CALL_MON_INST(_monitor, _instId);
+		}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_menuActionCondition", _target, _instanceIndex], _radius];
 
-			["loadMenu", [_caller, _target]] CALL_SELF;
-		}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_menuActionCondition", _target], _radius]; 
-
-		private _actionDisc = _selfObj addAction [format["<t color='#FF0000'>%1</t>", CFM_STR_DISCONNECT_CAMERA], { 
+		private _actionDisc = _selfObj addAction [format["<t color='#FF0000'>%1</t>", CFM_STR_DISCONNECT_CAMERA], {
 			params ["_target", "_caller", "_", "_p"];
-			_p params ["_monitor", "_self"]; 
-
-			[_monitor, _caller] call CFM_fnc_disconnectMonitorFromOperator;
-		}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_disconnectActionCondition", _target], _radius]; 
+			_p params ["_monitor", "_instId"];
+			[[_monitor, _instId], _caller] call CFM_fnc_disconnectMonitorFromOperator;
+		}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_disconnectActionCondition", _target, _instanceIndex], _radius];
 
 		_actions append [_actionMenu, _actionDisc];
 
-		if (_isHandMonitor) then {
-			private _switchMenuText = [CFM_STR_SWITCH_MENU_SEAT_TABLET, CFM_STR_SWITCH_MENU_HAND_TABLET] select _isVehTablet;
-			private _switchTargetMode = ["veh", "hand"] select _isVehTablet;
-			private _actionSwitchMenu = _selfObj addAction [format["<t color='#00e5ff'>%1</t>", _switchMenuText], { 
+		if (_isHandMonitor || _isVehSeatTablet) then {
+			private _switchMenuText = [CFM_STR_SWITCH_MENU_SEAT_TABLET, CFM_STR_SWITCH_MENU_HAND_TABLET] select _isVehSeatTablet;
+			private _switchTargetMode = ["veh", "hand"] select _isVehSeatTablet;
+			private _actionSwitchMenu = _selfObj addAction [format["<t color='#00e5ff'>%1</t>", _switchMenuText], {
 				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self", "_mode"]; 
-				
+				_p params ["_monitor", "_instId", "_mode"];
 				[_mode] call CFM_fnc_switchTabletMenu;
-			}, [_selfObj, _self, _switchTargetMode], _priority + 0.5, true, false, "", format["[%1] call CFM_fnc_switchTabletMenuActionCondition", _target], _radius]; 
-
-			private _actionWatch = _selfObj addAction [format["<t color='#0000FF'>%1</t>", CFM_STR_WATCH_TABLET], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-				
-				[_monitor] call CFM_fnc_turnOnMonitorLocal;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_watchTabletActionCondition", _target], _radius]; 
-
-			private _actionStopWatch = _selfObj addAction [format["<t color='#FF3344'>%1</t>", CFM_STR_STOP_WATCHING_TABLET], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-
-				[_monitor] call CFM_fnc_turnOffMonitorLocal;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_stopWatchTabletActionCondition", _target], _radius]; 
-
-			private _actionPipLeft = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_LEFT], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-
-				[_monitor, PIP_SLOT_LEFT] call CFM_fnc_switchPipSlot;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchPipSlotActionCondition", _target, PIP_SLOT_LEFT], _radius]; 
-
-			private _actionPipRight = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_RIGHT], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-
-				[_monitor, PIP_SLOT_RIGHT] call CFM_fnc_switchPipSlot;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchPipSlotActionCondition", _target, PIP_SLOT_RIGHT], _radius]; 
-
-			private _actionPipNextSlot = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_NEXT_SLOT], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-
-				[_monitor, -1] call CFM_fnc_switchPipSlot;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1, -1] call CFM_fnc_switchPipSlotActionCondition", _target], _radius]; 
-
-			private _actionSwitchDrones = _selfObj addAction [format["<t color='#c31cff'>%1</t>", CFM_STR_SWITCH_UAV], { 
-				params ["_target", "_caller", "_", "_p"];
-				_p params ["_monitor", "_self"]; 
-
-				[_monitor] call CFM_fnc_switchUAV;
-			}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchUAVActionCondition", _target], _radius]; 
-
-			_actions append [_actionSwitchMenu, _actionWatch, _actionStopWatch, _actionPipLeft, _actionPipRight, _actionPipNextSlot, _actionSwitchDrones];
+			}, [_selfObj, _instanceIndex, _switchTargetMode], _priority + 0.5, true, false, "", format["[%1, %2] call CFM_fnc_switchTabletMenuActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _actionSwitchMenu;
 		};
-	
+
+		if (_isHandMonitor) then {
+			private _actionWatch = _selfObj addAction [format["<t color='#0000FF'>%1</t>", CFM_STR_WATCH_TABLET], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_turnOnMonitorLocal;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_watchTabletActionCondition", _target, _instanceIndex], _radius];
+
+			private _actionStopWatch = _selfObj addAction [format["<t color='#FF3344'>%1</t>", CFM_STR_STOP_WATCHING_TABLET], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_turnOffMonitorLocal;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_stopWatchTabletActionCondition", _target, _instanceIndex], _radius];
+
+			private _actionPipLeft = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_LEFT], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId], PIP_SLOT_LEFT] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2, %3] call CFM_fnc_switchPipSlotActionCondition", _target, _instanceIndex, PIP_SLOT_LEFT], _radius];
+
+			private _actionPipRight = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_TO_RIGHT], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId], PIP_SLOT_RIGHT] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2, %3] call CFM_fnc_switchPipSlotActionCondition", _target, _instanceIndex, PIP_SLOT_RIGHT], _radius];
+
+			private _actionPipNextSlot = _selfObj addAction [format["<t color='#20b2aa'>%1</t>", CFM_STR_PIP_NEXT_SLOT], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId], -1] call CFM_fnc_switchPipSlot;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2, -1] call CFM_fnc_switchPipSlotActionCondition", _target, _instanceIndex], _radius];
+
+			private _actionSwitchDrones = _selfObj addAction [format["<t color='#c31cff'>%1</t>", CFM_STR_SWITCH_UAV], {
+				params ["_target", "_caller", "_", "_p"];
+				_p params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_switchUAV;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchUAVActionCondition", _target, _instanceIndex], _radius];
+
+			_actions append [_actionWatch, _actionStopWatch, _actionPipLeft, _actionPipRight, _actionPipNextSlot, _actionSwitchDrones];
+		};
+
 		["addActionsToActionsList", _actions] CALL_SELF;
 	};
+
 	PRIVATE LOCAL METHOD("addOptionalActions") {
 		params [
 			["_radius", ACTION_RADIUS],
@@ -1083,130 +1167,111 @@ PUBLIC GLOBAL SINGLETON_CLASS(Monitor)
 			["_canTurnOffLocal", true],
 			["_canSwitchNvg", true],
 			["_canSwitchTi", true]
-		]; 
+		];
 		private _target = _targetInActionsConditions;
 		private _priority = PLAYER_ getVariable ["CFM_currentActionsPriority", ACTIONS_PRIORITY];
 		private _actions = [];
-		private _radius = _selfObj getVariable ["CFM_actionsRadius", _radius];
-		call {
-			if (true) then {
-				_operatorInfoActionId = _selfObj addAction [OPERATOR_INFO_TEXT_DEF, { 
-					(_this#3) params ["_target", "_self"];
-					
-					[_target] call CFM_fnc_getOperatorInfo;
-				}, [_selfObj, _self], _priority + 1, true, false, "", format["[%1] call CFM_fnc_operatorInfoActionCondition", _target], _radius]; 
-				_selfObj setVariable ["CFM_operatorInfoActionId", _operatorInfoActionId];
-				_actions append [_operatorInfoActionId];
-			};
+		_radius = _selfObj getVariable ["CFM_actionsRadius", _radius];
 
-			if (_canZoom) then {
-				private _actionZoomIn = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_IN], { 
-					(_this#3) params ["_target", "_self"];
-					
-					[_target, +1] call CFM_fnc_zoom;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomInActionCondition", _target], _radius]; 
+		_operatorInfoActionId = _selfObj addAction [OPERATOR_INFO_TEXT_DEF, {
+			(_this#3) params ["_monitor", "_instId"];
+			[[_monitor, _instId]] call CFM_fnc_getOperatorInfo;
+		}, [_selfObj, _instanceIndex], _priority + 1, true, false, "", format["[%1, %2] call CFM_fnc_operatorInfoActionCondition", _target, _instanceIndex], _radius];
+		SET_SELFVAR(_operatorInfoActionId);
+		_actions pushBack _operatorInfoActionId;
 
-				private _actionZoomOut = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_OUT], { 
-					(_this#3) params ["_target", "_self"];
-					
-					[_target, -1] call CFM_fnc_zoom;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
-			
-				private _actionZoomDefault = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_RESET_ZOOM], { 
-					(_this#3) params ["_target", "_self"]; 
+		if (_canZoom) then {
+			private _actionZoomIn = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_IN], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId], +1] call CFM_fnc_zoom;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_zoomInActionCondition", _target, _instanceIndex], _radius];
 
-					[_target, "reset"] call CFM_fnc_zoom;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_zoomActionsCondition", _target], _radius]; 
+			private _actionZoomOut = _selfObj addAction [format["<t color='#c5dafa'>%1</t>", CFM_STR_ZOOM_OUT], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId], -1] call CFM_fnc_zoom;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_zoomActionsCondition", _target, _instanceIndex], _radius];
 
-				private _actionZoomByDrone = _selfObj addAction [format["<t color='#90c73e'>%1</t>", CFM_STR_USE_OPERATOR_ZOOM], { 
-					(_this#3) params ["_target", "_self"]; 
+			private _actionZoomDefault = _selfObj addAction [format["<t color='#45d9b9'>%1</t>", CFM_STR_RESET_ZOOM], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId], "reset"] call CFM_fnc_zoom;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_zoomActionsCondition", _target, _instanceIndex], _radius];
 
-					[_target, "op"] call CFM_fnc_zoom;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_operatorZoomActionsCondition", _target], _radius]; 
+			private _actionZoomByDrone = _selfObj addAction [format["<t color='#90c73e'>%1</t>", CFM_STR_USE_OPERATOR_ZOOM], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId], "op"] call CFM_fnc_zoom;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_operatorZoomActionsCondition", _target, _instanceIndex], _radius];
 
-				_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
-			};
-
-			if (_canConnectDrone) then {
-				private _connectDroneAction = _selfObj addAction [format["<t color='#1c399e'>%1</t>", CFM_STR_TAKE_UAV_CONTROL], { 
-					(_this#3) params ["_target", "_self"]; 
-
-					[_target] spawn CFM_fnc_takeUAVcontorls;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_connectDroneActionCondition", _target], _radius]; 
-				_actions append [_connectDroneAction];
-			};
-
-			if (_canFix) then {
-				private _actionFix = _selfObj addAction [format["<t color='#690707'>%1</t>", CFM_STR_RESET_FIX_FEED_LOCAL], { 
-					(_this#3) params ["_target", "_self"]; 
-					
-					[_target] call CFM_fnc_fixFeed;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_fixFeedActionCondition", _target], _radius]; 
-				_actions append [_actionFix];
-			};
-
-			if (_canSwitchTurret) then {
-				// private _actionSwitchTurret = _selfObj addAction ["<t color='#ffba4a'>Switch to Turret Camera</t>", { 
-				// 	(_this#3) params ["_target", "_self"]; 
-					
-				// 	["switchTurret", [GUNNER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				// }, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToGunnerActionCondition", _target], _radius]; 
-				// private _actionSwitchDriver = _selfObj addAction ["<t color='#ffba4a'>Switch to Pilot Camera</t>", { 
-				// 	(_this#3) params ["_target", "_self"]; 
-
-				// 	["switchTurret", [DRIVER_TURRET_PATH]] CALL_OBJCLASS("Monitor", _target);
-				// }, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraToPilotActionCondition", _target], _radius]; 
-				// _actions append [_actionSwitchTurret, _actionSwitchDriver];
-				private _actionSwitchCamera = _selfObj addAction [format["<t color='#ffba4a'>%1</t>", CFM_STR_SWITCH_CAMERA], { 
-					(_this#3) params ["_target", "_self"]; 
-
-					[_target] call CFM_fnc_monitorNextTurretCamera;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_switchCameraTurretActionCondition", _target], _radius]; 
-				_actions append [_actionSwitchCamera];
-			};
-
-			if (_canTurnOffLocal && !_isHandMonitor) then {
-				private _actionTurnOffLocal = _selfObj addAction [format["<t color='#8a3200'>%1</t>", CFM_STR_TURN_OFF_FEED_LOCAL], { 
-					(_this#3) params ["_target", "_self"]; 
-					
-					[_target] call CFM_fnc_turnOffMonitorLocal;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_turnOffActionCondition", _target], _radius]; 
-				private _actionTurnOnLocal = _selfObj addAction [format["<t color='#036900'>%1</t>", CFM_STR_TURN_ON_FEED_LOCAL], { 
-					(_this#3) params ["_target", "_self"]; 
-					
-					[_target] call CFM_fnc_turnOnMonitorLocal;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_turnOnActionCondition", _target], _radius]; 
-				_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
-			};
-
-			if (_canSwitchNvg) then {
-				private _actionSwitchNvg = _selfObj addAction [format["<t color='#006e02'>%1</t>", CFM_STR_TOGGLE_NVG], { 
-					(_this#3) params ["_target", "_self"]; 
-					[_target] call CFM_fnc_monitorToggleNVG;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_toggleNvgActionCondition", _target], _radius]; 
-				_actions append [_actionSwitchNvg];
-			};
-
-			if (_canSwitchTi) then {
-				private _actionSwitchTi = _selfObj addAction [format["<t color='#525252'>%1</t>", CFM_STR_TOGGLE_TI], { 
-					(_this#3) params ["_target", "_self"]; 
-					[_target] call CFM_fnc_monitorSwitchTi;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_toggleTiActionCondition", _target], _radius]; 
-				_actions append [_actionSwitchTi];
-			};
-
-			if (_canFullScreen) then {
-				private _actionEnterFullScreen = _selfObj addAction [format["<t color='#67bce0'>%1</t>", CFM_STR_ENTER_FULLSCREEN], { 
-					(_this#3) params ["_target", "_self"]; 
-					[_target] call CFM_fnc_enterMonitorFullScreen;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_enterFullScreenActionCondition", _target], _radius]; 
-				private _actionExitFullScreen = _selfObj addAction ["<t color='#67bce0'>Exit Fullscreen</t>", { 
-					(_this#3) params ["_target", "_self"]; 
-					[_target] call CFM_fnc_exitMonitorFullScreen;
-				}, [_selfObj, _self], _priority, true, false, "", format["[%1] call CFM_fnc_exitFullScreenActionCondition", _target], _radius]; 
-				_actions append [_actionEnterFullScreen, _actionExitFullScreen];
-			};
+			_actions append [_actionZoomIn, _actionZoomOut, _actionZoomDefault, _actionZoomByDrone];
 		};
+
+		if (_canConnectDrone) then {
+			private _connectDroneAction = _selfObj addAction [format["<t color='#1c399e'>%1</t>", CFM_STR_TAKE_UAV_CONTROL], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] spawn CFM_fnc_takeUAVcontorls;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_connectDroneActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _connectDroneAction;
+		};
+
+		if (_canFix) then {
+			private _actionFix = _selfObj addAction [format["<t color='#690707'>%1</t>", CFM_STR_RESET_FIX_FEED_LOCAL], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_fixFeed;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_fixFeedActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _actionFix;
+		};
+
+		if (_canSwitchTurret) then {
+			private _actionSwitchCamera = _selfObj addAction [format["<t color='#ffba4a'>%1</t>", CFM_STR_SWITCH_CAMERA], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_monitorNextTurretCamera;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_switchCameraTurretActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _actionSwitchCamera;
+		};
+
+		if (_canTurnOffLocal && !_isHandMonitor) then {
+			private _actionTurnOffLocal = _selfObj addAction [format["<t color='#8a3200'>%1</t>", CFM_STR_TURN_OFF_FEED_LOCAL], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_turnOffMonitorLocal;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_turnOffActionCondition", _target, _instanceIndex], _radius];
+
+			private _actionTurnOnLocal = _selfObj addAction [format["<t color='#036900'>%1</t>", CFM_STR_TURN_ON_FEED_LOCAL], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_turnOnMonitorLocal;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_turnOnActionCondition", _target, _instanceIndex], _radius];
+
+			_actions append [_actionTurnOffLocal, _actionTurnOnLocal];
+		};
+
+		if (_canSwitchNvg) then {
+			private _actionSwitchNvg = _selfObj addAction [format["<t color='#006e02'>%1</t>", CFM_STR_TOGGLE_NVG], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_monitorToggleNVG;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_toggleNvgActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _actionSwitchNvg;
+		};
+
+		if (_canSwitchTi) then {
+			private _actionSwitchTi = _selfObj addAction [format["<t color='#525252'>%1</t>", CFM_STR_TOGGLE_TI], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_monitorSwitchTi;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_toggleTiActionCondition", _target, _instanceIndex], _radius];
+			_actions pushBack _actionSwitchTi;
+		};
+
+		if (_canFullScreen) then {
+			private _actionEnterFullScreen = _selfObj addAction [format["<t color='#67bce0'>%1</t>", CFM_STR_ENTER_FULLSCREEN], {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_enterMonitorFullScreen;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_enterFullScreenActionCondition", _target, _instanceIndex], _radius];
+
+			private _actionExitFullScreen = _selfObj addAction ["<t color='#67bce0'>Exit Fullscreen</t>", {
+				(_this#3) params ["_monitor", "_instId"];
+				[[_monitor, _instId]] call CFM_fnc_exitMonitorFullScreen;
+			}, [_selfObj, _instanceIndex], _priority, true, false, "", format["[%1, %2] call CFM_fnc_exitFullScreenActionCondition", _target, _instanceIndex], _radius];
+
+			_actions append [_actionEnterFullScreen, _actionExitFullScreen];
+		};
+
 		["addActionsToActionsList", _actions] CALL_SELF;
 	};
 CLASS_END

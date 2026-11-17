@@ -6,8 +6,9 @@
 
 #include "defines.hpp" 
 
-params["_target"];
+params["_target", ["_instId", -1]];
+RESOLVE_ACTION_INST
 HAND_MON_CONDITION
-(_target getVariable ['CFM_feedActive', false]) &&
-{(_target getVariable ["CFM_isHandMonitor", false]) &&
-{!(_target getVariable ["CFM_turnedOffLocal", false])}}
+(MON_GVAR(_target, _instId, 'CFM_feedActive', false)) &&
+{(MON_GVAR(_target, _instId, "CFM_isHandMonitor", false)) &&
+{!(MON_GVAR(_target, _instId, "CFM_turnedOffLocal", false))}}

@@ -83,6 +83,21 @@ CFUNC(setupDefScreenResolutions) = {
 	_resSetDef
 };
 
+CFUNC(resolveMonitor) = {
+	params [["_monArg", objNull]];
+	if (_monArg isEqualType []) exitWith {
+		_monArg params [["_obj", objNull], ["_instId", -1]];
+		if !(IS_OBJ(_obj)) exitWith {[objNull, -1]};
+		if (_instId < 1) then {
+			_instId = [_obj] call FUNC(getSelectedMonitorInstance);
+		};
+		[_obj, _instId]
+	};
+	if !(IS_OBJ(_monArg)) exitWith {[objNull, -1]};
+	private _instId = [_monArg] call FUNC(getSelectedMonitorInstance);
+	[_monArg, _instId]
+};
+
 CFUNC(getCrewSeatKey) = {
 	params [["_crewEntry", []]];
 	if (_crewEntry isEqualType objNull) then {
@@ -111,68 +126,71 @@ CFUNC(getUnitVehicleSeatKey) = {
 
 CFUNC(isCrewSeatAllowed) = {
 	params ["_veh", ["_crewEntry", objNull]];
-	if (_crewEntry isEqualTo objNull) exitWith {false};
-	if (_crewEntry isEqualTo []) exitWith {false};
-	private _vehMonSeats = _veh getVariable ["CFM_vehicleTabletSeats", []];
-	if (_vehMonSeats isEqualTo []) exitWith {true};
-	if (_crewEntry isEqualType objNull) then {
-		_crewEntry = PLAYER_CREW_ROLE(_veh);
+	if !(IS_OBJ(_veh)) exitWith {false};
+	private _seatKey = if (_crewEntry isEqualType "") then {
+		_crewEntry
+	} else {
+		[_crewEntry] call FUNC(getCrewSeatKey)
 	};
-	if (_crewEntry isEqualTo []) exitWith {false};
-	_crewEntry params [["_unit", objNull], ["_role", ""], ["_cargoIdx", -1], ["_turretPath", []]];
-	_role = toLower _role;
-	if (IS_OBJ(_unit) && {(_unit in _veh) && {(assignedVehicleRole _unit) in _vehMonSeats}}) exitWith {true};
-	(_role in _vehMonSeats) ||
-	{([_role] in _vehMonSeats)} ||
-	{([_role, _turretPath] in _vehMonSeats)} ||
-	{([_role, _cargoIdx] in _vehMonSeats)} ||
-	{(!(_turretPath isEqualTo []) && {(["turret", _turretPath] in _vehMonSeats) || {(_turretPath in _vehMonSeats)}})} ||
-	{((_role isEqualTo "driver") && {(["turret", [-1]] in _vehMonSeats) || {([-1] in _vehMonSeats)} || {(-1 in _vehMonSeats)}})}
+	if (_seatKey isEqualTo "") exitWith {false};
+	private _map = _veh getVariable ["CFM_monitorInstancesMap", createHashMap];
+	private _instIds = _map getOrDefault [_seatKey, []];
+	!(_instIds isEqualTo [])
 };
 
-CFUNC(getOrCreateSeatTabletId) = {
-	params [["_monitor", objNull], ["_seatKey", ""]];
-	if (!(IS_OBJ(_monitor)) || {_seatKey isEqualTo ""}) exitWith {-1};
-	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
-	private _instId = _seatInstances getOrDefault [_seatKey, -1];
-	if (_instId > 0) exitWith {_instId};
-	["setSeatTablet", [_seatKey], -1] CALL_OBJCLASS("Monitor", _monitor)
-};
-
-CFUNC(isVehTabletUsingOperator) = {
-	params ["_monitor", "_operator", ["_turretIdx", nil]];
-	if !(_monitor getVariable ["CFM_isVehTablet", false]) exitWith {false};
-	private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
+CFUNC(isMonitorUsingOperator) = {
+	params ["_monitor", "_operator", ["_turretIdx", nil], ["_excludeInstId", -1]];
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	private _keysMap = _monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap];
 	private _used = false;
 	{
-		private _seatInstId = _y;
-		private _op = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
-		if (_op isEqualTo _operator) then {
-			if (isNil "_turretIdx") exitWith { _used = true; };
-			private _turr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
-			if (TURRET_INDEX(_turr) isEqualTo TURRET_INDEX(_turretIdx)) exitWith { _used = true; };
+		private _instId = _x;
+		if !(_instId isEqualTo _excludeInstId) then {
+			private _op = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
+			if (_op isEqualTo _operator) then {
+				if (isNil "_turretIdx") exitWith { _used = true; };
+				private _turr = MON_GVAR(_monitor, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH);
+				if (TURRET_INDEX(_turr) isEqualTo TURRET_INDEX(_turretIdx)) exitWith { _used = true; };
+			};
 		};
 		if (_used) exitWith {};
-	} forEach _seatInstances;
+	} forEach _keysMap;
 	_used
 };
 
 CFUNC(inVehicleTabletSeatCondition) = {
-	params ["_target"];
-	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
+	params ["_target", ["_instId", -1]];
+	if (_target isEqualType []) then {
+		_target params [["_obj", objNull], ["_id", -1]];
+		_target = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	if !(IS_OBJ(_target)) exitWith {false};
 	private _plr = PLAYER_;
+	if (_instId > 0) exitWith {
+		if !(MON_GVAR(_target, _instId, "CFM_isVehSeatTablet", false)) exitWith {true};
+		if !(_plr in _target) exitWith {false};
+		private _reqSeat = MON_GVAR(_target, _instId, "CFM_seatKey", "");
+		if (_reqSeat isEqualTo "") exitWith {true};
+		private _curSeat = [_target, _plr] call FUNC(getUnitVehicleSeatKey);
+		!(_curSeat isEqualTo "") && {_curSeat isEqualTo _reqSeat}
+	};
+	if !(_target getVariable ["CFM_isVehSeatTablet", false]) exitWith {true};
 	if !(_plr in _target) exitWith {false};
-	private _roleInfo = (fullCrew [_target, "", false]) select {(_x select 0) isEqualTo _plr};
-	if (_roleInfo isEqualTo []) exitWith {false};
-	[_target, _roleInfo select 0] call FUNC(isCrewSeatAllowed)
+	private _curSeat = [_target, _plr] call FUNC(getUnitVehicleSeatKey);
+	if (_curSeat isEqualTo "") exitWith {false};
+	private _map = _target getVariable ["CFM_monitorInstancesMap", createHashMap];
+	!((_map getOrDefault [_curSeat, []]) isEqualTo [])
 };
 
 CFUNC(hasHandTablet) = {
 	params [["_plr", PLAYER_]];
 	if !(IS_OBJ(_plr)) exitWith {false};
+	private _handInst = (_plr getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [HAND_MONITOR_KEY, -1];
 	(_plr getVariable ["CFM_isMonitorSet", false]) &&
-	{(_plr getVariable ["CFM_isHandMonitor", false])} &&
-	{!(_plr getVariable ["CFM_isVehTablet", false])} &&
+	{_plr getVariable ["CFM_isHandTablet", false]} &&
+	{_handInst > 0} &&
+	{MON_GVAR(_plr, _handInst, "CFM_isHandMonitor", false)} &&
 	{[_plr] call FUNC(hasUAVterminal)}
 };
 
@@ -182,42 +200,67 @@ CFUNC(hasDualTabletMenu) = {
 	private _veh = objectParent _plr;
 	if (isNull _veh || {_veh isEqualTo _plr}) exitWith {false};
 	if !(_veh getVariable ["CFM_isMonitorSet", false]) exitWith {false};
-	if !(_veh getVariable ["CFM_isVehTablet", false]) exitWith {false};
+	if !(_veh getVariable ["CFM_isVehSeatTablet", false]) exitWith {false};
 	[_veh] call FUNC(inVehicleTabletSeatCondition)
 };
 
 CFUNC(isSelectedTablet) = {
-	params [["_monitor", objNull]];
-	if !(IS_OBJ(_monitor)) exitWith {false};
+	params [["_monArg", objNull], ["_instId", -1]];
+	if (_monArg isEqualType []) then {
+		_monArg params [["_obj", objNull], ["_id", -1]];
+		_monArg = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	if !(IS_OBJ(_monArg)) exitWith {false};
 	if !(call FUNC(hasDualTabletMenu)) exitWith {true};
 	private _selected = PLAYER_ getVariable ["CFM_selectedTablet", "veh"];
-	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
-		_selected isEqualTo "veh"
-	} else {
+	if ((_monArg isEqualTo PLAYER_) || {(_instId > 0) && {MON_GVAR(_monArg, _instId, "CFM_isHandTablet", false)}}) exitWith {
 		_selected isEqualTo "hand"
-	}
+	};
+	if ((_monArg isEqualTo (objectParent PLAYER_)) || {(_instId > 0) && {MON_GVAR(_monArg, _instId, "CFM_isVehSeatTablet", false)}}) exitWith {
+		_selected isEqualTo "veh"
+	};
+	true
 };
 
 CFUNC(getOtherTabletMonitor) = {
-	params [["_monitor", objNull]];
+	params [["_monArg", objNull], ["_instId", -1]];
+	if (_monArg isEqualType []) then {
+		_monArg params [["_obj", objNull], ["_id", -1]];
+		_monArg = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	if !(IS_OBJ(_monArg)) exitWith {[objNull, -1]};
 	private _plr = PLAYER_;
 	private _veh = objectParent _plr;
-	if (_monitor isEqualTo _plr) exitWith {
-		if (!isNull _veh && {!(_veh isEqualTo _plr)} && {_veh getVariable ["CFM_isVehTablet", false]}) then {_veh} else {objNull}
+	if (_monArg isEqualTo _plr) exitWith {
+		if (!isNull _veh && {!(_veh isEqualTo _plr)} && {_veh getVariable ["CFM_isVehSeatTablet", false]}) then {
+			private _curSeat = [_veh, _plr] call FUNC(getUnitVehicleSeatKey);
+			private _seatInsts = (_veh getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [_curSeat, []];
+			if (_seatInsts isEqualTo []) exitWith {[objNull, -1]};
+			private _pipInst = -1;
+			{
+				if (MON_GVAR(_veh, _x, "CFM_isHandMonitor", false)) exitWith {_pipInst = _x};
+			} forEach _seatInsts;
+			if (_pipInst < 0) then {_pipInst = _seatInsts select 0};
+			[_veh, _pipInst]
+		} else {[objNull, -1]}
 	};
-	if (!isNull _veh && {_monitor isEqualTo _veh}) exitWith {
-		if (_plr getVariable ["CFM_isHandMonitor", false]) then {_plr} else {objNull}
+	if (!isNull _veh && {_monArg isEqualTo _veh}) exitWith {
+		private _handInst = (_plr getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [HAND_MONITOR_KEY, -1];
+		if (_handInst > 0 && {MON_GVAR(_plr, _handInst, "CFM_isHandMonitor", false)}) then {[_plr, _handInst]} else {[objNull, -1]}
 	};
-	objNull
+	[objNull, -1]
 };
 
 CFUNC(isPipVisible) = {
-	params [["_monitor", objNull]];
-	if !(IS_OBJ(_monitor)) exitWith {false};
-	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
-	if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {false};
-	if (_monitor getVariable ["CFM_turnedOffLocal", false]) exitWith {false};
-	if ((_monitor getVariable ["CFM_isVehTablet", false]) && {!([_monitor] call FUNC(inVehicleTabletSeatCondition))}) exitWith {false};
+	params [["_monArg", objNull], ["_instId", -1]];
+	(RESOLVE_MON(if (_instId > 0 && {!(_monArg isEqualType [])}) then {[_monArg I _instId]} else {_monArg})) params ["_monitor", "_resolvedId"];
+	if (!(IS_OBJ(_monitor)) || {_resolvedId < 1}) exitWith {false};
+	if !(MON_GVAR(_monitor, _resolvedId, "CFM_isHandMonitor", false)) exitWith {false};
+	if !(MON_GVAR(_monitor, _resolvedId, "CFM_feedActive", false)) exitWith {false};
+	if (MON_GVAR(_monitor, _resolvedId, "CFM_turnedOffLocal", false)) exitWith {false};
+	if (MON_GVAR(_monitor, _resolvedId, "CFM_isVehSeatTablet", false) && {!([_monitor, _resolvedId] call FUNC(inVehicleTabletSeatCondition))}) exitWith {false};
 	true
 };
 
@@ -249,12 +292,13 @@ CFUNC(getPipSlotsSettings) = {
 };
 
 CFUNC(getPipSlotSettings) = {
-	params [["_monitor", objNull], ["_slotIdx", -1]];
+	params [["_monArg", objNull], ["_slotIdx", -1]];
+	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
 	if (_slotIdx < 0) then {
-		_slotIdx = if (IS_OBJ(_monitor)) then {
-			_monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]
+		_slotIdx = if (IS_OBJ(_monitor) && {_instId > 0}) then {
+			MON_GVAR(_monitor, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT)
 		} else {
 			PIP_SLOT_RIGHT
 		};
@@ -266,22 +310,21 @@ CFUNC(getPipSlotSettings) = {
 };
 
 CFUNC(getFreePipSlot) = {
-	params [["_monitor", objNull], ["_preferredSlot", -1]];
+	params [["_monArg", objNull], ["_preferredSlot", -1]];
+	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
-	private _plr = PLAYER_;
-	private _veh = objectParent _plr;
 	private _usedSlots = [];
-	{
-		if (IS_OBJ(_x) && {!(_x isEqualTo _monitor)} && {[_x] call FUNC(isPipVisible)}) then {
-			_usedSlots pushBackUnique (_x getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]);
-		};
-	} forEach [_plr, _veh];
+	private _otherMonPair = if (IS_OBJ(_monitor)) then {[[_monitor, _instId]] call FUNC(getOtherTabletMonitor)} else {[objNull, -1]};
+	if ([_otherMonPair] call FUNC(isPipVisible)) then {
+		_otherMonPair params ["_otherObj", "_otherId"];
+		_usedSlots pushBackUnique (MON_GVAR(_otherObj, _otherId, "CFM_pipSlot", PIP_SLOT_RIGHT));
+	};
 
 	private _curSlot = if (_preferredSlot >= 0) then {
 		_preferredSlot
 	} else {
-		if (IS_OBJ(_monitor)) then {_monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT]} else {PIP_SLOT_RIGHT}
+		if (IS_OBJ(_monitor) && {_instId > 0}) then {MON_GVAR(_monitor, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT)} else {PIP_SLOT_RIGHT}
 	};
 	if (!(_curSlot isEqualType 0) || {_curSlot < 0} || {_curSlot >= _slotsCount}) then {
 		_curSlot = PIP_SLOT_RIGHT;
@@ -298,11 +341,11 @@ CFUNC(getFreePipSlot) = {
 };
 
 CFUNC(calcPipControlsPositions) = {
-	params [["_monitor", objNull], ["_settings", ""]];
+	params [["_monArg", objNull], ["_settings", ""]];
 	private _settingsCompiled = if ((_settings isEqualType "") && {!(_settings isEqualTo "")}) then {
 		parseSimpleArray _settings
 	} else {
-		[_monitor] call FUNC(getPipSlotSettings)
+		[_monArg] call FUNC(getPipSlotSettings)
 	};
 	if ((isNil "_settingsCompiled") || {!(_settingsCompiled isEqualType [])} || {count _settingsCompiled < 3}) then {
 		_settingsCompiled = DEFAULT_PIP_SETTINGS_RIGHT;
@@ -338,16 +381,17 @@ CFUNC(calcPipControlsPositions) = {
 };
 
 CFUNC(updatePipWindowPosition) = {
-	params [["_monitor", objNull]];
-	if !(IS_OBJ(_monitor)) exitWith {false};
-	private _display = _monitor getVariable ["CFM_currentDisplay", displayNull];
+	params [["_monArg", objNull]];
+	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+	private _display = MON_GVAR(_monitor, _instId, "CFM_currentDisplay", displayNull);
 	if (isNull _display) exitWith {false};
-	private _ctrls = _monitor getVariable ["CFM_currentPipControls", []];
+	private _ctrls = MON_GVAR(_monitor, _instId, "CFM_currentPipControls", []);
 	if (count _ctrls < 3) exitWith {false};
 	_ctrls params [["_background", controlNull], ["_title", controlNull], ["_pictureCtrl", controlNull]];
 	if (isNull _background || {isNull _title} || {isNull _pictureCtrl}) exitWith {false};
 
-	([_monitor] call FUNC(calcPipControlsPositions)) params ["_bgPos", "_titlePos", "_picPos"];
+	([[_monitor, _instId]] call FUNC(calcPipControlsPositions)) params ["_bgPos", "_titlePos", "_picPos"];
 	_background ctrlSetPosition _bgPos;
 	_background ctrlCommit 0;
 	_title ctrlSetPosition _titlePos;
@@ -358,21 +402,24 @@ CFUNC(updatePipWindowPosition) = {
 };
 
 CFUNC(bringPipToTop) = {
-	params [["_monitor", objNull], ["_forceRecreate", false]];
-	if !([_monitor] call FUNC(isPipVisible)) exitWith {false};
-	private _otherMon = [_monitor] call FUNC(getOtherTabletMonitor);
+	params [["_monArg", objNull], ["_forceRecreate", false]];
+	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+	if !([[_monitor, _instId]] call FUNC(isPipVisible)) exitWith {false};
+	private _otherMonPair = [[_monitor, _instId]] call FUNC(getOtherTabletMonitor);
 	private _needRecreate = _forceRecreate;
-	if (!_needRecreate && {[_otherMon] call FUNC(isPipVisible)}) then {
-		private _mySlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
-		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
-		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
-		private _otherLayer = _otherMon getVariable ["CFM_currentRscLayer", -1];
+	if (!_needRecreate && {[_otherMonPair] call FUNC(isPipVisible)}) then {
+		_otherMonPair params ["_otherMon", "_otherInstId"];
+		private _mySlot = MON_GVAR(_monitor, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT);
+		private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
+		private _myLayer = MON_GVAR(_monitor, _instId, "CFM_currentRscLayer", -1);
+		private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
 		if ((_mySlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
 			_needRecreate = true;
 		};
 	};
 	if (_needRecreate) then {
-		[_monitor, true] call FUNC(setHandDisplay);
+		[[_monitor, _instId], true] call FUNC(setHandDisplay);
 	};
 	true
 };
@@ -386,75 +433,77 @@ CFUNC(switchTabletMenu) = {
 		_mode = ["hand", "veh"] select (_curMode isEqualTo "hand");
 	};
 	if (_mode isEqualTo "hand") then {
-		if (IS_OBJ(_veh) && {_veh getVariable ["CFM_menuActive", false]}) then {
-			[_veh] call FUNC(monitorCloseMenu);
+		if (IS_OBJ(_veh)) then {
+			[_veh, true] call FUNC(monitorCloseMenu);
 		};
 		_plr setVariable ["CFM_selectedTablet", "hand"];
 		[_plr] call FUNC(bringPipToTop);
 	} else {
-		if (_plr getVariable ["CFM_menuActive", false]) then {
-			[_plr] call FUNC(monitorCloseMenu);
-		};
+		[_plr, true] call FUNC(monitorCloseMenu);
 		_plr setVariable ["CFM_selectedTablet", "veh"];
 		if (IS_OBJ(_veh)) then {
-			[_veh] call FUNC(bringPipToTop);
+			private _otherPair = [_plr] call FUNC(getOtherTabletMonitor);
+			if (IS_VALID_MON(_otherPair)) then {
+				[_otherPair] call FUNC(bringPipToTop);
+			};
 		};
 	};
 	true
 };
 
 CFUNC(switchPipSlot) = {
-	params [["_monitor", GET_MON], ["_targetSlot", -1]];
-	if !(IS_OBJ(_monitor)) exitWith {false};
-	if !(_monitor getVariable ["CFM_isHandMonitor", false]) exitWith {false};
+	params [["_monArg", GET_MON], ["_targetSlot", -1]];
+	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+	if !(MON_GVAR(_monitor, _instId, "CFM_isHandMonitor", false)) exitWith {false};
 	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
-	private _curSlot = _monitor getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+	private _curSlot = MON_GVAR(_monitor, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT);
 	if (_targetSlot < 0) then {
 		_targetSlot = (_curSlot + 1) mod _slotsCount;
 	};
-	_monitor setVariable ["CFM_pipSlot", _targetSlot];
-	if (_monitor getVariable ["CFM_isVehTablet", false]) then {
-		["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
-	};
-	if !([_monitor] call FUNC(isPipVisible)) exitWith {true};
+	MON_SVAR(_monitor, _instId, "CFM_pipSlot", _targetSlot);
+	if !([[_monitor, _instId]] call FUNC(isPipVisible)) exitWith {true};
 
-	private _otherMon = [_monitor] call FUNC(getOtherTabletMonitor);
+	private _otherMonPair = [[_monitor, _instId]] call FUNC(getOtherTabletMonitor);
 	private _needTopLayer = false;
-	if ([_otherMon] call FUNC(isPipVisible)) then {
-		private _otherSlot = _otherMon getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
-		private _myLayer = _monitor getVariable ["CFM_currentRscLayer", -1];
-		private _otherLayer = _otherMon getVariable ["CFM_currentRscLayer", -1];
+	if ([_otherMonPair] call FUNC(isPipVisible)) then {
+		_otherMonPair params ["_otherMon", "_otherInstId"];
+		private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
+		private _myLayer = MON_GVAR(_monitor, _instId, "CFM_currentRscLayer", -1);
+		private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
 		if ((_targetSlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
 			_needTopLayer = true;
 		};
 	};
 	if (_needTopLayer) exitWith {
-		[_monitor, true] call FUNC(setHandDisplay);
+		[[_monitor, _instId], true] call FUNC(setHandDisplay);
 		true
 	};
 
-	if !([_monitor] call FUNC(updatePipWindowPosition)) then {
-		[_monitor, true] call FUNC(setHandDisplay);
+	if !([[_monitor, _instId]] call FUNC(updatePipWindowPosition)) then {
+		[[_monitor, _instId], true] call FUNC(setHandDisplay);
 	};
 	true
 };
 
 CFUNC(switchTabletMenuActionCondition) = {
-	params ["_target"];
+	params ["_target", ["_instId", -1]];
 	if !(call FUNC(hasDualTabletMenu)) exitWith {false};
-	[_target] call FUNC(isSelectedTablet)
+	if (_instId >= 0 && {_instId != ([_target] call CFM_fnc_getSelectedMonitorInstance)}) exitWith {false};
+	[_target, _instId] call FUNC(isSelectedTablet)
 };
 
 CFUNC(switchPipSlotActionCondition) = {
-	params ["_target", ["_targetSlot", -1]];
+	params ["_target", ["_instId", -1], ["_targetSlot", -1]];
+	RESOLVE_ACTION_INST
 	HAND_MON_CONDITION
 	IS_MONITOR_ON
-	if !(_target getVariable ["CFM_feedActive", false]) exitWith {false};
-	if !(_target getVariable ["CFM_isHandMonitor", false]) exitWith {false};
+	if !(MON_GVAR(_target, _instId, "CFM_feedActive", false)) exitWith {false};
+	if !(MON_GVAR(_target, _instId, "CFM_isHandMonitor", false)) exitWith {false};
 	if (missionNamespace getVariable ["CFM_isInPIPFullScreen", false]) exitWith {false};
 	if (
-		(_target getVariable ["CFM_isHandMonitorDisplay", false]) ||
+		(MON_GVAR(_target, _instId, "CFM_isHandMonitorDisplay", false)) ||
 		{MGVAR ["CFM_allHandMonitorsAreDisplays", false]}
 	) exitWith {false};
 
@@ -466,24 +515,39 @@ CFUNC(switchPipSlotActionCondition) = {
 	};
 	if (_slotsCount > 2) exitWith {false};
 
-	private _curSlot = _target getVariable ["CFM_pipSlot", PIP_SLOT_RIGHT];
+	private _curSlot = MON_GVAR(_target, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT);
 	!(_curSlot isEqualTo _targetSlot)
 };
 
 CFUNC(inVehicleTabletActionCondition) = {
-	params ["_target"];
-	if !(_target getVariable ["CFM_isVehTablet", false]) exitWith {true};
-	if !([_target] call FUNC(inVehicleTabletSeatCondition)) exitWith {false};
-	[_target] call FUNC(isSelectedTablet)
+	params ["_target", ["_instId", -1]];
+	if !(IS_OBJ(_target)) exitWith {false};
+	if (_instId > 0) then {
+		if !(MON_GVAR(_target, _instId, "CFM_isVehSeatTablet", false)) exitWith {true};
+		if !([_target, _instId] call FUNC(inVehicleTabletSeatCondition)) exitWith {false};
+		[_target, _instId] call FUNC(isSelectedTablet)
+	} else {
+		if !(_target getVariable ["CFM_isVehSeatTablet", false]) exitWith {true};
+		if !([_target] call FUNC(inVehicleTabletSeatCondition)) exitWith {false};
+		[_target] call FUNC(isSelectedTablet)
+	}
 };
 
 CFUNC(hasMonitorPasswordAccess) = {
-	params ["_monitor"];
-	if !(_monitor getVariable ["CFM_canSetPassword", false]) exitWith {true};
-	private _pass = _monitor getVariable ["CFM_password", ""];
+	params ["_monitor", ["_instId", -1]];
+	if (_monitor isEqualType []) then {
+		_monitor params [["_obj", objNull], ["_id", -1]];
+		_monitor = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	if !(IS_OBJ(_monitor)) exitWith {false};
+	if (_instId < 1) then {_instId = [_monitor] call FUNC(getSelectedMonitorInstance)};
+	if (_instId < 1) exitWith {true};
+	if !(MON_GVAR(_monitor, _instId, "CFM_canSetPassword", false)) exitWith {true};
+	private _pass = MON_GVAR(_monitor, _instId, "CFM_password", "");
 	if (_pass isEqualTo "") exitWith {true};
 	if ((MGVAR ["CFM_debug", false]) || {PLAYER_IS_ADMIN && {(MGVAR ["CFM_adminHaveAccessToAllMonitors", false])}}) exitWith {true};
-	private _accessList = _monitor getVariable ["CFM_passwordAccess", []];
+	private _accessList = MON_GVAR(_monitor, _instId, "CFM_passwordAccess", []);
 	PLAYER_PASS_ID in _accessList
 };
 
@@ -655,10 +719,10 @@ CFUNC(handleContinuousCameraMove) = {
 	private _info = missionNamespace getVariable ["CFM_heldCameraMoveKeyInfo", [[], [], [], []]];
 
 	if (_isDown) then {
-		private _monitor = GET_MON;
-		if !(IS_OBJ(_monitor)) exitWith {false};
-		if !(_monitor getVariable ["CFM_currentCameraCanMove", false]) exitWith {false};
-		private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
+		GET_MON params [["_monitor", objNull], ["_instId", -1]];
+		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+		if !(MON_GVAR(_monitor, _instId, "CFM_currentCameraCanMove", false)) exitWith {false};
+		private _camera = MON_GVAR(_monitor, _instId, "CFM_currentFeedCam", objNull);
 		if !(IS_OBJ(_camera)) exitWith {false};
 
 		_held set [_dirIdx, true];
@@ -695,23 +759,23 @@ CFUNC(updateContinuousCameraMove) = {
 		call FUNC(stopContinuousCameraMove);
 	};
 
-	private _monitor = GET_MON;
-	if !(IS_OBJ(_monitor)) exitWith {
+	GET_MON params [["_monitor", objNull], ["_instId", -1]];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {
 		call FUNC(stopContinuousCameraMove);
 	};
 
-	private _canMove = _monitor getVariable ["CFM_currentCameraCanMove", false];
+	private _canMove = MON_GVAR(_monitor, _instId, "CFM_currentCameraCanMove", false);
 	if !(_canMove isEqualTo true) exitWith {
 		call FUNC(stopContinuousCameraMove);
 	};
 
-	private _camera = _monitor getVariable ["CFM_currentFeedCam", objNull];
-	private _operator = _monitor getVariable ["CFM_connectedOperator", objNull];
+	private _camera = MON_GVAR(_monitor, _instId, "CFM_currentFeedCam", objNull);
+	private _operator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
 	if (!IS_OBJ(_camera) || {!IS_OBJ(_operator)}) exitWith {
 		call FUNC(stopContinuousCameraMove);
 	};
 
-	private _turretIndex = _monitor getVariable ["CFM_currentTurret", [-1]];
+	private _turretIndex = MON_GVAR(_monitor, _instId, "CFM_currentTurret", [-1]);
 	private _lastOp = missionNamespace getVariable ["CFM_contMoveLastOp", objNull];
 	private _lastTurr = missionNamespace getVariable ["CFM_contMoveLastTurr", [-1]];
 	if (IS_OBJ(_lastOp) && {(_lastOp isNotEqualTo _operator) || {_lastTurr isNotEqualTo _turretIndex}}) then {
@@ -720,7 +784,7 @@ CFUNC(updateContinuousCameraMove) = {
 	missionNamespace setVariable ["CFM_contMoveLastOp", _operator];
 	missionNamespace setVariable ["CFM_contMoveLastTurr", _turretIndex];
 
-	private _currZoom = _monitor getVariable ["CFM_zoomFov", 1];
+	private _currZoom = MON_GVAR(_monitor, _instId, "CFM_zoomFov", 1);
 	if !(_currZoom isEqualType 1) then {
 		_currZoom = _operator getVariable ["CFM_prevZoomLocalFov", getObjectFov _operator];
 	};
@@ -731,8 +795,8 @@ CFUNC(updateContinuousCameraMove) = {
 	private _baseStep = _sensitivity * 6 * _currZoom * _dt;
 	if (_baseStep <= 0) exitWith {};
 
-	private _movementRestrictions = _monitor getVariable ["CFM_currentCameraMoveRestrictions", [85, 85, 180, 180]];
-	private _currentCameraMoves = _monitor getVariable ["CFM_currentCameraMoves", [0, 0, 0, 0]];
+	private _movementRestrictions = MON_GVAR(_monitor, _instId, "CFM_currentCameraMoveRestrictions", [85 I 85 I 180 I 180]);
+	private _currentCameraMoves = MON_GVAR(_monitor, _instId, "CFM_currentCameraMoves", [0 I 0 I 0 I 0]);
 
 	private _vertical = 0;
 	private _horizontal = 0;
@@ -771,13 +835,14 @@ CFUNC(updateContinuousCameraMove) = {
 };
 
 CFUNC(stopContinuousZoom) = {
-	private _lastMon = missionNamespace getVariable ["CFM_contZoomLastMon", objNull];
+	private _lastMonPair = missionNamespace getVariable ["CFM_contZoomLastMon", [objNull, -1]];
+	_lastMonPair params [["_lastMon", objNull], ["_lastInstId", -1]];
 	missionNamespace setVariable ["CFM_heldZoomDirs", [false, false]];
 	missionNamespace setVariable ["CFM_heldZoomKeyInfo", [[], []]];
 	missionNamespace setVariable ["CFM_isContinuousZooming", false];
-	missionNamespace setVariable ["CFM_contZoomLastMon", objNull];
-	if (IS_OBJ(_lastMon)) then {
-		["syncContinuousZoom", []] CALL_OBJCLASS("Monitor", _lastMon);
+	missionNamespace setVariable ["CFM_contZoomLastMon", [objNull, -1]];
+	if (IS_OBJ(_lastMon) && {_lastInstId > 0}) then {
+		["syncContinuousZoom", []] CALL_MON_INST(_lastMon, _lastInstId);
 	};
 };
 
@@ -793,11 +858,11 @@ CFUNC(handleContinuousZoom) = {
 	private _info = missionNamespace getVariable ["CFM_heldZoomKeyInfo", [[], []]];
 
 	if (_isDown) then {
-		private _monitor = GET_MON;
-		if !(IS_OBJ(_monitor)) exitWith {false};
-		if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {false};
+		GET_MON params [["_monitor", objNull], ["_instId", -1]];
+		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+		if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {false};
 		if (
-			(_monitor getVariable ["CFM_currentOperatorIsDrone", false]) &&
+			(MON_GVAR(_monitor, _instId, "CFM_currentOperatorIsDrone", false)) &&
 			{!(MGVAR ["CFM_canChangeZoomOnDrones", true])}
 		) exitWith {false};
 
@@ -835,41 +900,42 @@ CFUNC(updateContinuousZoom) = {
 		call FUNC(stopContinuousZoom);
 	};
 
-	private _monitor = GET_MON;
-	if !(IS_OBJ(_monitor)) exitWith {
+	GET_MON params [["_monitor", objNull], ["_instId", -1]];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {
 		call FUNC(stopContinuousZoom);
 	};
-	if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {
+	if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {
 		call FUNC(stopContinuousZoom);
 	};
 	if (
-		(_monitor getVariable ["CFM_currentOperatorIsDrone", false]) &&
+		(MON_GVAR(_monitor, _instId, "CFM_currentOperatorIsDrone", false)) &&
 		{!(MGVAR ["CFM_canChangeZoomOnDrones", true])}
 	) exitWith {
 		call FUNC(stopContinuousZoom);
 	};
 
-	private _lastMon = missionNamespace getVariable ["CFM_contZoomLastMon", objNull];
-	if (IS_OBJ(_lastMon) && {_lastMon isNotEqualTo _monitor}) then {
-		["syncContinuousZoom", []] CALL_OBJCLASS("Monitor", _lastMon);
+	private _lastMonPair = missionNamespace getVariable ["CFM_contZoomLastMon", [objNull, -1]];
+	_lastMonPair params [["_lastMon", objNull], ["_lastInstId", -1]];
+	if (IS_OBJ(_lastMon) && {_lastInstId > 0} && {(_lastMon isNotEqualTo _monitor) || {_lastInstId != _instId}}) then {
+		["syncContinuousZoom", []] CALL_MON_INST(_lastMon, _lastInstId);
 	};
-	missionNamespace setVariable ["CFM_contZoomLastMon", _monitor];
+	missionNamespace setVariable ["CFM_contZoomLastMon", [_monitor, _instId]];
 
 	private _dir = 0;
 	if (_held select 0) then { _dir = _dir + 1; };
 	if (_held select 1) then { _dir = _dir - 1; };
 	if (_dir == 0) exitWith {};
 
-	private _curZoom = _monitor getVariable ["CFM_zoom", 1];
+	private _curZoom = MON_GVAR(_monitor, _instId, "CFM_zoom", 1);
 	if !(_curZoom isEqualType 1) then { _curZoom = 1; };
-	private _zoomMax = _monitor getVariable ["CFM_zoomMax", 1];
+	private _zoomMax = MON_GVAR(_monitor, _instId, "CFM_zoomMax", 1);
 	if ((_dir > 0) && {_curZoom >= _zoomMax}) exitWith {};
 	if ((_dir < 0) && {_curZoom <= 1}) exitWith {};
 
 	private _dt = diag_deltaTime min 0.1;
 	private _zoomStep = _dir * 2.0 * _dt;
 
-	[_monitor, _zoomStep, -1, true] call FUNC(zoom);
+	[[_monitor, _instId], _zoomStep, -1, true] call FUNC(zoom);
 };
 
 {

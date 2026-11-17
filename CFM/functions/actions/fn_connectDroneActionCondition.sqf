@@ -6,11 +6,12 @@
 
 #include "defines.hpp" 
 
-params["_target"];
+params["_target", ["_instId", -1]];
+RESOLVE_ACTION_INST
 HAND_MON_CONDITION
 IS_MONITOR_ON
-(_target getVariable ['CFM_feedActive', false]) && {
-	(_target getVariable ['CFM_currentOperatorIsDrone', false]) && {
+(MON_GVAR(_target, _instId, 'CFM_feedActive', false)) && {
+	(MON_GVAR(_target, _instId, 'CFM_currentOperatorIsDrone', false)) && {
     (focusOn isEqualTo player) &&
 	{player call CFM_fnc_hasUAVterminal}}
 }

@@ -27,6 +27,27 @@
 ["CFM_Mavic_dropShowMessageEH",  "CHECKBOX",  [CFM_STR_MAVIC_SHOW_GRENADE_DROP_MESSAGE, CFM_STR_DESC_MAVIC_SHOW_GRENADE_DROP_MESSAGE], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_useR2Tsystem",  "CHECKBOX",  [CFM_STR_USE_R2T_SYSTEM, CFM_STR_DESC_USE_R2T_SYSTEM], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
 ["CFM_adminHaveAccessToAllMonitors",  "CHECKBOX",  [CFM_STR_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS, CFM_STR_DESC_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
+["CFM_detectMonitorByIntersect",  "CHECKBOX",  [CFM_STR_DETECT_MONITOR_BY_INTERSECT, CFM_STR_DESC_DETECT_MONITOR_BY_INTERSECT], CFM_CATEGORY, false, 0] call CBA_fnc_addSetting;
+["CFM_renderSeatTextureOutOfSeat",  "CHECKBOX",  [CFM_STR_RENDER_SEAT_TEXTURE_OUT_OF_SEAT, CFM_STR_DESC_RENDER_SEAT_TEXTURE_OUT_OF_SEAT], CFM_CATEGORY, true, 0, {
+	params ["_value"];
+	if (isNil "CFM_inited" || {!hasInterface}) exitWith {};
+	{
+		_x params [["_mon", objNull], ["_instId", -1]];
+		if (IS_OBJ(_mon) && {_instId > 0} && {MON_GVAR(_mon, _instId, "CFM_isVehSeatTablet", false)} && {MON_GVAR(_mon, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION) >= 0}) then {
+			private _seatKey = MON_GVAR(_mon, _instId, "CFM_seatKey", "");
+			private _inThatSeat = ((objectParent PLAYER_) isEqualTo _mon) && {([_mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey};
+			if !(_inThatSeat) then {
+				if (_value) then {
+					["activateSeat", []] CALL_MON_INST(_mon, _instId);
+				} else {
+					["deactivateSeat", []] CALL_MON_INST(_mon, _instId);
+				};
+			};
+		};
+	} forEach (+(missionNamespace getVariable ["CFM_Monitors", []]));
+}] call CBA_fnc_addSetting;
+
+[CFM_CATEGORY, "CFM_switchMonitorKey", [CFM_STR_SWITCH_MONITOR, CFM_STR_DESC_SWITCH_MONITOR], {call CFM_fnc_switchMonitorKeybind}, "", [DIK_M, [false, true, false]]] call CBA_fnc_addKeybind;
 
 [CFM_CATEGORY, "CFM_enterFullScreenKey", [CFM_STR_ENTER_FULLSCREEN_MODE, CFM_STR_DESC_ENTER_FULLSCREEN_MODE], {call CFM_fnc_enterFullscreenKeybind}, "", [DIK_F, [true, false, false]]] call CBA_fnc_addKeybind;
 [CFM_CATEGORY, "CFM_exitFullScreenKey", [CFM_STR_EXIT_FULLSCREEN_MODE, CFM_STR_DESC_EXIT_FULLSCREEN_MODE], {call CFM_fnc_exitFullscreenKeybind}, "", [18, [false, true, false]]] call CBA_fnc_addKeybind;

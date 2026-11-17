@@ -18,15 +18,15 @@
 
 if !(missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) exitWith {};
 
-params [["_monitor", objNull, [objNull]]];
+params [["_monArg", objNull]];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 
-if !(IS_OBJ(_monitor)) exitWith { false };
+if !(IS_OBJ(_monitor) && {_instId > 0}) exitWith { false };
 
-// Проверяем, что это именно ХендТаблет (ручной планшет и НЕ планшет техники)
-private _isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
-private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
+private _isHandMonitor = MON_GVAR(_monitor, _instId, "CFM_isHandMonitor", false);
+private _isVehSeatTablet = MON_GVAR(_monitor, _instId, "CFM_isVehSeatTablet", false);
 
-if (!_isHandMonitor || {_isVehTablet}) exitWith { false };
+if (!_isHandMonitor || {_isVehSeatTablet}) exitWith { false };
 
 // Определяем юнит: если монитор сам является пехотинцем (Man), берем его, иначе PLAYER_
 private _unit = if (_monitor isKindOf "Man") then { _monitor } else { PLAYER_ };

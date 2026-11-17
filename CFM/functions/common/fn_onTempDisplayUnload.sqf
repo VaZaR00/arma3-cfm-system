@@ -13,7 +13,7 @@ private _wasInPipFullScreen = missionNamespace getVariable ["CFM_isInPIPFullScre
 missionNamespace setVariable ["CFM_isInPIPFullScreen", false];
 uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
 
-private _currentFullscreenedMonitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull];
+private _currentFullscreenedMonArg = missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]];
 
 if (missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {
 	[] call CFM_fnc_exitFullScreen;
@@ -21,28 +21,31 @@ if (missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {
 
 missionNamespace setVariable ["CFM_currentFullScreenMonitor", nil];
 
-if !(IS_OBJ(_currentFullscreenedMonitor)) exitWith {
-	[PLAYER_] call CFM_fnc_closePIPwindow;
+(RESOLVE_MON(_currentFullscreenedMonArg)) params ["_monObj", "_monInstId"];
+if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) exitWith {
+	private _handInst = (PLAYER_ getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [HAND_MONITOR_KEY, 1];
+	[[PLAYER_, _handInst]] call CFM_fnc_closePIPwindow;
 };
 
-_currentFullscreenedMonitor setVariable ["CFM_tabletDisplayIsOpened", false];
+private _monPair = [_monObj, _monInstId];
+MON_SVAR(_monObj, _monInstId, "CFM_tabletDisplayIsOpened", false);
 
-if !(_currentFullscreenedMonitor getVariable ["CFM_feedActive", false]) exitWith {
-	[_currentFullscreenedMonitor] call CFM_fnc_closePIPwindow;
+if !(MON_GVAR(_monObj, _monInstId, "CFM_feedActive", false)) exitWith {
+	[_monPair] call CFM_fnc_closePIPwindow;
 };
 
-private _isHandMonitor = _currentFullscreenedMonitor getVariable ["CFM_isHandMonitor", false];
+private _isHandMonitor = MON_GVAR(_monObj, _monInstId, "CFM_isHandMonitor", false);
 private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
-private _isAlwaysDialog = _isAllHandMonsDialogs || (_currentFullscreenedMonitor getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs]);
+private _isAlwaysDialog = _isAllHandMonsDialogs || (MON_GVAR(_monObj, _monInstId, "CFM_isHandMonitorDisplay", _isAllHandMonsDialogs));
 
 if !(_isHandMonitor) exitWith {
-	[_currentFullscreenedMonitor] call CFM_fnc_closePIPwindow;
+	[_monPair] call CFM_fnc_closePIPwindow;
 };
 
 if (_isAlwaysDialog) exitWith {
-	[_currentFullscreenedMonitor] call CFM_fnc_turnOffMonitorLocal;
+	[_monPair] call CFM_fnc_turnOffMonitorLocal;
 };
 
-if !([_currentFullscreenedMonitor] call CFM_fnc_updatePipWindowPosition) then {
-	[_currentFullscreenedMonitor, true] call CFM_fnc_setHandDisplay;
+if !([_monPair] call CFM_fnc_updatePipWindowPosition) then {
+	[_monPair, true] call CFM_fnc_setHandDisplay;
 };

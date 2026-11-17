@@ -7,5 +7,7 @@
 #include "defines.hpp" 
 
 
-params ["_monitor", ["_reset", false], ["_isOptimize", false]];
-["stopFeed", [_reset, _isOptimize]] CALL_OBJCLASS("Monitor", _monitor);
+params ["_monArg", ["_reset", false], ["_isOptimize", false]];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+["stopFeed", [_reset, _isOptimize]] CALL_MON_INST(_monitor, _instId);

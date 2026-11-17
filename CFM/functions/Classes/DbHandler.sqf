@@ -82,11 +82,15 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 		true
 	};
 	LE GA METHOD("setupMonitorDisplay") {
-		params["_monitor"];
+		params[["_monitor", objNull], ["_monInstId", -1]];
 
-		if !(IS_OBJ(_monitor)) exitWith {};
+		if (!(IS_OBJ(_monitor)) || {_monInstId < 1}) exitWith {-1};
 
-		[_monitor] NEW_OBJINSTANCE("DisplayHandler");
+		([_monitor, [_monInstId]] NEW_OBJINSTANCE("DisplayHandler")) params [["_dhId", -1]];
+		if (_dhId > 0) then {
+			MON_SVAR(_monitor, _monInstId, "CFM_displayHandlerId", _dhId);
+		};
+		_dhId
 	};
 	LOCAL METHOD("addToList") {
 		params["_obj", ["_listName", ""], ["_unique", true]];
@@ -114,7 +118,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 	};
 	GE LA METHOD("addMonitor") {
 		params["_monitor", ["_global", true]];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
+		if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {-1};
 		["CFM_" + "addMonitor", _monitor, _global] call CFM_fnc_remoteEvent;
 	};
 	GE LA METHOD("addOperator") {
@@ -155,7 +159,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 		private _uidStr = "";
 		isNil {
 			params["_monitor"];
-			if !(IS_OBJ(_monitor)) exitWith {""};
+			if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {""};
 			private _idsHash = missionNamespace getVariable ["CFM_MonitorsUIds", createHashMap];
 			private _nextId = ["safeGenerateId", [_idsHash]] CALL_SELF;
 			if (_nextId < 0) exitWith {
@@ -173,7 +177,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 		private _r2tStr = "";
 		isNil {
 			params["_monitor"];
-			if !(IS_OBJ(_monitor)) exitWith {""};
+			if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {""};
 			private _idsHash = missionNamespace getVariable ["CFM_MonitorsR2Ts", createHashMap];
 			private _nextId = ["safeGenerateId", [_idsHash]] CALL_SELF;
 			if (_nextId < 0) exitWith {
@@ -189,13 +193,14 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 	};
 	LE GA METHOD("addActiveMonitor") {
 		params["_monitor"];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
+		if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {-1};
 		["addToList", [_monitor, "CFM_ActiveMonitors"]] CALL_SELF;
 	};
 	LE GA METHOD("removeActiveMonitor") {
 		params["_monitor"];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
-		["removeFromList", [_monitor, "CFM_ActiveMonitors"]] CALL_SELF;
+		if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {-1};
+		private _elem = if (_monitor isEqualType []) then {[_monitor]} else {_monitor};
+		["removeFromList", [_elem, "CFM_ActiveMonitors"]] CALL_SELF;
 	};
 	GE LA METHOD("addActiveOperator") {
 		params["_operator"];
@@ -235,19 +240,21 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 		true
 	};
 	GE LA METHOD("monitorAddActiveViewer") {
-		params[["_monitor", objNull], ["_player", objNull]];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
+		params[["_monArg", objNull], ["_player", objNull]];
+		(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {-1};
 		if !(IS_OBJ(_player)) exitWith {-1};
 		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
 		if ((_ownerId isEqualTo 0) && {isMultiplayer && !isServer}) exitWith {
 			"ERROR monitorAddActiveViewer: CAN'T ADD REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			-1
 		};
-		["CFM_" + "monitorAddActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
+		["CFM_" + "monitorAddActiveViewer", [_monitor, _instId, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
 	GE LA METHOD("monitorRemoveActiveViewer") {
-		params[["_monitor", objNull], ["_player", objNull]];
-		if !(IS_OBJ(_monitor)) exitWith {-1};
+		params[["_monArg", objNull], ["_player", objNull]];
+		(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {-1};
 		if !(IS_OBJ(_player)) exitWith {false};
 		if !(_player getVariable ["CFM_isActiveViewer", false]) exitWith {false};
 		private _ownerId = if (_player isEqualTo PLAYER_) then {clientOwner} else {owner _player};
@@ -255,7 +262,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(DbHandler)
 			"ERROR monitorRemoveActiveViewer: CAN'T REMOVE REMOTE ACTIVE VIEWER ON NON SERVER MACHINE OR CLIENT SELF!" WARN;
 			false
 		};
-		["CFM_" + "monitorRemoveActiveViewer", [_monitor, _ownerId], 0] call CFM_fnc_remoteEvent;
+		["CFM_" + "monitorRemoveActiveViewer", [_monitor, _instId, _ownerId], 0] call CFM_fnc_remoteEvent;
 	};
 	LOCAL METHOD("nextR2Tindex") {
 		private _current = missionNamespace getVariable ["CFM_R2T_index", 0];

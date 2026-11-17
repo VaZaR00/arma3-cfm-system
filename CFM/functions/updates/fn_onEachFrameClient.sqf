@@ -27,7 +27,7 @@ private _lastVeh = _player getVariable ["CFM_currentVeh", objNull];
 private _inVeh = !isNull _currentVeh && {!(_currentVeh isEqualTo _player)};
 
 if (!_inVeh) then {
-	// 1 & 2. Игрок покинул технику
+	// 1 & 2. Player left vehicle
 	if (!isNull _lastVeh) then {
 		private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
 		_player setVariable ["CFM_currentVeh", objNull];
@@ -36,16 +36,16 @@ if (!_inVeh) then {
 		_player setVariable ["CFM_activeSeatKey", ""];
 		_player setVariable ["CFM_selectedTablet", "hand"];
 
-		// 2. Вылез из техники с места С планшетом
+		// Notify MonitorHost on leaving seat
 		if !(_lastSeatKey isEqualTo "") then {
-			["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
+			["onSeatChanged", [_lastSeatKey, ""]] CALL_OBJCLASS("MonitorHost", _lastVeh);
 		};
 	};
 } else {
 	private _currentRole = PLAYER_CREW_ROLE(_currentVeh);
 	private _curMonSet = _currentVeh getVariable ["CFM_isMonitorSet", false];
 
-	// Если изменилась машина, место или инициализировался монитор техники
+	// Only notify MonitorHost when vehicle, seat role, or monitor initialization changes
 	if (
 		!(_currentVeh isEqualTo _lastVeh)
 		|| {!(_curMonSet isEqualTo (_player getVariable ["CFM_currentVehMonSet", false]))}
@@ -55,46 +55,38 @@ if (!_inVeh) then {
 		_player setVariable ["CFM_currentVehMonSet", _curMonSet];
 
 		private _lastSeatKey = _player getVariable ["CFM_activeSeatKey", ""];
-		private _isVehTablet = _curMonSet && {_currentVeh getVariable ["CFM_isVehTablet", false]};
+		private _isVehSeatTablet = _curMonSet && {_currentVeh getVariable ["CFM_isVehSeatTablet", false]};
 
-		// Проверяем, есть ли на новом месте планшет
-		private _curSeatKey = if (_isVehTablet && {[_currentVeh, _currentRole] call CFM_fnc_isCrewSeatAllowed}) then {
-			[_currentRole] call CFM_fnc_getCrewSeatKey
+		private _curSeatKey = if (_isVehSeatTablet) then {
+			private _seatCandidate = [_currentRole] call CFM_fnc_getCrewSeatKey;
+			private _vehMap = _currentVeh getVariable ["CFM_monitorInstancesMap", createHashMap];
+			if (!(_seatCandidate isEqualTo "") && {!((_vehMap getOrDefault [_seatCandidate, []]) isEqualTo [])}) then {
+				_seatCandidate
+			} else {""}
 		} else {
 			""
 		};
 
-		// Обработка смены техники (сели в новую машину или пересели напрямую между машинами)
 		if !(_currentVeh isEqualTo _lastVeh) then {
 			if (!isNull _lastVeh && {!(_lastSeatKey isEqualTo "")}) then {
-				["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_lastVeh, _lastSeatKey);
+				["onSeatChanged", [_lastSeatKey, ""]] CALL_OBJCLASS("MonitorHost", _lastVeh);
 				_lastSeatKey = "";
 			};
 			_player setVariable ["CFM_currentVeh", _currentVeh];
 		};
 
-		// Всегда обновляем CFM_activeSeatKey при любом изменении места
 		_player setVariable ["CFM_activeSeatKey", _curSeatKey];
 		if (_curSeatKey isEqualTo "") then {
 			_player setVariable ["CFM_selectedTablet", "hand"];
 		} else {
 			if (_player getVariable ["CFM_menuActive", false]) then {
-				[_player] call CFM_fnc_monitorCloseMenu;
+				[_player, true] call CFM_fnc_monitorCloseMenu;
 			};
 			_player setVariable ["CFM_selectedTablet", "veh"];
 		};
 
-		// Обработка перехода между местами
 		if !(_lastSeatKey isEqualTo _curSeatKey) then {
-			// 5 или 6 (пересадка с места С планшетом): деактивируем прошлый планшет
-			if !(_lastSeatKey isEqualTo "") then {
-				["deactivateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _lastSeatKey);
-			};
-
-			// 3 или 6 (посадка/пересадка на место С планшетом): активируем новый планшет
-			if !(_curSeatKey isEqualTo "") then {
-				["activateSeat"] CALL_SEAT_TABLET_INSTANCE(_currentVeh, _curSeatKey);
-			};
+			["onSeatChanged", [_lastSeatKey, _curSeatKey]] CALL_OBJCLASS("MonitorHost", _currentVeh);
 		};
 	};
 };
@@ -122,33 +114,47 @@ call CFM_fnc_updateContinuousZoom;
 // ---------- UPDATE MONITORS ----------
 private _optimizeDistance = GET_OPTIMIZE_DIST;
 private _doOptimize = _optimizeDistance > 0;
-private ["_monitor", "_condition", "_isHandMonitor", "_dist", "_operator", "_turret"];
-private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monitor]};
+private ["_monPair", "_monitor", "_instId", "_condition", "_isHandMonitor", "_dist", "_operator", "_turret"];
+private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monPair]};
 {
-	_monitor = _x;
-	_condition = _monitor call CFM_fnc_monitorFeedActive;
-	if (_condition isEqualTo false) then {
-		[_monitor] call CFM_fnc_stopOperatorFeed;
+	_monPair = _x;
+	if (!(_monPair isEqualType []) || {(count _monPair) < 2}) then {
 		call _remMonF;
 		continue;
 	};
-	_isHandMonitor = _monitor getVariable ["CFM_isHandMonitor", false];
+	_monPair params [["_monObj", objNull], ["_monId", -1]];
+	_monitor = _monObj;
+	_instId = _monId;
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) then {
+		call _remMonF;
+		continue;
+	};
+
+	_condition = _monPair call CFM_fnc_monitorFeedActive;
+	if (_condition isEqualTo false) then {
+		[_monPair] call CFM_fnc_stopOperatorFeed;
+		call _remMonF;
+		continue;
+	};
+
+	_isHandMonitor = MON_GVAR(_monitor, _instId, "CFM_isHandMonitor", false);
 	if (!(_isHandMonitor) && {_doOptimize}) then {
 		_dist = _player distance _monitor;
 		if (_dist > _optimizeDistance) then {
-			_operator = _monitor getVariable ["CFM_connectedOperator", objNull];
-			_turret = _monitor getVariable ["CFM_currentTurret", _monitor getVariable ["CFM_waitingForStartTurret", DRIVER_TURRET_PATH]];
-			[_monitor, false, true] call CFM_fnc_stopOperatorFeed;
-			[_monitor, _operator, true, _turret, true] spawn CFM_fnc_syncState;
+			_operator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
+			_turret = MON_GVAR(_monitor, _instId, "CFM_currentTurret", MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", DRIVER_TURRET_PATH));
+			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+			[_monPair, _operator, true, _turret, true] spawn CFM_fnc_syncState;
 			call _remMonF;
 			continue;
 		};
 	};
+
 	if (_condition) then {
-		_condition = if (_monitor getVariable ["CFM_currentFeedIsDisplay", false]) then {
-			_monitor call CFM_fnc_updateMonitor;
+		_condition = if (MON_GVAR(_monitor, _instId, "CFM_currentFeedIsDisplay", false)) then {
+			_monPair call CFM_fnc_updateMonitor;
 		} else {
-			_monitor call CFM_fnc_updateMonitorCamera;
+			_monPair call CFM_fnc_updateMonitorCamera;
 		};
 	};
 } forEach _monitorsParams;

@@ -6,5 +6,7 @@
 
 #include "defines.hpp" 
 
-params["_monitor"];
-["switchUAV"] SPAWN_OBJCLASS("Monitor", _monitor);
+params["_monArg"];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+["switchUAV"] SPAWN_MON_INST(_monitor, _instId);

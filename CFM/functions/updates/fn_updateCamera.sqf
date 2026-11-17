@@ -70,6 +70,18 @@ if (_turretLocal && {_setLocalOpTurretDir}) then {
 	// };
 };
 
+private _monObj = objNull;
+private _monInstId = -1;
+if (_monitor isEqualType []) then {
+	_monitor params [["_mO", objNull], ["_mI", -1]];
+	_monObj = _mO;
+	_monInstId = _mI;
+} else {
+	_monObj = _monitor;
+	if (IS_OBJ(_monObj)) then {_monInstId = 1};
+};
+private _hasValidMon = IS_OBJ(_monObj) && {_monInstId > 0};
+
 private _newFov = _fov;
 private _newPos = _pos;
 private _newDir = _dir;
@@ -81,19 +93,18 @@ if (_doInterpolation) then {
 		missionNamespace setVariable ["CFM_camInterpolation_tightnessOffset", _interpTightnessOffsetVal];
 	};
 	private _interpTightnessOffset = 0.01 max (parseNumber (_interpTightnessOffsetVal));
-	// private _lastPos = _monitor getVariable ["CFM_camInterp_lastPos", _pos];
-	private _lastDir = _monitor getVariable ["CFM_camInterp_lastDir", _dir];
-	private _lastUp = _monitor getVariable ["CFM_camInterp_lastUp", _up];
-	// _newPos = [_lastPos, _pos, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
+	private _lastDir = if (_hasValidMon) then {MON_GVAR(_monObj, _monInstId, "CFM_camInterp_lastDir", _dir)} else {_dir};
+	private _lastUp = if (_hasValidMon) then {MON_GVAR(_monObj, _monInstId, "CFM_camInterp_lastUp", _up)} else {_up};
 	_newDir = [_lastDir, _dir, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
 	_newUp = [_lastUp, _up, _interpTightnessOffset] call CFM_fnc_timeInterpolate;
-	// _monitor setVariable ["CFM_camInterp_lastPos", _newPos];
-	_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
-	_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
+	if (_hasValidMon) then {
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastDir", _newDir);
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastUp", _newUp);
+	};
 } else {
-	if (IS_OBJ(_monitor)) then {
-		_monitor setVariable ["CFM_camInterp_lastDir", _newDir];
-		_monitor setVariable ["CFM_camInterp_lastUp", _newUp];
+	if (_hasValidMon) then {
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastDir", _newDir);
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastUp", _newUp);
 	};
 };
 if (_smoothZoom) then {
@@ -103,12 +114,14 @@ if (_smoothZoom) then {
 		missionNamespace setVariable ["CFM_camInterpolation_tightnessZoom", _interpTightnessZoomVal];
 	};
 	private _interpTightnessZoom = 0.01 max (parseNumber (_interpTightnessZoomVal));
-	private _lastFov = _monitor getVariable ["CFM_camInterp_lastFov", _fov];
+	private _lastFov = if (_hasValidMon) then {MON_GVAR(_monObj, _monInstId, "CFM_camInterp_lastFov", _fov)} else {_fov};
 	_newFov = [_lastFov, _fov, _interpTightnessZoom] call CFM_fnc_timeInterpolate;
-	_monitor setVariable ["CFM_camInterp_lastFov", _newFov];
+	if (_hasValidMon) then {
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastFov", _newFov);
+	};
 } else {
-	if (IS_OBJ(_monitor)) then {
-		_monitor setVariable ["CFM_camInterp_lastFov", _newFov];
+	if (_hasValidMon) then {
+		MON_SVAR(_monObj, _monInstId, "CFM_camInterp_lastFov", _newFov);
 	};
 };
 if (_camExists && _doSetCam) then {

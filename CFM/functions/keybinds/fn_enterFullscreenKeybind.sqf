@@ -6,7 +6,7 @@
 
 #include "defines.hpp" 
 
-private _monitor = GET_MON;
-if !(IS_OBJ(_monitor)) exitWith {};
-if !([_monitor] call CFM_fnc_enterFullScreenActionCondition) exitWith {};
-[_monitor] call CFM_fnc_enterMonitorFullScreen;
+private _monPair = GET_MON;
+if !(IS_VALID_MON(_monPair)) exitWith {};
+if !(_monPair call CFM_fnc_enterFullScreenActionCondition) exitWith {};
+[_monPair] call CFM_fnc_enterMonitorFullScreen;

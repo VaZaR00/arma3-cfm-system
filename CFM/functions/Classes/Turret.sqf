@@ -359,11 +359,14 @@ PUBLIC GLOBAL CLASS(Turret)
 
 		private _localDoUpdCam = [true, +_pointParams] select _isStaticCam;
 		{
-			_x setVariable ["CFM_camDoInterpolation", _doInterpolation];
-			_x setVariable ["CFM_cam_prevSetPos", nil];
-			_x setVariable ["CFM_currentCamPointParams", +_pointParams];
-			_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
-			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+				MON_SVAR(_monObj, _monInstId, "CFM_camDoInterpolation", _doInterpolation);
+				MON_SVAR(_monObj, _monInstId, "CFM_cam_prevSetPos", nil);
+				MON_SVAR(_monObj, _monInstId, "CFM_currentCamPointParams", +_pointParams);
+				MON_SVAR(_monObj, _monInstId, "CFM_doUpdateCamera", _localDoUpdCam);
+				MON_SVAR(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves);
+			};
 		} forEach _monitorsOnTurret;
 
 		private _netTargets = if (isMultiplayer) then {
@@ -372,15 +375,19 @@ PUBLIC GLOBAL CLASS(Turret)
 		if (_netTargets isNotEqualTo []) then {
 			private _doUpdCam = if (!_doInterpolation && {(_ppType > 0)}) then {0} else {_pointParams};
 			{
-				if (_x getVariable ["CFM_isVehTablet", false]) then {
-					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
-				} else {
-					if !(_doInterpolation) then {
-						_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
+				_x params [["_monObj", objNull], ["_monInstId", -1]];
+				if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+					private _isSeatPip = (MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false)) && {(MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION)) < 0};
+					if (_isSeatPip) then {
+						["CFM_syncVehTabletTurretMove", [[_monObj, _monInstId], _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
+					} else {
+						if !(_doInterpolation) then {
+							MON_SVARG(_monObj, _monInstId, "CFM_camDoInterpolation", true, _netTargets);
+						};
+						MON_SVARG(_monObj, _monInstId, "CFM_currentCamPointParams", +_pointParams, _netTargets);
+						MON_SVARG(_monObj, _monInstId, "CFM_doUpdateCamera", _doUpdCam, _netTargets);
+						MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves, _netTargets);
 					};
-					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
-					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
-					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
 				};
 			} forEach _monitorsOnTurret;
 		};
@@ -436,11 +443,15 @@ PUBLIC GLOBAL CLASS(Turret)
 		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
 
 		{
-			if (_x getVariable ["CFM_isVehTablet", false]) then {
-				["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_compiledPointParams, _doUpdCam], _targets] call CFM_fnc_remoteEvent;
-			} else {
-				_x setVariable ["CFM_currentCamPointParams", +_compiledPointParams, _targets];
-				_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+				private _isSeatPip = (MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false)) && {(MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION)) < 0};
+				if (_isSeatPip) then {
+					["CFM_syncVehTabletTurretMove", [[_monObj, _monInstId], _operator, _turretIndex, +_compiledPointParams, _doUpdCam], _targets] call CFM_fnc_remoteEvent;
+				} else {
+					MON_SVARG(_monObj, _monInstId, "CFM_currentCamPointParams", +_compiledPointParams, _targets);
+					MON_SVARG(_monObj, _monInstId, "CFM_doUpdateCamera", _doUpdCam, _targets);
+				};
 			};
 		} forEach _monitorsOnTurret;
     };
@@ -530,55 +541,61 @@ PUBLIC GLOBAL CLASS(Turret)
 
 		if (_disabled) exitWith {false};
 
+		(RESOLVE_MON(_monitor)) params ["_monObj", "_monInstId"];
+		if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) exitWith {false};
+		private _monPair = [_monObj, _monInstId];
+
 		private _zoomMax = _zoomTable getOrDefault ["max", 1];
 		_zoomMax = if (_zoomMax isEqualType 1) then {_zoomMax} else {1};
 
 		_cameraMoveRestrictions resize [4, 0];
 
-		private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
-		private _monIsLocal = (_monitor getVariable ["CFM_isLocal", false]) || _isVehTablet;
-		if (_isVehTablet) then {
+		private _isVehSeatTablet = MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false);
+		private _texSel = MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
+		private _isSeatPip = _isVehSeatTablet && {_texSel < 0};
+		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSeatPip;
+		if (_isSeatPip) then {
 			_global = false;
 		};
 		if (isServer || _monIsLocal) then {
-			if (isServer || !_isVehTablet) then {
-				["TurretChangedLocalOperator", [_monitor]] CALL_SELF;
+			if (isServer || !_isSeatPip) then {
+				["TurretChangedLocalOperator", [_monPair]] CALL_SELF;
 			};
-			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex, !_monIsLocal];
+			MON_SVARG(_monObj, _monInstId, "CFM_waitingForStartTurret", _turretIndex, !_monIsLocal);
 		} else {
-			_monitor setVariable ["CFM_waitingForStartTurret", _turretIndex];
+			MON_SVAR(_monObj, _monInstId, "CFM_waitingForStartTurret", _turretIndex);
 		};
 
-		_monitor setVariable ["CFM_currentTurret", [_turretIndex], _global];
-		_monitor setVariable ["CFM_connectedTurretObject", _turretObject, _global];
-		_monitor setVariable ["CFM_zoomMax", _zoomMax, _global];
-		_monitor setVariable ["CFM_zoomTable", _zoomTable, _global];
-		_monitor setVariable ["CFM_cameraPosFunc", _camPosFunc, _global];
-		_monitor setVariable ["CFM_turretLocal", _isLocal, _global];
+		MON_SVARG(_monObj, _monInstId, "CFM_currentTurret", [_turretIndex], _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_connectedTurretObject", _turretObject, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_zoomMax", _zoomMax, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_zoomTable", _zoomTable, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_cameraPosFunc", _camPosFunc, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_turretLocal", _isLocal, _global);
 		private _compiledPointParams = ["compilePointParams"] CALL_SELF;
-		_monitor setVariable ["CFM_currentCamPointParams", _compiledPointParams, _global];
-		_monitor setVariable ["CFM_currentTiTable", _tiParams, _global];
-		_monitor setVariable ["CFM_currentNvgParam", _nvgParam, _global];
-		_monitor setVariable ["CFM_currentCameraIsStatic", _isStaticCam, _global];
-		_monitor setVariable ["CFM_currentCameraCanMove", _canMoveCamera, _global];
-		_monitor setVariable ["CFM_currentCameraMoves", _currentCameraMoves, _global];
-		_monitor setVariable ["CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global];
-		_monitor setVariable ["CFM_doUpdateCamera", [true, _compiledPointParams] select _isStaticCam, _global];
-		_monitor setVariable ["CFM_currentCameraSmoothZoom", _smoothZoom, _global];
-		_monitor setVariable ["CFM_camInterp_lastDir", nil, _global];
-		_monitor setVariable ["CFM_camInterp_lastUp", nil, _global];
-		_monitor setVariable ["CFM_camDoInterpolation", _doInterpolation, _global];
-		if (_isVehTablet && hasInterface && {[_monitor] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-			["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_monitor);
-		};
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCamPointParams", _compiledPointParams, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentTiTable", _tiParams, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentNvgParam", _nvgParam, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCameraIsStatic", _isStaticCam, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCameraCanMove", _canMoveCamera, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", _currentCameraMoves, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoveRestrictions", _cameraMoveRestrictions, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_doUpdateCamera", [true I _compiledPointParams] select _isStaticCam, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_currentCameraSmoothZoom", _smoothZoom, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_camInterp_lastDir", nil, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_camInterp_lastUp", nil, _global);
+		MON_SVARG(_monObj, _monInstId, "CFM_camDoInterpolation", _doInterpolation, _global);
 
-		if (_monitor getVariable ["CFM_feedActive", false]) then {
-			[_monitor, true, _operator] call CFM_fnc_setOperatorInfo;
+		if (MON_GVAR(_monObj, _monInstId, "CFM_feedActive", false)) then {
+			[_monPair, true, _operator] call CFM_fnc_setOperatorInfo;
 
 			private _uiParams = if (IS_STR(_interfaceClass)) then {
 				[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
 			} else {[]};
-			["startRendering", [_reset, _uiParams]] CALL_OBJCLASS("DisplayHandler", _monitor);
+			private _dhId = MON_GVAR(_monObj, _monInstId, "CFM_displayHandlerId", -1);
+			if (_dhId > 0) then {
+				["startRendering", [_reset, _uiParams]] CALL_DH_INST(_monObj, _dhId);
+			};
 		};
 
 		true
@@ -586,12 +603,14 @@ PUBLIC GLOBAL CLASS(Turret)
 	PRIVATE GE LA METHOD("TurretChangedLocalOperator") {
 		params["_monitor"];
 
-		private _prevTurret = _monitor getVariable ["CFM_currentTurret", -2];
+		(RESOLVE_MON(_monitor)) params ["_monObj", "_monInstId"];
+		if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) exitWith {false};
+		private _monPair = [_monObj, _monInstId];
 
-		if !([_monitor, _operator, _prevTurret] call CFM_fnc_isVehTabletUsingOperator) then {
-			["removeMonitor", [_monitor, _prevTurret]] CALL_OBJCLASS("Operator", _operator);
-		};
-		["addMonitor", [_monitor, _turretIndex]] CALL_OBJCLASS("Operator", _operator);
+		private _prevTurret = MON_GVAR(_monObj, _monInstId, "CFM_currentTurret", -2);
+
+		["removeMonitor", [_monPair, _prevTurret]] CALL_OBJCLASS("Operator", _operator);
+		["addMonitor", [_monPair, _turretIndex]] CALL_OBJCLASS("Operator", _operator);
 
 		if (_selfObj isNotEqualTo _operator) then {
 			CFM_operatorsToUpdate = _operator;
@@ -602,9 +621,9 @@ PUBLIC GLOBAL CLASS(Turret)
 		true
 	};
 	PRIVATE GE GA LOCAL METHOD("addMonitor") {
-		params[["_monitor", objNull]];
+		params[["_monitor", [objNull, -1]]];
 
-		if !(IS_OBJ(_monitor)) exitWith {-1};
+		if !(IS_VALID_MON(_monitor)) exitWith {-1};
 
 		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
 		[_selfObj, _varName, _monitor, true, false] call CFM_fnc_pushBackGlobal;
@@ -613,13 +632,13 @@ PUBLIC GLOBAL CLASS(Turret)
 		_monitorsOnTurret find _monitor
 	};
 	PRIVATE GE GA LOCAL METHOD("removeMonitor") {
-		params[["_monitor", objNull]];
+		params[["_monitor", [objNull, -1]]];
 
 		private _varName = format ["CFM_turret_monitorsOnTurret_%1", _instanceIndex];
-		[_selfObj, _varName, _monitor, false, false] call CFM_fnc_removeFromArrayGlobal;
+		[_selfObj, _varName, [_monitor], false, false] call CFM_fnc_removeFromArrayGlobal;
 		_monitorsOnTurret = _selfObj getVariable [_varName, []];
 
-		true	
+		true
 	};
 	//----------- State set -----------
 	PUBLIC LE GA METHOD("setDisabled") {
@@ -731,13 +750,13 @@ PUBLIC GLOBAL CLASS(Turret)
 			SET_SELFVAR(_pointParams);
 
 			{
-				_x setVariable ["CFM_camDoInterpolation", false];
-				_x setVariable ["CFM_cam_prevSetPos", nil];
-				_x setVariable ["CFM_currentCamPointParams", +_pointParams];
-				_x setVariable ["CFM_doUpdateCamera", _localDoUpdCam];
-				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
-				if ((_x getVariable ["CFM_isVehTablet", false]) && hasInterface && {[_x] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-					["saveFromMonitor"] CALL_ACTIVE_SEAT_TABLET(_x);
+				_x params [["_monObj", objNull], ["_monInstId", -1]];
+				if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+					MON_SVAR(_monObj, _monInstId, "CFM_camDoInterpolation", false);
+					MON_SVAR(_monObj, _monInstId, "CFM_cam_prevSetPos", nil);
+					MON_SVAR(_monObj, _monInstId, "CFM_currentCamPointParams", +_pointParams);
+					MON_SVAR(_monObj, _monInstId, "CFM_doUpdateCamera", _localDoUpdCam);
+					MON_SVAR(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves);
 				};
 			} forEach _monitorsOnTurret;
 
@@ -747,15 +766,19 @@ PUBLIC GLOBAL CLASS(Turret)
 				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]});
 				if (_netTargets isNotEqualTo []) then {
 					{
-						if (_x getVariable ["CFM_isVehTablet", false]) then {
-							["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
-						} else {
-							if !(_doInterpolation) then {
-								_x setVariable ["CFM_camDoInterpolation", true, _netTargets];
+						_x params [["_monObj", objNull], ["_monInstId", -1]];
+						if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+							private _isSeatPip = (MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false)) && {(MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION)) < 0};
+							if (_isSeatPip) then {
+								["CFM_syncVehTabletTurretMove", [[_monObj, _monInstId], _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _netTargets] call CFM_fnc_remoteEvent;
+							} else {
+								if !(_doInterpolation) then {
+									MON_SVARG(_monObj, _monInstId, "CFM_camDoInterpolation", true, _netTargets);
+								};
+								MON_SVARG(_monObj, _monInstId, "CFM_currentCamPointParams", +_pointParams, _netTargets);
+								MON_SVARG(_monObj, _monInstId, "CFM_doUpdateCamera", _doUpdCam, _netTargets);
+								MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves, _netTargets);
 							};
-							_x setVariable ["CFM_currentCamPointParams", +_pointParams, _netTargets];
-							_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _netTargets];
-							_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
 						};
 					} forEach _monitorsOnTurret;
 				};
@@ -763,15 +786,19 @@ PUBLIC GLOBAL CLASS(Turret)
 		} else {
 			private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 			{
-				if (_x getVariable ["CFM_isVehTablet", false]) then {
-					["CFM_syncVehTabletTurretMove", [_x, _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _targets] call CFM_fnc_remoteEvent;
-				} else {
-					if !(_doInterpolation) then {
-						_x setVariable ["CFM_camDoInterpolation", true, _targets];
+				_x params [["_monObj", objNull], ["_monInstId", -1]];
+				if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+					private _isSeatPip = (MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false)) && {(MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION)) < 0};
+					if (_isSeatPip) then {
+						["CFM_syncVehTabletTurretMove", [[_monObj, _monInstId], _operator, _turretIndex, +_pointParams, _doUpdCam, +_currentCameraMoves, !_doInterpolation], _targets] call CFM_fnc_remoteEvent;
+					} else {
+						if !(_doInterpolation) then {
+							MON_SVARG(_monObj, _monInstId, "CFM_camDoInterpolation", true, _targets);
+						};
+						MON_SVARG(_monObj, _monInstId, "CFM_currentCamPointParams", +_pointParams, _targets);
+						MON_SVARG(_monObj, _monInstId, "CFM_doUpdateCamera", _doUpdCam, _targets);
+						MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves, _targets);
 					};
-					_x setVariable ["CFM_currentCamPointParams", +_pointParams, _targets];
-					_x setVariable ["CFM_doUpdateCamera", _doUpdCam, _targets];
-					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
 				};
 			} forEach _monitorsOnTurret;
 
@@ -812,7 +839,10 @@ PUBLIC GLOBAL CLASS(Turret)
 				_currentCameraMoves = [_currentCameraMoves, _axisAngles, _cameraMoveRestrictions] call CFM_fnc_calculateCameraMoves;
 				SET_SELFVAR(_currentCameraMoves);
 				{
-					_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+					_x params [["_monObj", objNull], ["_monInstId", -1]];
+					if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+						MON_SVAR(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves);
+					};
 				} forEach _monitorsOnTurret;
 
 				private _accVar = format ["CFM_contDroneMoveAcc_%1", _instanceIndex];
@@ -955,7 +985,10 @@ PUBLIC GLOBAL CLASS(Turret)
 						if (_moves isNotEqualTo []) then {
 							private _mons = _obj getVariable [format ["CFM_turret_monitorsOnTurret_%1", _instIdx], []];
 							{
-								_x setVariable ["CFM_currentCameraMoves", +_moves, _fTargets];
+								_x params [["_monObj", objNull], ["_monInstId", -1]];
+								if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+									MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_moves, _fTargets);
+								};
 							} forEach _mons;
 						};
 					};
@@ -966,7 +999,10 @@ PUBLIC GLOBAL CLASS(Turret)
 
 			SET_SELFVAR(_currentCameraMoves);
 			{
-				_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves];
+				_x params [["_monObj", objNull], ["_monInstId", -1]];
+				if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+					MON_SVAR(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves);
+				};
 			} forEach _monitorsOnTurret;
 
 			private _syncVar = format ["CFM_contDroneLastNetSync_%1", _instanceIndex];
@@ -975,7 +1011,10 @@ PUBLIC GLOBAL CLASS(Turret)
 				private _netTargets = (ACTIVE_VIEWERS_AND_SELF(false)) - (if (isServer) then {[clientOwner, 2]} else {[clientOwner]});
 				if (_netTargets isNotEqualTo []) then {
 					{
-						_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _netTargets];
+						_x params [["_monObj", objNull], ["_monInstId", -1]];
+						if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+							MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves, _netTargets);
+						};
 					} forEach _monitorsOnTurret;
 				};
 				SET_SELFVARG(_currentCameraMoves);
@@ -1068,7 +1107,10 @@ PUBLIC GLOBAL CLASS(Turret)
 		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 
 		{
-			_x setVariable ["CFM_currentCameraMoves", +_currentCameraMoves, _targets];
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+				MON_SVARG(_monObj, _monInstId, "CFM_currentCameraMoves", +_currentCameraMoves, _targets);
+			};
 		} forEach _monitorsOnTurret;
 
 		SET_SELFVARG(_currentCameraMoves);

@@ -6,15 +6,16 @@
 
 #include "defines.hpp" 
 
-params["_target"];
+params["_target", ["_instId", -1]];
+RESOLVE_ACTION_INST
 HAND_MON_CONDITION
 IS_MONITOR_ON
-(_target getVariable ['CFM_feedActive', false]) && {
-	(_target getVariable ['CFM_monitorCanSwitchTi', false]) && {
-		!((equipmentDisabled (_target getVariable ['CFM_connectedOperator', objNull]))#1) && {
+(MON_GVAR(_target, _instId, 'CFM_feedActive', false)) && {
+	(MON_GVAR(_target, _instId, 'CFM_monitorCanSwitchTi', false)) && {
+		!((equipmentDisabled (MON_GVAR(_target, _instId, 'CFM_connectedOperator', objNull)))#1) && {
 			(
 				!(
-					(_target getVariable ['CFM_currentTiTable', []]) isEqualTo []
+					(MON_GVAR(_target, _instId, 'CFM_currentTiTable', [])) isEqualTo []
 				)
 			)
 		}

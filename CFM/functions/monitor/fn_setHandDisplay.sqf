@@ -6,19 +6,21 @@
 
 #include "defines.hpp" 
 
-params[["_monitor", PLAYER_], ["_render", true], ["_fullscreen", false]];
+params[["_monArg", PLAYER_], ["_render", true], ["_fullscreen", false]];
 
-if !(IS_OBJ(_monitor)) exitWith {};
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
+private _monPair = [_monitor, _instId];
 
-private _isUI = _monitor getVariable ["CFM_currentFeedIsDisplay", false];
-private _renderTarget = _monitor getVariable ["CFM_monitorR2Tid", ""];
+private _isUI = MON_GVAR(_monitor, _instId, "CFM_currentFeedIsDisplay", false);
+private _renderTarget = MON_GVAR(_monitor, _instId, "CFM_monitorR2Tid", "");
 private _isAllHandMonsDialogs = missionNamespace getVariable ["CFM_allHandMonitorsAreDisplays", false];
-private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (_monitor getVariable ["CFM_isHandMonitorDisplay", _isAllHandMonsDialogs])};
+private _isDialog = _fullscreen || {_isAllHandMonsDialogs || (MON_GVAR(_monitor, _instId, "CFM_isHandMonitorDisplay", _isAllHandMonsDialogs))};
 
 private _canRender = _render
 	&& {IS_VALID_R2T(_renderTarget)}
-	&& {_monitor getVariable ["CFM_feedActive", false]}
-	&& {!(_monitor getVariable ["CFM_isVehTablet", false]) || {[_monitor] call CFM_fnc_inVehicleTabletSeatCondition}};
+	&& {MON_GVAR(_monitor, _instId, "CFM_feedActive", false)}
+	&& {!(MON_GVAR(_monitor, _instId, "CFM_isVehSeatTablet", false)) || {[_monitor, _instId] call CFM_fnc_inVehicleTabletSeatCondition}};
 
 if (_canRender) then {
 	private _settings = if (_isDialog) then {
@@ -27,7 +29,7 @@ if (_canRender) then {
 		if (!isNull _prevDisp) then {
 			_prevDisp closeDisplay 1;
 		};
-		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _monitor];
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", _monPair];
 		private _disp = if (missionNamespace getVariable ["CFM_blockMovementInFullscreen", false]) then {
 			createDialog "RscDisplayCFMEmpty";
 			findDisplay 167
@@ -35,21 +37,21 @@ if (_canRender) then {
 			(findDisplay 46) createDisplay "RscDisplayCFMEmpty"
 		};
 		uiNamespace setVariable ["CFM_tabletDisplay", _disp];
-		_monitor setVariable ["CFM_tabletDisplayIsOpened", true];
-		_monitor setVariable ["CFM_turnedOffLocal", false];
+		MON_SVAR(_monitor, _instId, "CFM_tabletDisplayIsOpened", true);
+		MON_SVAR(_monitor, _instId, "CFM_turnedOffLocal", false);
 
     	missionNamespace setVariable ["CFM_isInPIPFullScreen", true];
-		[_monitor] call CFM_fnc_playHandTabletAnim;
+		[_monPair] call CFM_fnc_playHandTabletAnim;
 		"[0.9, 0.5, 0.5]"
 	} else {
 		""
 	};
-	private _prevPipHndl = _monitor getVariable ["CFM_createPipHndl", scriptNull];
+	private _prevPipHndl = MON_GVAR(_monitor, _instId, "CFM_createPipHndl", scriptNull);
 	if (!isNull _prevPipHndl && {!(scriptDone _prevPipHndl)}) then {
 		terminate _prevPipHndl;
 	};
-	private _pipHndl = [_monitor, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
-	_monitor setVariable ["CFM_createPipHndl", _pipHndl];
+	private _pipHndl = [_monPair, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
+	MON_SVAR(_monitor, _instId, "CFM_createPipHndl", _pipHndl);
 } else {
 	if (dialog) then {
 		closeDialog 0;
@@ -63,7 +65,7 @@ if (_canRender) then {
 	if (!isNull _fallbackDisp) then {
 		_fallbackDisp closeDisplay 1;
 	};
-	_monitor setVariable ["CFM_tabletDisplayIsOpened", false];
+	MON_SVAR(_monitor, _instId, "CFM_tabletDisplayIsOpened", false);
 	missionNamespace setVariable ["CFM_isInPIPFullScreen", false];
-	[_monitor] call CFM_fnc_closePIPwindow;
+	[_monPair] call CFM_fnc_closePIPwindow;
 };

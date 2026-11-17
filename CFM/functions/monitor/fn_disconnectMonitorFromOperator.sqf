@@ -7,5 +7,7 @@
 #include "defines.hpp" 
 
 
-params ["_monitor", ["_caller", objNull]];
-["disconnect", [_caller]] CALL_OBJCLASS("Monitor", _monitor);
+params ["_monArg", ["_caller", objNull]];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+["disconnect", [_caller]] CALL_MON_INST(_monitor, _instId);

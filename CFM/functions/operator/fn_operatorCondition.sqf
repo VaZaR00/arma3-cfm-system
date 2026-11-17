@@ -6,9 +6,24 @@
 
 #include "defines.hpp" 
 
-params[["_op", objNull], ["_monitor", objNull], ["_checkFeeding", false]];
+params[["_op", objNull], ["_monArg", objNull], ["_checkFeeding", false]];
 
+private _monitor = objNull;
+private _instId = -1;
+if (_monArg isEqualType []) then {
+	_monArg params [["_mObj", objNull], ["_mId", -1]];
+	_monitor = _mObj;
+	_instId = _mId;
+} else {
+	_monitor = _monArg;
+};
 if !(IS_OBJ(_monitor)) exitWith {false};
+if (_instId < 1) then {
+	_instId = [_monitor] call CFM_fnc_getSelectedMonitorInstance;
+	if (_instId < 1) then {
+		_instId = ((keys (_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap])) param [0, -1]);
+	};
+};
 if !(IS_VALID_OP(_op)) exitWith {
 	["removeOperator", [_op]] CALL_CLASS("DbHandler");
 	false
@@ -37,10 +52,12 @@ if (call {
 	private _activeTurrs = _op getVariable ["CFM_turrets", []];
 	if ((_allTurrs isNotEqualTo []) && {_activeTurrs isEqualTo []}) exitWith {true};
 
-	// 3. If monitor is connected, check current turret
-	private _connectedOp = _monitor getVariable ["CFM_connectedOperator", objNull];
+	// 3. If monitor instance is connected, check current turret
+	private _connectedOp = if (_instId > 0) then {
+		MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull)
+	} else {objNull};
 	if (_connectedOp isEqualTo _op) then {
-		private _currTurret = TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
+		private _currTurret = TURRET_INDEX(MON_GVAR(_monitor, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH));
 		private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
 		if (_currTurret in _disabledTurrets || {[_op, _currTurret] call CFM_fnc_isOperatorCameraDestroyed}) then {
 			// Trigger turret checkup to disable dead turret and switch monitor to active turret
@@ -50,45 +67,22 @@ if (call {
 			false
 		};
 	} else {
-		if (_monitor getVariable ["CFM_isVehTablet", false]) then {
-			private _seatInstances = _monitor getVariable ["CFM_seatTabletsInstances", createHashMap];
-			private _hasAliveSeat = false;
-			private _hasSeatWithOp = false;
-			{
-				private _seatInstId = _y;
-				private _seatOp = OIVAR(_monitor, "SeatTablet", _connectedOperator, _seatInstId, objNull);
-				if (_seatOp isEqualTo _op) then {
-					_hasSeatWithOp = true;
-					private _seatTurr = OIVAR(_monitor, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
-					_seatTurr = TURRET_INDEX(_seatTurr);
-					private _disabledTurrets = _op getVariable ["CFM_disabledTurrets", []];
-					if (_seatTurr in _disabledTurrets || {[_op, _seatTurr] call CFM_fnc_isOperatorCameraDestroyed}) then {
-						_op call CFM_fnc_checkOperatorTurrets;
-					};
-					if ((_op getVariable ["CFM_turrets", []]) isNotEqualTo []) then {
-						_hasAliveSeat = true;
-					};
-				};
-			} forEach _seatInstances;
-			if (_hasSeatWithOp) then {!_hasAliveSeat} else {false};
-		} else {
-			false
-		};
+		false
 	};
 }) exitWith {false};
 
 private _cls = _op call CFM_fnc_getOperatorClass;
 private _type = [_op] call CFM_fnc_cameraType;
 if !(call {
-	private _monitorAllowedOperator = _monitor getVariable ["CFM_allowedOperators", []];
-	private _monitorAllowedOperatorTypes = _monitor getVariable ["CFM_allowedOperatorsTypes", []];
+	private _monitorAllowedOperator = if (_instId > 0) then {MON_GVAR(_monitor, _instId, "CFM_allowedOperators", [])} else {[]};
+	private _monitorAllowedOperatorTypes = if (_instId > 0) then {MON_GVAR(_monitor, _instId, "CFM_allowedOperatorsTypes", [])} else {[]};
 	if (IS_ARRAY(_monitorAllowedOperator) || {IS_ARRAY(_monitorAllowedOperatorTypes)}) exitWith {
 		if (_op in _monitorAllowedOperator) exitWith {true};
 		if (_cls in _monitorAllowedOperatorTypes) exitWith {true};
 		if (_type in _monitorAllowedOperatorTypes) exitWith {true};
 		false
 	};
-	private _monitorSides = _monitor getVariable ["CFM_monitorSides", []];
+	private _monitorSides = if (_instId > 0) then {MON_GVAR(_monitor, _instId, "CFM_monitorSides", [])} else {[]};
 	private _sidesOp = _op getVariable ["CFM_opSides", [[(getNumber (configFile >> "CfgVehicles" >> _cls >> "side"))] call BIS_fnc_sideType]];
 	private _sidesUseCiv = missionNamespace getVariable ["CFM_sidesCanUseCiv", []];
 	if !(_sidesOp isEqualType []) then {

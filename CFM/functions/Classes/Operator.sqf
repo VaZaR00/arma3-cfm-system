@@ -250,47 +250,34 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		private _nextTurr = if (_hasOtherTurrets) then {TURRET_INDEX(_turrets select 0)} else {-2};
 
 		{
-			private _mon = _x;
-			if !(IS_OBJ(_mon)) then {continue};
-
-			if (_mon getVariable ["CFM_isVehTablet", false]) then {
-				private _seatInstances = _mon getVariable ["CFM_seatTabletsInstances", createHashMap];
-				{
-					private _seatInstId = _y;
-					private _seatOp = OIVAR(_mon, "SeatTablet", _connectedOperator, _seatInstId, objNull);
-					if (_seatOp isEqualTo _selfObj) then {
-						private _seatTurr = OIVAR(_mon, "SeatTablet", _currentTurret, _seatInstId, DRIVER_TURRET_PATH);
-						_seatTurr = TURRET_INDEX(_seatTurr);
-						if (_seatTurr isEqualTo _turretIndex) then {
-							if (_hasOtherTurrets) then {
-								["connect", [_selfObj, _nextTurr]] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
-								if (hasInterface && {[_mon] call CFM_fnc_inVehicleTabletSeatCondition}) then {
-									["applyToMonitor"] CALL_ACTIVE_SEAT_TABLET(_mon);
-								};
-							} else {
-								["disconnect"] CALL_OBJINSTANCE("SeatTablet", _seatInstId, _mon);
+			_x params [["_mon", objNull], ["_instId", -1]];
+			if (!(IS_OBJ(_mon)) || {_instId < 1}) then {continue};
+			private _monPair = [_mon, _instId];
+			private _connOp = MON_GVAR(_mon, _instId, "CFM_connectedOperator", objNull);
+			if (_connOp isEqualTo _selfObj) then {
+				private _currTurr = TURRET_INDEX(MON_GVAR(_mon, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH));
+				if (_currTurr isEqualTo _turretIndex) then {
+					if (_hasOtherTurrets) then {
+						private _isVehSeat = MON_GVAR(_mon, _instId, "CFM_isVehSeatTablet", false);
+						private _texSel = MON_GVAR(_mon, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
+						private _isSeatPip = _isVehSeat && {_texSel < 0};
+						if (_isSeatPip) then {
+							MON_SVARG(_mon, _instId, "CFM_currentTurret", [_nextTurr], true);
+							if (hasInterface && {[_mon, _instId] call CFM_fnc_inVehicleTabletSeatCondition}) then {
+								["TurretChanged", [_monPair, [_nextTurr], false, false]] CALL_SELF;
 							};
-						};
-					};
-				} forEach _seatInstances;
-			} else {
-				private _connOp = _mon getVariable ["CFM_connectedOperator", objNull];
-				if (_connOp isEqualTo _selfObj) then {
-					private _currTurr = TURRET_INDEX(_mon getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH]);
-					if (_currTurr isEqualTo _turretIndex) then {
-						if (_hasOtherTurrets) then {
-							private _isVehTablet = _mon getVariable ["CFM_isVehTablet", false];
-							private _monIsLocal = (_mon getVariable ["CFM_isLocal", false]) || _isVehTablet;
-							private _targets = MONITOR_VIEWERS_AND_SELF(_mon, _monIsLocal);
-							["TurretChanged", [_mon, [_nextTurr], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
-							_mon setVariable ["CFM_currentOpHasTurrets", _opHasTurrets, true];
 						} else {
-							[_mon, _mon] call CFM_fnc_disconnectMonitorFromOperator;
+							private _monIsLocal = MON_GVAR(_mon, _instId, "CFM_isLocal", false);
+							private _targets = MONITOR_VIEWERS_AND_SELF(_mon, _instId, _monIsLocal);
+							["TurretChanged", [_monPair, [_nextTurr], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 						};
+						MON_SVARG(_mon, _instId, "CFM_currentOpHasTurrets", _opHasTurrets, true);
+					} else {
+						[_monPair, _monPair] call CFM_fnc_disconnectMonitorFromOperator;
 					};
 				};
 			};
-		} forEach _monitors;
+		} forEach (+_monitors);
 	};
 	PRIVATE GE LA METHOD("syncContinuousMove") {
 		params[["_turret", -1]];
@@ -400,33 +387,35 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 	//----------- State control -----------
 	PRIVATE GE METHOD("monitorConnected") {
 		// should be executed globaly
-		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull], ["_reset", false]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]], ["_caller", objNull], ["_reset", false]];
 
-		if !(IS_OBJ(_monitor)) exitWith {};
+		(RESOLVE_MON(_monitor)) params ["_monObj", "_monInstId"];
+		if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) exitWith {};
+		private _monPair = [_monObj, _monInstId];
 
 		private _callerLocal = IS_OBJ(_caller) && {(local _caller)};
 
 		_selfObj setVariable ["CFM_isFeeding", true];
-		_monitor setVariable ["CFM_monitorCanSwitchNvg", _selfObj getVariable ["CFM_canSwitchNvg", false]];
-		_monitor setVariable ["CFM_monitorCanSwitchTi", _selfObj getVariable ["CFM_canSwitchTi", false]];
-		_monitor setVariable ["CFM_currentOpHasTurrets", _opHasTurrets];
-		_monitor setVariable ["CFM_currentCameraType", _cameraType];
-		_monitor setVariable ["CFM_currentOperatorIsDrone", _isDroneFeed];
+		MON_SVAR(_monObj, _monInstId, "CFM_monitorCanSwitchNvg", _selfObj getVariable ["CFM_canSwitchNvg" I false]);
+		MON_SVAR(_monObj, _monInstId, "CFM_monitorCanSwitchTi", _selfObj getVariable ["CFM_canSwitchTi" I false]);
+		MON_SVAR(_monObj, _monInstId, "CFM_currentOpHasTurrets", _opHasTurrets);
+		MON_SVAR(_monObj, _monInstId, "CFM_currentCameraType", _cameraType);
+		MON_SVAR(_monObj, _monInstId, "CFM_currentOperatorIsDrone", _isDroneFeed);
 
-		["TurretChanged", [_monitor, _turret, false, _callerLocal, _reset]] CALL_SELF;
+		["TurretChanged", [_monPair, _turret, false, _callerLocal, _reset]] CALL_SELF;
 	};
 	PRIVATE GE LA METHOD("monitorConnectedLocalOperator") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]]];
 
 		["addActiveOperator", [_operator]] CALL_CLASS("DbHandler");
 		["TurretChangedLocalOperator", [_monitor, _turret]] CALL_SELF;
 	};
 	PRIVATE GE METHOD("monitorDisconnected") {
 		// should be executed globaly
-		params[["_monitor", objNull], ["_turret", [-1]], ["_caller", objNull]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]], ["_caller", objNull]];
 	};
 	PRIVATE GE LA METHOD("monitorDisconnectedLocalOperator") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]]];
 
 		["removeMonitor", [_monitor, _turret]] CALL_SELF;
 		if !([_selfObj] call CFM_fnc_checkIfOperatorFeedsToAnyMonitor) then {
@@ -471,6 +460,10 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 	PRIVATE GE METHOD("feedTurretToMonitor") {
 		params["_monitor", ["_turret", [-1]]];
 
+		(RESOLVE_MON(_monitor)) params ["_monObj", "_monInstId"];
+		if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) exitWith {false};
+		private _monPair = [_monObj, _monInstId];
+
 		private _turretIdx = TURRET_INDEX(_turret);
 
 		private _activeTurrs = _selfObj getVariable ["CFM_turrets", _turrets];
@@ -478,12 +471,14 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		if !(_turretIdx in _turretsIndexes) exitWith {false};
 
-		private _isVehTablet = _monitor getVariable ["CFM_isVehTablet", false];
-		private _monIsLocal = (_monitor getVariable ["CFM_isLocal", false]) || _isVehTablet;
-		private _targets = MONITOR_VIEWERS_AND_SELF(_monitor, _monIsLocal);
-		["TurretChanged", [_monitor, [_turretIdx], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
-		if (_isVehTablet && !isServer) then {
-			["TurretChangedLocalOperator", [_monitor, [_turretIdx]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+		private _isVehSeat = MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false);
+		private _texSel = MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
+		private _isSeatPip = _isVehSeat && {_texSel < 0};
+		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSeatPip;
+		private _targets = MONITOR_VIEWERS_AND_SELF(_monObj, _monInstId, _monIsLocal);
+		["TurretChanged", [_monPair, [_turretIdx], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
+		if (_isSeatPip && !isServer) then {
+			["TurretChangedLocalOperator", [_monPair, [_turretIdx]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 		};
 
 		true
@@ -509,12 +504,12 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		true
 	};
 	PRIVATE GE LA METHOD("addMonitor") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]]];
 
 		["addMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};
 	PRIVATE GE LA METHOD("removeMonitor") {
-		params[["_monitor", objNull], ["_turret", [-1]]];
+		params[["_monitor", [objNull, -1]], ["_turret", [-1]]];
 
 		["removeMonitor", _monitor] CALL_TURRET_INSTANCE(_turret);
 	};

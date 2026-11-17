@@ -6,12 +6,13 @@
 
 #include "defines.hpp" 
 
-params["_target"];
+params["_target", ["_instId", -1]];
+RESOLVE_ACTION_INST
 IN_VEH_TABLET_CONDITION
-if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
-if ([_target] call CFM_fnc_hasMonitorPasswordAccess) then {
-	if (_target getVariable ['CFM_feedActive', false]) exitWith {false};
-	if (_target getVariable ['CFM_menuActive', false]) exitWith {false};
+if ([_target, _instId] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
+if ([_target, _instId] call CFM_fnc_hasMonitorPasswordAccess) then {
+	if (MON_GVAR(_target, _instId, 'CFM_feedActive', false)) exitWith {false};
+	if (MON_GVAR(_target, _instId, 'CFM_menuActive', false)) exitWith {false};
 	private _additionalCondition = _target getVariable ["CFM_actions_additionalCondition", {true}];
 	_target call _additionalCondition
 } else {

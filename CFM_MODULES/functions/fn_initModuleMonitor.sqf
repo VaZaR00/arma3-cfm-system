@@ -93,17 +93,8 @@ if (is3DEN) exitWith {};
 		_sides = [west];
 	};
 
-	private _vehSeatsStr = trim (LGVAR ["vehicleTabletSeats", ""]);
-	private _vehicleTabletSeats = if (_vehSeatsStr isEqualTo "") then {
-		-1
-	} else {
-		if ("[" in _vehSeatsStr) then {
-			private _compiledSeats = call compile _vehSeatsStr;
-			if (isNil "_compiledSeats" || {!(_compiledSeats isEqualType [])}) then {-1} else {_compiledSeats}
-		} else {
-			(_vehSeatsStr splitString SPLIT_CHARACTERS) apply {[toLower _x]}
-		}
-	};
+	private _textureSelections = trim (LGVAR ["textureSelections", ""]);
+	private _seatKeys = trim (LGVAR ["seatKeys", ""]);
 
 	[
 		_monitors,
@@ -111,8 +102,8 @@ if (is3DEN) exitWith {};
 		_allowedOperators,
 		_allowedOperatorsTypes,
 		BOOL("IsHandMonitorDisplay", 0),
-		_vehicleTabletSeats,
-		SELECT_DEF("isVehTablet", -1),
+		_seatKeys,
+		SELECT_DEF("isVehSeatTablet", -1),
 		BOOL("monitorcanSwitchNvg", 1),
 		BOOL("monitorCanSwitchTi", 1),
 		BOOL("monitorCanSwitchTurret", 1),
@@ -122,6 +113,7 @@ if (is3DEN) exitWith {};
 		BOOL("monitorCanFix", 1),
 		BOOL("monitorCanTurnOffLocal", 1),
 		BOOL("monitorHasPassword", 1),
-		LGVAR ["ScreenResolution", ""]
+		LGVAR ["ScreenResolution", ""],
+		_textureSelections
 	] call CFM_fnc_setMonitor;
 };

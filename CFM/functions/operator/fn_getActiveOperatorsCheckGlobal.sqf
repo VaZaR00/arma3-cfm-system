@@ -18,7 +18,7 @@ if (missionNamespace getVariable ["CFM_checkVehCams", false]) then {
 	_objs append vehicles;
 };
 
-if !(IS_OBJ(_monitor)) exitWith {
+if !(IS_VALID_MON(_monitor) || {IS_OBJ(_monitor)}) exitWith {
 	_objs select {
 		[_x] call CFM_fnc_checkIfNewOperator
 	};

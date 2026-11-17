@@ -8,7 +8,7 @@
 
 params["_from", "_to"];
 
-private _actions = _plr getVariable ["CFM_mainActions", []];
+private _actions = _from getVariable ["CFM_allMainActions", []];
 
 if (!(_actions isEqualType []) || {(_actions isEqualTo [])}) exitWith {
 	"CAN'T COPY HAND MONITOR ACTIONS TO NEW CONTROLLED UNIT!" WARN;
@@ -26,6 +26,6 @@ private _newActions = [];
 	_newActions pushBack _id;
 } forEach _actions;
 
-_unit setVariable ["CFM_copiedActions", _newActions];
-_unit setVariable ["CFM_actionsSet", true];
+_to setVariable ["CFM_copiedActions", _newActions];
+_to setVariable ["CFM_actionsSet", true];
 true

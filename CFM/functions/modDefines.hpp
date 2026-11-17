@@ -65,11 +65,27 @@
 #define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index)) select 1)
 #define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx); _this CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};
 
-// -- SeatTablets --
-#define SEAT_TABLET_INSTANCE_ID(mon, seatKey) ((mon getVariable ["CFM_seatTabletsInstances", createHashMap]) getOrDefault [seatKey, -1])
-#define CALL_SEAT_TABLET_INSTANCE(mon, seatKey) call {private _stId = [mon, seatKey] call CFM_fnc_getOrCreateSeatTabletId; if (_stId > 0) then {_this CALL_OBJINSTANCE("SeatTablet", _stId, mon)} else {false}};
-#define CALL_ACTIVE_SEAT_TABLET(mon) call {private _sKey = PLAYER_ getVariable ["CFM_activeSeatKey", ""]; if (_sKey isEqualTo "") then {_sKey = [mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey}; _this CALL_SEAT_TABLET_INSTANCE(mon, _sKey)};
+// -- Multi-instance Monitor & DisplayHandler --
+#define NO_TEXTURE_SELECTION -1
+#define HAND_MONITOR_KEY "hand"
 #define PLAYER_CREW_ROLE(veh) (call {((fullCrew [veh, "", false]) select {(_x select 0) isEqualTo PLAYER_}) param [0, []]})
+
+#define MON_VAR_NAME(var, instId) ((var) + "_" + str (instId))
+#define MON_GVAR(mon, instId, var, def) ((mon) getVariable [MON_VAR_NAME(var, instId) I def])
+#define MON_SVAR(mon, instId, var, val) ((mon) setVariable [MON_VAR_NAME(var, instId) I val])
+#define MON_SVARG(mon, instId, var, val, pub) ((mon) setVariable [MON_VAR_NAME(var, instId) I val I pub])
+
+#define CALL_MON_INST(mon, instId) CALL_OBJINSTANCE("Monitor", instId, mon)
+#define SPAWN_MON_INST(mon, instId) SPAWN_OBJINSTANCE("Monitor", instId, mon)
+#define CALL_DH_INST(mon, dhId) CALL_OBJINSTANCE("DisplayHandler", dhId, mon)
+#define SPAWN_DH_INST(mon, dhId) SPAWN_OBJINSTANCE("DisplayHandler", dhId, mon)
+
+#define IS_VALID_MON(monPair) (((monPair) isEqualType []) && {(count (monPair)) >= 2} && {IS_OBJ((monPair) select 0)} && {((monPair) select 1) isEqualType 0} && {((monPair) select 1) > 0})
+#define RESOLVE_MON(monArg) ([monArg] call CFM_fnc_resolveMonitor)
+#define RESOLVE_ACTION_INST private _selectedInstId = [_target] call CFM_fnc_getSelectedMonitorInstance; \
+if (_instId >= 0 && {_instId != _selectedInstId}) exitWith {false}; \
+if (_instId < 0) then {_instId = _selectedInstId;}; \
+if (_instId < 1) exitWith {false};
 
 // -- Point params --
 #define PP_NONE -1
@@ -106,15 +122,12 @@
 
 // -- Actions --
 #define ACTIONS_PRIORITY 956
-#define FEED_ACTION_CONDITION "((_target getVariable ['CFM_feedActive', false])"
-#define DIST_ACTION_CONDITION "((_target distance PLAYER_) < 5)"
-#define BASIC_ACTION_CONDITION (format["%1 && %2", FEED_ACTION_CONDITION, DIST_ACTION_CONDITION])
 #define PLAYER_PASS_ID (call {private _uid = getPlayerUID player; if (_uid isEqualTo "") then {str player} else {_uid}})
 #define PLAYER_IS_ADMIN (!isMultiplayer || {isServer || {serverCommandAvailable "#logout"}})
-#define PASSWORD_ACCESS_CONDITION if !([_target] call CFM_fnc_hasMonitorPasswordAccess) exitWith {false};
-#define IN_VEH_TABLET_CONDITION if !([_target] call CFM_fnc_inVehicleTabletActionCondition) exitWith {false};
-#define HAND_MON_CONDITION IN_VEH_TABLET_CONDITION if ([_target] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false}; PASSWORD_ACCESS_CONDITION
-#define IS_MONITOR_ON if ((_target getVariable ["CFM_isHandMonitor", false]) && {_target getVariable ['CFM_turnedOffLocal', false]}) exitWith {false};
+#define PASSWORD_ACCESS_CONDITION if !([_target, _instId] call CFM_fnc_hasMonitorPasswordAccess) exitWith {false};
+#define IN_VEH_TABLET_CONDITION if !([_target, _instId] call CFM_fnc_inVehicleTabletActionCondition) exitWith {false};
+#define HAND_MON_CONDITION IN_VEH_TABLET_CONDITION if ([_target, _instId] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false}; PASSWORD_ACCESS_CONDITION
+#define IS_MONITOR_ON if (MON_GVAR(_target, _instId, "CFM_isHandMonitor", false) && {MON_GVAR(_target, _instId, "CFM_turnedOffLocal", false)}) exitWith {false};
 
 // -- Operators --
 #define IS_VALID_OP(op) (IS_OBJ(op))
@@ -128,7 +141,7 @@
 // -- Network targets --
 #define ACTIVE_VIEWERS(islocal) (if (islocal) then {false} else {missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]})
 #define ACTIVE_VIEWERS_AND_SELF(islocal) (if (islocal) then {false} else {private _viewers = +(missionNamespace getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers pushBackUnique 2; _viewers})
-#define MONITOR_VIEWERS_AND_SELF(monitor, islocal) (if (islocal) then {false} else {private _viewers = +(monitor getVariable ["CFM_ActiveMonitorViewers", [2]]); _viewers pushBackUnique clientOwner; _viewers pushBackUnique 2; _viewers})
+#define MONITOR_VIEWERS_AND_SELF(monitor, instId, islocal) (if (islocal) then {false} else {private _viewers = +(MON_GVAR(monitor, instId, "CFM_ActiveMonitorViewers", [2])); _viewers pushBackUnique clientOwner; _viewers pushBackUnique 2; _viewers})
 
 // -- Signals --
 #define SIGNAL_WEAK_CONNECTION_THREASHOLD 0.1

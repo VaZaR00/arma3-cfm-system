@@ -2,8 +2,8 @@
 
 #include "DbHandler.sqf" 
 #include "CameraManager.sqf" 
+#include "MonitorHost.sqf" 
 #include "Monitor.sqf" 
 #include "Operator.sqf" 
 #include "DisplayHandler.sqf" 
 #include "Turret.sqf" 
-#include "SeatTablet.sqf" 

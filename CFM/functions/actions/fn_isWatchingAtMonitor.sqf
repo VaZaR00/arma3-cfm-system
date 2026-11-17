@@ -7,4 +7,7 @@
 #include "defines.hpp" 
 
 params[["_target", PLAYER_]];
-(!(isNil {cursorObject getVariable "CFM_originalTexture"})) && {!(cursorObject getVariable ["CFM_isVehTablet", false])} && {!(cursorObject isEqualTo _target)};
+(!isNull cursorObject) &&
+{cursorObject getVariable ["CFM_isMonitorSet", false]} &&
+{!(cursorObject isEqualTo _target)} &&
+{([cursorObject] call CFM_fnc_getSelectedMonitorInstance) > 0};

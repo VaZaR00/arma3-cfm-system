@@ -6,24 +6,27 @@
 
 #include "defines.hpp" 
 
-params["_monitor", ["_turret", DRIVER_TURRET_PATH]];
+params["_monArg", ["_turret", DRIVER_TURRET_PATH]];
 
-if !(IS_OBJ(_monitor)) exitWith {};
-if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {
-	[_monitor] call CFM_fnc_closePIPwindow;
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
+private _monPair = [_monitor, _instId];
+
+if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {
+	[_monPair] call CFM_fnc_closePIPwindow;
 };
 
 isNil {
-	[_monitor] call CFM_fnc_turnOffMonitorLocal;
+	[_monPair] call CFM_fnc_turnOffMonitorLocal;
 };
-private _hndl = _monitor getVariable ["CFM_monitorMainHndl", scriptNull];
+private _hndl = MON_GVAR(_monitor, _instId, "CFM_monitorMainHndl", scriptNull);
 if !(_hndl isEqualType scriptNull) then {
 	_hndl = scriptNull;
 };
 waitUntil {scriptDone (_hndl)};
-private _mainDisplay = _monitor getVariable ["CFM_mainDisplay", displayNull];
+private _mainDisplay = MON_GVAR(_monitor, _instId, "CFM_mainDisplay", displayNull);
 waitUntil {isNull (_mainDisplay)};
-if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {};
+if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {};
 isNil {
-	[_monitor] call CFM_fnc_turnOnMonitorLocal;
+	[_monPair] call CFM_fnc_turnOnMonitorLocal;
 };

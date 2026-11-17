@@ -7,18 +7,19 @@
 #include "defines.hpp"
 
 params [
-	["_monitor", objNull],
+	["_monArg", objNull],
 	["_mode", "enter"],
 	["_caller", player],
 	["_target", objNull]
 ];
 
 if !(hasInterface) exitWith {};
-if !(IS_OBJ(_monitor)) exitWith {};
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
 if (isNull _target) then {_target = _monitor};
 
 if !(canSuspend) exitWith {
-	_this spawn CFM_fnc_openPasswordDialog;
+	[[_monitor, _instId], _mode, _caller, _target] spawn CFM_fnc_openPasswordDialog;
 };
 
 disableSerialization;
@@ -71,7 +72,7 @@ _btnOk ctrlSetText CFM_STR_OK;
 _btnOk ctrlCommit 0;
 
 _display setVariable ["CFM_passEditCtrl", _edit];
-_display setVariable ["CFM_passMonitor", _monitor];
+_display setVariable ["CFM_passMonitor", [_monitor, _instId]];
 _display setVariable ["CFM_passMode", _mode];
 _display setVariable ["CFM_passCaller", _caller];
 _display setVariable ["CFM_passTarget", _target];
@@ -80,43 +81,44 @@ private _onConfirm = {
 	params ["_display"];
 	if (isNull _display) exitWith {};
 	private _editCtrl = _display getVariable ["CFM_passEditCtrl", controlNull];
-	private _monitor = _display getVariable ["CFM_passMonitor", objNull];
+	private _monPair = _display getVariable ["CFM_passMonitor", [objNull, -1]];
+	_monPair params ["_monitor", "_instId"];
 	private _mode = _display getVariable ["CFM_passMode", "enter"];
 	private _caller = _display getVariable ["CFM_passCaller", player];
 	private _target = _display getVariable ["CFM_passTarget", _monitor];
 
 	private _input = ctrlText _editCtrl;
-	private _isLocal = _monitor getVariable ["CFM_isLocal", false];
-	private _currentPass = _monitor getVariable ["CFM_password", ""];
+	private _isLocal = MON_GVAR(_monitor, _instId, "CFM_isLocal", false);
+	private _currentPass = MON_GVAR(_monitor, _instId, "CFM_password", "");
 	private _plrId = PLAYER_PASS_ID;
 
 	switch (_mode) do {
 		case "set": {
 			_display closeDisplay 1;
 			if (_input isEqualTo "") exitWith {};
-			_monitor setVariable ["CFM_password", _input, !_isLocal];
-			_monitor setVariable ["CFM_passwordAccess", [_plrId], !_isLocal];
+			MON_SVARG(_monitor, _instId, "CFM_password", _input, !_isLocal);
+			MON_SVARG(_monitor, _instId, "CFM_passwordAccess", [_plrId], !_isLocal);
 			CFM_STR_PASSWORD_SET _HINT;
 		};
 		case "change": {
 			_display closeDisplay 1;
 			if (_input isEqualTo _currentPass) exitWith {};
 			if (_input isEqualTo "") exitWith {
-				_monitor setVariable ["CFM_password", "", !_isLocal];
-				_monitor setVariable ["CFM_passwordAccess", [], !_isLocal];
+				MON_SVARG(_monitor, _instId, "CFM_password", "", !_isLocal);
+				MON_SVARG(_monitor, _instId, "CFM_passwordAccess", [], !_isLocal);
 				CFM_STR_PASSWORD_REMOVED _HINT;
 			};
-			_monitor setVariable ["CFM_password", _input, !_isLocal];
-			_monitor setVariable ["CFM_passwordAccess", [_plrId], !_isLocal];
+			MON_SVARG(_monitor, _instId, "CFM_password", _input, !_isLocal);
+			MON_SVARG(_monitor, _instId, "CFM_passwordAccess", [_plrId], !_isLocal);
 			CFM_STR_PASSWORD_CHANGED _HINT;
 		};
 		case "enter": {
 			if (_input isEqualTo _currentPass) then {
 				_display closeDisplay 1;
-				[_monitor, _plrId] call CFM_fnc_monitorGrantAccess;
+				[_monPair, _plrId] call CFM_fnc_monitorGrantAccess;
 				CFM_STR_PASSWORD_ACCEPTED _HINT;
-				if !(_monitor getVariable ["CFM_feedActive", false]) then {
-					["loadMenu", [_caller, _target]] CALL_OBJCLASS("Monitor", _monitor);
+				if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) then {
+					["loadMenu", [_caller, _target]] CALL_MON_INST(_monitor, _instId);
 				};
 			} else {
 				_display closeDisplay 2;

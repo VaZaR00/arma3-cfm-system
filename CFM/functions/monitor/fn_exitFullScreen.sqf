@@ -8,9 +8,10 @@
 
 if !(missionNamespace getVariable ["CFM_isInFullScreen", false]) exitWith {};
 
-private _monitor = missionNamespace getVariable ["CFM_currentFullScreenMonitor", objNull];
-private _exited = if (IS_OBJ(_monitor)) then {
-	["monitorExitFullScreen", [_monitor], false] CALL_OBJCLASS("Monitor", _monitor);
+private _monPair = missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]];
+(RESOLVE_MON(_monPair)) params ["_monitor", "_instId"];
+private _exited = if (IS_OBJ(_monitor) && {_instId > 0}) then {
+	["monitorExitFullScreen", [], false] CALL_MON_INST(_monitor, _instId);
 } else {false};
 
 if (!(isNil "_exited") && {(_exited isEqualTo true)}) exitWith {};

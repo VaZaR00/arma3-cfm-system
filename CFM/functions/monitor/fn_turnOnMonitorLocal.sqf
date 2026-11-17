@@ -6,6 +6,9 @@
 
 #include "defines.hpp" 
 
-params["_monitor"];
-
-["toggleMonitorLocal", true] CALL_OBJCLASS("DisplayHandler", _monitor);
+params["_monArg"];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+private _dhId = MON_GVAR(_monitor, _instId, "CFM_displayHandlerId", -1);
+if (_dhId < 1) exitWith {false};
+["toggleMonitorLocal", true] CALL_DH_INST(_monitor, _dhId);

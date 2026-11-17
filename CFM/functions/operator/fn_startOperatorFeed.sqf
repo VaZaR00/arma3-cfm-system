@@ -7,5 +7,7 @@
 #include "defines.hpp" 
 
 
-params ["_monitor", "_operator", ["_turret", DRIVER_TURRET_PATH], ["_reset", false]];
-["startFeed", [_operator, _turret, _reset], _monitor] CALL_OBJCLASS("Monitor", _monitor);
+params ["_monArg", "_operator", ["_turret", DRIVER_TURRET_PATH], ["_reset", false]];
+(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
+if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+["startFeed", [_operator, _turret, _reset], _monitor] CALL_MON_INST(_monitor, _instId);

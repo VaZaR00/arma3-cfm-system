@@ -24,10 +24,23 @@
 
 ["CFM_newMonitorInstance", {
     LOG_CBA_EVENT
-	_this spawn {
-		waitUntil { sleep 1; !(isNil "CFM_inited") };
-		_this SPAWN_NEW_OBJINSTANCE("Monitor");
+	params [["_monitor", objNull], ["_instanceSpecs", []], ["_commonArgs", []]];
+	if !(IS_OBJ(_monitor)) exitWith {};
+	if (isNil "CFM_inited") exitWith {
+		[_monitor, _instanceSpecs, _commonArgs] spawn {
+			waitUntil { sleep 0.2; !(isNil "CFM_inited") };
+			params ["_mon", "_specs", "_args"];
+			if !(IS_OBJ(_mon)) exitWith {};
+			if !(_mon getVariable ["CFM_isMonitorHostCreated", false]) then {
+				[_mon, [false]] NEW_OBJINSTANCE("MonitorHost");
+			};
+			["addInstances", [_specs, _args, false]] CALL_OBJCLASS("MonitorHost", _mon);
+		};
 	};
+	if !(_monitor getVariable ["CFM_isMonitorHostCreated", false]) then {
+		[_monitor, [false]] NEW_OBJINSTANCE("MonitorHost");
+	};
+	["addInstances", [_instanceSpecs, _commonArgs, false]] CALL_OBJCLASS("MonitorHost", _monitor);
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_operatorMonitorConnected", {
@@ -72,14 +85,14 @@
 	params[["_drone", objNull]];
 	if !(IS_OBJ(_drone)) exitWith {};
 	{
-		private _monitor = _x;
-		if !(IS_OBJ(_monitor)) exitWith {};
-		if !(_monitor getVariable ["CFM_feedActive", false]) exitWith {};
-		private _op = _monitor getVariable ["CFM_connectedOperator", objNull];
+		_x params [["_monitor", objNull], ["_instId", -1]];
+		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
+		if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {};
+		private _op = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
 		if !(IS_OBJ(_op)) exitWith {};
 		if !(_op isEqualTo _drone) exitWith {};
 
-		private _uiDisplayUniqueName = _monitor getVariable ["CFM_uiDisplayUniqueName", ""];
+		private _uiDisplayUniqueName = MON_GVAR(_monitor, _instId, "CFM_uiDisplayUniqueName", "");
 		private _group = uiNamespace getVariable ["DB_mavic_DetachGrenade" + _uiDisplayUniqueName, controlNull];
 
 		if (isNull _group) exitWith {};
@@ -165,14 +178,14 @@
 
 ["CFM_" + "monitorAddActiveViewer", {
     LOG_CBA_EVENT
-	params["_monitor", "_viewer"];
-	[_monitor, "CFM_ActiveMonitorViewers", _viewer, true, true] call CFM_fnc_pushBack;
+	params["_monitor", "_instId", "_viewer"];
+	[_monitor, MON_VAR_NAME("CFM_ActiveMonitorViewers", _instId), _viewer, true, true] call CFM_fnc_pushBack;
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_" + "monitorRemoveActiveViewer", {
     LOG_CBA_EVENT
-	params["_monitor", "_viewer"];
-	[_monitor, "CFM_ActiveMonitorViewers", _viewer, false, true] call CFM_fnc_removeFromArray;
+	params["_monitor", "_instId", "_viewer"];
+	[_monitor, MON_VAR_NAME("CFM_ActiveMonitorViewers", _instId), _viewer, false, true] call CFM_fnc_removeFromArray;
 }] call CBA_fnc_addEventHandler;
 
 ["CFM_" + "addTurretInstanceToOperator", {
@@ -181,26 +194,20 @@
 	[_self, "CFM_turretsInstances", _turretIndex, _data, true] call CFM_fnc_hashSet;
 }] call CBA_fnc_addEventHandler;
 
-
-["CFM_" + "addSeatTabletInstanceToMonitor", {
-    LOG_CBA_EVENT
-	params["_self", "_seatKey", "_instanceId"];
-	[_self, "CFM_seatTabletsInstances", _seatKey, _instanceId, true] call CFM_fnc_hashSet;
-}] call CBA_fnc_addEventHandler;
-
 ["CFM_" + "syncVehTabletTurretMove", {
     LOG_CBA_EVENT
-	params["_monitor", "_operator", "_turretIndex", "_pointParams", "_doUpdCam", ["_camMoves", nil], ["_forceInterp", false]];
-	if !(IS_OBJ(_monitor)) exitWith {};
-	if !((_monitor getVariable ["CFM_connectedOperator", objNull]) isEqualTo _operator) exitWith {};
-	if !((TURRET_INDEX(_monitor getVariable ["CFM_currentTurret" I DRIVER_TURRET_PATH])) isEqualTo _turretIndex) exitWith {};
+	params["_monPair", "_operator", "_turretIndex", "_pointParams", "_doUpdCam", ["_camMoves", nil], ["_forceInterp", false]];
+	(RESOLVE_MON(_monPair)) params ["_monitor", "_instId"];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {};
+	if !((MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull)) isEqualTo _operator) exitWith {};
+	if !((TURRET_INDEX(MON_GVAR(_monitor, _instId, "CFM_currentTurret", DRIVER_TURRET_PATH))) isEqualTo _turretIndex) exitWith {};
 	if (_forceInterp) then {
-		_monitor setVariable ["CFM_camDoInterpolation", true];
+		MON_SVAR(_monitor, _instId, "CFM_camDoInterpolation", true);
 	};
-	_monitor setVariable ["CFM_currentCamPointParams", +_pointParams];
-	_monitor setVariable ["CFM_doUpdateCamera", _doUpdCam];
+	MON_SVAR(_monitor, _instId, "CFM_currentCamPointParams", +_pointParams);
+	MON_SVAR(_monitor, _instId, "CFM_doUpdateCamera", _doUpdCam);
 	if !(isNil "_camMoves") then {
-		_monitor setVariable ["CFM_currentCameraMoves", +_camMoves];
+		MON_SVAR(_monitor, _instId, "CFM_currentCameraMoves", +_camMoves);
 	};
 }] call CBA_fnc_addEventHandler;
 
