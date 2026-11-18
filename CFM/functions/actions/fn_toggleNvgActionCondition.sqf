@@ -11,11 +11,13 @@ RESOLVE_ACTION_INST
 HAND_MON_CONDITION
 IS_MONITOR_ON
 (MON_GVAR(_target, _instId, 'CFM_feedActive', false)) && {
+	(MON_GVAR(_target, _instId, 'CFM_canSwitchNvgAction', true)) && {
 	(MON_GVAR(_target, _instId, 'CFM_monitorCanSwitchNvg', false)) && {
 		!((equipmentDisabled (MON_GVAR(_target, _instId, 'CFM_connectedOperator', objNull))) param [0, false]) && {
 			(
 				(MON_GVAR(_target, _instId, 'CFM_currentNvgParam', false))
 			)
 		}
+	}
 	}
 }

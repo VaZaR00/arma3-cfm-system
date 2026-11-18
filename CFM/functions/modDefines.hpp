@@ -122,6 +122,7 @@ if (_instId < 1) exitWith {false};
 
 // -- Actions --
 #define ACTIONS_PRIORITY 956
+#define OPERATOR_INFO_TEXT_DEF format["<t color='#0d6aff'>%1</t>", CFM_STR_OPERATOR_INFO_TITLE]
 #define PLAYER_PASS_ID (call {private _uid = getPlayerUID player; if (_uid isEqualTo "") then {str player} else {_uid}})
 #define PLAYER_IS_ADMIN (!isMultiplayer || {isServer || {serverCommandAvailable "#logout"}})
 #define PASSWORD_ACCESS_CONDITION if !([_target, _instId] call CFM_fnc_hasMonitorPasswordAccess) exitWith {false};
