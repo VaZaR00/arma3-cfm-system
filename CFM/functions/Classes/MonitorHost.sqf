@@ -426,6 +426,10 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		if (!(IS_OBJ(_monitor)) || {_instanceSpecs isEqualTo []}) exitWith {[]};
 
 		private _createdIds = [];
+		private _existingKeysMap = _monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap];
+		private _existingCount = count _existingKeysMap;
+		private _existingKeys = keys _existingKeysMap;
+		private _isMultiMonitor = (_existingCount + (count _instanceSpecs)) > 1;
 		private _hasAnyHand = _monitor getVariable ["CFM_isHandTablet", false];
 		private _hasAnyVehSeat = _monitor getVariable ["CFM_isVehSeatTablet", false];
 		private _hasAnyNonSeat = _monitor getVariable ["CFM_hasNonSeatMonitors", false];
@@ -455,7 +459,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 			};
 
 			if !(_duplicate) then {
-				private _instRes = [_monitor, [[_texSel, _seatKey, _isVehSeat, _isHand], _commonArgs, _isLocal]] NEW_OBJINSTANCE("Monitor");
+				private _instRes = [_monitor, [[_texSel, _seatKey, _isVehSeat, _isHand], _commonArgs, _isLocal, _isMultiMonitor]] NEW_OBJINSTANCE("Monitor");
 				_instRes params [["_instId", -1], ["_ok", false]];
 
 				if ((_ok isEqualTo true) && {_instId > 0}) then {
@@ -531,6 +535,16 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 			_monitor setVariable ["CFM_lastUiSyncedInst", nil];
 
 			if (hasInterface) then {
+				private _totalCount = count (_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap]);
+				if (_existingCount == 1 && {_totalCount > 1}) then {
+					{
+						["buildMenuActionLabels", [true]] CALL_MON_INST(_monitor, _x);
+					} forEach _existingKeys;
+				};
+				if (_existingCount == 0 && {_totalCount == 1} && {_isMultiMonitor}) then {
+					["buildMenuActionLabels", [false]] CALL_MON_INST(_monitor, _createdIds select 0);
+				};
+
 				_commonArgs params [
 					"", "", "", "",
 					["_canSwitchNvg", true],

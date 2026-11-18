@@ -90,7 +90,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 		params [
 			["_instanceSpec", []],
 			["_commonArgs", []],
-			["_isLocalArg", false]
+			["_isLocalArg", false],
+			["_isMultiMonitor", false]
 		];
 
 		if !(IS_OBJ(_monitor)) exitWith {false};
@@ -227,38 +228,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 			SET_SELFVAR(_seatDisplayName);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
 
-			private _menuText = if (_isHandTablet) then {
-				CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU
-			} else {
-				if (_isVehSeatTablet && {_textureSelection < 0}) then {
-					CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU
-				} else {
-					CFM_STR_CAMERA_SYSTEM_MENU
-				}
-			};
-			private _instTag = "";
-			private _instTagDev = "";
-			if !(_isHandTablet) then {
-				if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
-					private _dispSeat = if (_seatDisplayName isEqualTo "") then {_seatKey} else {_seatDisplayName};
-					if (_textureSelection >= 0) then {
-						_instTag = format [" [%1 #%2]", _dispSeat, _textureSelection];
-						_instTagDev = format [" [%1 #%2]", _seatKey, _textureSelection];
-					} else {
-						_instTag = format [" [%1]", _dispSeat];
-						_instTagDev = format [" [%1]", _seatKey];
-					};
-				} else {
-					if (_instanceIndex > 1 || {_textureSelection > 0}) then {
-						_instTag = format [" [#%1]", _instanceIndex];
-						_instTagDev = _instTag;
-					};
-				};
-			};
-			private _menuLabel = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTag];
-			private _menuLabelDev = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTagDev];
-			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabel", _menuLabel);
-			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabelDev", _menuLabelDev);
+			["buildMenuActionLabels", [_isMultiMonitor]] CALL_SELF;
 			MON_SVAR(_monitor, _instanceIndex, "CFM_operatorInfoText", OPERATOR_INFO_TEXT_DEF);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_canZoomAction", _canZoom);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_canConnectDroneAction", _canConnectDrone);
@@ -278,6 +248,43 @@ PUBLIC GLOBAL CLASS(Monitor)
 		_monitor setVariable ["CFM_selInstCache", nil];
 
 		true
+	};
+
+	PRIVATE LOCAL METHOD("buildMenuActionLabels") {
+		params [["_isMultiMonitor", false]];
+		if !(hasInterface) exitWith {};
+		private _menuText = if (_isHandTablet) then {
+			CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU
+		} else {
+			if (_isVehSeatTablet && {_textureSelection < 0}) then {
+				CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU
+			} else {
+				CFM_STR_CAMERA_SYSTEM_MENU
+			}
+		};
+		private _instTag = "";
+		private _instTagDev = "";
+		if !(_isHandTablet) then {
+			if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
+				private _dispSeat = if (_seatDisplayName isEqualTo "") then {_seatKey} else {_seatDisplayName};
+				if (_textureSelection >= 0) then {
+					_instTag = format [" [%1 #%2]", _dispSeat, _textureSelection];
+					_instTagDev = format [" [%1 #%2]", _seatKey, _textureSelection];
+				} else {
+					_instTag = format [" [%1]", _dispSeat];
+					_instTagDev = format [" [%1]", _seatKey];
+				};
+			} else {
+				if (_isMultiMonitor || {_instanceIndex > 1}) then {
+					_instTag = format [" [#%1]", _instanceIndex];
+					_instTagDev = _instTag;
+				};
+			};
+		};
+		private _menuLabel = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTag];
+		private _menuLabelDev = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTagDev];
+		MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabel", _menuLabel);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabelDev", _menuLabelDev);
 	};
 
 	PRIVATE GE GA METHOD("activateSeat") {
