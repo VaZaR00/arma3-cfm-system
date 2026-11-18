@@ -49,7 +49,15 @@ if !(_available isEqualTo []) then {
 };
 
 _monitor setVariable ["CFM_selInstCache", [diag_frameNo, _plr, _plrParent, _result]];
-if (_result > 0 && {!((_monitor getVariable ["CFM_lastUiSyncedInst", -1]) isEqualTo _result)} && {_monitor getVariable ["CFM_isMonitorHostCreated", false]}) then {
+private _devSeatMode = missionNamespace getVariable ["CFM_devShowSeatKeys", false];
+if (
+	_result > 0 &&
+	{_monitor getVariable ["CFM_isMonitorHostCreated", false]} &&
+	{
+		!((_monitor getVariable ["CFM_lastUiSyncedInst", -1]) isEqualTo _result) ||
+		{!((_monitor getVariable ["CFM_lastUiDevSeatKeys", false]) isEqualTo _devSeatMode)}
+	}
+) then {
 	["syncSelectedActionLabels", [_result]] CALL_OBJCLASS("MonitorHost", _monitor);
 };
 _result

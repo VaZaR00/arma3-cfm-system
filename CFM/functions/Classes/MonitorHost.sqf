@@ -102,9 +102,11 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		if !(IS_OBJ(_monitor)) exitWith {};
 		if (_targetInstId < 1) exitWith {};
 
+		private _useDevSeatKey = missionNamespace getVariable ["CFM_devShowSeatKeys", false];
 		if (_menuActionId >= 0) then {
 			private _defMenuLbl = format["<t color='#00FF00'>%1</t>", CFM_STR_CAMERA_SYSTEM_MENU];
-			private _menuLbl = MON_GVAR(_monitor, _targetInstId, "CFM_menuActionLabel", _defMenuLbl);
+			private _lblVar = ["CFM_menuActionLabel", "CFM_menuActionLabelDev"] select _useDevSeatKey;
+			private _menuLbl = MON_GVAR(_monitor, _targetInstId, _lblVar, _defMenuLbl);
 			_monitor setUserActionText [_menuActionId, _menuLbl];
 		};
 		if (_operatorInfoActionId >= 0) then {
@@ -116,6 +118,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 			_monitor setUserActionText [_operatorInfoActionId, _infoText];
 		};
 		_monitor setVariable ["CFM_lastUiSyncedInst", _targetInstId];
+		_monitor setVariable ["CFM_lastUiDevSeatKeys", _useDevSeatKey];
 	};
 
 	PRIVATE LOCAL METHOD("ensureHostActions") {
@@ -623,10 +626,17 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		_entry params [["_texSel", NO_TEXTURE_SELECTION], ["_seatKey", ""], ["_isVehSeat", false]];
 
 		private _label = if (_isVehSeat && {!(_seatKey isEqualTo "")}) then {
-			if (_texSel >= 0) then {
-				format ["%1 #%2", _seatKey, _texSel]
-			} else {
+			private _useDevSeatKey = missionNamespace getVariable ["CFM_devShowSeatKeys", false];
+			private _dispSeat = if (_useDevSeatKey) then {
 				_seatKey
+			} else {
+				private _cachedName = MON_GVAR(_monitor, _nextInstId, "CFM_seatDisplayName", "");
+				if (_cachedName isEqualTo "") then {_seatKey} else {_cachedName}
+			};
+			if (_texSel >= 0) then {
+				format ["%1 #%2", _dispSeat, _texSel]
+			} else {
+				_dispSeat
 			}
 		} else {
 			format ["#%1", _nextInstId]

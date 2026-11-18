@@ -3,6 +3,7 @@
 CFM_updateEachFrame = true;
 CFM_initSetDefPointAlignments = false;
 CFM_initSetDefScreenResolutions = true;
+if (isNil "CFM_devShowSeatKeys") then { CFM_devShowSeatKeys = false; };
 
 if (CFM_updateEachFrame) then {
 	[] call CFM_fnc_setupDraw3dEH;

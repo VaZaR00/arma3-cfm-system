@@ -9,6 +9,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 	PUBLIC GLOBAL FIELD ["_seatKey", ""];
 	PUBLIC GLOBAL FIELD ["_isVehSeatTablet", false];
 	PUBLIC GLOBAL FIELD ["_isHandTablet", false];
+	PUBLIC LOCAL FIELD ["_seatDisplayName", ""];
 	PRIVATE LOCAL FIELD ["_displayHandlerId", -1];
 	PRIVATE LOCAL FIELD ["_isMonitorInstanceSet", false];
 
@@ -220,6 +221,12 @@ PUBLIC GLOBAL CLASS(Monitor)
 		MON_SVAR(_monitor, _instanceIndex, "CFM_targetInActionsConditions", _targetInActionsConditions);
 
 		if (hasInterface) then {
+			_seatDisplayName = if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
+				[_monitor, _seatKey] call CFM_fnc_getSeatDisplayName
+			} else {""};
+			SET_SELFVAR(_seatDisplayName);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
+
 			private _menuText = if (_isHandTablet) then {
 				CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU
 			} else {
@@ -229,23 +236,29 @@ PUBLIC GLOBAL CLASS(Monitor)
 					CFM_STR_CAMERA_SYSTEM_MENU
 				}
 			};
-			private _instTag = if (_isHandTablet) then {
-				""
-			} else {
+			private _instTag = "";
+			private _instTagDev = "";
+			if !(_isHandTablet) then {
 				if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
+					private _dispSeat = if (_seatDisplayName isEqualTo "") then {_seatKey} else {_seatDisplayName};
 					if (_textureSelection >= 0) then {
-						format [" [%1 #%2]", _seatKey, _textureSelection]
+						_instTag = format [" [%1 #%2]", _dispSeat, _textureSelection];
+						_instTagDev = format [" [%1 #%2]", _seatKey, _textureSelection];
 					} else {
-						format [" [%1]", _seatKey]
-					}
+						_instTag = format [" [%1]", _dispSeat];
+						_instTagDev = format [" [%1]", _seatKey];
+					};
 				} else {
 					if (_instanceIndex > 1 || {_textureSelection > 0}) then {
-						format [" [#%1]", _instanceIndex]
-					} else {""}
-				}
+						_instTag = format [" [#%1]", _instanceIndex];
+						_instTagDev = _instTag;
+					};
+				};
 			};
 			private _menuLabel = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTag];
+			private _menuLabelDev = format ["<t color='#00FF00'>%1%2</t>", _menuText, _instTagDev];
 			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabel", _menuLabel);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_menuActionLabelDev", _menuLabelDev);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_operatorInfoText", OPERATOR_INFO_TEXT_DEF);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_canZoomAction", _canZoom);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_canConnectDroneAction", _canConnectDrone);
