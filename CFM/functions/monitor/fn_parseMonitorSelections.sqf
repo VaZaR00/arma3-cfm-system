@@ -64,7 +64,18 @@ private _fnc_tryParseArray = {
 	private _normalized = if ((_s find "'") >= 0 && {(_s find """") < 0}) then {
 		(_s splitString "'") joinString """"
 	} else {_s};
-	parseSimpleArray _normalized
+	private _arr = parseSimpleArray _normalized;
+	if (!isNil "_arr" && {_arr isEqualType []}) exitWith {_arr};
+
+	// Fallback for unquoted [seatKey, texSel] pairs such as [driver, 0] or [turret_[2], 0]
+	private _len = count _s;
+	if (_len >= 2 && {(_s select [0, 1]) isEqualTo "["} && {(_s select [_len - 1, 1]) isEqualTo "]"}) then {
+		private _parts = [_s select [1, _len - 2]] call _fnc_splitTopLevel;
+		if ((count _parts) == 2 && {(_parts select 1) regexMatch "^-?[0-9]+$"}) exitWith {
+			[_parts select 0, parseNumber (_parts select 1)]
+		};
+	};
+	nil
 };
 
 // 1. Parse textureSelections -> array of non-negative integers
@@ -127,29 +138,155 @@ private _fnc_normalizeArrayItems = {
 	_arr
 };
 
-private _rawSeatItems = [];
-if (_seatKeys isEqualType "") then {
-	private _tokens = [_seatKeys] call _fnc_splitTopLevel;
+private _fnc_parseListString = {
+	params ["_listStr"];
+	private _items = [];
+	private _tokens = [_listStr] call _fnc_splitTopLevel;
 	{
 		private _tok = _x;
 		private _firstCh = _tok select [0, 1];
 		if (_firstCh isEqualTo "[") then {
 			private _parsed = [_tok] call _fnc_tryParseArray;
-			if (_parsed isEqualType []) then {
-				_rawSeatItems append ([_parsed] call _fnc_normalizeArrayItems);
+			if (!isNil "_parsed" && {_parsed isEqualType []}) then {
+				_items append ([_parsed] call _fnc_normalizeArrayItems);
 			};
 		} else {
 			if (_firstCh in ["""", "'"]) then {
 				private _unquoted = _tok select [1, ((count _tok) - 2) max 0];
-				if !(_unquoted isEqualTo "") then {_rawSeatItems pushBack _unquoted};
+				if !(_unquoted isEqualTo "") then {_items pushBack _unquoted};
 			} else {
-				_rawSeatItems pushBack _tok;
+				if !(_tok isEqualTo "") then {_items pushBack _tok};
 			};
 		};
 	} forEach _tokens;
+	_items
+};
+
+private _fnc_parseRewriteItems = {
+	params ["_body"];
+	private _pairCandidate = [format ["[%1]", _body]] call _fnc_tryParseArray;
+	if (!isNil "_pairCandidate" && {_pairCandidate isEqualType []} && {[_pairCandidate] call _fnc_isPairEntry}) exitWith {
+		[_pairCandidate]
+	};
+	[_body] call _fnc_parseListString
+};
+
+private _useModifier = false;
+private _baseMode = ""; // "", "DEFAULT", "ALL"
+private _addBodies = [];
+private _removeBodies = [];
+private _rewriteBodies = [];
+private _rawSeatItems = [];
+
+if (_seatKeys isEqualType "") then {
+	private _s = trim _seatKeys;
+	if (_s isEqualTo "") then {
+		if (_isVehSeatTablet) then {
+			_useModifier = true;
+			_baseMode = "DEFAULT";
+		};
+	} else {
+		private _wsChars = [" ", toString [9], toString [10], toString [13]];
+		private _skipChars = _wsChars + [","];
+		private _sLen = count _s;
+		private _pos = 0;
+		private _parsedOk = true;
+		private _sawModifierToken = false;
+
+		while {_pos < _sLen && {_parsedOk}} do {
+			while {_pos < _sLen && {(_s select [_pos, 1]) in _skipChars}} do {
+				_pos = _pos + 1;
+			};
+			if (_pos >= _sLen) exitWith {};
+
+			private _ch = _s select [_pos, 1];
+			private _rest = _s select [_pos];
+
+			if ((toLower (_rest select [0, 3])) isEqualTo "all" && {(_pos + 3 >= _sLen) || {!((_s select [_pos + 3, 1]) regexMatch "[A-Za-z0-9_]")}}) then {
+				_baseMode = "ALL";
+				_sawModifierToken = true;
+				_pos = _pos + 3;
+				continue;
+			};
+			if ((toLower (_rest select [0, 7])) isEqualTo "default" && {(_pos + 7 >= _sLen) || {!((_s select [_pos + 7, 1]) regexMatch "[A-Za-z0-9_]")}}) then {
+				if (_baseMode isEqualTo "") then {_baseMode = "DEFAULT"};
+				_sawModifierToken = true;
+				_pos = _pos + 7;
+				continue;
+			};
+
+			if (_ch in ["+", "-", "!"]) then {
+				private _j = _pos + 1;
+				while {_j < _sLen && {(_s select [_j, 1]) in _wsChars}} do {
+					_j = _j + 1;
+				};
+				if (_j < _sLen && {(_s select [_j, 1]) isEqualTo "["}) then {
+					private _depth = 0;
+					private _inDQ = false;
+					private _inSQ = false;
+					private _endIdx = -1;
+					for "_k" from _j to (_sLen - 1) do {
+						private _c = _s select [_k, 1];
+						if (_c isEqualTo """" && {!_inSQ}) then {
+							_inDQ = !_inDQ;
+						} else {
+							if (_c isEqualTo "'" && {!_inDQ}) then {
+								_inSQ = !_inSQ;
+							} else {
+								if (!_inDQ && {!_inSQ}) then {
+									if (_c isEqualTo "[") then {_depth = _depth + 1};
+									if (_c isEqualTo "]") then {
+										_depth = _depth - 1;
+										if (_depth == 0) exitWith {_endIdx = _k};
+									};
+								};
+							};
+						};
+					};
+					if (_endIdx > _j) then {
+						private _inner = _s select [_j + 1, _endIdx - _j - 1];
+						switch (_ch) do {
+							case "+": { _addBodies pushBack _inner; };
+							case "-": { _removeBodies pushBack _inner; };
+							case "!": { _rewriteBodies pushBack _inner; };
+						};
+						_sawModifierToken = true;
+						_pos = _endIdx + 1;
+						continue;
+					};
+				};
+			};
+
+			_parsedOk = false;
+		};
+
+		if (_parsedOk && {_sawModifierToken}) then {
+			_useModifier = true;
+			if (_baseMode isEqualTo "") then {
+				_baseMode = "DEFAULT";
+			};
+		} else {
+			_addBodies = [];
+			_removeBodies = [];
+			_rewriteBodies = [];
+			_rawSeatItems = [_s] call _fnc_parseListString;
+		};
+	};
 } else {
 	if (_seatKeys isEqualType []) then {
-		_rawSeatItems = [_seatKeys] call _fnc_normalizeArrayItems;
+		if (_seatKeys isEqualTo []) then {
+			if (_isVehSeatTablet) then {
+				_useModifier = true;
+				_baseMode = "DEFAULT";
+			};
+		} else {
+			if ((count _seatKeys == 1) && {(_seatKeys select 0) isEqualType ""} && {(toLower trim (_seatKeys select 0)) in ["all", "default"]}) then {
+				_useModifier = true;
+				_baseMode = ["DEFAULT", "ALL"] select ((toLower trim (_seatKeys select 0)) isEqualTo "all");
+			} else {
+				_rawSeatItems = [_seatKeys] call _fnc_normalizeArrayItems;
+			};
+		};
 	} else {
 		if (_seatKeys isEqualType 0) then {
 			_rawSeatItems = [_seatKeys];
@@ -198,29 +335,120 @@ private _fnc_resolveSeatDesc = {
 };
 
 private _seatSpecsRaw = [];
-{
-	private _item = _x;
-	private _seatDesc = _item;
-	private _texSel = NO_TEXTURE_SELECTION;
-	if ([_item] call _fnc_isPairEntry) then {
-		_seatDesc = _item select 0;
-		_texSel = floor (_item select 1);
-		if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
-	};
-	private _resolvedKeys = [_seatDesc] call _fnc_resolveSeatDesc;
+if (_useModifier) then {
+	private _baseKeys = [];
 	{
-		_seatSpecsRaw pushBack [_texSel, _x, true, false];
-	} forEach _resolvedKeys;
-} forEach _rawSeatItems;
-
-// If isVehSeatTablet is enabled and no explicit seatKeys were provided, include all crew seats as PiP tablets
-if (_isVehSeatTablet && {_rawSeatItems isEqualTo []} && {!(_crewInfo isEqualTo [])}) then {
-	{
-		private _key = _x select 0;
+		_x params ["_key", "_role"];
 		if !(_key isEqualTo "") then {
-			_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _key, true, false];
+			if (_baseMode isEqualTo "ALL" || {_role in ["driver", "gunner", "commander"]}) then {
+				_baseKeys pushBackUnique _key;
+			};
 		};
 	} forEach _crewInfo;
+
+	private _removeKeysSet = createHashMap;
+	{
+		private _remItems = [_x] call _fnc_parseListString;
+		{
+			private _desc = if ([_x] call _fnc_isPairEntry) then {_x select 0} else {_x};
+			{
+				_removeKeysSet set [_x, true];
+			} forEach ([_desc] call _fnc_resolveSeatDesc);
+		} forEach _remItems;
+	} forEach _removeBodies;
+
+	private _rewriteMap = createHashMap;
+	{
+		private _rwItems = [_x] call _fnc_parseRewriteItems;
+		{
+			private _seatDesc = _x;
+			private _texSel = NO_TEXTURE_SELECTION;
+			if ([_x] call _fnc_isPairEntry) then {
+				_seatDesc = _x select 0;
+				_texSel = floor (_x select 1);
+				if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
+			};
+			{
+				private _arr = _rewriteMap getOrDefault [_x, []];
+				_arr pushBackUnique _texSel;
+				_rewriteMap set [_x, _arr];
+			} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+		} forEach _rwItems;
+	} forEach _rewriteBodies;
+
+	private _addSpecs = [];
+	private _addTexBoundSeats = createHashMap;
+	{
+		private _addItems = [_x] call _fnc_parseListString;
+		{
+			private _seatDesc = _x;
+			private _texSel = NO_TEXTURE_SELECTION;
+			if ([_x] call _fnc_isPairEntry) then {
+				_seatDesc = _x select 0;
+				_texSel = floor (_x select 1);
+				if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
+			};
+			{
+				if (_texSel >= 0) then {_addTexBoundSeats set [_x, true]};
+				_addSpecs pushBack [_texSel, _x, true, false];
+			} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+		} forEach _addItems;
+	} forEach _addBodies;
+
+	private _emittedRewritten = createHashMap;
+	{
+		if !(_x in _removeKeysSet) then {
+			if (_x in _rewriteMap) then {
+				private _rwSeat = _x;
+				{
+					_seatSpecsRaw pushBack [_x, _rwSeat, true, false];
+				} forEach (_rewriteMap get _rwSeat);
+				_emittedRewritten set [_rwSeat, true];
+			} else {
+				if !(_x in _addTexBoundSeats) then {
+					_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _x, true, false];
+				};
+			};
+		};
+	} forEach _baseKeys;
+
+	{
+		_x params ["_texSel", "_seatKey", "_isVeh", "_isHand"];
+		if (_seatKey in _rewriteMap) then {
+			if !(_seatKey in _emittedRewritten) then {
+				{
+					_seatSpecsRaw pushBack [_x, _seatKey, true, false];
+				} forEach (_rewriteMap get _seatKey);
+				_emittedRewritten set [_seatKey, true];
+			};
+		} else {
+			_seatSpecsRaw pushBack [_texSel, _seatKey, _isVeh, _isHand];
+		};
+	} forEach _addSpecs;
+
+	{
+		private _rwSeat = _x;
+		if (!(_rwSeat in _emittedRewritten) && {!(_rwSeat in _removeKeysSet)}) then {
+			{
+				_seatSpecsRaw pushBack [_x, _rwSeat, true, false];
+			} forEach _y;
+		};
+	} forEach _rewriteMap;
+} else {
+	{
+		private _item = _x;
+		private _seatDesc = _item;
+		private _texSel = NO_TEXTURE_SELECTION;
+		if ([_item] call _fnc_isPairEntry) then {
+			_seatDesc = _item select 0;
+			_texSel = floor (_item select 1);
+			if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
+		};
+		private _resolvedKeys = [_seatDesc] call _fnc_resolveSeatDesc;
+		{
+			_seatSpecsRaw pushBack [_texSel, _x, true, false];
+		} forEach _resolvedKeys;
+	} forEach _rawSeatItems;
 };
 
 // 4. Combine and prevent textureSelection conflicts & duplicate PiP seat entries
@@ -259,11 +487,16 @@ private _texOnlySpecs = [];
 // Order: standalone texture monitors first, then seat instances
 private _orderedSpecs = _texOnlySpecs + _specs;
 
+private _hadSeatConstraints = (_rawSeatItems isNotEqualTo []) || {_addBodies isNotEqualTo []} || {_removeBodies isNotEqualTo []} || {_rewriteBodies isNotEqualTo []};
 if (_orderedSpecs isEqualTo []) then {
 	if (_isVehSeatTablet) then {
-		_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false]];
+		if (!_hadSeatConstraints && {_crewInfo isEqualTo []}) then {
+			_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false]];
+		};
 	} else {
-		_orderedSpecs = [[0, "", false, false]];
+		if (!_hadSeatConstraints && {_texSels isEqualTo []}) then {
+			_orderedSpecs = [[0, "", false, false]];
+		};
 	};
 };
 

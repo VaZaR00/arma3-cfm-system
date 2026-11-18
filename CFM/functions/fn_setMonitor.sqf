@@ -14,7 +14,7 @@
 		3. _allowedOperators [Array[object], object] - defines which operators it have access to
 		4. _allowedOperatorsTypes [Array[string], string] - defines which operators it have access to
 		5. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
-		6. _seatKeys [String / Array] - seat keys (e.g. "driver, gunner" or '["driver", 0], ["gunner", 1]')
+		6. _seatKeys [String / Array] - seat keys (empty/DEFAULT = driver/gunner/commander, "ALL" = all seats, +[...]/-[...]/![seat,texSel] modifiers, or explicit keys e.g. '["driver", 0]')
 		7. _isVehSeatTablet [bool / -1] - whether object uses vehicle seat tablet logic (-1 = auto detect)
 		8. _canSwitchNvg [bool]
 		9. _canSwitchTi [bool]
