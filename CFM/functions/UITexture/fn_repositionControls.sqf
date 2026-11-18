@@ -3,7 +3,7 @@
     Author: Vazar
     Description:
         Evaluates cached control formulas for the given display and monitor ScreenResolution
-        (including optional {scaleX, scaleY} viewport scaling and corner anchor),
+        (including optional {scaleX, scaleY[, offsetX[, offsetY]]} viewport scaling, corner anchor and static edge offset),
         and repositions/resizes all controls of the display on load.
 */
 
@@ -52,14 +52,26 @@ private _scaleArr = _res param [2, DEFAULT_UI_SCALE];
 if (!(_scaleArr isEqualType []) || {count _scaleArr < 2}) then {
 	_scaleArr = DEFAULT_UI_SCALE;
 };
-_scaleArr params [["_sx", 1], ["_sy", 1]];
+_scaleArr params [["_sx", 1], ["_sy", 1], ["_ox", 0], ["_oy", 0]];
+if !(_sx isEqualType 0) then {_sx = 1};
+if !(_sy isEqualType 0) then {_sy = 1};
+if !(_ox isEqualType 0) then {_ox = 0};
+if !(_oy isEqualType 0) then {_oy = 0};
 if (_sx == 0) then {_sx = 1};
 if (_sy == 0) then {_sy = 1};
 
 private _absX = abs _sx;
 private _absY = abs _sy;
-private _offsetX = if (_sx < 0) then {1 - _absX} else {0};
-private _offsetY = if (_sy < 0) then {1 - _absY} else {0};
+private _offsetX = if (_ox != 0) then {
+	if (_ox < 0) then {1 - _absX + _ox} else {_ox}
+} else {
+	if (_sx < 0) then {1 - _absX} else {0}
+};
+private _offsetY = if (_oy != 0) then {
+	if (_oy < 0) then {1 - _absY + _oy} else {_oy}
+} else {
+	if (_sy < 0) then {1 - _absY} else {0}
+};
 
 private _fnc_applyCtrl = {
 	params ["_idc", "_ctrlData"];

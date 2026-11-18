@@ -2,14 +2,16 @@
     Function: CFM_fnc_parseScreenResolution
     Author: Vazar
     Description:
-        Parses screen resolution parameter into [width, height, [scaleX, scaleY]] array.
+        Parses screen resolution parameter into [width, height, [scaleX, scaleY, offsetX, offsetY]] array.
         Supported formats:
-            - "1:1", "4:3", "16:9" (w:h aspect ratio with default width 512)
+            - "1:1", "4:3", "16:9" (w:h aspect ratio with default width 1024)
             - "1:1 500", "4:3 800" (w:h aspect ratio and explicit width in pixels)
             - "700x500" (explicit width x height in pixels)
-            - "{0.8, 0.8}", "16:9 {0.8, 0.8}", "700x500 {-0.8, -0.8}" (optional {scaleX, scaleY} viewport scaling & anchor:
-                +X = from left, -X = from right; +Y = from top, -Y = from bottom)
-            - [700, 500], [700, 500, [0.8, 0.8]], or ["4:3", 500, [0.8, 0.8]] (array format)
+            - "{0.8, 0.8}", "16:9 {0.8, 0.8}", "700x500 {-0.8, -0.8}", "16:9 {0.8, 0.8, 0.05, -0.1}"
+              (optional {scaleX, scaleY[, offsetX[, offsetY]]} viewport scaling, corner anchor & static edge offset in 0..1:
+                scale: +X = from left, -X = from right; +Y = from top, -Y = from bottom;
+                offset (overrides anchor on its axis when != 0): +X = from left edge, -X = from right edge; +Y = from top edge, -Y = from bottom edge)
+            - [700, 500], [700, 500, [0.8, 0.8]], [700, 500, [0.8, 0.8, 0.05, -0.1]], or ["4:3", 500, [0.8, 0.8, 0.05, -0.1]] (array format)
             - 500 or "500" (square width x height)
 */
 
@@ -23,31 +25,47 @@ if (_input isEqualType 0) exitWith {
 	if (_input <= 0) then {[]} else {[_input, _input, +DEFAULT_UI_SCALE]}
 };
 
+private _fnc_parseScaleArr = {
+	params ["_arr"];
+	if !(_arr isEqualType [] && {count _arr >= 1}) exitWith {[]};
+	if (count _arr == 1) exitWith {
+		private _s = _arr select 0;
+		if ((_s isEqualType 0) && {_s != 0}) then {[_s, _s, 0, 0]} else {[]}
+	};
+	private _sx = _arr select 0;
+	private _sy = _arr select 1;
+	if !((_sx isEqualType 0) && {_sy isEqualType 0} && {_sx != 0} && {_sy != 0}) exitWith {[]};
+	private _ox = _arr param [2, 0];
+	if !(_ox isEqualType 0) then {_ox = 0};
+	private _oy = _arr param [3, 0];
+	if !(_oy isEqualType 0) then {_oy = 0};
+	[_sx, _sy, _ox, _oy]
+};
+
 if (_input isEqualType []) exitWith {
 	if (count _input < 2) exitWith {[]};
 	private _first = _input select 0;
 	private _second = _input select 1;
-	private _third = _input param [2, DEFAULT_UI_SCALE];
-	private _scaleArr = if ((_third isEqualType []) && {count _third >= 2} && {(_third select 0) isEqualType 0} && {(_third select 1) isEqualType 0} && {(_third select 0) != 0} && {(_third select 1) != 0}) then {
-		[_third select 0, _third select 1]
-	} else {
-		+DEFAULT_UI_SCALE
-	};
+	private _third = _input param [2, []];
+	private _parsedThird = [_third] call _fnc_parseScaleArr;
+	private _hasThirdScale = _parsedThird isNotEqualTo [];
+	private _scaleArr = if (_hasThirdScale) then {_parsedThird} else {+DEFAULT_UI_SCALE};
 
-	if ((_first isEqualType "") && {(_second isEqualType []) && {count _second >= 2}}) exitWith {
+	if ((_first isEqualType "") && {_second isEqualType []}) exitWith {
 		private _parsed = [_first, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsed isEqualTo []) exitWith {[]};
-		private _sx = _second param [0, 1];
-		private _sy = _second param [1, 1];
-		if ((_sx isEqualType 0) && {_sy isEqualType 0} && {_sx != 0} && {_sy != 0}) then {
-			_parsed set [2, [_sx, _sy]];
+		private _parsedSecond = [_second] call _fnc_parseScaleArr;
+		if (_parsedSecond isNotEqualTo []) then {
+			_parsed set [2, _parsedSecond];
 		};
 		_parsed
 	};
 	if ((_first isEqualType "") && {(_second isEqualType 0)} && {_second > 0}) exitWith {
 		private _parsed = [format ["%1 %2", _first, _second], _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsed isEqualTo []) exitWith {[]};
-		_parsed set [2, _scaleArr];
+		if (_hasThirdScale) then {
+			_parsed set [2, _scaleArr];
+		};
 		_parsed
 	};
 	if ((_first isEqualType 0) && {(_second isEqualType 0)} && {_first > 0} && {_second > 0}) exitWith {
@@ -61,7 +79,7 @@ if !(_input isEqualType "") exitWith {[]};
 private _str = trim _input;
 if ((_str isEqualTo "") || {(toLower _str) in ["default", "-1"]}) exitWith {[]};
 
-// Parse optional "{scaleX, scaleY}" block if present
+// Parse optional "{scaleX, scaleY[, offsetX[, offsetY]]}" block if present
 private _scaleArr = +DEFAULT_UI_SCALE;
 private _hasScaleBlock = false;
 private _braceStart = _str find "{";
@@ -69,18 +87,21 @@ private _braceEnd = _str find "}";
 if (_braceStart >= 0 && {_braceEnd > _braceStart}) then {
 	private _braceContent = _str select [_braceStart + 1, _braceEnd - _braceStart - 1];
 	private _scaleParts = (_braceContent splitString " ,;\t") select {_x isNotEqualTo ""};
-	if (count _scaleParts >= 2) then {
+	private _partsCount = count _scaleParts;
+	if (_partsCount >= 2) then {
 		private _sx = parseNumber (_scaleParts select 0);
 		private _sy = parseNumber (_scaleParts select 1);
 		if (_sx != 0 && {_sy != 0}) then {
-			_scaleArr = [_sx, _sy];
+			private _ox = if (_partsCount >= 3) then {parseNumber (_scaleParts select 2)} else {0};
+			private _oy = if (_partsCount >= 4) then {parseNumber (_scaleParts select 3)} else {0};
+			_scaleArr = [_sx, _sy, _ox, _oy];
 			_hasScaleBlock = true;
 		};
 	} else {
-		if (count _scaleParts == 1) then {
+		if (_partsCount == 1) then {
 			private _s = parseNumber (_scaleParts select 0);
 			if (_s != 0) then {
-				_scaleArr = [_s, _s];
+				_scaleArr = [_s, _s, 0, 0];
 				_hasScaleBlock = true;
 			};
 		};
