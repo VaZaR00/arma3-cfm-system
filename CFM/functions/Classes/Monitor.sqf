@@ -126,6 +126,34 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		if (_isHandArg && {!(_monitor isEqualTo PLAYER_)}) exitWith {false};
 
+		private _wasAlreadySet = MON_GVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false);
+		private _prevTexSel = MON_GVAR(_monitor, _instanceIndex, "CFM_textureSelection", NO_TEXTURE_SELECTION);
+		private _prevOrigTex = MON_GVAR(_monitor, _instanceIndex, "CFM_originalTexture", "");
+
+		private _monitorTextures = [];
+		if (_texSelArg >= 0) then {
+			_monitorTextures = getObjectTextures _monitor;
+		};
+		if (_texSelArg >= 0 && {_texSelArg >= (count _monitorTextures)}) exitWith {
+			format["CLASS Monitor init: Object '%1' has no texture selection %2!", _monitor, _texSelArg] WARN;
+			false
+		};
+
+		if (_wasAlreadySet) then {
+			if (hasInterface && {MON_GVAR(_monitor, _instanceIndex, "CFM_menuActive", false)}) then {
+				[[_monitor, _instanceIndex]] call CFM_fnc_monitorCloseMenu;
+			};
+			if (hasInterface && {(missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]]) isEqualTo [_monitor, _instanceIndex]}) then {
+				["monitorExitFullScreen"] CALL_SELF;
+			};
+			if (_feedActive || {MON_GVAR(_monitor, _instanceIndex, "CFM_feedActive", false)}) then {
+				[[_monitor, _instanceIndex], false, false, false] call CFM_fnc_stopOperatorFeed;
+			};
+			if (hasInterface && {_prevTexSel >= 0} && {_prevTexSel != _texSelArg}) then {
+				_monitor setObjectTexture [_prevTexSel, _prevOrigTex];
+			};
+		};
+
 		_textureSelection = _texSelArg;
 		_seatKey = _seatKeyArg;
 		_seatKeys = if (_seatKeysArg isEqualType [] && {_seatKeysArg isNotEqualTo []}) then {
@@ -139,22 +167,13 @@ PUBLIC GLOBAL CLASS(Monitor)
 		_isLocal = _isLocalArg || _isHandTablet;
 		_isHandMonitor = _isHandTablet || (_isVehSeatTablet && {_textureSelection < 0});
 
-		private _monitorTextures = [];
-		if (_textureSelection >= 0) then {
-			_monitorTextures = getObjectTextures _monitor;
-		};
-		if (_textureSelection >= 0 && {_textureSelection >= (count _monitorTextures)}) exitWith {
-			format["CLASS Monitor init: Object '%1' has no texture selection %2!", _monitor, _textureSelection] WARN;
-			false
-		};
-
-		if (MON_GVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false) && {_feedActive}) then {
-			[[_monitor, _instanceIndex], false, false, false] call CFM_fnc_stopOperatorFeed;
-		};
-
 		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
-			private _existingRes = MON_GVAR(_monitor, _instanceIndex, "CFM_screenResolution", _monitor getVariable ["ScreenResolution" I ""]);
+			private _existingRes = if (_wasAlreadySet) then {
+				_monitor getVariable ["ScreenResolution", ""]
+			} else {
+				MON_GVAR(_monitor, _instanceIndex, "CFM_screenResolution", _monitor getVariable ["ScreenResolution" I ""])
+			};
 			_parsedScreenRes = [_existingRes, _monitor] call CFM_fnc_parseScreenResolution;
 		};
 		if (_parsedScreenRes isEqualTo []) then {
@@ -164,7 +183,12 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		_originalTexture = if (_textureSelection >= 0) then {
 			private _tex = _monitorTextures param [_textureSelection, ""];
-			if (isNil "_tex") then {""} else {_tex}
+			if (isNil "_tex") then {_tex = ""};
+			if (_wasAlreadySet && {_prevTexSel == _textureSelection} && {!(_prevOrigTex isEqualTo "")} && {(_tex select [0, 2]) isEqualTo "#("}) then {
+				_prevOrigTex
+			} else {
+				if ((_tex select [0, 2]) isEqualTo "#(") then {""} else {_tex}
+			};
 		} else {""};
 
 		if !(_sides isEqualType []) then {_sides = [_sides]};
@@ -228,6 +252,12 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		if (_textureSelection >= 0) then {
 			[_monitor, _textureSelection, _instanceIndex] call CFM_fnc_cacheMonitorSelectionPos;
+		} else {
+			private _posMap = _monitor getVariable ["CFM_monitorSelectionPositions", createHashMap];
+			if (_instanceIndex in _posMap) then {
+				_posMap deleteAt _instanceIndex;
+				_monitor setVariable ["CFM_monitorSelectionPositions", _posMap];
+			};
 		};
 
 		_radius = if (_isHandTablet) then {-1} else {ACTION_RADIUS};
@@ -265,7 +295,14 @@ PUBLIC GLOBAL CLASS(Monitor)
 			MON_SVAR(_monitor, _instanceIndex, "CFM_canSwitchTiAction", _canSwitchTi);
 		};
 
-		_displayHandlerId = ["setupMonitorDisplay", [_monitor, _instanceIndex]] CALL_CLASS("DbHandler");
+		_displayHandlerId = MON_GVAR(_monitor, _instanceIndex, "CFM_displayHandlerId", -1);
+		if (_displayHandlerId <= 0) then {
+			_displayHandlerId = ["setupMonitorDisplay", [_monitor, _instanceIndex]] CALL_CLASS("DbHandler");
+		} else {
+			[_monitor, "DisplayHandler", "_textureSelection", _textureSelection, false, _displayHandlerId] call OOP_FUNC(setVar);
+			[_monitor, "DisplayHandler", "_originalTexture", _originalTexture, false, _displayHandlerId] call OOP_FUNC(setVar);
+			[_monitor, "DisplayHandler", "_isHandMonitor", _isHandMonitor, false, _displayHandlerId] call OOP_FUNC(setVar);
+		};
 		SET_SELFVAR(_displayHandlerId);
 
 		_isMonitorInstanceSet = true;
@@ -273,16 +310,95 @@ PUBLIC GLOBAL CLASS(Monitor)
 		_monitor setVariable ["CFM_availInstCache", nil];
 		_monitor setVariable ["CFM_selInstCache", nil];
 
+		if (_wasAlreadySet) then {
+			["validateConnectedOperator"] CALL_SELF;
+		};
+
+		true
+	};
+
+	PUBLIC LOCAL METHOD("deinit") {
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		private _monPair = [_monitor, _instanceIndex];
+		private _curTexSel = MON_GVAR(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection);
+		private _curOrigTex = MON_GVAR(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture);
+		private _curIsLocal = MON_GVAR(_monitor, _instanceIndex, "CFM_isLocal", _isLocal);
+		private _curOp = MON_GVAR(_monitor, _instanceIndex, "CFM_connectedOperator", _connectedOperator);
+		private _curTurret = MON_GVAR(_monitor, _instanceIndex, "CFM_currentTurret", _currentTurret);
+
+		if (hasInterface && {MON_GVAR(_monitor, _instanceIndex, "CFM_menuActive", false)}) then {
+			[_monPair] call CFM_fnc_monitorCloseMenu;
+		};
+		if (hasInterface && {(missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]]) isEqualTo _monPair}) then {
+			["monitorExitFullScreen"] CALL_SELF;
+		};
+		if (MON_GVAR(_monitor, _instanceIndex, "CFM_feedActive", false)) then {
+			[_monPair, false, false, false] call CFM_fnc_stopOperatorFeed;
+		};
+		if (IS_OBJ(_curOp)) then {
+			["monitorDisconnected", [_monPair, _curTurret, objNull]] CALL_OBJCLASS("Operator", _curOp);
+		};
+		if (hasInterface && {_curTexSel >= 0}) then {
+			_monitor setObjectTexture [_curTexSel, _curOrigTex];
+		};
+
+		private _posMap = _monitor getVariable ["CFM_monitorSelectionPositions", createHashMap];
+		if (_instanceIndex in _posMap) then {
+			_posMap deleteAt _instanceIndex;
+			_monitor setVariable ["CFM_monitorSelectionPositions", _posMap];
+		};
+
+		["clearVariables"] CALL_SELF;
+
+		_isMonitorInstanceSet = false;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false);
+		if (isServer && {!_curIsLocal}) then {
+			MON_SVARG(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false, true);
+		};
+
+		["removeFromList", [[_monPair], "CFM_Monitors"]] CALL_CLASS("DbHandler");
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		true
+	};
+
+	PUBLIC LOCAL METHOD("updateSharedSeats") {
+		params [["_newSeatKeys", []], ["_newControlSeatKeys", []]];
+		if !(IS_OBJ(_monitor)) exitWith {false};
+		private _curIsLocal = MON_GVAR(_monitor, _instanceIndex, "CFM_isLocal", _isLocal);
+		_seatKeys = +_newSeatKeys;
+		_seatKey = _seatKeys joinString ", ";
+		_controlSeatKeys = +_newControlSeatKeys;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_controlSeatKeys", _controlSeatKeys);
+		if (isServer && {!_curIsLocal}) then {
+			MON_SVARG(_monitor, _instanceIndex, "CFM_seatKey", _seatKey, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_controlSeatKeys", _controlSeatKeys, true);
+		};
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [true]] CALL_SELF;
+		if (hasInterface && {MON_GVAR(_monitor, _instanceIndex, "CFM_menuActive", false)} && {!([_selfObj, _instanceIndex] call CFM_fnc_canControlMonitorSeat)}) then {
+			[[_selfObj, _instanceIndex], _currentMenuObj] call CFM_fnc_monitorCloseMenu;
+		};
 		true
 	};
 
 	PRIVATE LOCAL METHOD("buildMenuActionLabels") {
 		params [["_isMultiMonitor", false]];
 		if !(hasInterface) exitWith {};
-		private _menuText = if (_isHandTablet) then {
+		private _curIsHand = MON_GVAR(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet);
+		private _curIsVehSeat = MON_GVAR(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet);
+		private _curTexSel = MON_GVAR(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection);
+		private _curSeatKey = MON_GVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		private _curSeatKeys = MON_GVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+		private _curSeatDispName = MON_GVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
+		private _menuText = if (_curIsHand) then {
 			CFM_STR_HAND_TABLET_CAMERA_SYSTEM_MENU
 		} else {
-			if (_isVehSeatTablet && {_textureSelection < 0}) then {
+			if (_curIsVehSeat && {_curTexSel < 0}) then {
 				CFM_STR_VEHICLE_TABLET_CAMERA_SYSTEM_MENU
 			} else {
 				CFM_STR_CAMERA_SYSTEM_MENU
@@ -290,17 +406,17 @@ PUBLIC GLOBAL CLASS(Monitor)
 		};
 		private _instTag = "";
 		private _instTagDev = "";
-		if !(_isHandTablet) then {
-			if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
-				private _dispSeat = if (_seatDisplayName isEqualTo "") then {_seatKey} else {_seatDisplayName};
-				private _devSeat = if ((count _seatKeys) > 3) then {
-					format ["%1, %2 (+%3)", _seatKeys select 0, _seatKeys select 1, (count _seatKeys) - 2]
+		if !(_curIsHand) then {
+			if (_curIsVehSeat && {!(_curSeatKey isEqualTo "")}) then {
+				private _dispSeat = if (_curSeatDispName isEqualTo "") then {_curSeatKey} else {_curSeatDispName};
+				private _devSeat = if ((count _curSeatKeys) > 3) then {
+					format ["%1, %2 (+%3)", _curSeatKeys select 0, _curSeatKeys select 1, (count _curSeatKeys) - 2]
 				} else {
-					_seatKey
+					_curSeatKey
 				};
-				if (_textureSelection >= 0) then {
-					_instTag = format [" [%1 #%2]", _dispSeat, _textureSelection];
-					_instTagDev = format [" [%1 #%2]", _devSeat, _textureSelection];
+				if (_curTexSel >= 0) then {
+					_instTag = format [" [%1 #%2]", _dispSeat, _curTexSel];
+					_instTagDev = format [" [%1 #%2]", _devSeat, _curTexSel];
 				} else {
 					_instTag = format [" [%1]", _dispSeat];
 					_instTagDev = format [" [%1]", _devSeat];
@@ -429,16 +545,19 @@ PUBLIC GLOBAL CLASS(Monitor)
 		params [["_recomputeSeatName", true]];
 		if !(hasInterface) exitWith {};
 		if (_recomputeSeatName) then {
-			_seatDisplayName = if (_isVehSeatTablet) then {
-				if ((count _seatKeys) > 1) then {
-					private _names = _seatKeys apply {[_monitor, _x] call CFM_fnc_getSeatDisplayName};
+			private _curIsVehSeat = MON_GVAR(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet);
+			private _curSeatKeys = MON_GVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+			private _curSeatKey = MON_GVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+			_seatDisplayName = if (_curIsVehSeat) then {
+				if ((count _curSeatKeys) > 1) then {
+					private _names = _curSeatKeys apply {[_monitor, _x] call CFM_fnc_getSeatDisplayName};
 					if ((count _names) <= 2) then {
 						_names joinString " + "
 					} else {
 						format ["%1, %2 (+%3)", _names select 0, _names select 1, (count _names) - 2]
 					}
 				} else {
-					private _singleKey = if (_seatKeys isNotEqualTo []) then {_seatKeys select 0} else {_seatKey};
+					private _singleKey = if (_curSeatKeys isNotEqualTo []) then {_curSeatKeys select 0} else {_curSeatKey};
 					if !(_singleKey isEqualTo "") then {
 						[_monitor, _singleKey] call CFM_fnc_getSeatDisplayName
 					} else {""}
@@ -455,7 +574,9 @@ PUBLIC GLOBAL CLASS(Monitor)
 	};
 
 	PRIVATE LOCAL METHOD("validateConnectedOperator") {
-		if ((isServer || _isLocal) && {IS_OBJ(_connectedOperator)} && {!([_connectedOperator, [_selfObj, _instanceIndex]] call CFM_fnc_operatorCondition)}) then {
+		private _curIsLocal = MON_GVAR(_selfObj, _instanceIndex, "CFM_isLocal", _isLocal);
+		private _curOp = MON_GVAR(_selfObj, _instanceIndex, "CFM_connectedOperator", _connectedOperator);
+		if ((isServer || _curIsLocal) && {IS_OBJ(_curOp)} && {!([_curOp, [_selfObj, _instanceIndex]] call CFM_fnc_operatorCondition)}) then {
 			["disconnect"] CALL_SELF;
 		};
 	};
