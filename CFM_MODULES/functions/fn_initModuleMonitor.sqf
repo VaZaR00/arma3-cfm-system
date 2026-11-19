@@ -107,6 +107,7 @@ if (is3DEN) exitWith {};
 		private _fnc_findClosingBracket = {
 			params ["_startIdx"];
 			private _depth = 0;
+			private _parenDepth = 0;
 			private _inDQ = false;
 			private _inSQ = false;
 			private _endIdx = -1;
@@ -119,10 +120,20 @@ if (is3DEN) exitWith {};
 						_inSQ = !_inSQ;
 					} else {
 						if (!_inDQ && {!_inSQ}) then {
-							if (_c isEqualTo "[") then {_depth = _depth + 1};
-							if (_c isEqualTo "]") then {
-								_depth = _depth - 1;
-								if (_depth == 0) exitWith {_endIdx = _k};
+							if (_c isEqualTo "(") then {
+								_parenDepth = _parenDepth + 1;
+							} else {
+								if (_c isEqualTo ")" && {_parenDepth > 0}) then {
+									_parenDepth = _parenDepth - 1;
+								} else {
+									if (_parenDepth == 0) then {
+										if (_c isEqualTo "[") then {_depth = _depth + 1};
+										if (_c isEqualTo "]") then {
+											_depth = _depth - 1;
+											if (_depth == 0) exitWith {_endIdx = _k};
+										};
+									};
+								};
 							};
 						};
 					};
@@ -134,6 +145,7 @@ if (is3DEN) exitWith {};
 		private _fnc_findTokenEnd = {
 			params ["_startIdx"];
 			private _depth = 0;
+			private _parenDepth = 0;
 			private _inDQ = false;
 			private _inSQ = false;
 			private _k = _startIdx;
@@ -146,9 +158,19 @@ if (is3DEN) exitWith {};
 						_inSQ = !_inSQ;
 					} else {
 						if (!_inDQ && {!_inSQ}) then {
-							if (_c in ["[", "("]) then {_depth = _depth + 1};
-							if (_c in ["]", ")"] && {_depth > 0}) then {_depth = _depth - 1};
-							if (_depth == 0 && {_c in _skipChars}) exitWith {};
+							if (_c isEqualTo "(") then {
+								_parenDepth = _parenDepth + 1;
+							} else {
+								if (_c isEqualTo ")" && {_parenDepth > 0}) then {
+									_parenDepth = _parenDepth - 1;
+								} else {
+									if (_parenDepth == 0) then {
+										if (_c isEqualTo "[") then {_depth = _depth + 1};
+										if (_c isEqualTo "]" && {_depth > 0}) then {_depth = _depth - 1};
+										if (_depth == 0 && {_c in _skipChars}) exitWith {};
+									};
+								};
+							};
 						};
 					};
 				};

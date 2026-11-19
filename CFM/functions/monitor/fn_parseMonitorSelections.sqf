@@ -26,6 +26,7 @@ private _fnc_findClosingBracket = {
 	params ["_str", "_startIdx"];
 	private _len = count _str;
 	private _depth = 0;
+	private _parenDepth = 0;
 	private _inDQ = false;
 	private _inSQ = false;
 	private _endIdx = -1;
@@ -38,10 +39,20 @@ private _fnc_findClosingBracket = {
 				_inSQ = !_inSQ;
 			} else {
 				if (!_inDQ && {!_inSQ}) then {
-					if (_c isEqualTo "[") then {_depth = _depth + 1};
-					if (_c isEqualTo "]") then {
-						_depth = _depth - 1;
-						if (_depth == 0) exitWith {_endIdx = _k};
+					if (_c isEqualTo "(") then {
+						_parenDepth = _parenDepth + 1;
+					} else {
+						if (_c isEqualTo ")" && {_parenDepth > 0}) then {
+							_parenDepth = _parenDepth - 1;
+						} else {
+							if (_parenDepth == 0) then {
+								if (_c isEqualTo "[") then {_depth = _depth + 1};
+								if (_c isEqualTo "]") then {
+									_depth = _depth - 1;
+									if (_depth == 0) exitWith {_endIdx = _k};
+								};
+							};
+						};
 					};
 				};
 			};
@@ -54,6 +65,7 @@ private _fnc_findTokenEnd = {
 	params ["_str", "_startIdx"];
 	private _len = count _str;
 	private _depth = 0;
+	private _parenDepth = 0;
 	private _inDQ = false;
 	private _inSQ = false;
 	private _k = _startIdx;
@@ -66,9 +78,19 @@ private _fnc_findTokenEnd = {
 				_inSQ = !_inSQ;
 			} else {
 				if (!_inDQ && {!_inSQ}) then {
-					if (_c in ["[", "("]) then {_depth = _depth + 1};
-					if (_c in ["]", ")"] && {_depth > 0}) then {_depth = _depth - 1};
-					if (_depth == 0 && {_c in _skipChars}) exitWith {};
+					if (_c isEqualTo "(") then {
+						_parenDepth = _parenDepth + 1;
+					} else {
+						if (_c isEqualTo ")" && {_parenDepth > 0}) then {
+							_parenDepth = _parenDepth - 1;
+						} else {
+							if (_parenDepth == 0) then {
+								if (_c isEqualTo "[") then {_depth = _depth + 1};
+								if (_c isEqualTo "]" && {_depth > 0}) then {_depth = _depth - 1};
+								if (_depth == 0 && {_c in _skipChars}) exitWith {};
+							};
+						};
+					};
 				};
 			};
 		};
@@ -77,7 +99,7 @@ private _fnc_findTokenEnd = {
 	_k
 };
 
-// Split comma-separated tokens outside [] brackets and quotes
+// Split comma-separated tokens outside [] / () brackets and quotes
 private _fnc_splitTopLevel = {
 	params ["_input"];
 	private _trimmed = trim _input;
@@ -85,6 +107,7 @@ private _fnc_splitTopLevel = {
 	private _tokens = [];
 	private _cur = "";
 	private _depth = 0;
+	private _parenDepth = 0;
 	private _inDQuote = false;
 	private _inSQuote = false;
 	for "_i" from 0 to ((count _trimmed) - 1) do {
@@ -97,13 +120,23 @@ private _fnc_splitTopLevel = {
 				_inSQuote = !_inSQuote;
 			} else {
 				if (!_inDQuote && {!_inSQuote}) then {
-					if (_ch in ["[", "("]) then {_depth = _depth + 1};
-					if (_ch in ["]", ")"] && {_depth > 0}) then {_depth = _depth - 1};
-					if (_ch isEqualTo "," && {_depth == 0}) then {
-						private _tok = trim _cur;
-						if !(_tok isEqualTo "") then {_tokens pushBack _tok};
-						_cur = "";
-						_handled = true;
+					if (_ch isEqualTo "(") then {
+						_parenDepth = _parenDepth + 1;
+					} else {
+						if (_ch isEqualTo ")" && {_parenDepth > 0}) then {
+							_parenDepth = _parenDepth - 1;
+						} else {
+							if (_parenDepth == 0) then {
+								if (_ch isEqualTo "[") then {_depth = _depth + 1};
+								if (_ch isEqualTo "]" && {_depth > 0}) then {_depth = _depth - 1};
+								if (_ch isEqualTo "," && {_depth == 0}) then {
+									private _tok = trim _cur;
+									if !(_tok isEqualTo "") then {_tokens pushBack _tok};
+									_cur = "";
+									_handled = true;
+								};
+							};
+						};
 					};
 				};
 			};
@@ -124,6 +157,7 @@ private _fnc_tryParseArray = {
 
 	// Verify the opening '[' at index 0 matches the closing ']' at index _len - 1
 	private _depth = 0;
+	private _parenDepth = 0;
 	private _inDQ = false;
 	private _inSQ = false;
 	private _closesAtEnd = true;
@@ -136,10 +170,20 @@ private _fnc_tryParseArray = {
 				_inSQ = !_inSQ;
 			} else {
 				if (!_inDQ && {!_inSQ}) then {
-					if (_c isEqualTo "[") then {_depth = _depth + 1};
-					if (_c isEqualTo "]") then {
-						_depth = _depth - 1;
-						if (_depth == 0 && {_k < (_len - 1)}) then {_closesAtEnd = false};
+					if (_c isEqualTo "(") then {
+						_parenDepth = _parenDepth + 1;
+					} else {
+						if (_c isEqualTo ")" && {_parenDepth > 0}) then {
+							_parenDepth = _parenDepth - 1;
+						} else {
+							if (_parenDepth == 0) then {
+								if (_c isEqualTo "[") then {_depth = _depth + 1};
+								if (_c isEqualTo "]") then {
+									_depth = _depth - 1;
+									if (_depth == 0 && {_k < (_len - 1)}) then {_closesAtEnd = false};
+								};
+							};
+						};
 					};
 				};
 			};
@@ -568,13 +612,29 @@ private _crewInfo = _allCrew apply {
 private _fnc_resolveSeatDesc = {
 	params ["_desc"];
 	private _keys = [];
+	private _isSubstringPattern = false;
+	private _pattern = "";
+	if (_desc isEqualType "") then {
+		private _d = toLower (trim _desc);
+		private _dLen = count _d;
+		if (_dLen >= 2 && {(_d select [0, 1]) isEqualTo "("} && {(_d select [_dLen - 1, 1]) isEqualTo ")"}) then {
+			_isSubstringPattern = true;
+			_pattern = trim (_d select [1, _dLen - 2]);
+		};
+	};
 	{
 		_x params ["_key", "_role", "_cargoIdx", "_turretPath"];
 		if !(_key isEqualTo "") then {
 			private _matched = false;
 			if (_desc isEqualType "") then {
-				private _d = toLower (trim _desc);
-				_matched = (_d isEqualTo (toLower _key)) || {_d isEqualTo _role};
+				if (_isSubstringPattern) then {
+					if !(_pattern isEqualTo "") then {
+						_matched = (_pattern in (toLower _key)) || {_pattern in _role};
+					};
+				} else {
+					private _d = toLower (trim _desc);
+					_matched = (_d isEqualTo (toLower _key)) || {_d isEqualTo _role};
+				};
 			} else {
 				if (_desc isEqualType []) then {
 					_matched = (_desc isEqualTo _turretPath)
@@ -591,7 +651,7 @@ private _fnc_resolveSeatDesc = {
 		};
 	} forEach _crewInfo;
 
-	if (_keys isEqualTo [] && {_crewInfo isEqualTo []} && {_desc isEqualType ""}) then {
+	if (_keys isEqualTo [] && {_crewInfo isEqualTo []} && {_desc isEqualType ""} && {!_isSubstringPattern}) then {
 		private _d = trim _desc;
 		if !(_d isEqualTo "") then {_keys pushBack _d};
 	};
