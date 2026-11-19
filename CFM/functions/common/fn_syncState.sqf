@@ -39,9 +39,10 @@ if (isServer && !_isOptimize) then {
 		["CFM_operatorMonitorConnected", [_operator, _monPair, _initTurr], _operator] call CBA_fnc_targetEvent;
 	} else {
 		_operator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
+		private _prevTurr = MON_GVAR(_monitor, _instId, "CFM_currentTurret", MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", DRIVER_TURRET_PATH));
 		MON_SVARG(_monitor, _instId, "CFM_connectedOperator", nil, !_monIsLocal);
 		MON_SVARG(_monitor, _instId, "CFM_waitingForStartTurret", nil, !_monIsLocal);
-		["CFM_operatorMonitorDisconnected", [_operator, _monPair], _operator] call CBA_fnc_targetEvent;
+		["CFM_operatorMonitorDisconnected", [_operator, _monPair, _prevTurr], _operator] call CBA_fnc_targetEvent;
 	};
 };
 

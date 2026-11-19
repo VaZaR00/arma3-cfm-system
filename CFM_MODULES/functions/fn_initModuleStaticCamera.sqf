@@ -68,7 +68,7 @@ if (!_activated || {is3DEN}) exitWith {};
 		private _isThis = (_trimmed isEqualTo "this") || {_isOffset && {_trimmed isEqualTo ""}};
 		
 		if (_isOffset && {_isThis}) exitWith {
-			[getPosASL _l, [vectorDir _l, vectorUp _l]]
+			[getPosWorld _l, [vectorDir _l, vectorUp _l]]
 		};
 
 		private _res = [];

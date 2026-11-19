@@ -156,7 +156,7 @@ if (!isServer && {!is3DEN}) exitWith {
 		private _isThis = (_cleanStr isEqualTo "this");
 
 		if (_isThis && {_forObj}) then {
-			private _relPosModule = _mainObject worldToModelVisual (ASLToAGL getPosASL _l);
+			private _relPosModule = _mainObject worldToModelVisual (ASLToAGL (getPosWorld _l));
 			private _relDirModule = _mainObject vectorWorldToModelVisual (vectorDir _l);
 			private _relUpModule = _mainObject vectorWorldToModelVisual (vectorUp _l);
 
@@ -168,12 +168,41 @@ if (!isServer && {!is3DEN}) exitWith {
 			} else {
 				private _memPointPos = _mainObject selectionPosition [_memPoint, _lod];
 				private _memPointDirUp = _mainObject selectionVectorDirAndUp [_memPoint, _lod];
-				private _translatedDirUp = [_memPointDirUp, [_relDirModule, _relUpModule]] call CFM_fnc_translateLocalVectors;
+				_memPointDirUp params [["_mDir", DEF_DIR], ["_mUp", DEF_UP]];
+				if (_mDir isEqualTo [0, 0, 0]) then {_mDir = DEF_DIR};
+				if (_mUp isEqualTo [0, 0, 0]) then {_mUp = DEF_UP};
+				_mDir = vectorNormalized _mDir;
+				_mUp = vectorNormalized _mUp;
+				private _mRight = vectorNormalized (_mDir vectorCrossProduct _mUp);
+				if (_mRight isEqualTo [0, 0, 0]) then {
+					_mDir = DEF_DIR;
+					_mUp = DEF_UP;
+					_mRight = [1, 0, 0];
+				} else {
+					_mUp = vectorNormalized (_mRight vectorCrossProduct _mDir);
+				};
+
+				private _diffPos = _relPosModule vectorDiff _memPointPos;
+				private _localPos = [
+					_diffPos vectorDotProduct _mRight,
+					_diffPos vectorDotProduct _mDir,
+					_diffPos vectorDotProduct _mUp
+				];
+				private _localDir = vectorNormalized [
+					_relDirModule vectorDotProduct _mRight,
+					_relDirModule vectorDotProduct _mDir,
+					_relDirModule vectorDotProduct _mUp
+				];
+				private _localUp = vectorNormalized [
+					_relUpModule vectorDotProduct _mRight,
+					_relUpModule vectorDotProduct _mDir,
+					_relUpModule vectorDotProduct _mUp
+				];
 				_res = [
 					[_memPoint, _lod],
-					_relPosModule vectorDiff _memPointPos,
-					_translatedDirUp # 0,
-					_translatedDirUp # 1
+					_localPos,
+					_localDir,
+					_localUp
 				];
 			};
 		};

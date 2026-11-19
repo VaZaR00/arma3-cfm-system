@@ -95,7 +95,7 @@ if (_model isEqualTo "" || {"empty" in toLower _model}) then {
 };
 
 // Создаем локальный simple object без физики и симуляции
-private _pos = getPosASLVisual _module;
+private _pos = getPosWorldVisual _module;
 private _visObj = createSimpleObject [_model, _pos, false];
 
 if (isNull _visObj) exitWith {
@@ -105,7 +105,7 @@ if (isNull _visObj) exitWith {
 
 _visObj enableSimulation false;
 _visObj disableCollisionWith _module;
-_visObj setPosASL _pos;
+_visObj setPosWorld _pos;
 _visObj setObjectScale CFM_cameraVisualizerScale; // Масштабируем визуализатор, чтобы он был меньше
 _visObj setVectorDirAndUp [vectorDirVisual _module, vectorUpVisual _module];
 
@@ -161,7 +161,7 @@ if (CFM_cameraVisualizerHandler isEqualTo -1) then {
 						_toRemove pushBack _forEachIndex;
 					} else {
 						// Синхронизируем положение и направление с модулем в реальном времени
-						_vis setPosASL (_mod modelToWorldVisualWorld [0, 0, 0]);
+						_vis setPosWorld (getPosWorldVisual _mod);
 						_vis setVectorDirAndUp [vectorDirVisual _mod, vectorUpVisual _mod];
 						_vis setObjectScale CFM_cameraVisualizerScale;
 					};

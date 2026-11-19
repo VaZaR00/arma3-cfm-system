@@ -109,7 +109,7 @@ class CfgVehicles
         portrait = "IconCamera";
         isGlobal = 0;
         is3DEN = 1;
-        model = "\a3\data_f\camera.p3d";
+        // model = "\a3\data_f\camera.p3d";
 
         class Arguments: ArgumentsBaseUnits
         {

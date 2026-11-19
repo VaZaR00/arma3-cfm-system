@@ -564,11 +564,9 @@ PUBLIC GLOBAL CLASS(Monitor)
 		if (_isSeatPip) then {
 			// Seat PiP tablets sync operator notifications to operator owner and run feed only locally for seated client
 			if (IS_OBJ(_prevOp) && {!(_prevOp isEqualTo _op) || {!(TURRET_INDEX(_prevTurr) isEqualTo _initTurrIdx)}}) then {
-				if !([_selfObj, _prevOp, _prevTurr, _instanceIndex] call CFM_fnc_isMonitorUsingOperator) then {
-					["CFM_operatorMonitorDisconnected", [_prevOp, _selfObj, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
-				};
+				["CFM_operatorMonitorDisconnected", [_prevOp, _monPair, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
 			};
-			["CFM_operatorMonitorConnected", [_op, _selfObj, [_initTurrIdx]], _op] call CBA_fnc_targetEvent;
+			["CFM_operatorMonitorConnected", [_op, _monPair, [_initTurrIdx]], _op] call CBA_fnc_targetEvent;
 			[_monPair, _op, true, [_initTurrIdx], true] spawn CFM_fnc_syncState;
 		} else {
 			private _jipKey = if (_isLocal) then {false} else {format ["cfm_mon_%1_%2", netId _selfObj, _instanceIndex]};
@@ -598,8 +596,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 			MON_SVARG(_selfObj, _instanceIndex, "CFM_maxZoomed", false, true);
 			MON_SVAR(_selfObj, _instanceIndex, "CFM_turnedOffLocal", false);
 
-			if (IS_OBJ(_prevOp) && {!([_selfObj, _prevOp, _prevTurr, _instanceIndex] call CFM_fnc_isMonitorUsingOperator)}) then {
-				["CFM_operatorMonitorDisconnected", [_prevOp, _selfObj, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
+			if (IS_OBJ(_prevOp)) then {
+				["CFM_operatorMonitorDisconnected", [_prevOp, _monPair, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
 			};
 
 			MON_SVAR(_selfObj, _instanceIndex, "CFM_waitingForStart", false);

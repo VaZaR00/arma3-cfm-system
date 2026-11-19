@@ -66,7 +66,7 @@ if (_title isEqualTo "") then { _title = _moduleClass; };
         // 1. Create the module logic object
         private _group = createGroup sideLogic;
         private _logic = _group createUnit [_moduleClass, _pos, [], 0, "CAN_COLLIDE"];
-        _logic setPosASL (AGLToASL _pos);
+        _logic setPosWorld (AGLToASL _pos);
 
         if (!isNull _target) then {
             _logic attachTo [_target];
