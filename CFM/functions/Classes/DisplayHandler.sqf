@@ -366,7 +366,7 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		_r2tDisplayCtrl ctrlSetText (format ["#(argb,%1,%1,1)r2t(%2,1.0)", _size, _monitorR2Tid]);
 		_r2tDisplayCtrl ctrlCommit 0;
 
-		[_monPair, MON_GVAR(_monitor, _monitorInstanceId, "CFM_currentPiPEffect", _currentPiPEffect)] call CFM_fnc_setMonitorPiPEffect;
+		[_monPair, MON_GVAR(_monitor, _monitorInstanceId, "CFM_currentPiPEffect", _currentPiPEffect), false] call CFM_fnc_setMonitorPiPEffect;
 	};
 	METHOD("stopRenderingUI") {
 		params[["_reset", true]];
@@ -389,7 +389,7 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 
 		["setR2TTexture", [true, _monitorR2Tid]] CALL_SELF;
 
-		[[_monitor, _monitorInstanceId], MON_GVAR(_monitor, _monitorInstanceId, "CFM_currentPiPEffect", _currentPiPEffect)] call CFM_fnc_setMonitorPiPEffect;
+		[[_monitor, _monitorInstanceId], MON_GVAR(_monitor, _monitorInstanceId, "CFM_currentPiPEffect", _currentPiPEffect), false] call CFM_fnc_setMonitorPiPEffect;
 	};
 	METHOD("stopRenderingR2T") {
 		["setR2TTexture", [false]] CALL_SELF;

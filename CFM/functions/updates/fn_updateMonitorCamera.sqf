@@ -93,7 +93,7 @@ if (_updatePip) then {
 	private _feedActive = MON_GVAR(_monitor, _instId, "CFM_feedActive", false);
 	if !(_feedActive) exitWith {};
 	private _currPip = MON_GVAR(_monitor, _instId, "CFM_currentPiPEffect", 0);
-	[[_monitor, _instId], _currPip] call CFM_fnc_setMonitorPiPEffect;
+	[[_monitor, _instId], _currPip, false] call CFM_fnc_setMonitorPiPEffect;
 	MON_SVAR(_monitor, _instId, "CFM_doUpdatePip", false);
 };
 

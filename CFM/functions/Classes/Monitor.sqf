@@ -149,7 +149,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 		};
 
 		if (MON_GVAR(_monitor, _instanceIndex, "CFM_isMonitorInstanceSet", false) && {_feedActive}) then {
-			[[_monitor, _instanceIndex]] call CFM_fnc_stopOperatorFeed;
+			[[_monitor, _instanceIndex], false, false, false] call CFM_fnc_stopOperatorFeed;
 		};
 
 		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
@@ -342,7 +342,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 		} else {
 			MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
 			if (_feedActive) then {
-				[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+				[_monPair, false, true, false] call CFM_fnc_stopOperatorFeed;
 			};
 			false
 		};
@@ -359,7 +359,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
 		if (MON_GVAR(_monitor, _instanceIndex, "CFM_feedActive", false)) then {
-			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+			[_monPair, false, true, false] call CFM_fnc_stopOperatorFeed;
 		};
 		true
 	};
@@ -644,7 +644,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 			MON_SVAR(_selfObj, _instanceIndex, "CFM_waitingForStart", false);
 			if (hasInterface && {MON_GVAR(_selfObj, _instanceIndex, "CFM_feedActive", false)}) then {
-				[_monPair] call CFM_fnc_stopOperatorFeed;
+				[_monPair, false, false, false] call CFM_fnc_stopOperatorFeed;
 			} else {
 				["clearVariables"] CALL_SELF;
 			};
@@ -924,7 +924,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 				_currentFeedCam cameraEffect ["Terminate", "back"];
 				PLAYER_ switchCamera "INTERNAL";
 			};
-			[_monPair, _currentPiPEffect] call CFM_fnc_setMonitorPiPEffect;
+			[_monPair, _currentPiPEffect, false] call CFM_fnc_setMonitorPiPEffect;
 			if (_isMavic) exitWith {
 				false call MAVIC_fnc_handleConnect;
 			};

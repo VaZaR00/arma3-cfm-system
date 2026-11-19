@@ -83,7 +83,7 @@ if (_isUI) then {
 } else {
     _pictureCtrl ctrlSetText (format ["#(argb,512,512,1)r2t(%1,1.0)", _renderTarget]);
     _pictureCtrl ctrlCommit 0;
-    [_monPair, MON_GVAR(_player, _instId, "CFM_currentPiPEffect", 0)] call CFM_fnc_setMonitorPiPEffect;
+    [_monPair, MON_GVAR(_player, _instId, "CFM_currentPiPEffect", 0), false] call CFM_fnc_setMonitorPiPEffect;
 };
 
 MON_SVAR(_player, _instId, "CFM_currentPictureCtrl", _pictureCtrl);

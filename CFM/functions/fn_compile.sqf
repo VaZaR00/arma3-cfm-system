@@ -90,12 +90,40 @@ CFUNC(resolveMonitor) = {
 		if !(IS_OBJ(_obj)) exitWith {[objNull, -1]};
 		if (_instId < 1) then {
 			_instId = [_obj] call FUNC(getSelectedMonitorInstance);
+			if (_instId < 1) then {
+				private _keys = keys (_obj getVariable ["CFM_monitorInstanceKeysMap", createHashMap]);
+				_keys sort true;
+				_instId = _keys param [0, -1];
+			};
 		};
 		[_obj, _instId]
 	};
 	if !(IS_OBJ(_monArg)) exitWith {[objNull, -1]};
 	private _instId = [_monArg] call FUNC(getSelectedMonitorInstance);
+	if (_instId < 1) then {
+		private _keys = keys (_monArg getVariable ["CFM_monitorInstanceKeysMap", createHashMap]);
+		_keys sort true;
+		_instId = _keys param [0, -1];
+	};
 	[_monArg, _instId]
+};
+
+CFUNC(resolveTurret) = {
+	params [["_operator", objNull], ["_turret", -1]];
+	if (_operator isEqualType []) then {
+		_operator params [["_opObj", objNull], ["_tArg", -1]];
+		_operator = _opObj;
+		if (_turret isEqualTo -1) then {_turret = _tArg};
+	};
+	if !(IS_OBJ(_operator)) exitWith {[objNull, -1]};
+	private _turretsInstances = _operator getVariable ["CFM_turretsInstances", createHashMap];
+	private _turretIndex = TURRET_INDEX(_turret);
+	if (_turretIndex in _turretsInstances) exitWith {
+		private _instData = _turretsInstances getOrDefault [_turretIndex, [-1, objNull]];
+		_instData params [["_instId", -1], ["_turrObj", objNull]];
+		[_turrObj, _instId]
+	};
+	[objNull, -1]
 };
 
 CFUNC(getCrewSeatKey) = {

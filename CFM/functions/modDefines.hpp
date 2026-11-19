@@ -64,6 +64,12 @@
 #define TURRET_INSTANCE_ID(index) ((TURRET_INSTANCE(index)) select 0)
 #define TURRET_INSTANCE_OBJECT(index) ((TURRET_INSTANCE(index)) select 1)
 #define CALL_TURRET_INSTANCE(index) call {private _turrIdx = TURRET_INDEX(index); private _turrInst = TURRET_INSTANCE(_turrIdx); _this CALL_OBJINSTANCE("Turret", (_turrInst select 0), (_turrInst select 1))};
+#define TURR_VAR_NAME(var, instId) (format ["CFM_turret_%1_%2", var, instId])
+#define TURR_GVAR(obj, instId, var, def) ((obj) getVariable [TURR_VAR_NAME(var, instId) I def])
+#define TURR_SVAR(obj, instId, var, val) ((obj) setVariable [TURR_VAR_NAME(var, instId) I val])
+#define TURR_SVARG(obj, instId, var, val, pub) ((obj) setVariable [TURR_VAR_NAME(var, instId) I val I pub])
+#define RESOLVE_TURRET(op, turr) ([op, turr] call CFM_fnc_resolveTurret)
+#define RESOLVE_SVAR_TARGET(t) (if ((t) isEqualType objNull) then {if (IS_OBJ(t)) then {OBJ_OWNER(t)} else {false}} else {if ((t) isEqualType []) then {(t) apply {if (_x isEqualType objNull) then {OBJ_OWNER(_x)} else {_x}}} else {t}})
 
 // -- Multi-instance Monitor & DisplayHandler --
 #define NO_TEXTURE_SELECTION -1

@@ -105,19 +105,19 @@ if (_start && {hasInterface}) then {
 };
 if (_start && {IS_OBJ(_operator)}) then {
 	if (MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) then {
-		[_monPair, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+		[_monPair, false, _isOptimize, false] call CFM_fnc_stopOperatorFeed;
 	};
 	_turret = MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", MON_GVAR(_monitor, _instId, "CFM_currentTurret", if (isNil "_turret") then {DRIVER_TURRET_PATH} else {_turret}));
-	[_monPair, _operator, _turret, _isOptimize] call CFM_fnc_startOperatorFeed;
+	[_monPair, _operator, _turret, _isOptimize, false] call CFM_fnc_startOperatorFeed;
 } else {
 	private _feedActive = MON_GVAR(_monitor, _instId, "CFM_feedActive", false);
 	if (_localSkipOnly) then {
 		if (_feedActive) then {
-			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+			[_monPair, false, true, false] call CFM_fnc_stopOperatorFeed;
 		};
 	} else {
 		if (_feedActive) then {
-			[_monPair, false, _isOptimize] call CFM_fnc_stopOperatorFeed;
+			[_monPair, false, _isOptimize, false] call CFM_fnc_stopOperatorFeed;
 		} else {
 			["clearVariables"] CALL_MON_INST(_monitor, _instId);
 		};

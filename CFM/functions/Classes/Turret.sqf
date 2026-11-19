@@ -588,7 +588,7 @@ PUBLIC GLOBAL CLASS(Turret)
 		MON_SVARG(_monObj, _monInstId, "CFM_camDoInterpolation", _doInterpolation, _global);
 
 		if (MON_GVAR(_monObj, _monInstId, "CFM_feedActive", false)) then {
-			[_monPair, true, _operator] call CFM_fnc_setOperatorInfo;
+			[_monPair, true, _operator, false] call CFM_fnc_setOperatorInfo;
 
 			private _uiParams = if (IS_STR(_interfaceClass)) then {
 				[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]

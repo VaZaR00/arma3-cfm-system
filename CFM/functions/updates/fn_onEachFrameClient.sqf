@@ -132,7 +132,7 @@ private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monPair]};
 
 	_condition = _monPair call CFM_fnc_monitorFeedActive;
 	if (_condition isEqualTo false) then {
-		[_monPair] call CFM_fnc_stopOperatorFeed;
+		[_monPair, false, false, false] call CFM_fnc_stopOperatorFeed;
 		call _remMonF;
 		continue;
 	};
@@ -143,7 +143,7 @@ private _remMonF = {CFM_ActiveMonitors = _monitorsParams - [_monPair]};
 		if (_dist > _optimizeDistance) then {
 			_operator = MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull);
 			_turret = MON_GVAR(_monitor, _instId, "CFM_currentTurret", MON_GVAR(_monitor, _instId, "CFM_waitingForStartTurret", DRIVER_TURRET_PATH));
-			[_monPair, false, true] call CFM_fnc_stopOperatorFeed;
+			[_monPair, false, true, false] call CFM_fnc_stopOperatorFeed;
 			[_monPair, _operator, true, _turret, true] spawn CFM_fnc_syncState;
 			call _remMonF;
 			continue;
