@@ -121,7 +121,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		_monitor setVariable ["CFM_lastUiDevSeatKeys", _useDevSeatKey];
 	};
 
-	PRIVATE LOCAL METHOD("ensureHostActions") {
+	PUBLIC LOCAL METHOD("ensureHostActions") {
 		params [
 			["_hasAnyHand", false],
 			["_hasAnyVehSeat", false],

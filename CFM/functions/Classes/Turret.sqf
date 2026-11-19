@@ -256,7 +256,7 @@ PUBLIC GLOBAL CLASS(Turret)
 		if (_ppType != PP_NONE) then {
 			private _initPointParams = _pointParams;
 			_pointParams = [];
-			_pointParams = ["setPointParams", [_initPointParams]] CALL_SELF;
+			_pointParams = ["setPointParams", [_initPointParams, true, false]] CALL_SELF;
 		};
 
 		// CAN MOVE CAMERA
@@ -438,10 +438,22 @@ PUBLIC GLOBAL CLASS(Turret)
 		} forEach _vars;
     };
     PRIVATE GE GA LOCAL METHOD("syncPointParamsToMonitors") {
-		private _compiledPointParams = ["compilePointParams"] CALL_SELF;
-		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		params [["_syncGlobal", false]];
+		private _compiledPointParams = ["compilePointParams", [_syncGlobal]] CALL_SELF;
 		private _doUpdCam = [true, _compiledPointParams] select _isStaticCam;
 
+		if !(_syncGlobal) exitWith {
+			{
+				_x params [["_monObj", objNull], ["_monInstId", -1]];
+				if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
+					MON_SVAR(_monObj, _monInstId, "CFM_cam_prevSetPos", nil);
+					MON_SVAR(_monObj, _monInstId, "CFM_currentCamPointParams", +_compiledPointParams);
+					MON_SVAR(_monObj, _monInstId, "CFM_doUpdateCamera", _doUpdCam);
+				};
+			} forEach _monitorsOnTurret;
+		};
+
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
 		{
 			_x params [["_monObj", objNull], ["_monInstId", -1]];
 			if (IS_OBJ(_monObj) && {_monInstId > 0}) then {
@@ -455,9 +467,45 @@ PUBLIC GLOBAL CLASS(Turret)
 			};
 		} forEach _monitorsOnTurret;
     };
+	PRIVATE LOCAL METHOD("syncUiCallbackToMonitors") {
+		params ["_monVarName", "_dhFieldName", "_func"];
+		private _uiParams = if (IS_STR(_interfaceClass)) then {
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+		} else {[]};
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			MON_SVAR(_monObj, _monInstId, _monVarName, _func);
+			MON_SVAR(_monObj, _monInstId, "CFM_uiParams", +_uiParams);
+			private _dhId = MON_GVAR(_monObj, _monInstId, "CFM_displayHandlerId", -1);
+			if (_dhId > 0) then {
+				[_monObj, "DisplayHandler", _dhFieldName, _func, false, _dhId] call OOP_FUNC(setVar);
+				[_monObj, "DisplayHandler", "_uiParams", +_uiParams, false, _dhId] call OOP_FUNC(setVar);
+			};
+		} forEach _monitorsOnTurret;
+	};
+	PRIVATE LOCAL METHOD("restartMonitorsUI") {
+		private _uiParams = if (IS_STR(_interfaceClass)) then {
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+		} else {[]};
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			if (MON_GVAR(_monObj, _monInstId, "CFM_feedActive", false) && {hasInterface}) then {
+				private _mainDisp = MON_GVAR(_monObj, _monInstId, "CFM_mainDisplay", displayNull);
+				if !(isNull _mainDisp) then {
+					_mainDisp closeDisplay 1;
+				};
+				private _dhId = MON_GVAR(_monObj, _monInstId, "CFM_displayHandlerId", -1);
+				if (_dhId > 0) then {
+					["startRendering", [true, _uiParams]] CALL_DH_INST(_monObj, _dhId);
+				};
+			};
+		} forEach _monitorsOnTurret;
+	};
 	//----------- Config set -----------
     PUBLIC LE GE GA METHOD("setPointParams") {
-		params[["_params", []], ["_syncGlobal", true]];
+		params[["_params", []], ["_syncGlobal", true], ["_syncMonitors", true]];
 
 		if (!(_params isEqualType []) || {(_params isEqualTo [])}) then {
 			_params = [_objClass, _turretIndex] call CFM_fnc_getDefaultPointAlignment;
@@ -473,9 +521,13 @@ PUBLIC GLOBAL CLASS(Turret)
 			SET_SELFVAR(_pointParams);
 		};
 
+		if (_syncMonitors && {_monitorsOnTurret isNotEqualTo []}) then {
+			["syncPointParamsToMonitors", [_syncGlobal]] CALL_SELF;
+		};
+
 		_pointParams
     };
-	PUBLIC GE GA LOCAL METHOD("setPPParam") {
+	PUBLIC LE GA LOCAL METHOD("setPPParam") {
 		params[["_ppParam", ""], ["_value", nil]];
 
 		private _params = switch (_ppType) do {
@@ -509,13 +561,158 @@ PUBLIC GLOBAL CLASS(Turret)
 
 		if (_params isEqualTo []) exitWith {false};
 
-		["setPointParams", [_params]] CALL_SELF;
-		["syncPointParamsToMonitors"] CALL_SELF;
+		["setPointParams", [_params, false, true]] CALL_SELF;
 
 		true
 	};
-	PUBLIC GE GA LOCAL METHOD("setDefaultPointAlignment") {
-		[_selfObj, _turretIndex, -1] call CFM_fnc_setPointAlignment;
+	PUBLIC LE GA LOCAL METHOD("setDefaultPointAlignment") {
+		["setPointParams", [-1, false, true]] CALL_SELF;
+	};
+	PUBLIC LE GA METHOD("setNvgParam") {
+		params [["_state", false]];
+		if !(_state isEqualType false) exitWith {false};
+		_nvgParam = _state;
+		SET_SELFVAR(_nvgParam);
+		if (_nvgParam && {IS_OBJ(_operator)}) then {
+			_operator setVariable ["CFM_canSwitchNvg", true];
+		};
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			MON_SVAR(_monObj, _monInstId, "CFM_currentNvgParam", _nvgParam);
+			["setMonitorCanSwitchNvg", [_nvgParam]] CALL_MON_INST(_monObj, _monInstId);
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setTiParams") {
+		params [["_tiParamsArg", []]];
+		if !(_tiParamsArg isEqualType []) exitWith {false};
+		_tiParams = +_tiParamsArg;
+		SET_SELFVAR(_tiParams);
+		private _hasTi = _tiParams isNotEqualTo [];
+		if (_hasTi && {IS_OBJ(_operator)}) then {
+			_operator setVariable ["CFM_canSwitchTi", true];
+		};
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			MON_SVAR(_monObj, _monInstId, "CFM_currentTiTable", +_tiParams);
+			["setMonitorCanSwitchTi", [_hasTi]] CALL_MON_INST(_monObj, _monInstId);
+			private _curPip = MON_GVAR(_monObj, _monInstId, "CFM_currentPiPEffect", 0);
+			if (_hasTi && {_curPip > 1} && {!(_curPip in _tiParams)}) then {
+				["setPiPEffect", [0]] CALL_MON_INST(_monObj, _monInstId);
+			};
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setZoomTable") {
+		params [["_zoomTableArg", createHashMap]];
+		if !(_zoomTableArg isEqualType createHashMap) exitWith {false};
+		private _tableCopy = +_zoomTableArg;
+		private _zooms = (keys _tableCopy) select {_x isEqualType 1};
+		_zooms sort false;
+		private _max = if !(_zooms isEqualTo []) then {_zooms select 0} else {1};
+		if (isNil "_max") then {_max = 1};
+		_tableCopy set ["max", _max];
+		_zoomTable = _tableCopy;
+		SET_SELFVAR(_zoomTable);
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			MON_SVAR(_monObj, _monInstId, "CFM_zoomTable", +_zoomTable);
+			MON_SVAR(_monObj, _monInstId, "CFM_zoomMax", _max);
+			private _curZoom = MON_GVAR(_monObj, _monInstId, "CFM_zoom", 1);
+			if (_curZoom isEqualType 1) then {
+				if (_curZoom > _max) then {
+					private _fov = _zoomTable getOrDefault [_max, 1 / (_max max 1)];
+					MON_SVAR(_monObj, _monInstId, "CFM_zoom", _max);
+					MON_SVAR(_monObj, _monInstId, "CFM_zoomFov", _fov);
+					MON_SVAR(_monObj, _monInstId, "CFM_maxZoomed", true);
+					MON_SVAR(_monObj, _monInstId, "CFM_doUpdateCamera", true);
+				} else {
+					MON_SVAR(_monObj, _monInstId, "CFM_maxZoomed", _curZoom >= _max);
+				};
+			};
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setSmoothZoom") {
+		params [["_state", true]];
+		if !(_state isEqualType false) exitWith {false};
+		_smoothZoom = _state;
+		SET_SELFVAR(_smoothZoom);
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			["setCurrentCameraSmoothZoom", [_smoothZoom]] CALL_MON_INST(_monObj, _monInstId);
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setCanMoveCamera") {
+		params [["_state", false]];
+		if !(_state isEqualType false) exitWith {false};
+		_canMoveCamera = _state;
+		SET_SELFVAR(_canMoveCamera);
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			["setCurrentCameraCanMove", [_canMoveCamera]] CALL_MON_INST(_monObj, _monInstId);
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setCameraMoveRestrictions") {
+		params [["_restrictionsArg", DEF_CAM_MOVE_RESTR]];
+		if !(_restrictionsArg isEqualType []) exitWith {false};
+		private _res = +_restrictionsArg;
+		_res resize [4, 0];
+		_cameraMoveRestrictions = _res;
+		SET_SELFVAR(_cameraMoveRestrictions);
+		{
+			_x params [["_monObj", objNull], ["_monInstId", -1]];
+			if (!(IS_OBJ(_monObj)) || {_monInstId < 1}) then {continue};
+			["setCurrentCameraMoveRestrictions", [+_cameraMoveRestrictions]] CALL_MON_INST(_monObj, _monInstId);
+		} forEach _monitorsOnTurret;
+		true
+	};
+	PUBLIC LE GA METHOD("setSignalFunc") {
+		params [["_func", {1}]];
+		if !(_func isEqualType {}) exitWith {false};
+		_signalFunc = _func;
+		SET_SELFVAR(_signalFunc);
+		["syncUiCallbackToMonitors", ["CFM_currentOperatorSignalFunction", "_currentOperatorSignalFunction", _signalFunc]] CALL_SELF;
+		true
+	};
+	PUBLIC LE GA METHOD("setEffectFunc") {
+		params [["_func", {}]];
+		if !(_func isEqualType {}) exitWith {false};
+		_effectFunc = _func;
+		SET_SELFVAR(_effectFunc);
+		["syncUiCallbackToMonitors", ["CFM_currentOperatorEffectsFunction", "_currentOperatorEffectsFunction", _effectFunc]] CALL_SELF;
+		true
+	};
+	PUBLIC LE GA METHOD("setInterfaceFunc") {
+		params [["_func", {}]];
+		if !(_func isEqualType {}) exitWith {false};
+		_interfaceFunc = _func;
+		SET_SELFVAR(_interfaceFunc);
+		["syncUiCallbackToMonitors", ["CFM_currentOperatorInterfaceFunction", "_currentOperatorInterfaceFunction", _interfaceFunc]] CALL_SELF;
+		true
+	};
+	PUBLIC LE GA METHOD("setInterfaceClass") {
+		params [["_classArg", ""]];
+		if !(_classArg isEqualType "") exitWith {false};
+		_interfaceClass = _classArg;
+		SET_SELFVAR(_interfaceClass);
+		["restartMonitorsUI"] CALL_SELF;
+		true
+	};
+	PUBLIC LE GA METHOD("setInitInterfaceFunc") {
+		params [["_func", {}]];
+		if !(_func isEqualType {}) exitWith {false};
+		_initInterfaceFunc = _func;
+		SET_SELFVAR(_initInterfaceFunc);
+		["restartMonitorsUI"] CALL_SELF;
+		true
 	};
 	//----------- Config get -----------
 	PUBLIC LE GA LOCAL METHOD("getPPParam") {
@@ -643,9 +840,17 @@ PUBLIC GLOBAL CLASS(Turret)
 	};
 	//----------- State set -----------
 	PUBLIC LE GA METHOD("setDisabled") {
-		params[["_state", true]];
+		params [["_state", true], ["_syncOperator", true]];
+		if !(_state isEqualType false) exitWith {false};
 		_disabled = _state;
 		SET_SELFVAR(_disabled);
+		if (_syncOperator && {IS_OBJ(_operator)}) then {
+			if (_disabled) then {
+				["disableTurret", [_turretIndex]] CALL_OBJCLASS("Operator", _operator);
+			} else {
+				["enableTurret", [_turretIndex]] CALL_OBJCLASS("Operator", _operator);
+			};
+		};
 		true
 	};
 	PRIVATE GE LA METHOD("moveCamera") {
@@ -677,7 +882,7 @@ PUBLIC GLOBAL CLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal]] CALL_SELF;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal, false]] CALL_SELF;
 				
 				true
 			};
@@ -690,7 +895,7 @@ PUBLIC GLOBAL CLASS(Turret)
 				private _newDir = _newDirUp param [0, _dir];
 				private _newUp = _newDirUp param [1, _up];
 
-				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal]] CALL_SELF;
+				_pointParams = ["setPointParams", [[_pos, _newDir, _newUp], _syncGlobal, false]] CALL_SELF;
 				
 				true
 			};
@@ -732,7 +937,7 @@ PUBLIC GLOBAL CLASS(Turret)
 					_newUpMS vectorDotProduct _mup
 				];
 
-				_pointParams = ["setPointParams", [[[_memPoint, _lod], _addArr, _dir, _up, _setArr], _syncGlobal]] CALL_SELF;
+				_pointParams = ["setPointParams", [[[_memPoint, _lod], _addArr, _dir, _up, _setArr], _syncGlobal, false]] CALL_SELF;
 
 				true
 			};

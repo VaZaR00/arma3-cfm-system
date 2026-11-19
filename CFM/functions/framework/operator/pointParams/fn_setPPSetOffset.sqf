@@ -3,17 +3,18 @@
     Author: Vazar & Gemini
     Description:
         Sets the coordinate override vector (PP_SETARR) on an operator turret
-        and synchronizes it to active monitors (-1 per axis keeps original memory point coordinate).
+        via Operator::setPPTurret and distributes via CFM remoteEvent (REMOTE_EXEC_OBJCLASS).
     Parameters:
         0: _operator [Object] - Target operator object (default objNull).
         1: _turretIndex [Number | Array] - Turret index or path (default -1).
         2: _setArr [Array] - Coordinate override array [x, y, z] (default []).
+        3: _target [Boolean | Number | Object | Array] - MP execution target (true = global, false = local) (default true).
     Returns:
-        [Boolean] - true if updated successfully, false otherwise.
+        [Boolean | String] - true when executed locally, JIP ID if global, or false otherwise.
 */
 
 #include "defines.hpp"
 
-params [["_operator", objNull], ["_turretIndex", -1], ["_setArr", []]];
+params [["_operator", objNull], ["_turretIndex", -1], ["_setArr", []], ["_target", true]];
 if !(IS_OBJ(_operator)) exitWith {false};
-["setPPTurret", [_turretIndex, PP_SETARR, _setArr]] CALL_OBJCLASS("Operator", _operator);
+["setPPTurret", [_turretIndex, PP_SETARR, _setArr], _target, false] REMOTE_EXEC_OBJCLASS("Operator", _operator);

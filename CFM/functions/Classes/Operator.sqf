@@ -285,28 +285,39 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		["syncContinuousMove", []] CALL_TURRET_INSTANCE(_turret);
 	};
+	PRIVATE LOCAL METHOD("getConnectedMonitors") {
+		private _result = [];
+		{
+			_x params [["_mon", objNull], ["_instId", -1]];
+			if (IS_OBJ(_mon) && {_instId > 0} && {(MON_GVAR(_mon, _instId, "CFM_connectedOperator", objNull)) isEqualTo _selfObj}) then {
+				_result pushBack [_mon, _instId];
+			};
+		} forEach +(missionNamespace getVariable ["CFM_Monitors", []]);
+		_result
+	};
 	//----------- Config set -----------
-	PUBLIC GE GA METHOD("setPointParams") {
-		params[["_turretIndex", -1], ["_params", []]];
+	PUBLIC LE GA METHOD("setPointParams") {
+		params[["_turretIndex", -1], ["_params", []], ["_syncGlobal", false]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
-		["setPointParams", [_params]] CALL_TURRET_INSTANCE(_turretIndex);
+		["setPointParams", [_params, _syncGlobal, true]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	PUBLIC GE GA METHOD("setPPTurret") {
+	PUBLIC LE GA METHOD("setPPTurret") {
 		params[["_turretIndex", -1], ["_ppParam", ""], ["_value", nil]];
 
 		_turretIndex = TURRET_INDEX(_turretIndex);
 
-		["setPPParam", [_ppParam, _value]] CALL_TURRET_INSTANCE(_turretIndex);
+		["setPPParam", [_ppParam, _NIL(_value)]] CALL_TURRET_INSTANCE(_turretIndex);
 	};
-	PUBLIC GE GA METHOD("setDefaultPointAlignment") {
+	PUBLIC LE GA METHOD("setDefaultPointAlignment") {
 		{
-			[_selfObj, _x, -1] call CFM_fnc_setPointAlignment;
+			["setPointParams", [_x, -1, false]] CALL_SELF;
 		} forEach _turrets;
+		true
 	};
-	PUBLIC GE GA METHOD("setOperatorSides") {
-		params[["_sides", civilian], ["_global", true]];
+	PUBLIC LE GE GA METHOD("setOperatorSides") {
+		params[["_sides", civilian], ["_global", false]];
 
 		if !(_sides isEqualType []) then {
 			_sides = [_sides];
@@ -317,6 +328,56 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		_opSides = _sides;
 		_selfObj setVariable ["CFM_opSides", _sides, _global];
+		true
+	};
+	PUBLIC LE GA METHOD("setOperatorName") {
+		params [["_operatorNameArg", ""]];
+		if !(_operatorNameArg isEqualType "") exitWith {false};
+		_operatorName = _operatorNameArg;
+		_selfObj setVariable ["CFM_operatorName", _operatorName];
+		{
+			_x params ["_mon", "_instId"];
+			if (MON_GVAR(_mon, _instId, "CFM_feedActive", false)) then {
+				[[_mon, _instId], true, _selfObj, false] call CFM_fnc_setOperatorInfo;
+			};
+		} forEach (["getConnectedMonitors"] CALL_SELF);
+		true
+	};
+	PUBLIC LE GA METHOD("setCanFeed") {
+		params [["_canFeedArg", false]];
+		if !(_canFeedArg isEqualType false) exitWith {false};
+		_canFeed = _canFeedArg;
+		_selfObj setVariable ["CFM_canFeed", _canFeed];
+		if !(_canFeed) then {
+			{
+				_x params ["_mon", "_instId"];
+				if (MON_GVAR(_mon, _instId, "CFM_feedActive", false)) then {
+					[[_mon, _instId], false, false, false] call CFM_fnc_stopOperatorFeed;
+				};
+			} forEach (["getConnectedMonitors"] CALL_SELF);
+		};
+		true
+	};
+	PUBLIC LE GA METHOD("setCanSwitchNvg") {
+		params [["_canSwitchNvgArg", false]];
+		if !(_canSwitchNvgArg isEqualType false) exitWith {false};
+		_canSwitchNvg = _canSwitchNvgArg;
+		_selfObj setVariable ["CFM_canSwitchNvg", _canSwitchNvg];
+		{
+			_x params ["_mon", "_instId"];
+			["setMonitorCanSwitchNvg", [_canSwitchNvg]] CALL_MON_INST(_mon, _instId);
+		} forEach (["getConnectedMonitors"] CALL_SELF);
+		true
+	};
+	PUBLIC LE GA METHOD("setCanSwitchTi") {
+		params [["_canSwitchTiArg", false]];
+		if !(_canSwitchTiArg isEqualType false) exitWith {false};
+		_canSwitchTi = _canSwitchTiArg;
+		_selfObj setVariable ["CFM_canSwitchTi", _canSwitchTi];
+		{
+			_x params ["_mon", "_instId"];
+			["setMonitorCanSwitchTi", [_canSwitchTi]] CALL_MON_INST(_mon, _instId);
+		} forEach (["getConnectedMonitors"] CALL_SELF);
 		true
 	};
 	PUBLIC SE METHOD("setTurretParams") {
@@ -526,7 +587,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		_disabledTurrets = _selfObj getVariable ["CFM_disabledTurrets", []];
 
 		// mark turret instance as disabled (instance is kept, not deleted)
-		["setDisabled", [true]] CALL_TURRET_INSTANCE(_turretIndex);
+		["setDisabled", [true, false]] CALL_TURRET_INSTANCE(_turretIndex);
 
 		[_selfObj, "CFM_turrets", _turretIndex, false, false] call CFM_fnc_removeFromArray;
 		_turrets = _selfObj getVariable ["CFM_turrets", []];
@@ -547,7 +608,7 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 		[_selfObj, "CFM_disabledTurrets", _turretIndex, false, false] call CFM_fnc_removeFromArray;
 		_disabledTurrets = _selfObj getVariable ["CFM_disabledTurrets", []];
 
-		["setDisabled", [false]] CALL_TURRET_INSTANCE(_turretIndex);
+		["setDisabled", [false, false]] CALL_TURRET_INSTANCE(_turretIndex);
 
 		[_selfObj, "CFM_turrets", _turretIndex, true, false] call CFM_fnc_pushBack;
 		_turrets = _selfObj getVariable ["CFM_turrets", []];

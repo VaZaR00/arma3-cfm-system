@@ -425,16 +425,51 @@ PUBLIC GLOBAL CLASS(Monitor)
 		MON_SVAR(_monitor, _instanceIndex, "CFM_menuActive", false);
 	};
 
+	PRIVATE LOCAL METHOD("refreshSeatLabels") {
+		params [["_recomputeSeatName", true]];
+		if !(hasInterface) exitWith {};
+		if (_recomputeSeatName) then {
+			_seatDisplayName = if (_isVehSeatTablet) then {
+				if ((count _seatKeys) > 1) then {
+					private _names = _seatKeys apply {[_monitor, _x] call CFM_fnc_getSeatDisplayName};
+					if ((count _names) <= 2) then {
+						_names joinString " + "
+					} else {
+						format ["%1, %2 (+%3)", _names select 0, _names select 1, (count _names) - 2]
+					}
+				} else {
+					private _singleKey = if (_seatKeys isNotEqualTo []) then {_seatKeys select 0} else {_seatKey};
+					if !(_singleKey isEqualTo "") then {
+						[_monitor, _singleKey] call CFM_fnc_getSeatDisplayName
+					} else {""}
+				}
+			} else {""};
+			SET_SELFVAR(_seatDisplayName);
+			MON_SVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
+		};
+		private _isMultiMonitor = (count (_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap])) > 1;
+		["buildMenuActionLabels", [_isMultiMonitor]] CALL_SELF;
+		if (_selfObj getVariable ["CFM_isMonitorHostCreated", false] && {([_selfObj] call CFM_fnc_getSelectedMonitorInstance) isEqualTo _instanceIndex}) then {
+			["syncSelectedActionLabels", [_instanceIndex]] CALL_OBJCLASS("MonitorHost", _selfObj);
+		};
+	};
+
+	PRIVATE LOCAL METHOD("validateConnectedOperator") {
+		if ((isServer || _isLocal) && {IS_OBJ(_connectedOperator)} && {!([_connectedOperator, [_selfObj, _instanceIndex]] call CFM_fnc_operatorCondition)}) then {
+			["disconnect"] CALL_SELF;
+		};
+	};
+
 	//----------- Config set -----------
-	PUBLIC GE GA METHOD("setScreenResolution") {
+	PUBLIC LE GA METHOD("setScreenResolution") {
 		params [["_screenResolutionSet", ""]];
 		private _parsedScreenRes = [_screenResolutionSet, _monitor] call CFM_fnc_parseScreenResolution;
 		if (_parsedScreenRes isEqualTo []) then {
 			_parsedScreenRes = [_monitor] call CFM_fnc_getDefaultScreenResolution;
 		};
 		_screenResolution = _parsedScreenRes;
-		MON_SVARG(_monitor, _instanceIndex, "CFM_screenResolution", _screenResolution, !_isLocal);
-		if (_feedActive) then {
+		MON_SVAR(_monitor, _instanceIndex, "CFM_screenResolution", _screenResolution);
+		if (hasInterface && {_feedActive}) then {
 			[[_selfObj, _instanceIndex]] spawn CFM_fnc_resetFeed;
 		};
 		_screenResolution
@@ -445,6 +480,198 @@ PUBLIC GLOBAL CLASS(Monitor)
 		if !(_plrId isEqualType "") exitWith {};
 		if (_plrId isEqualTo "") exitWith {};
 		[_monitor, MON_VAR_NAME("CFM_passwordAccess", _instanceIndex), _plrId, true, false, !_isLocal, !_isLocal] call CFM_fnc_pushBackNet;
+	};
+
+	PUBLIC LE GA METHOD("setTextureSelection") {
+		params [["_texSelArg", NO_TEXTURE_SELECTION]];
+		if !(_texSelArg isEqualType 0) exitWith {false};
+		private _monitorTextures = if (_texSelArg >= 0) then {getObjectTextures _monitor} else {[]};
+		if (_texSelArg >= 0 && {_texSelArg >= (count _monitorTextures)}) exitWith {
+			format["Monitor::setTextureSelection: Object '%1' has no texture selection %2!", _monitor, _texSelArg] WARN;
+			false
+		};
+		if (hasInterface && {_textureSelection >= 0} && {_textureSelection != _texSelArg}) then {
+			_monitor setObjectTexture [_textureSelection, _originalTexture];
+		};
+		_textureSelection = _texSelArg;
+		_isHandMonitor = _isHandTablet || (_isVehSeatTablet && {_textureSelection < 0});
+		_originalTexture = if (_textureSelection >= 0) then {
+			private _tex = _monitorTextures param [_textureSelection, ""];
+			if (isNil "_tex") then {""} else {_tex}
+		} else {""};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandMonitor", _isHandMonitor);
+		if (_displayHandlerId > 0) then {
+			[_monitor, "DisplayHandler", "_textureSelection", _textureSelection, false, _displayHandlerId] call OOP_FUNC(setVar);
+			[_monitor, "DisplayHandler", "_originalTexture", _originalTexture, false, _displayHandlerId] call OOP_FUNC(setVar);
+			[_monitor, "DisplayHandler", "_isHandMonitor", _isHandMonitor, false, _displayHandlerId] call OOP_FUNC(setVar);
+		};
+		if (_textureSelection >= 0) then {
+			[_monitor, _textureSelection, _instanceIndex] call CFM_fnc_cacheMonitorSelectionPos;
+		};
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [false]] CALL_SELF;
+		if (hasInterface && {_feedActive}) then {
+			[[_selfObj, _instanceIndex]] spawn CFM_fnc_resetFeed;
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setSeatKey") {
+		params [["_seatKeyArg", ""]];
+		if !(_seatKeyArg isEqualType "") exitWith {false};
+		_seatKey = _seatKeyArg;
+		if (_seatKeys isEqualTo [] && {!(_seatKey isEqualTo "")}) then {
+			_seatKeys = [_seatKey];
+			MON_SVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+		};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [true]] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setSeatKeys") {
+		params [["_seatKeysArg", []]];
+		if !(_seatKeysArg isEqualType []) exitWith {false};
+		_seatKeys = _seatKeysArg select {_x isEqualType ""};
+		if (_seatKey isEqualTo "" && {_seatKeys isNotEqualTo []}) then {
+			_seatKey = _seatKeys select 0;
+			MON_SVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [true]] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setControlSeatKeys") {
+		params [["_controlSeatKeysArg", []]];
+		if !(_controlSeatKeysArg isEqualType []) exitWith {false};
+		_controlSeatKeys = _controlSeatKeysArg select {_x isEqualType ""};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_controlSeatKeys", _controlSeatKeys);
+		if (hasInterface && {_menuActive} && {!([_selfObj, _instanceIndex] call CFM_fnc_canControlMonitorSeat)}) then {
+			[[_selfObj, _instanceIndex], _currentMenuObj] call CFM_fnc_monitorCloseMenu;
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setIsVehSeatTablet") {
+		params [["_isVehSeatArg", false]];
+		if !(_isVehSeatArg isEqualType false) exitWith {false};
+		_isVehSeatTablet = _isVehSeatArg;
+		_isHandMonitor = _isHandTablet || (_isVehSeatTablet && {_textureSelection < 0});
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandMonitor", _isHandMonitor);
+		if (_displayHandlerId > 0) then {
+			[_monitor, "DisplayHandler", "_isHandMonitor", _isHandMonitor, false, _displayHandlerId] call OOP_FUNC(setVar);
+		};
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [true]] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setIsHandTablet") {
+		params [["_isHandArg", false]];
+		if !(_isHandArg isEqualType false) exitWith {false};
+		_isHandTablet = _isHandArg;
+		_isHandMonitor = _isHandTablet || (_isVehSeatTablet && {_textureSelection < 0});
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandMonitor", _isHandMonitor);
+		if (_displayHandlerId > 0) then {
+			[_monitor, "DisplayHandler", "_isHandMonitor", _isHandMonitor, false, _displayHandlerId] call OOP_FUNC(setVar);
+		};
+		_monitor setVariable ["CFM_availInstCache", nil];
+		_monitor setVariable ["CFM_selInstCache", nil];
+		["refreshSeatLabels", [false]] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setSeatDisplayName") {
+		params [["_seatDisplayNameArg", ""]];
+		if !(_seatDisplayNameArg isEqualType "") exitWith {false};
+		_seatDisplayName = _seatDisplayNameArg;
+		SET_SELFVAR(_seatDisplayName);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
+		["refreshSeatLabels", [false]] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setMonitorSides") {
+		params [["_sidesArg", []]];
+		if !(_sidesArg isEqualType []) then {_sidesArg = [_sidesArg]};
+		_sidesArg = _sidesArg select {_x isEqualType west};
+		_monitorSides = _sidesArg;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_monitorSides", _monitorSides);
+		["validateConnectedOperator"] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setOriginalTexture") {
+		params [["_origTexArg", ""]];
+		if !(_origTexArg isEqualType "") exitWith {false};
+		_originalTexture = _origTexArg;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture);
+		if (_displayHandlerId > 0) then {
+			[_monitor, "DisplayHandler", "_originalTexture", _originalTexture, false, _displayHandlerId] call OOP_FUNC(setVar);
+		};
+		if (hasInterface && {!_feedActive} && {_textureSelection >= 0}) then {
+			_monitor setObjectTexture [_textureSelection, _originalTexture];
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setAllowedOperators") {
+		params [["_allowedOpsArg", []]];
+		if !(_allowedOpsArg isEqualTypeAny [objNull, []]) exitWith {false};
+		if !(_allowedOpsArg isEqualType []) then {_allowedOpsArg = [_allowedOpsArg]};
+		_allowedOperators = _allowedOpsArg select {_x isEqualType objNull};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_allowedOperators", _allowedOperators);
+		["validateConnectedOperator"] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setAllowedOperatorsTypes") {
+		params [["_allowedTypesArg", []]];
+		if !(_allowedTypesArg isEqualTypeAny ["", 1, []]) exitWith {false};
+		if !(_allowedTypesArg isEqualType []) then {_allowedTypesArg = [_allowedTypesArg]};
+		_allowedOperatorsTypes = _allowedTypesArg select {(_x isEqualType "") || {(_x isEqualType 1)}};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_allowedOperatorsTypes", _allowedOperatorsTypes);
+		["validateConnectedOperator"] CALL_SELF;
+		true
+	};
+
+	PUBLIC LE GA METHOD("setCanFullScreen") {
+		params [["_canFullScreenArg", false]];
+		if !(_canFullScreenArg isEqualType false) exitWith {false};
+		_canFullScreen = _canFullScreenArg;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_canFullScreen", _canFullScreen);
+		if (hasInterface) then {
+			if (_canFullScreen) then {
+				if (_monitor getVariable ["CFM_isMonitorHostCreated", false]) then {
+					["ensureHostActions", [false, false, false, false, false, false, false, false, false, false, false, true]] CALL_OBJCLASS("MonitorHost", _monitor);
+				};
+			} else {
+				private _curFullMon = missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]];
+				if (_curFullMon isEqualTo [_selfObj, _instanceIndex]) then {
+					["monitorExitFullScreen"] CALL_SELF;
+				};
+			};
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setCanSetPassword") {
+		params [["_canSetPasswordArg", true]];
+		if !(_canSetPasswordArg isEqualType false) exitWith {false};
+		_canSetPassword = _canSetPasswordArg && {!_isHandMonitor || _isVehSeatTablet};
+		MON_SVAR(_monitor, _instanceIndex, "CFM_canSetPassword", _canSetPassword);
+		true
 	};
 
 	//----------- State set -----------
@@ -984,6 +1211,87 @@ PUBLIC GLOBAL CLASS(Monitor)
 		};
 
 		_infoStr
+	};
+
+	PUBLIC LE GA METHOD("setPiPEffect") {
+		params [["_pipEffect", 0]];
+		if !(_pipEffect isEqualType 0) exitWith {false};
+		private _renderTarget = MON_GVAR(_monitor, _instanceIndex, "CFM_monitorR2Tid", _monitorR2Tid);
+		if (hasInterface && {!(_renderTarget isEqualTo "")}) then {
+			_renderTarget setPiPEffect [_pipEffect];
+		};
+		_currentPiPEffect = _pipEffect;
+		_isInNvg = _pipEffect isEqualTo 1;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentPiPEffect", _pipEffect);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_isInNvg", _isInNvg);
+		true
+	};
+
+	PUBLIC LE GA METHOD("setMonitorCanSwitchNvg") {
+		params [["_canSwitchNvg", false]];
+		if !(_canSwitchNvg isEqualType false) exitWith {false};
+		_monitorCanSwitchNvg = _canSwitchNvg;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_monitorCanSwitchNvg", _monitorCanSwitchNvg);
+		if (_monitorCanSwitchNvg) then {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_canSwitchNvgAction", true);
+			if (hasInterface && {_monitor getVariable ["CFM_isMonitorHostCreated", false]}) then {
+				["ensureHostActions", [false, false, false, false, false, false, false, false, false, true, false, false]] CALL_OBJCLASS("MonitorHost", _monitor);
+			};
+		} else {
+			if (_isInNvg) then {
+				["setPiPEffect", [0]] CALL_SELF;
+			};
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setMonitorCanSwitchTi") {
+		params [["_canSwitchTi", false]];
+		if !(_canSwitchTi isEqualType false) exitWith {false};
+		_monitorCanSwitchTi = _canSwitchTi;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_monitorCanSwitchTi", _monitorCanSwitchTi);
+		if (_monitorCanSwitchTi) then {
+			MON_SVAR(_monitor, _instanceIndex, "CFM_canSwitchTiAction", true);
+			if (hasInterface && {_monitor getVariable ["CFM_isMonitorHostCreated", false]}) then {
+				["ensureHostActions", [false, false, false, false, false, false, false, false, false, false, true, false]] CALL_OBJCLASS("MonitorHost", _monitor);
+			};
+		} else {
+			if (_currentPiPEffect > 1) then {
+				["setPiPEffect", [0]] CALL_SELF;
+			};
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setCurrentCameraSmoothZoom") {
+		params [["_smoothZoom", true]];
+		if !(_smoothZoom isEqualType false) exitWith {false};
+		_currentCameraSmoothZoom = _smoothZoom;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentCameraSmoothZoom", _currentCameraSmoothZoom);
+		true
+	};
+
+	PUBLIC LE GA METHOD("setCurrentCameraCanMove") {
+		params [["_canMove", false]];
+		if !(_canMove isEqualType false) exitWith {false};
+		_currentCameraCanMove = _canMove;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentCameraCanMove", _currentCameraCanMove);
+		if (!_currentCameraCanMove && {hasInterface} && {missionNamespace getVariable ["CFM_isContinuousMoving", false]} && {(GET_MON) isEqualTo [_selfObj, _instanceIndex]}) then {
+			call CFM_fnc_stopContinuousCameraMove;
+		};
+		true
+	};
+
+	PUBLIC LE GA METHOD("setCurrentCameraMoveRestrictions") {
+		params [["_restrictions", []]];
+		if !(_restrictions isEqualType []) exitWith {false};
+		private _res = +_restrictions;
+		if (_res isNotEqualTo []) then {
+			_res resize [4, 0];
+		};
+		_currentCameraMoveRestrictions = _res;
+		MON_SVAR(_monitor, _instanceIndex, "CFM_currentCameraMoveRestrictions", _currentCameraMoveRestrictions);
+		true
 	};
 
 	//----------- State get -----------

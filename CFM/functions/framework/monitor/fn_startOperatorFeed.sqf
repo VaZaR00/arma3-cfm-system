@@ -19,4 +19,5 @@
 params [["_monArg", objNull], ["_operator", objNull], ["_turret", DRIVER_TURRET_PATH], ["_reset", false], ["_target", true]];
 (RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+if (_target isNotEqualTo false && {MON_GVAR(_monitor, _instId, "CFM_isLocal", false)}) then {_target = false};
 ["startFeed", [_operator, _turret, _reset], _target, _monitor] REMOTE_EXEC_OBJINSTANCE("Monitor", _instId, _monitor);

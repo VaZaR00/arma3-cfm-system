@@ -19,4 +19,5 @@
 params [["_monArg", objNull], ["_set", false], ["_operator", nil], ["_target", true]];
 (RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+if (_target isNotEqualTo false && {MON_GVAR(_monitor, _instId, "CFM_isLocal", false)}) then {_target = false};
 ["setOperatorInfo", [_set, _NIL(_operator)], _target, false] REMOTE_EXEC_OBJINSTANCE("Monitor", _instId, _monitor);
