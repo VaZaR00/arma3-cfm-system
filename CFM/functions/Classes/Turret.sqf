@@ -552,13 +552,14 @@ PUBLIC GLOBAL CLASS(Turret)
 
 		private _isVehSeatTablet = MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false);
 		private _texSel = MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
-		private _isSeatPip = _isVehSeatTablet && {_texSel < 0};
-		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSeatPip;
-		if (_isSeatPip) then {
+		private _seatKeys = MON_GVAR(_monObj, _monInstId, "CFM_seatKeys", []);
+		private _isSingleSeatPip = _isVehSeatTablet && {_texSel < 0} && {(count _seatKeys) <= 1};
+		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSingleSeatPip;
+		if (_isSingleSeatPip) then {
 			_global = false;
 		};
 		if (isServer || _monIsLocal) then {
-			if (isServer || !_isSeatPip) then {
+			if (isServer || !_isSingleSeatPip) then {
 				["TurretChangedLocalOperator", [_monPair]] CALL_SELF;
 			};
 			MON_SVARG(_monObj, _monInstId, "CFM_waitingForStartTurret", _turretIndex, !_monIsLocal);

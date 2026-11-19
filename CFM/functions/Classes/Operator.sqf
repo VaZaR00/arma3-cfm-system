@@ -260,8 +260,9 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 					if (_hasOtherTurrets) then {
 						private _isVehSeat = MON_GVAR(_mon, _instId, "CFM_isVehSeatTablet", false);
 						private _texSel = MON_GVAR(_mon, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
-						private _isSeatPip = _isVehSeat && {_texSel < 0};
-						if (_isSeatPip) then {
+						private _seatKeys = MON_GVAR(_mon, _instId, "CFM_seatKeys", []);
+						private _isSingleSeatPip = _isVehSeat && {_texSel < 0} && {(count _seatKeys) <= 1};
+						if (_isSingleSeatPip) then {
 							MON_SVARG(_mon, _instId, "CFM_currentTurret", [_nextTurr], true);
 							if (hasInterface && {[_mon, _instId] call CFM_fnc_inVehicleTabletSeatCondition}) then {
 								["TurretChanged", [_monPair, [_nextTurr], false, false]] CALL_SELF;
@@ -473,11 +474,12 @@ PUBLIC GLOBAL SINGLETON_CLASS(Operator)
 
 		private _isVehSeat = MON_GVAR(_monObj, _monInstId, "CFM_isVehSeatTablet", false);
 		private _texSel = MON_GVAR(_monObj, _monInstId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
-		private _isSeatPip = _isVehSeat && {_texSel < 0};
-		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSeatPip;
+		private _seatKeys = MON_GVAR(_monObj, _monInstId, "CFM_seatKeys", []);
+		private _isSingleSeatPip = _isVehSeat && {_texSel < 0} && {(count _seatKeys) <= 1};
+		private _monIsLocal = (MON_GVAR(_monObj, _monInstId, "CFM_isLocal", false)) || _isSingleSeatPip;
 		private _targets = MONITOR_VIEWERS_AND_SELF(_monObj, _monInstId, _monIsLocal);
 		["TurretChanged", [_monPair, [_turretIdx], false, false], [_targets, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
-		if (_isSeatPip && !isServer) then {
+		if (_isSingleSeatPip && !isServer) then {
 			["TurretChangedLocalOperator", [_monPair, [_turretIdx]], [2, false]] REMOTE_EXEC_OBJCLASS("Operator", _selfObj);
 		};
 

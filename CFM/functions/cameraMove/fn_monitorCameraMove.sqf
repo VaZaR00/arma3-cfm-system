@@ -9,6 +9,7 @@
 params["_monArg", ["_direction", ""]];
 (RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+if !([_monitor, _instId] call CFM_fnc_canControlMonitorSeat) exitWith {false};
 
 private _canMove = MON_GVAR(_monitor, _instId, "CFM_currentCameraCanMove", false);
 if !(_canMove isEqualTo true) exitWith {false};

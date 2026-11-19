@@ -6,8 +6,8 @@
 
 #include "defines.hpp" 
 
-[] call CFM_fnc_exitFullScreen;
 private _monPair = GET_MON;
-if (IS_VALID_MON(_monPair)) then {
-	[_monPair, PLAYER_] call CFM_fnc_disconnectMonitorFromOperator;
-};
+if !(IS_VALID_MON(_monPair)) exitWith {};
+if !(_monPair call CFM_fnc_canControlMonitorSeat) exitWith {};
+[] call CFM_fnc_exitFullScreen;
+[_monPair, PLAYER_] call CFM_fnc_disconnectMonitorFromOperator;

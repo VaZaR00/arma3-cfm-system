@@ -170,6 +170,11 @@ CFUNC(inVehicleTabletSeatCondition) = {
 	if (_instId > 0) exitWith {
 		if !(MON_GVAR(_target, _instId, "CFM_isVehSeatTablet", false)) exitWith {true};
 		if !(_plr in _target) exitWith {false};
+		private _reqSeats = MON_GVAR(_target, _instId, "CFM_seatKeys", []);
+		if (_reqSeats isNotEqualTo []) exitWith {
+			private _curSeat = [_target, _plr] call FUNC(getUnitVehicleSeatKey);
+			!(_curSeat isEqualTo "") && {_curSeat in _reqSeats}
+		};
 		private _reqSeat = MON_GVAR(_target, _instId, "CFM_seatKey", "");
 		if (_reqSeat isEqualTo "") exitWith {true};
 		private _curSeat = [_target, _plr] call FUNC(getUnitVehicleSeatKey);
@@ -181,6 +186,27 @@ CFUNC(inVehicleTabletSeatCondition) = {
 	if (_curSeat isEqualTo "") exitWith {false};
 	private _map = _target getVariable ["CFM_monitorInstancesMap", createHashMap];
 	!((_map getOrDefault [_curSeat, []]) isEqualTo [])
+};
+
+CFUNC(canControlMonitorSeat) = {
+	params ["_target", ["_instId", -1]];
+	if (_target isEqualType []) then {
+		_target params [["_obj", objNull], ["_id", -1]];
+		_target = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	if !(IS_OBJ(_target)) exitWith {false};
+	if (_instId < 1) then {
+		_instId = [_target] call FUNC(getSelectedMonitorInstance);
+	};
+	if (_instId < 1) exitWith {false};
+	if !(MON_GVAR(_target, _instId, "CFM_isVehSeatTablet", false)) exitWith {true};
+	private _controlSeats = MON_GVAR(_target, _instId, "CFM_controlSeatKeys", []);
+	if (_controlSeats isEqualTo []) exitWith {true};
+	private _plr = PLAYER_;
+	if !(_plr in _target) exitWith {false};
+	private _curSeat = [_target, _plr] call FUNC(getUnitVehicleSeatKey);
+	!(_curSeat isEqualTo "") && {_curSeat in _controlSeats}
 };
 
 CFUNC(hasHandTablet) = {
@@ -721,6 +747,7 @@ CFUNC(handleContinuousCameraMove) = {
 	if (_isDown) then {
 		GET_MON params [["_monitor", objNull], ["_instId", -1]];
 		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+		if !([_monitor, _instId] call FUNC(canControlMonitorSeat)) exitWith {false};
 		if !(MON_GVAR(_monitor, _instId, "CFM_currentCameraCanMove", false)) exitWith {false};
 		private _camera = MON_GVAR(_monitor, _instId, "CFM_currentFeedCam", objNull);
 		if !(IS_OBJ(_camera)) exitWith {false};
@@ -761,6 +788,9 @@ CFUNC(updateContinuousCameraMove) = {
 
 	GET_MON params [["_monitor", objNull], ["_instId", -1]];
 	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {
+		call FUNC(stopContinuousCameraMove);
+	};
+	if !([_monitor, _instId] call FUNC(canControlMonitorSeat)) exitWith {
 		call FUNC(stopContinuousCameraMove);
 	};
 
@@ -860,6 +890,7 @@ CFUNC(handleContinuousZoom) = {
 	if (_isDown) then {
 		GET_MON params [["_monitor", objNull], ["_instId", -1]];
 		if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
+		if !([_monitor, _instId] call FUNC(canControlMonitorSeat)) exitWith {false};
 		if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {false};
 		if (
 			(MON_GVAR(_monitor, _instId, "CFM_currentOperatorIsDrone", false)) &&
@@ -902,6 +933,9 @@ CFUNC(updateContinuousZoom) = {
 
 	GET_MON params [["_monitor", objNull], ["_instId", -1]];
 	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {
+		call FUNC(stopContinuousZoom);
+	};
+	if !([_monitor, _instId] call FUNC(canControlMonitorSeat)) exitWith {
 		call FUNC(stopContinuousZoom);
 	};
 	if !(MON_GVAR(_monitor, _instId, "CFM_feedActive", false)) exitWith {

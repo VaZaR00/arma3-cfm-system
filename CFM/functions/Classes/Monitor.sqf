@@ -7,6 +7,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 	// instance identity & mode config
 	PUBLIC GLOBAL FIELD ["_textureSelection", NO_TEXTURE_SELECTION];
 	PUBLIC GLOBAL FIELD ["_seatKey", ""];
+	PUBLIC GLOBAL FIELD ["_seatKeys", []];
+	PUBLIC GLOBAL FIELD ["_controlSeatKeys", []];
 	PUBLIC GLOBAL FIELD ["_isVehSeatTablet", false];
 	PUBLIC GLOBAL FIELD ["_isHandTablet", false];
 	PUBLIC LOCAL FIELD ["_seatDisplayName", ""];
@@ -100,7 +102,9 @@ PUBLIC GLOBAL CLASS(Monitor)
 			["_texSelArg", 0],
 			["_seatKeyArg", ""],
 			["_isVehSeatArg", false],
-			["_isHandArg", false]
+			["_isHandArg", false],
+			["_seatKeysArg", []],
+			["_controlSeatKeysArg", []]
 		];
 
 		_commonArgs params [
@@ -124,6 +128,12 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		_textureSelection = _texSelArg;
 		_seatKey = _seatKeyArg;
+		_seatKeys = if (_seatKeysArg isEqualType [] && {_seatKeysArg isNotEqualTo []}) then {
+			+_seatKeysArg
+		} else {
+			if !(_seatKeyArg isEqualTo "") then {[_seatKeyArg]} else {[]}
+		};
+		_controlSeatKeys = if (_controlSeatKeysArg isEqualType []) then {+_controlSeatKeysArg} else {[]};
 		_isVehSeatTablet = _isVehSeatArg;
 		_isHandTablet = _isHandArg;
 		_isLocal = _isLocalArg || _isHandTablet;
@@ -173,6 +183,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 		// Deterministic local writes first so fast clients have full config before server packets arrive
 		MON_SVAR(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection);
 		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKey", _seatKey);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_controlSeatKeys", _controlSeatKeys);
 		MON_SVAR(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet);
 		MON_SVAR(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet);
 		MON_SVAR(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture);
@@ -197,6 +209,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 		if (isServer && {!_isLocal}) then {
 			MON_SVARG(_monitor, _instanceIndex, "CFM_textureSelection", _textureSelection, true);
 			MON_SVARG(_monitor, _instanceIndex, "CFM_seatKey", _seatKey, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_seatKeys", _seatKeys, true);
+			MON_SVARG(_monitor, _instanceIndex, "CFM_controlSeatKeys", _controlSeatKeys, true);
 			MON_SVARG(_monitor, _instanceIndex, "CFM_isVehSeatTablet", _isVehSeatTablet, true);
 			MON_SVARG(_monitor, _instanceIndex, "CFM_isHandTablet", _isHandTablet, true);
 			MON_SVARG(_monitor, _instanceIndex, "CFM_originalTexture", _originalTexture, true);
@@ -222,8 +236,20 @@ PUBLIC GLOBAL CLASS(Monitor)
 		MON_SVAR(_monitor, _instanceIndex, "CFM_targetInActionsConditions", _targetInActionsConditions);
 
 		if (hasInterface) then {
-			_seatDisplayName = if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
-				[_monitor, _seatKey] call CFM_fnc_getSeatDisplayName
+			_seatDisplayName = if (_isVehSeatTablet) then {
+				if ((count _seatKeys) > 1) then {
+					private _names = _seatKeys apply {[_monitor, _x] call CFM_fnc_getSeatDisplayName};
+					if ((count _names) <= 2) then {
+						_names joinString " + "
+					} else {
+						format ["%1, %2 (+%3)", _names select 0, _names select 1, (count _names) - 2]
+					}
+				} else {
+					private _singleKey = if (_seatKeys isNotEqualTo []) then {_seatKeys select 0} else {_seatKey};
+					if !(_singleKey isEqualTo "") then {
+						[_monitor, _singleKey] call CFM_fnc_getSeatDisplayName
+					} else {""}
+				}
 			} else {""};
 			SET_SELFVAR(_seatDisplayName);
 			MON_SVAR(_monitor, _instanceIndex, "CFM_seatDisplayName", _seatDisplayName);
@@ -267,12 +293,17 @@ PUBLIC GLOBAL CLASS(Monitor)
 		if !(_isHandTablet) then {
 			if (_isVehSeatTablet && {!(_seatKey isEqualTo "")}) then {
 				private _dispSeat = if (_seatDisplayName isEqualTo "") then {_seatKey} else {_seatDisplayName};
+				private _devSeat = if ((count _seatKeys) > 3) then {
+					format ["%1, %2 (+%3)", _seatKeys select 0, _seatKeys select 1, (count _seatKeys) - 2]
+				} else {
+					_seatKey
+				};
 				if (_textureSelection >= 0) then {
 					_instTag = format [" [%1 #%2]", _dispSeat, _textureSelection];
-					_instTagDev = format [" [%1 #%2]", _seatKey, _textureSelection];
+					_instTagDev = format [" [%1 #%2]", _devSeat, _textureSelection];
 				} else {
 					_instTag = format [" [%1]", _dispSeat];
-					_instTagDev = format [" [%1]", _seatKey];
+					_instTagDev = format [" [%1]", _devSeat];
 				};
 			} else {
 				if (_isMultiMonitor || {_instanceIndex > 1}) then {
@@ -301,7 +332,12 @@ PUBLIC GLOBAL CLASS(Monitor)
 				_pipSlot = [_monPair, _pipSlot] call CFM_fnc_getFreePipSlot;
 				MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlot", _pipSlot);
 			};
-			[_monPair, _connectedOperator, true, _currentTurret, true] spawn CFM_fnc_syncState;
+			private _startTurret = if (_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) > 1}) then {
+				MON_GVAR(_monitor, _instanceIndex, "CFM_waitingForStartTurret", _currentTurret)
+			} else {
+				_currentTurret
+			};
+			[_monPair, _connectedOperator, true, _startTurret, true] spawn CFM_fnc_syncState;
 			true
 		} else {
 			MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
@@ -329,7 +365,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 	};
 
 	PUBLIC GE GA METHOD("syncContinuousZoom") {
-		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _isSingleSeatPip = _isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1};
+		private _syncGlobal = !_isLocal && {!_isSingleSeatPip};
 		private _valMaxZoomed = MON_GVAR(_monitor, _instanceIndex, "CFM_maxZoomed", false);
 		private _valZoom = MON_GVAR(_monitor, _instanceIndex, "CFM_zoom", 1);
 		private _valZoomFov = MON_GVAR(_monitor, _instanceIndex, "CFM_zoomFov", 1);
@@ -456,7 +493,11 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		[_monPair, _currentMenuObj] call CFM_fnc_monitorCloseMenu;
 
-		if (_isHandMonitor) then {
+		if (_isHandMonitor && {hasInterface}) then {
+			if !(_reset) then {
+				private _slot = [_monPair, MON_GVAR(_monitor, _instanceIndex, "CFM_pipSlot", PIP_SLOT_RIGHT)] call CFM_fnc_getFreePipSlot;
+				MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlot", _slot);
+			};
 			private _prevHndl = MON_GVAR(_monitor, _instanceIndex, "CFM_opCheckHndl", scriptNull);
 			private _opCheckHndl = [_monitor, _instanceIndex, _operator, _prevHndl] spawn {
 				params["_monitor", "_instId", "_operator", "_prevHndl"];
@@ -475,6 +516,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 					sleep 1;
 				};
 				if !(_signalLost) exitWith {};
+				if !(IS_OBJ(MON_GVAR(_monitor, _instId, "CFM_connectedOperator", objNull))) exitWith {};
 				[_monPair, player] call CFM_fnc_disconnectMonitorFromOperator;
 			};
 			MON_SVAR(_monitor, _instanceIndex, "CFM_opCheckHndl", _opCheckHndl);
@@ -549,10 +591,10 @@ PUBLIC GLOBAL CLASS(Monitor)
 		};
 
 		private _pub = !_isLocal;
-		private _isSeatPip = _isVehSeatTablet && {_textureSelection < 0};
+		private _isSingleSeatPip = _isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1};
 
 		MON_SVARG(_selfObj, _instanceIndex, "CFM_connectedOperator", _op, _pub);
-		MON_SVARG(_selfObj, _instanceIndex, "CFM_waitingForStartTurret", _initTurrIdx, _pub && {!_isSeatPip});
+		MON_SVARG(_selfObj, _instanceIndex, "CFM_waitingForStartTurret", _initTurrIdx, _pub && {!_isSingleSeatPip});
 		MON_SVARG(_selfObj, _instanceIndex, "CFM_currentTurret", [_initTurrIdx], _pub);
 		MON_SVARG(_selfObj, _instanceIndex, "CFM_currentPiPEffect", 0, _pub);
 		MON_SVARG(_selfObj, _instanceIndex, "CFM_isInNvg", false, _pub);
@@ -561,8 +603,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 		MON_SVARG(_selfObj, _instanceIndex, "CFM_maxZoomed", false, _pub);
 		MON_SVAR(_selfObj, _instanceIndex, "CFM_turnedOffLocal", false);
 
-		if (_isSeatPip) then {
-			// Seat PiP tablets sync operator notifications to operator owner and run feed only locally for seated client
+		if (_isSingleSeatPip) then {
+			// Single-seat PiP tablets sync operator notifications to operator owner and run feed only locally for seated client
 			if (IS_OBJ(_prevOp) && {!(_prevOp isEqualTo _op) || {!(TURRET_INDEX(_prevTurr) isEqualTo _initTurrIdx)}}) then {
 				["CFM_operatorMonitorDisconnected", [_prevOp, _monPair, _prevTurr], _prevOp] call CBA_fnc_targetEvent;
 			};
@@ -585,8 +627,8 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 		MON_SVAR(_selfObj, _instanceIndex, "CFM_actionCaller", _caller);
 
-		private _isSeatPip = _isVehSeatTablet && {_textureSelection < 0};
-		if (_isSeatPip) then {
+		private _isSingleSeatPip = _isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1};
+		if (_isSingleSeatPip) then {
 			MON_SVARG(_selfObj, _instanceIndex, "CFM_connectedOperator", objNull, true);
 			MON_SVARG(_selfObj, _instanceIndex, "CFM_currentTurret", DRIVER_TURRET_PATH, true);
 			MON_SVARG(_selfObj, _instanceIndex, "CFM_currentPiPEffect", 0, true);
@@ -660,7 +702,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 			_newMaxZoomed = false;
 		};
 
-		private _pub = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _pub = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1})};
 
 		if (_isContinuous) then {
 			MON_SVAR(_monitor, _instanceIndex, "CFM_maxZoomed", _newMaxZoomed);
@@ -688,7 +730,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 	};
 
 	PUBLIC GE GA METHOD("nextTurret") {
-		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1})};
 		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", 0, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
@@ -697,7 +739,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 	PUBLIC GE GA METHOD("setTurret") {
 		params[["_turretIndex", -1]];
-		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1})};
 		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", 0, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
@@ -706,7 +748,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 
 	PUBLIC GE GA METHOD("switchNvg") {
 		private _newEffect = if (_currentPiPEffect != 1) then {1} else {0};
-		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1})};
 		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", _newEffect, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", _newEffect isEqualTo 1, _syncGlobal);
@@ -723,7 +765,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 		};
 		if (isNil "_newEffect") exitWith {};
 		if !(_newEffect isEqualType 1) exitWith {};
-		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0})};
+		private _syncGlobal = !_isLocal && {!(_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) <= 1})};
 		MON_SVARG(_monitor, _instanceIndex, "CFM_currentPiPEffect", _newEffect, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_doUpdatePip", true, _syncGlobal);
 		MON_SVARG(_monitor, _instanceIndex, "CFM_isInNvg", false, _syncGlobal);
@@ -974,6 +1016,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 	PRIVATE LOCAL METHOD("loadMenu") {
 		params[["_caller", objNull], ["_target", _selfObj]];
 		private _monPair = [_selfObj, _instanceIndex];
+		if !([_selfObj, _instanceIndex] call CFM_fnc_canControlMonitorSeat) exitWith {};
 		if !([_selfObj, _instanceIndex] call CFM_fnc_hasMonitorPasswordAccess) exitWith {
 			[_monPair, "enter", _caller, _target] call CFM_fnc_openPasswordDialog;
 		};
@@ -1065,7 +1108,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 				!(MON_GVAR(_selfObj, _instId, "CFM_menuActive", false)) ||
 				{!(([_selfObj] call CFM_fnc_getSelectedMonitorInstance) isEqualTo _instId)} ||
 				{!(_selfObj isEqualTo PLAYER_) && {(_selfObj distance PLAYER_) > (MONITOR_ACTION_RADIUS(_selfObj))}} ||
-				{(MON_GVAR(_selfObj, _instId, "CFM_isVehSeatTablet", false)) && {!([_selfObj, _instId] call CFM_fnc_inVehicleTabletSeatCondition)}} ||
+				{(MON_GVAR(_selfObj, _instId, "CFM_isVehSeatTablet", false)) && {!([_selfObj, _instId] call CFM_fnc_inVehicleTabletSeatCondition) || {!([_selfObj, _instId] call CFM_fnc_canControlMonitorSeat)}}} ||
 				{(MON_GVAR(_selfObj, _instId, "CFM_isHandMonitor", false)) && {!([_selfObj, _instId] call CFM_fnc_isSelectedTablet)}} ||
 				{!([_selfObj, _instId] call CFM_fnc_hasMonitorPasswordAccess)}
 			};

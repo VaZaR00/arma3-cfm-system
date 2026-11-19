@@ -34,8 +34,7 @@
 	{
 		_x params [["_mon", objNull], ["_instId", -1]];
 		if (IS_OBJ(_mon) && {_instId > 0} && {MON_GVAR(_mon, _instId, "CFM_isVehSeatTablet", false)} && {MON_GVAR(_mon, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION) >= 0}) then {
-			private _seatKey = MON_GVAR(_mon, _instId, "CFM_seatKey", "");
-			private _inThatSeat = ((objectParent PLAYER_) isEqualTo _mon) && {([_mon, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey};
+			private _inThatSeat = [_mon, _instId] call CFM_fnc_inVehicleTabletSeatCondition;
 			if !(_inThatSeat) then {
 				if (_value) then {
 					["activateSeat", []] CALL_MON_INST(_mon, _instId);

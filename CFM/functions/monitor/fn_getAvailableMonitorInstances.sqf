@@ -40,7 +40,7 @@ private _curSeatKey = if (_inVeh) then {[_monitor, _plr] call CFM_fnc_getUnitVeh
 private _available = [];
 {
 	private _instId = _x;
-	_y params [["_texSel", NO_TEXTURE_SELECTION], ["_seatKey", ""], ["_isVehSeat", false], ["_isHand", false]];
+	_y params [["_texSel", NO_TEXTURE_SELECTION], ["_seatKey", ""], ["_isVehSeat", false], ["_isHand", false], ["_seatKeys", []]];
 	if (MON_GVAR(_monitor, _instId, "CFM_isMonitorInstanceSet", false)) then {
 		if (_isHand) then {
 			if (_isPlrHandTablet) then {
@@ -48,7 +48,13 @@ private _available = [];
 			};
 		} else {
 			if (_isVehSeat) then {
-				if (_inVeh && {(_seatKey isEqualTo "") || {_seatKey isEqualTo _curSeatKey}}) then {
+				if (_inVeh && {
+					if (_seatKeys isNotEqualTo []) then {
+						!(_curSeatKey isEqualTo "") && {_curSeatKey in _seatKeys}
+					} else {
+						(_seatKey isEqualTo "") || {_seatKey isEqualTo _curSeatKey}
+					}
+				}) then {
 					_available pushBack _instId;
 				};
 			} else {

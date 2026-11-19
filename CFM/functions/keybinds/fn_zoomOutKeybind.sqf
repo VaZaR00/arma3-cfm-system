@@ -14,4 +14,7 @@ if (MGVAR ["CFM_continuousCameraZoom", false]) exitWith {
 
 if (!_isDown) exitWith {false};
 
-[GET_MON, -1] call CFM_fnc_zoom;
+private _monPair = GET_MON;
+if !(IS_VALID_MON(_monPair)) exitWith {};
+if !(_monPair call CFM_fnc_canControlMonitorSeat) exitWith {};
+[_monPair, -1] call CFM_fnc_zoom;

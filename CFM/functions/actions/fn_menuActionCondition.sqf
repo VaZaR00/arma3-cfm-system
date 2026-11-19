@@ -9,6 +9,7 @@
 params["_target", ["_instId", -1]];
 RESOLVE_ACTION_INST
 IN_VEH_TABLET_CONDITION
+CONTROL_MON_CONDITION
 if ([_target, _instId] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false};
 if ([_target, _instId] call CFM_fnc_hasMonitorPasswordAccess) then {
 	if (MON_GVAR(_target, _instId, 'CFM_feedActive', false)) exitWith {false};

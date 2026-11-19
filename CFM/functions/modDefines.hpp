@@ -127,6 +127,7 @@ if (_instId < 1) exitWith {false};
 #define PLAYER_IS_ADMIN (!isMultiplayer || {isServer || {serverCommandAvailable "#logout"}})
 #define PASSWORD_ACCESS_CONDITION if !([_target, _instId] call CFM_fnc_hasMonitorPasswordAccess) exitWith {false};
 #define IN_VEH_TABLET_CONDITION if !([_target, _instId] call CFM_fnc_inVehicleTabletActionCondition) exitWith {false};
+#define CONTROL_MON_CONDITION if !([_target, _instId] call CFM_fnc_canControlMonitorSeat) exitWith {false};
 #define HAND_MON_CONDITION IN_VEH_TABLET_CONDITION if ([_target, _instId] call CFM_fnc_handMonitorMenuActionCondition) exitWith {false}; PASSWORD_ACCESS_CONDITION
 #define IS_MONITOR_ON if (MON_GVAR(_target, _instId, "CFM_isHandMonitor", false) && {MON_GVAR(_target, _instId, "CFM_turnedOffLocal", false)}) exitWith {false};
 

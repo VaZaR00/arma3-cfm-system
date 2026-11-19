@@ -61,7 +61,9 @@ private _localSkipOnly = false;
 
 if (_start && {hasInterface}) then {
 	MON_SVAR(_monitor, _instId, "CFM_waitingForStartOperator", _operator);
-	if (!isNil "_turret" && {!(MON_GVAR(_monitor, _instId, "CFM_seatKey", "") isEqualTo "") || {isNil {_monitor getVariable (MON_VAR_NAME("CFM_waitingForStartTurret", _instId))}}}) then {
+	private _seatKeys = MON_GVAR(_monitor, _instId, "CFM_seatKeys", []);
+	private _isSingleSeatPip = (MON_GVAR(_monitor, _instId, "CFM_isVehSeatTablet", false)) && {(MON_GVAR(_monitor, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION)) < 0} && {(count _seatKeys) <= 1};
+	if (!isNil "_turret" && {_isSingleSeatPip || {isNil {_monitor getVariable (MON_VAR_NAME("CFM_waitingForStartTurret", _instId))}}}) then {
 		MON_SVAR(_monitor, _instId, "CFM_waitingForStartTurret", _turret);
 	};
 	waitUntil {
@@ -73,11 +75,8 @@ if (_start && {hasInterface}) then {
 			if !(MON_GVAR(_monitor, _instId, "CFM_isMonitorInstanceSet", false)) exitWith {false};
 
 			private _isVehSeatTablet = MON_GVAR(_monitor, _instId, "CFM_isVehSeatTablet", false);
-			private _seatKey = MON_GVAR(_monitor, _instId, "CFM_seatKey", "");
 			private _texSel = MON_GVAR(_monitor, _instId, "CFM_textureSelection", NO_TEXTURE_SELECTION);
-			private _inReqSeat = !_isVehSeatTablet || {_seatKey isEqualTo ""} || {
-				(PLAYER_ in _monitor) && {(([_monitor, PLAYER_] call CFM_fnc_getUnitVehicleSeatKey) isEqualTo _seatKey)}
-			};
+			private _inReqSeat = !_isVehSeatTablet || {[_monitor, _instId] call CFM_fnc_inVehicleTabletSeatCondition};
 			private _needSeatForRender = (_texSel < 0) || {!(missionNamespace getVariable ["CFM_renderSeatTextureOutOfSeat", true])};
 			if (_isVehSeatTablet && {_needSeatForRender} && {!_inReqSeat}) exitWith {
 				_start = false;

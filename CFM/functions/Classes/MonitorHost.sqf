@@ -441,8 +441,13 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 				["_texSel", NO_TEXTURE_SELECTION],
 				["_seatKey", ""],
 				["_isVehSeat", false],
-				["_isHand", false]
+				["_isHand", false],
+				["_seatKeys", []],
+				["_controlSeatKeys", []]
 			];
+			if (_seatKeys isEqualTo [] && {!(_seatKey isEqualTo "")}) then {
+				_seatKeys = [_seatKey];
+			};
 
 			private _instancesMap = _monitor getVariable ["CFM_monitorInstancesMap", createHashMap];
 			private _keysMap = _monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap];
@@ -451,20 +456,23 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 			if (_isHand && {HAND_MONITOR_KEY in _instancesMap}) then {_duplicate = true};
 			if (!_duplicate && {_texSel >= 0} && {_texSel in _instancesMap}) then {_duplicate = true};
 			if (!_duplicate && {_isVehSeat} && {_texSel < 0}) then {
-				private _seatExisting = _instancesMap getOrDefault [_seatKey, []];
+				private _checkSeats = if (_seatKeys isNotEqualTo []) then {_seatKeys} else {[_seatKey]};
 				{
-					private _entry = _keysMap getOrDefault [_x, []];
-					if ((_entry param [0, NO_TEXTURE_SELECTION]) < 0) exitWith {_duplicate = true};
-				} forEach _seatExisting;
+					private _seatExisting = _instancesMap getOrDefault [_x, []];
+					{
+						private _entry = _keysMap getOrDefault [_x, []];
+						if ((_entry param [0, NO_TEXTURE_SELECTION]) < 0) exitWith {_duplicate = true};
+					} forEach _seatExisting;
+					if (_duplicate) exitWith {};
+				} forEach _checkSeats;
 			};
 
 			if !(_duplicate) then {
-				private _instRes = [_monitor, [[_texSel, _seatKey, _isVehSeat, _isHand], _commonArgs, _isLocal, _isMultiMonitor]] NEW_OBJINSTANCE("Monitor");
+				private _keyTuple = [_texSel, _seatKey, _isVehSeat, _isHand, _seatKeys, _controlSeatKeys];
+				private _instRes = [_monitor, [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] NEW_OBJINSTANCE("Monitor");
 				_instRes params [["_instId", -1], ["_ok", false]];
 
 				if ((_ok isEqualTo true) && {_instId > 0}) then {
-					private _keyTuple = [_texSel, _seatKey, _isVehSeat, _isHand];
-
 					// Always populate maps locally BEFORE CFM_isMonitorSet = true to prevent MP Init race
 					[_monitor, "CFM_monitorInstanceKeysMap", _instId, _keyTuple, true] call CFM_fnc_hashSet;
 					if (isServer && {!_isLocal}) then {
@@ -487,12 +495,16 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 					};
 
 					if (_isVehSeat) then {
-						private _seatArr = +((_monitor getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [_seatKey, []]);
-						_seatArr pushBackUnique _instId;
-						[_monitor, "CFM_monitorInstancesMap", _seatKey, _seatArr, true] call CFM_fnc_hashSet;
-						if (isServer && {!_isLocal}) then {
-							[_monitor, "CFM_monitorInstancesMap", _seatKey, _seatArr, true, true, _monitor] call CFM_fnc_hashSetNet;
-						};
+						private _regSeats = if (_seatKeys isNotEqualTo []) then {_seatKeys} else {[_seatKey]};
+						{
+							private _sk = _x;
+							private _seatArr = +((_monitor getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [_sk, []]);
+							_seatArr pushBackUnique _instId;
+							[_monitor, "CFM_monitorInstancesMap", _sk, _seatArr, true] call CFM_fnc_hashSet;
+							if (isServer && {!_isLocal}) then {
+								[_monitor, "CFM_monitorInstancesMap", _sk, _seatArr, true, true, _monitor] call CFM_fnc_hashSetNet;
+							};
+						} forEach _regSeats;
 						_hasAnyVehSeat = true;
 					} else {
 						if !(_isHand) then {
@@ -676,18 +688,22 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 
 		[_monitor, true] call CFM_fnc_monitorCloseMenu;
 		private _map = _monitor getVariable ["CFM_monitorInstancesMap", createHashMap];
+		private _oldInsts = if !(_lastSeatKey isEqualTo "") then {_map getOrDefault [_lastSeatKey, []]} else {[]};
+		private _newInsts = if !(_curSeatKey isEqualTo "") then {_map getOrDefault [_curSeatKey, []]} else {[]};
 
 		if (!(_lastSeatKey isEqualTo "") && {!(_lastSeatKey isEqualTo _curSeatKey)}) then {
-			private _oldInsts = _map getOrDefault [_lastSeatKey, []];
 			{
-				["deactivateSeat"] CALL_MON_INST(_monitor, _x);
+				if !(_x in _newInsts) then {
+					["deactivateSeat"] CALL_MON_INST(_monitor, _x);
+				};
 			} forEach _oldInsts;
 		};
 
 		if !(_curSeatKey isEqualTo "") then {
-			private _newInsts = _map getOrDefault [_curSeatKey, []];
 			{
-				["activateSeat"] CALL_MON_INST(_monitor, _x);
+				if !(_x in _oldInsts) then {
+					["activateSeat"] CALL_MON_INST(_monitor, _x);
+				};
 			} forEach _newInsts;
 		};
 
