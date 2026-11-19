@@ -2,7 +2,7 @@
     Function: CFM_fnc_parseMonitorSelections
     Author: Vazar
     Description: Parses textureSelections and seatKeys into deterministic monitor instance specs:
-                 [[_texSel, _seatKey, _isVehSeatTablet, _isHandTablet, _seatKeys, _controlSeatKeys, _opMode, _hasExplicitTexSel], ...]
+                 [[_texSel, _seatKey, _isVehSeatTablet, _isHandTablet, _seatKeys, _controlSeatKeys, _opMode, _hasExplicitTexSel, _pipCount], ...]
 */
 
 #include "defines.hpp"
@@ -16,7 +16,7 @@ params [
 ];
 
 if (_isHandTablet) exitWith {
-	[[NO_TEXTURE_SELECTION, "", false, true, [], [], "BASE_EMPTY", false]]
+	[[NO_TEXTURE_SELECTION, "", false, true, [], [], "BASE_EMPTY", false, 1]]
 };
 
 private _wsChars = [" ", toString [9], toString [10], toString [13]];
@@ -235,7 +235,20 @@ private _fnc_collectTexNums = {
 		private _arr = [_trimmed] call _fnc_tryParseArray;
 		if (!isNil "_arr" && {_arr isEqualType []}) then {
 			{
-				if (_x isEqualType 0 && {_x >= 0}) then {_dest pushBackUnique (floor _x)};
+				if (_x isEqualType 0 && {_x >= 0}) then {
+					_dest pushBackUnique (floor _x);
+				} else {
+					if (_x isEqualType "") then {
+						private _ts = trim _x;
+						if (_ts regexMatch "^#[0-9]+$") then {
+							_dest pushBackUnique (floor (parseNumber (_ts select [1])));
+						} else {
+							if (_ts regexMatch "^[0-9]+$") then {
+								_dest pushBackUnique (floor (parseNumber _ts));
+							};
+						};
+					};
+				};
 			} forEach _arr;
 		};
 	} else {
@@ -247,6 +260,10 @@ private _fnc_collectTexNums = {
 				private _firstCh = _t select [0, 1];
 				if (_firstCh in ["""", "'"]) then {
 					_t = _t select [1, ((count _t) - 2) max 0];
+				};
+				_t = trim _t;
+				if (_t regexMatch "^#[0-9]+$") then {
+					_t = _t select [1];
 				};
 				if (_t regexMatch "^-?[0-9]+$") then {
 					private _num = parseNumber _t;
@@ -262,7 +279,20 @@ if (_textureSelections isEqualType 0) then {
 } else {
 	if (_textureSelections isEqualType []) then {
 		{
-			if (_x isEqualType 0 && {_x >= 0}) then {_texAddSels pushBackUnique (floor _x)};
+			if (_x isEqualType 0 && {_x >= 0}) then {
+				_texAddSels pushBackUnique (floor _x);
+			} else {
+				if (_x isEqualType "") then {
+					private _ts = trim _x;
+					if (_ts regexMatch "^#[0-9]+$") then {
+						_texAddSels pushBackUnique (floor (parseNumber (_ts select [1])));
+					} else {
+						if (_ts regexMatch "^[0-9]+$") then {
+							_texAddSels pushBackUnique (floor (parseNumber _ts));
+						};
+					};
+				};
+			};
 		} forEach _textureSelections;
 	} else {
 		if (_textureSelections isEqualType "") then {
@@ -326,6 +356,37 @@ _texRewriteSels = _texRewriteSels select {!(_x in _texRemoveSels)};
 _texAddSels = _texAddSels select {!(_x in _texRemoveSels) && {!(_x in _texRewriteSels)}};
 
 // 2. Parse seatKeys -> raw entries
+// Parses the 2nd element of [seatOrSeatList, second(, ctrl)].
+// Returns: [_valid, _isTexSel, _texSel, _pipCount, _isAllPipSentinel]
+// - "#0", "#2"     -> [true, true, 0/2, 1, false]      (explicit 3D texture selection)
+// - -1, "-1"       -> [true, false, -1, 1, true]       (explicit 1 PiP instance / all PiP for REMOVE)
+// - 2, "2", 1, "1" -> [true, false, -1, 2/1, false]    (explicit N PiP instances)
+// - 0, "0"         -> [true, false, -1, 0, false]      (count 0 -> ignored with warning, NOT texSel 0)
+private _fnc_parsePairSecond = {
+	params ["_val"];
+	if (_val isEqualType 0) exitWith {
+		private _n = floor _val;
+		if (_n == NO_TEXTURE_SELECTION) exitWith {[true, false, NO_TEXTURE_SELECTION, 1, true]};
+		if (_n >= 0) exitWith {[true, false, NO_TEXTURE_SELECTION, _n, false]};
+		[false, false, NO_TEXTURE_SELECTION, 0, false]
+	};
+	if (_val isEqualType "") exitWith {
+		private _s = trim _val;
+		if (_s regexMatch "^#[0-9]+$") exitWith {
+			private _texSel = floor (parseNumber (_s select [1]));
+			[true, true, _texSel, 1, false]
+		};
+		if (_s regexMatch "^-?[0-9]+$") exitWith {
+			private _n = floor (parseNumber _s);
+			if (_n == NO_TEXTURE_SELECTION) exitWith {[true, false, NO_TEXTURE_SELECTION, 1, true]};
+			if (_n >= 0) exitWith {[true, false, NO_TEXTURE_SELECTION, _n, false]};
+			[false, false, NO_TEXTURE_SELECTION, 0, false]
+		};
+		[false, false, NO_TEXTURE_SELECTION, 0, false]
+	};
+	[false, false, NO_TEXTURE_SELECTION, 0, false]
+};
+
 // True for single-seat array descriptors: [0], [0, 1], [-1], ["turret", [0]], ["cargo", 0]
 private _fnc_isSingleSeatArrayDesc = {
 	params ["_arr"];
@@ -346,7 +407,9 @@ private _fnc_isPairEntryBasic = {
 	if (!(_arr isEqualType []) || {(count _arr) != 2}) exitWith {false};
 	private _first = _arr select 0;
 	private _second = _arr select 1;
-	!(_first isEqualType 0) && {_second isEqualType 0} && {_second >= -1}
+	// Preserve numeric turret paths such as [0, 1]
+	if (_first isEqualType 0 && {_second isEqualType 0}) exitWith {false};
+	([_second] call _fnc_parsePairSecond) select 0
 };
 
 // True for a list of seat descriptors used in shared PiP entries:
@@ -362,24 +425,23 @@ private _fnc_isSeatList = {
 };
 
 // True for shared PiP monitor entries:
-// [[seat1, seat2, ...], -1] or [[seat1, seat2, ...], -1, controlSeatOrList]
+// [[seat1, seat2, ...], -1|count] or [[seat1, seat2, ...], -1|count, controlSeatOrList]
 private _fnc_isSharedGroupEntry = {
 	params ["_arr"];
 	if (!(_arr isEqualType []) || {!((count _arr) in [2, 3])}) exitWith {false};
 	private _first = _arr select 0;
 	private _second = _arr select 1;
 	if !([_first] call _fnc_isSeatList) exitWith {false};
-	if !(_second isEqualType 0) exitWith {false};
-	(floor _second) == NO_TEXTURE_SELECTION
+	([_second] call _fnc_parsePairSecond) params ["_valid", "_isTexSel"];
+	_valid && {!_isTexSel}
 };
 
 private _fnc_isInvalidSharedTexEntry = {
 	params ["_item"];
-	(_item isEqualType []) &&
-	{(count _item) in [2, 3]} &&
-	{[_item select 0] call _fnc_isSeatList} &&
-	{(_item select 1) isEqualType 0} &&
-	{(floor (_item select 1)) >= 0}
+	if (!(_item isEqualType []) || {!((count _item) in [2, 3])}) exitWith {false};
+	if !([_item select 0] call _fnc_isSeatList) exitWith {false};
+	([_item select 1] call _fnc_parsePairSecond) params ["_valid", "_isTexSel"];
+	_valid && {_isTexSel}
 };
 
 private _fnc_isPairEntry = {
@@ -709,40 +771,65 @@ if !(_baseMode isEqualTo "") then {
 
 private _removeFullSeatsSet = createHashMap;
 private _removePairSet = createHashMap;
+private _removePipCountMap = createHashMap;
 private _removeSpecs = [];
 {
 	_x params ["_body", "_fromBrackets"];
 	private _remItems = [_body, _fromBrackets] call _fnc_parseModifierItems;
 	{
 		if ([_x] call _fnc_isSharedGroupEntry) then {
-			([_x] call _fnc_resolveSharedGroup) params ["_grpSeats"];
-			if (_grpSeats isNotEqualTo []) then {
-				{
-					_removePairSet set [format ["%1|%2", _x, NO_TEXTURE_SELECTION], true];
-				} forEach _grpSeats;
-				_removeSpecs pushBack [NO_TEXTURE_SELECTION, _grpSeats joinString ", ", true, false, _grpSeats, [], "REMOVE", true];
+			([_x select 1] call _fnc_parsePairSecond) params ["", "", "", "_parsedCount", "_isAllPip"];
+			if (!_isAllPip && {_parsedCount <= 0}) then {
+				diag_log format ["[CFM] Monitor count 0 ignored for shared entry %1 on %2 (use ""#0"" for texture selection 0)", _x, _monitor];
+			} else {
+				([_x] call _fnc_resolveSharedGroup) params ["_grpSeats"];
+				if (_grpSeats isNotEqualTo []) then {
+					private _remCnt = if (_isAllPip) then {-1} else {_parsedCount};
+					{
+						if (_isAllPip) then {
+							_removePairSet set [format ["%1|%2", _x, NO_TEXTURE_SELECTION], true];
+						} else {
+							_removePipCountMap set [_x, (_removePipCountMap getOrDefault [_x, 0]) + _parsedCount];
+						};
+					} forEach _grpSeats;
+					_removeSpecs pushBack [NO_TEXTURE_SELECTION, _grpSeats joinString ", ", true, false, _grpSeats, [], "REMOVE", true, _remCnt];
+				};
 			};
 		} else {
 			if ([_x] call _fnc_isInvalidSharedTexEntry) then {
-				diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (-1); ignoring on %2", _x, _monitor];
+				diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (count or -1); ignoring on %2", _x, _monitor];
 			} else {
 				private _seatDesc = _x;
 				private _texSel = NO_TEXTURE_SELECTION;
 				private _hasExp = false;
+				private _remCnt = -1;
+				private _skipItem = false;
 				if ([_x] call _fnc_isPairEntry) then {
 					_seatDesc = _x select 0;
-					_texSel = floor (_x select 1);
-					if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
-					_hasExp = true;
-				};
-				{
-					if (_hasExp) then {
-						_removePairSet set [format ["%1|%2", _x, _texSel], true];
+					([_x select 1] call _fnc_parsePairSecond) params ["", "_isTexSel", "_parsedTexSel", "_parsedCount", "_isAllPip"];
+					if (!_isTexSel && {!_isAllPip} && {_parsedCount <= 0}) then {
+						diag_log format ["[CFM] Monitor count 0 ignored for seat %1 on %2 (use ""#0"" for texture selection 0)", _seatDesc, _monitor];
+						_skipItem = true;
 					} else {
-						_removeFullSeatsSet set [_x, true];
+						_texSel = if (_isTexSel) then {_parsedTexSel} else {NO_TEXTURE_SELECTION};
+						_hasExp = true;
+						_remCnt = if (_isTexSel) then {1} else {if (_isAllPip) then {-1} else {_parsedCount}};
 					};
-					_removeSpecs pushBack [_texSel, _x, true, false, [_x], [], "REMOVE", _hasExp];
-				} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+				};
+				if !(_skipItem) then {
+					{
+						if (_hasExp) then {
+							if (_texSel >= 0 || {_remCnt < 0}) then {
+								_removePairSet set [format ["%1|%2", _x, _texSel], true];
+							} else {
+								_removePipCountMap set [_x, (_removePipCountMap getOrDefault [_x, 0]) + _remCnt];
+							};
+						} else {
+							_removeFullSeatsSet set [_x, true];
+						};
+						_removeSpecs pushBack [_texSel, _x, true, false, [_x], [], "REMOVE", _hasExp, _remCnt];
+					} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+				};
 			};
 		};
 	} forEach _remItems;
@@ -756,48 +843,73 @@ private _rewriteSharedSeatSet = createHashMap;
 	private _rwItems = [_body, _fromBrackets] call _fnc_parseModifierItems;
 	{
 		if ([_x] call _fnc_isSharedGroupEntry) then {
-			([_x] call _fnc_resolveSharedGroup) params ["_grpSeats", "_grpControls"];
-			private _keptSeats = _grpSeats select {!(_x in _removeFullSeatsSet) && {!((format ["%1|%2", _x, NO_TEXTURE_SELECTION]) in _removePairSet)}};
-			if (_keptSeats isNotEqualTo []) then {
-				private _keptCtrls = if (_grpControls isEqualTo [] || {_grpControls isEqualTo ["__NO_CONTROLLER__"]}) then {
-					_grpControls
-				} else {
-					private _c = _grpControls select {_x in _keptSeats};
-					if (_c isEqualTo []) then {["__NO_CONTROLLER__"]} else {_c}
+			([_x select 1] call _fnc_parsePairSecond) params ["", "", "", "_parsedCount"];
+			if (_parsedCount <= 0) then {
+				diag_log format ["[CFM] Monitor count 0 ignored for shared entry %1 on %2 (use ""#0"" for texture selection 0)", _x, _monitor];
+			} else {
+				([_x] call _fnc_resolveSharedGroup) params ["_grpSeats", "_grpControls"];
+				private _keptSeats = _grpSeats select {!(_x in _removeFullSeatsSet) && {!((format ["%1|%2", _x, NO_TEXTURE_SELECTION]) in _removePairSet)}};
+				if (_keptSeats isNotEqualTo []) then {
+					private _keptCtrls = if (_grpControls isEqualTo [] || {_grpControls isEqualTo ["__NO_CONTROLLER__"]}) then {
+						_grpControls
+					} else {
+						private _c = _grpControls select {_x in _keptSeats};
+						if (_c isEqualTo []) then {["__NO_CONTROLLER__"]} else {_c}
+					};
+					_rewriteSharedGroups pushBack [_keptSeats, _keptCtrls, _parsedCount];
+					{
+						_rewriteSharedSeatSet set [_x, true];
+					} forEach _keptSeats;
 				};
-				_rewriteSharedGroups pushBack [_keptSeats, _keptCtrls];
-				{
-					_rewriteSharedSeatSet set [_x, true];
-				} forEach _keptSeats;
 			};
 		} else {
 			if ([_x] call _fnc_isInvalidSharedTexEntry) then {
-				diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (-1); ignoring on %2", _x, _monitor];
+				diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (count or -1); ignoring on %2", _x, _monitor];
 			} else {
 				private _seatDesc = _x;
 				private _texSel = NO_TEXTURE_SELECTION;
 				private _hasExp = false;
+				private _pipCount = 1;
+				private _skipItem = false;
 				if ([_x] call _fnc_isPairEntry) then {
 					_seatDesc = _x select 0;
-					_texSel = floor (_x select 1);
-					if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
-					_hasExp = true;
-				};
-				{
-					private _sk = _x;
-					if (!(_sk in _removeFullSeatsSet) && {!((format ["%1|%2", _sk, _texSel]) in _removePairSet)}) then {
-						private _arr = _rewriteMap getOrDefault [_sk, []];
-						private _idx = _arr findIf {(_x select 0) == _texSel};
-						if (_idx >= 0) then {
-							if (_hasExp) then {
-								(_arr select _idx) set [1, true];
-							};
-						} else {
-							_arr pushBack [_texSel, _hasExp];
-						};
-						_rewriteMap set [_sk, _arr];
+					([_x select 1] call _fnc_parsePairSecond) params ["", "_isTexSel", "_parsedTexSel", "_parsedCount"];
+					if (!_isTexSel && {_parsedCount <= 0}) then {
+						diag_log format ["[CFM] Monitor count 0 ignored for seat %1 on %2 (use ""#0"" for texture selection 0)", _seatDesc, _monitor];
+						_skipItem = true;
+					} else {
+						_texSel = if (_isTexSel) then {_parsedTexSel} else {NO_TEXTURE_SELECTION};
+						_pipCount = if (_isTexSel) then {1} else {_parsedCount};
+						_hasExp = true;
 					};
-				} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+				};
+				if !(_skipItem) then {
+					{
+						private _sk = _x;
+						if (!(_sk in _removeFullSeatsSet) && {!((format ["%1|%2", _sk, _texSel]) in _removePairSet)}) then {
+							private _effCount = if (_texSel < 0) then {
+								_pipCount - (_removePipCountMap getOrDefault [_sk, 0])
+							} else {
+								1
+							};
+							if (_effCount > 0) then {
+								private _arr = _rewriteMap getOrDefault [_sk, []];
+								private _idx = _arr findIf {(_x select 0) == _texSel};
+								if (_idx >= 0) then {
+									if (_hasExp) then {
+										(_arr select _idx) set [1, true];
+										if (_texSel < 0) then {
+											(_arr select _idx) set [2, _effCount];
+										};
+									};
+								} else {
+									_arr pushBack [_texSel, _hasExp, _effCount];
+								};
+								_rewriteMap set [_sk, _arr];
+							};
+						};
+					} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+				};
 			};
 		};
 	} forEach _rwItems;
@@ -814,40 +926,62 @@ private _addSpecs = [];
 private _addSuppressBasePipSeats = createHashMap;
 {
 	if ([_x] call _fnc_isSharedGroupEntry) then {
-		([_x] call _fnc_resolveSharedGroup) params ["_grpSeats", "_grpControls"];
-		private _keptSeats = _grpSeats select {!(_x in _removeFullSeatsSet) && {!((format ["%1|%2", _x, NO_TEXTURE_SELECTION]) in _removePairSet)}};
-		if (_keptSeats isNotEqualTo []) then {
-			private _keptCtrls = if (_grpControls isEqualTo [] || {_grpControls isEqualTo ["__NO_CONTROLLER__"]}) then {
-				_grpControls
-			} else {
-				private _c = _grpControls select {_x in _keptSeats};
-				if (_c isEqualTo []) then {["__NO_CONTROLLER__"]} else {_c}
+		([_x select 1] call _fnc_parsePairSecond) params ["", "", "", "_parsedCount"];
+		if (_parsedCount <= 0) then {
+			diag_log format ["[CFM] Monitor count 0 ignored for shared entry %1 on %2 (use ""#0"" for texture selection 0)", _x, _monitor];
+		} else {
+			([_x] call _fnc_resolveSharedGroup) params ["_grpSeats", "_grpControls"];
+			private _keptSeats = _grpSeats select {!(_x in _removeFullSeatsSet) && {!((format ["%1|%2", _x, NO_TEXTURE_SELECTION]) in _removePairSet)}};
+			if (_keptSeats isNotEqualTo []) then {
+				private _keptCtrls = if (_grpControls isEqualTo [] || {_grpControls isEqualTo ["__NO_CONTROLLER__"]}) then {
+					_grpControls
+				} else {
+					private _c = _grpControls select {_x in _keptSeats};
+					if (_c isEqualTo []) then {["__NO_CONTROLLER__"]} else {_c}
+				};
+				{
+					_addSuppressBasePipSeats set [_x, true];
+				} forEach _keptSeats;
+				_addSpecs pushBack [NO_TEXTURE_SELECTION, _keptSeats joinString ", ", true, false, _keptSeats, _keptCtrls, "ADD", true, _parsedCount];
 			};
-			{
-				_addSuppressBasePipSeats set [_x, true];
-			} forEach _keptSeats;
-			_addSpecs pushBack [NO_TEXTURE_SELECTION, _keptSeats joinString ", ", true, false, _keptSeats, _keptCtrls, "ADD", true];
 		};
 	} else {
 		if ([_x] call _fnc_isInvalidSharedTexEntry) then {
-			diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (-1); ignoring on %2", _x, _monitor];
+			diag_log format ["[CFM] Shared multi-seat monitor entry %1 only supports PiP (count or -1); ignoring on %2", _x, _monitor];
 		} else {
 			private _seatDesc = _x;
 			private _texSel = NO_TEXTURE_SELECTION;
 			private _hasExp = false;
+			private _pipCount = 1;
+			private _skipItem = false;
 			if ([_x] call _fnc_isPairEntry) then {
 				_seatDesc = _x select 0;
-				_texSel = floor (_x select 1);
-				if (_texSel < 0) then {_texSel = NO_TEXTURE_SELECTION};
-				_hasExp = true;
-			};
-			{
-				private _sk = _x;
-				if (!(_sk in _removeFullSeatsSet) && {!((format ["%1|%2", _sk, _texSel]) in _removePairSet)}) then {
-					if (_texSel >= 0) then {_addSuppressBasePipSeats set [_sk, true]};
-					_addSpecs pushBack [_texSel, _sk, true, false, [_sk], [], "ADD", _hasExp];
+				([_x select 1] call _fnc_parsePairSecond) params ["", "_isTexSel", "_parsedTexSel", "_parsedCount"];
+				if (!_isTexSel && {_parsedCount <= 0}) then {
+					diag_log format ["[CFM] Monitor count 0 ignored for seat %1 on %2 (use ""#0"" for texture selection 0)", _seatDesc, _monitor];
+					_skipItem = true;
+				} else {
+					_texSel = if (_isTexSel) then {_parsedTexSel} else {NO_TEXTURE_SELECTION};
+					_pipCount = if (_isTexSel) then {1} else {_parsedCount};
+					_hasExp = true;
 				};
-			} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+			};
+			if !(_skipItem) then {
+				{
+					private _sk = _x;
+					if (!(_sk in _removeFullSeatsSet) && {!((format ["%1|%2", _sk, _texSel]) in _removePairSet)}) then {
+						private _effCount = if (_texSel < 0) then {
+							_pipCount - (_removePipCountMap getOrDefault [_sk, 0])
+						} else {
+							1
+						};
+						if (_effCount > 0) then {
+							if (_hasExp) then {_addSuppressBasePipSeats set [_sk, true]};
+							_addSpecs pushBack [_texSel, _sk, true, false, [_sk], [], "ADD", _hasExp, _effCount];
+						};
+					};
+				} forEach ([_seatDesc] call _fnc_resolveSeatDesc);
+			};
 		};
 	};
 } forEach _addItemsList;
@@ -858,30 +992,30 @@ private _emittedRewritten = createHashMap;
 		if (_x in _rewriteMap) then {
 			private _rwSeat = _x;
 			{
-				_x params ["_rwTex", "_rwExp"];
-				_seatSpecsRaw pushBack [_rwTex, _rwSeat, true, false, [_rwSeat], [], "REWRITE", _rwExp];
+				_x params ["_rwTex", "_rwExp", ["_rwCount", 1]];
+				_seatSpecsRaw pushBack [_rwTex, _rwSeat, true, false, [_rwSeat], [], "REWRITE", _rwExp, _rwCount];
 			} forEach (_rewriteMap get _rwSeat);
 			_emittedRewritten set [_rwSeat, true];
 		} else {
-			if (!(_x in _rewriteSharedSeatSet) && {!(_x in _addSuppressBasePipSeats)}) then {
-				_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _x, true, false, [_x], [], _baseOpMode, false];
+			if (!(_x in _rewriteSharedSeatSet) && {!(_x in _addSuppressBasePipSeats)} && {(_removePipCountMap getOrDefault [_x, 0]) < 1}) then {
+				_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _x, true, false, [_x], [], _baseOpMode, false, 1];
 			};
 		};
 	};
 } forEach _baseKeys;
 
 {
-	_x params ["_grpSeats", "_grpControls"];
-	_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _grpSeats joinString ", ", true, false, _grpSeats, _grpControls, "REWRITE", true];
+	_x params ["_grpSeats", "_grpControls", ["_grpCount", 1]];
+	_seatSpecsRaw pushBack [NO_TEXTURE_SELECTION, _grpSeats joinString ", ", true, false, _grpSeats, _grpControls, "REWRITE", true, _grpCount];
 } forEach _rewriteSharedGroups;
 
 {
 	private _rwSeat = _x;
 	if (!(_rwSeat in _emittedRewritten) && {!(_rwSeat in _removeFullSeatsSet)}) then {
 		{
-			_x params ["_rwTex", "_rwExp"];
+			_x params ["_rwTex", "_rwExp", ["_rwCount", 1]];
 			if !((format ["%1|%2", _rwSeat, _rwTex]) in _removePairSet) then {
-				_seatSpecsRaw pushBack [_rwTex, _rwSeat, true, false, [_rwSeat], [], "REWRITE", _rwExp];
+				_seatSpecsRaw pushBack [_rwTex, _rwSeat, true, false, [_rwSeat], [], "REWRITE", _rwExp, _rwCount];
 			};
 		} forEach _y;
 		_emittedRewritten set [_rwSeat, true];
@@ -889,22 +1023,22 @@ private _emittedRewritten = createHashMap;
 } forEach _rewriteMap;
 
 {
-	_x params ["_texSel", "_seatKey", "_isVeh", "_isHand", "_seatKeysArr", "_ctrlSeatKeys", "_opMode", "_hasExp"];
+	_x params ["_texSel", "_seatKey", "_isVeh", "_isHand", "_seatKeysArr", "_ctrlSeatKeys", "_opMode", "_hasExp", ["_pipCount", 1]];
 	private _isSharedSpec = ((count _seatKeysArr) > 1) || {_ctrlSeatKeys isNotEqualTo []};
 	if (_isSharedSpec) then {
-		_seatSpecsRaw pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp];
+		_seatSpecsRaw pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp, _pipCount];
 	} else {
 		if (_seatKey in _rewriteMap) then {
 			if !(_seatKey in _emittedRewritten) then {
 				{
-					_x params ["_rwTex", "_rwExp"];
-					_seatSpecsRaw pushBack [_rwTex, _seatKey, true, false, [_seatKey], [], "REWRITE", _rwExp];
+					_x params ["_rwTex", "_rwExp", ["_rwCount", 1]];
+					_seatSpecsRaw pushBack [_rwTex, _seatKey, true, false, [_seatKey], [], "REWRITE", _rwExp, _rwCount];
 				} forEach (_rewriteMap get _seatKey);
 				_emittedRewritten set [_seatKey, true];
 			};
 		} else {
 			if !(_seatKey in _rewriteSharedSeatSet) then {
-				_seatSpecsRaw pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp];
+				_seatSpecsRaw pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp, _pipCount];
 			};
 		};
 	};
@@ -915,7 +1049,7 @@ private _specs = [];
 private _usedTexSels = createHashMap;
 private _usedPipSeats = createHashMap;
 
-// Reserve explicit seat-bound texture selections first so hybrid [seatKey, texSel] wins if also listed in textureSelections
+// Reserve explicit seat-bound texture selections first so hybrid [seatKey, "#texSel"] wins if also listed in textureSelections
 {
 	_x params [
 		"_texSel",
@@ -925,7 +1059,8 @@ private _usedPipSeats = createHashMap;
 		["_seatKeysArr", []],
 		["_ctrlSeatKeys", []],
 		["_opMode", "ADD"],
-		["_hasExp", false]
+		["_hasExp", false],
+		["_pipCount", 1]
 	];
 	if (_seatKeysArr isEqualTo [] && {!(_seatKey isEqualTo "")}) then {
 		_seatKeysArr = [_seatKey];
@@ -935,28 +1070,46 @@ private _usedPipSeats = createHashMap;
 			diag_log format ["[CFM] Duplicate monitor textureSelection %1 ignored for seat '%2' on %3", _texSel, _seatKey, _monitor];
 		} else {
 			_usedTexSels set [_texSel, true];
-			_specs pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp];
+			_specs pushBack [_texSel, _seatKey, _isVeh, _isHand, _seatKeysArr, _ctrlSeatKeys, _opMode, _hasExp, 1];
 		};
 	} else {
 		if (_seatKeysArr isNotEqualTo []) then {
-			private _freeSeats = _seatKeysArr select {!(_x in _usedPipSeats)};
-			if (_freeSeats isNotEqualTo []) then {
-				{
-					_usedPipSeats set [_x, true];
-				} forEach _freeSeats;
-				private _finalSeatKey = _freeSeats joinString ", ";
-				private _finalCtrlKeys = if (_ctrlSeatKeys isEqualTo [] || {_ctrlSeatKeys isEqualTo ["__NO_CONTROLLER__"]}) then {
-					_ctrlSeatKeys
-				} else {
-					private _keptCtrls = _ctrlSeatKeys select {_x in _freeSeats};
-					if (_keptCtrls isEqualTo []) then {["__NO_CONTROLLER__"]} else {_keptCtrls}
+			private _isSingleSeatSpec = ((count _seatKeysArr) == 1) && {_ctrlSeatKeys isEqualTo []};
+			if (_isSingleSeatSpec && {(_seatKeysArr select 0) in _usedPipSeats}) then {
+				if (_hasExp) then {
+					private _sk = _seatKeysArr select 0;
+					private _prevIdx = _usedPipSeats get _sk;
+					if (_prevIdx isEqualType 0 && {_prevIdx >= 0} && {_prevIdx < (count _specs)}) then {
+						private _prevSpec = _specs select _prevIdx;
+						private _prevSeats = _prevSpec param [4, []];
+						private _prevCtrls = _prevSpec param [5, []];
+						if (((count _prevSeats) == 1) && {_prevCtrls isEqualTo []} && {(_prevSpec param [6, "ADD"]) isEqualTo _opMode}) then {
+							_prevSpec set [7, true];
+							_prevSpec set [8, _pipCount];
+						};
+					};
 				};
-				_specs pushBack [_texSel, _finalSeatKey, _isVeh, _isHand, _freeSeats, _finalCtrlKeys, _opMode, _hasExp];
+			} else {
+				private _freeSeats = _seatKeysArr select {!(_x in _usedPipSeats)};
+				if (_freeSeats isNotEqualTo []) then {
+					private _specIdx = count _specs;
+					{
+						_usedPipSeats set [_x, _specIdx];
+					} forEach _freeSeats;
+					private _finalSeatKey = _freeSeats joinString ", ";
+					private _finalCtrlKeys = if (_ctrlSeatKeys isEqualTo [] || {_ctrlSeatKeys isEqualTo ["__NO_CONTROLLER__"]}) then {
+						_ctrlSeatKeys
+					} else {
+						private _keptCtrls = _ctrlSeatKeys select {_x in _freeSeats};
+						if (_keptCtrls isEqualTo []) then {["__NO_CONTROLLER__"]} else {_keptCtrls}
+					};
+					_specs pushBack [_texSel, _finalSeatKey, _isVeh, _isHand, _freeSeats, _finalCtrlKeys, _opMode, _hasExp, _pipCount];
+				};
 			};
 		} else {
 			if !(_seatKey in _usedPipSeats) then {
-				_usedPipSeats set [_seatKey, true];
-				_specs pushBack [_texSel, _seatKey, _isVeh, _isHand, [], _ctrlSeatKeys, _opMode, _hasExp];
+				_usedPipSeats set [_seatKey, count _specs];
+				_specs pushBack [_texSel, _seatKey, _isVeh, _isHand, [], _ctrlSeatKeys, _opMode, _hasExp, _pipCount];
 			};
 		};
 	};
@@ -966,7 +1119,7 @@ private _texOnlySpecs = [];
 {
 	if !(_x in _usedTexSels) then {
 		_usedTexSels set [_x, true];
-		_texOnlySpecs pushBack [_x, "", false, false, [], [], "REWRITE", true];
+		_texOnlySpecs pushBack [_x, "", false, false, [], [], "REWRITE", true, 1];
 	} else {
 		diag_log format ["[CFM] TextureSelection %1 already bound to a seat on %2; skipping duplicate", _x, _monitor];
 	};
@@ -975,13 +1128,13 @@ private _texOnlySpecs = [];
 {
 	if !(_x in _usedTexSels) then {
 		_usedTexSels set [_x, true];
-		_texOnlySpecs pushBack [_x, "", false, false, [], [], "ADD", true];
+		_texOnlySpecs pushBack [_x, "", false, false, [], [], "ADD", true, 1];
 	} else {
 		diag_log format ["[CFM] TextureSelection %1 already bound to a seat on %2; skipping duplicate", _x, _monitor];
 	};
 } forEach _texAddSels;
 
-private _texRemoveSpecs = _texRemoveSels apply {[_x, "", false, false, [], [], "REMOVE", true]};
+private _texRemoveSpecs = _texRemoveSels apply {[_x, "", false, false, [], [], "REMOVE", true, 1]};
 
 // Order: removals first (unbinds selections/seats before additions), then standalone texture monitors, then seat instances
 private _orderedSpecs = _removeSpecs + _texRemoveSpecs + _texOnlySpecs + _specs;
@@ -989,13 +1142,13 @@ private _orderedSpecs = _removeSpecs + _texRemoveSpecs + _texOnlySpecs + _specs;
 if (_orderedSpecs isEqualTo []) then {
 	if (_isEmptyKeys) then {
 		if (_isVehSeatTablet) then {
-			_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false, [], [], "BASE_EMPTY", false]];
+			_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false, [], [], "BASE_EMPTY", false, 1]];
 		} else {
-			_orderedSpecs = [[0, "", false, false, [], [], "BASE_EMPTY", true]];
+			_orderedSpecs = [[0, "", false, false, [], [], "BASE_EMPTY", true, 1]];
 		};
 	} else {
 		if (_isVehSeatTablet && {!(_baseMode isEqualTo "")} && {_crewInfo isEqualTo []} && {_removeSpecs isEqualTo []} && {_texRemoveSpecs isEqualTo []} && {_texOnlySpecs isEqualTo []}) then {
-			_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false, [], [], _baseOpMode, false]];
+			_orderedSpecs = [[NO_TEXTURE_SELECTION, "", true, false, [], [], _baseOpMode, false, 1]];
 		};
 	};
 };

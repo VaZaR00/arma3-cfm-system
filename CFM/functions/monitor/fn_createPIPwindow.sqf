@@ -21,41 +21,69 @@ if !(MON_GVAR(_player, _instId, "CFM_feedActive", false)) exitWith {};
 if (MON_GVAR(_player, _instId, "CFM_turnedOffLocal", false)) exitWith {};
 if (MON_GVAR(_player, _instId, "CFM_isVehSeatTablet", false) && {!([_player, _instId] call CFM_fnc_inVehicleTabletSeatCondition)}) exitWith {};
 
-if (isNil {_player getVariable (MON_VAR_NAME("CFM_pipSlot", _instId))}) then {
-    MON_SVAR(_player, _instId, "CFM_pipSlot", [_monPair] call CFM_fnc_getFreePipSlot);
-};
-
-private _otherMonPair = [_monPair] call CFM_fnc_getOtherTabletMonitor;
-private _otherVisible = [_otherMonPair] call CFM_fnc_isPipVisible;
-private _otherLayer = if (_otherVisible) then {
-    MON_GVAR(_otherMonPair select 0, _otherMonPair select 1, "CFM_currentRscLayer", -1)
-} else {-1};
-private _isFullscreen = missionNamespace getVariable ["CFM_isInPIPFullScreen", false];
-private _isSelected = _isFullscreen || {[_player, _instId] call CFM_fnc_isSelectedTablet};
-
-private _layerId = if (_otherVisible && {_otherLayer isEqualType 0} && {_otherLayer >= 0}) then {
-    if (_isSelected) then {
-        _otherLayer + 1
-    } else {
-        (_otherLayer - 1) max 1
-    }
-} else {
-    PIP_BASE_LAYER
-};
-
 waitUntil {
     private _lockScript = missionNamespace getVariable ["CFM_creatingPipDisplayScript", scriptNull];
     isNull _lockScript || {scriptDone _lockScript}
 };
 missionNamespace setVariable ["CFM_creatingPipDisplayScript", _thisScript];
+
+if (
+    !(MON_GVAR(_player, _instId, "CFM_feedActive", false)) ||
+    {MON_GVAR(_player, _instId, "CFM_turnedOffLocal", false)} ||
+    {MON_GVAR(_player, _instId, "CFM_isVehSeatTablet", false) && {!([_player, _instId] call CFM_fnc_inVehicleTabletSeatCondition)}}
+) exitWith {
+    missionNamespace setVariable ["CFM_creatingPipDisplayScript", scriptNull];
+};
+
+if (isNil {_player getVariable (MON_VAR_NAME("CFM_pipSlot", _instId))}) then {
+    MON_SVAR(_player, _instId, "CFM_pipSlot", [_monPair] call CFM_fnc_getFreePipSlot);
+};
+
+private _otherMons = [_monPair] call CFM_fnc_getOtherPipMonitors;
+private _usedLayers = [];
+private _maxOtherLayer = -1;
+private _minOtherLayer = 1e9;
+{
+    if ([_x] call CFM_fnc_isPipVisible) then {
+        _x params ["_oMon", "_oId"];
+        private _oLayer = MON_GVAR(_oMon, _oId, "CFM_currentRscLayer", -1);
+        if (_oLayer isEqualType 0 && {_oLayer >= 0}) then {
+            _usedLayers pushBackUnique _oLayer;
+            if (_oLayer > _maxOtherLayer) then {_maxOtherLayer = _oLayer};
+            if (_oLayer < _minOtherLayer) then {_minOtherLayer = _oLayer};
+        };
+    };
+} forEach _otherMons;
+
+private _isFullscreen = missionNamespace getVariable ["CFM_isInPIPFullScreen", false];
+private _isVehMon = MON_GVAR(_player, _instId, "CFM_isVehSeatTablet", false);
+private _isSelected = _isFullscreen || {
+    ([_player, _instId] call CFM_fnc_isSelectedTablet) &&
+    {!_isVehMon || {([_player] call CFM_fnc_getSelectedMonitorInstance) isEqualTo _instId}}
+};
+
+private _layerId = if (_usedLayers isNotEqualTo []) then {
+    if (_isSelected) then {
+        _maxOtherLayer + 1
+    } else {
+        private _cand = (_minOtherLayer - 1) max 1;
+        while {_cand in _usedLayers} do {
+            _cand = _cand + 1;
+        };
+        _cand
+    }
+} else {
+    PIP_BASE_LAYER
+};
+
 uiNamespace setVariable ["RscTitleDisplayEmpty", displayNull];
 _layerId cutRsc ["RscTitleDisplayEmpty", "PLAIN"];
 waitUntil {!isNull (uiNamespace getVariable ["RscTitleDisplayEmpty", displayNull])};
 private _display = uiNamespace getVariable "RscTitleDisplayEmpty";
-missionNamespace setVariable ["CFM_creatingPipDisplayScript", scriptNull];
 
 MON_SVAR(_player, _instId, "CFM_currentRscLayer", _layerId);
 MON_SVAR(_player, _instId, "CFM_currentDisplay", _display);
+missionNamespace setVariable ["CFM_creatingPipDisplayScript", scriptNull];
 
 ([_monPair, _settings] call CFM_fnc_calcPipControlsPositions) params ["_bgPos", "_titlePos", "_picPos"];
 
@@ -65,7 +93,12 @@ _background ctrlSetPosition _bgPos;
 _background ctrlCommit 0;
 
 private _title = _display ctrlCreate ["RscText", -1];
-_title ctrlSetText CFM_STR_CAMERA_FEED;
+private _titleText = CFM_STR_CAMERA_FEED;
+([_player, _instId] call CFM_fnc_getSeatPipOrdinal) params ["_pipOrd", "_pipTot"];
+if (_pipOrd > 0 && {_pipTot > 1}) then {
+    _titleText = format ["%1 [%2]", CFM_STR_CAMERA_FEED, _pipOrd];
+};
+_title ctrlSetText _titleText;
 _title ctrlSetTextColor [1, 1, 1, 1];
 _title ctrlSetPosition _titlePos;
 _title ctrlSetScale 0.85;

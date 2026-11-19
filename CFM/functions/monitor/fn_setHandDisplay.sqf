@@ -53,19 +53,23 @@ if (_canRender) then {
 	private _pipHndl = [_monPair, _renderTarget, _settings, _isUI] spawn CFM_fnc_createPIPwindow;
 	MON_SVAR(_monitor, _instId, "CFM_createPipHndl", _pipHndl);
 } else {
-	if (dialog) then {
-		closeDialog 0;
+	private _isThisFullscreen = (MON_GVAR(_monitor, _instId, "CFM_tabletDisplayIsOpened", false)) || {(missionNamespace getVariable ["CFM_currentFullScreenMonitor", [objNull, -1]]) isEqualTo _monPair};
+	if (_isThisFullscreen) then {
+		if (dialog) then {
+			closeDialog 0;
+		};
+		private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
+		if (!isNull _disp) then {
+			_disp closeDisplay 1;
+			uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
+		};
+		private _fallbackDisp = findDisplay 167;
+		if (!isNull _fallbackDisp) then {
+			_fallbackDisp closeDisplay 1;
+		};
+		MON_SVAR(_monitor, _instId, "CFM_tabletDisplayIsOpened", false);
+		missionNamespace setVariable ["CFM_isInPIPFullScreen", false];
+		missionNamespace setVariable ["CFM_currentFullScreenMonitor", [objNull, -1]];
 	};
-	private _disp = uiNamespace getVariable ["CFM_tabletDisplay", displayNull];
-	if (!isNull _disp) then {
-		_disp closeDisplay 1;
-		uiNamespace setVariable ["CFM_tabletDisplay", displayNull];
-	};
-	private _fallbackDisp = findDisplay 167;
-	if (!isNull _fallbackDisp) then {
-		_fallbackDisp closeDisplay 1;
-	};
-	MON_SVAR(_monitor, _instId, "CFM_tabletDisplayIsOpened", false);
-	missionNamespace setVariable ["CFM_isInPIPFullScreen", false];
 	[_monPair] call CFM_fnc_closePIPwindow;
 };

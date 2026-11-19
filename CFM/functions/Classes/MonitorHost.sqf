@@ -917,8 +917,15 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		};
 
 		private _createdIds = [];
+		private _touchedInstIds = createHashMap;
 		private _stateChanged = false;
-		private _isMultiMonitor = (_existingCount + (count _instanceSpecs)) > 1;
+		private _specTotalCount = 0;
+		{
+			if ((_x param [6, "ADD"]) isNotEqualTo "REMOVE") then {
+				_specTotalCount = _specTotalCount + ((_x param [8, 1]) max 1);
+			};
+		} forEach _instanceSpecs;
+		private _isMultiMonitor = (_existingCount + _specTotalCount) > 1;
 		private _now = diag_tickTime;
 
 		{
@@ -930,7 +937,8 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 				["_seatKeys", []],
 				["_controlSeatKeys", []],
 				["_opMode", "ADD"],
-				["_hasExplicitTexSel", false]
+				["_hasExplicitTexSel", false],
+				["_pipCount", 1]
 			];
 			if (_seatKeys isEqualTo [] && {!(_seatKey isEqualTo "")}) then {
 				_seatKeys = [_seatKey];
@@ -948,7 +956,9 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 				if (_isVehSeat && {_seatKeys isNotEqualTo []}) then {
 					{
 						if (_hasExplicitTexSel) then {
-							_remSeats set [format ["%1|%2", _x, _texSel], _now];
+							if (_texSel >= 0 || {_pipCount < 0}) then {
+								_remSeats set [format ["%1|%2", _x, _texSel], _now];
+							};
 						} else {
 							_remSeats set [_x, _now];
 						};
@@ -985,7 +995,14 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						} forEach (_instancesMap getOrDefault [_x, []]);
 					} forEach _seatKeys;
 
+					private _limitRem = _hasExplicitTexSel && {_texSel < 0} && {_pipCount > 0};
+					if (_limitRem) then {
+						_candidateInsts sort false;
+					};
+					private _removedCount = 0;
+
 					{
+						if (_limitRem && {_removedCount >= _pipCount}) exitWith {};
 						private _instId = _x;
 						private _entry = (_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap]) getOrDefault [_instId, []];
 						if (_entry isNotEqualTo []) then {
@@ -996,10 +1013,16 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 							if (!_hasExplicitTexSel || {_eTexSel == _texSel}) then {
 								private _keptSeats = _eSeatKeys select {!(_x in _seatKeys)};
 								if (_keptSeats isEqualTo []) then {
-									if (["removeInstance", [_instId]] CALL_SELF) then {_stateChanged = true};
+									if (["removeInstance", [_instId]] CALL_SELF) then {
+										_stateChanged = true;
+										_removedCount = _removedCount + 1;
+									};
 								} else {
 									if ((count _keptSeats) < (count _eSeatKeys)) then {
-										if (["detachSeatsFromInstance", [_instId, _seatKeys]] CALL_SELF) then {_stateChanged = true};
+										if (["detachSeatsFromInstance", [_instId, _seatKeys]] CALL_SELF) then {
+											_stateChanged = true;
+											_removedCount = _removedCount + 1;
+										};
 									};
 								};
 							};
@@ -1059,11 +1082,13 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						if (["reconfigureInstance", [_targetInstId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 							_baseInstIds deleteAt _targetInstId;
 							_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+							_touchedInstIds set [_targetInstId, true];
 							_stateChanged = true;
 						};
 					} else {
 						private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
 						if (_newId > 0) then {
+							_touchedInstIds set [_newId, true];
 							_createdIds pushBack _newId;
 							_stateChanged = true;
 						};
@@ -1078,11 +1103,13 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						if (["reconfigureInstance", [_targetInstId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 							_baseInstIds deleteAt _targetInstId;
 							_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+							_touchedInstIds set [_targetInstId, true];
 							_stateChanged = true;
 						};
 					} else {
 						private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
 						if (_newId > 0) then {
+							_touchedInstIds set [_newId, true];
 							_createdIds pushBack _newId;
 							_stateChanged = true;
 						};
@@ -1093,6 +1120,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 				if (_isVehSeat && {_seatKeys isNotEqualTo []}) then {
 					private _isSharedGroup = ((count _seatKeys) > 1) || {_controlSeatKeys isNotEqualTo []};
 					if (_isSharedGroup) then {
+						private _targetCount = _pipCount max 1;
 						private _pipInsts = [];
 						{
 							{
@@ -1103,36 +1131,57 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 							} forEach (_instancesMap getOrDefault [_x, []]);
 						} forEach _seatKeys;
 
-						private _exactMatchId = -1;
-						if ((count _pipInsts) == 1) then {
-							private _candId = _pipInsts select 0;
+						private _sortedNew = +_seatKeys;
+						_sortedNew sort true;
+
+						private _exactMatchIds = [];
+						private _otherPipIds = [];
+						{
+							private _candId = _x;
 							private _candEntry = _keysMap getOrDefault [_candId, []];
 							private _candSeats = +(_candEntry param [4, []]);
 							if (_candSeats isEqualTo [] && {!((_candEntry param [1, ""]) isEqualTo "")}) then {
 								_candSeats = [_candEntry param [1, ""]];
 							};
 							private _sortedCand = +_candSeats;
-							private _sortedNew = +_seatKeys;
 							_sortedCand sort true;
-							_sortedNew sort true;
 							if (_sortedCand isEqualTo _sortedNew) then {
-								_exactMatchId = _candId;
+								_exactMatchIds pushBack _candId;
+							} else {
+								_otherPipIds pushBack _candId;
 							};
-						};
+						} forEach _pipInsts;
+						_exactMatchIds sort true;
+
+						{
+							if !(_x in _touchedInstIds) then {
+								if (["detachSeatsFromInstance", [_x, _seatKeys]] CALL_SELF) then {_stateChanged = true};
+							};
+						} forEach _otherPipIds;
 
 						private _keyTuple = [NO_TEXTURE_SELECTION, _seatKey, true, false, _seatKeys, _controlSeatKeys];
-						if (_exactMatchId > 0) then {
-							if (["reconfigureInstance", [_exactMatchId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
-								_baseInstIds deleteAt _exactMatchId;
-								_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
-								_stateChanged = true;
+						private _reused = 0;
+						{
+							private _eId = _x;
+							if (_reused < _targetCount) then {
+								if (["reconfigureInstance", [_eId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
+									_baseInstIds deleteAt _eId;
+									_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+									_touchedInstIds set [_eId, true];
+									_reused = _reused + 1;
+									_stateChanged = true;
+								};
+							} else {
+								if (!(_eId in _touchedInstIds) && {["removeInstance", [_eId]] CALL_SELF}) then {
+									_stateChanged = true;
+								};
 							};
-						} else {
-							{
-								if (["detachSeatsFromInstance", [_x, _seatKeys]] CALL_SELF) then {_stateChanged = true};
-							} forEach _pipInsts;
+						} forEach _exactMatchIds;
+
+						for "_ci" from (_reused + 1) to _targetCount do {
 							private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
 							if (_newId > 0) then {
+								_touchedInstIds set [_newId, true];
 								_createdIds pushBack _newId;
 								_stateChanged = true;
 							};
@@ -1145,7 +1194,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 					private _seatInstIds = +(_instancesMap getOrDefault [_sk, []]);
 					private _singleInstIds = [];
 					private _sharedPipIds = [];
-					private _singlePipId = -1;
+					private _singlePipIds = [];
 					private _singleTexIds = [];
 
 					{
@@ -1157,7 +1206,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 							if ((count _eSeats) <= 1) then {
 								_singleInstIds pushBack _eId;
 								if (_eTex < 0) then {
-									if (_singlePipId < 0) then {_singlePipId = _eId};
+									_singlePipIds pushBack _eId;
 								} else {
 									_singleTexIds pushBack _eId;
 								};
@@ -1166,6 +1215,8 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 							};
 						};
 					} forEach _seatInstIds;
+					_singlePipIds sort true;
+					_singleTexIds sort true;
 
 					if (!_hasExplicitTexSel) then {
 						if (_singleInstIds isNotEqualTo []) then {
@@ -1176,16 +1227,20 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 								if (["reconfigureInstance", [_eId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 									_baseInstIds deleteAt _eId;
 									_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+									_touchedInstIds set [_eId, true];
 									_stateChanged = true;
 								};
 							} forEach _singleInstIds;
 						} else {
 							{
-								if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
+								if !(_x in _touchedInstIds) then {
+									if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
+								};
 							} forEach _sharedPipIds;
 							private _keyTuple = [NO_TEXTURE_SELECTION, _sk, true, false, [_sk], []];
 							private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
 							if (_newId > 0) then {
+								_touchedInstIds set [_newId, true];
 								_createdIds pushBack _newId;
 								_stateChanged = true;
 							};
@@ -1206,6 +1261,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 									if (["reconfigureInstance", [_texOwnerId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 										_baseInstIds deleteAt _texOwnerId;
 										_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+										_touchedInstIds set [_texOwnerId, true];
 										_stateChanged = true;
 									};
 									_handled = true;
@@ -1214,48 +1270,76 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 								};
 							};
 							if !(_handled) then {
+								private _untouchedPipIds = _singlePipIds select {!(_x in _touchedInstIds)};
+								private _singlePipId = _untouchedPipIds param [0, -1];
 								if (_singlePipId > 0 && {(_monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap]) getOrDefault [_singlePipId, []] isNotEqualTo []}) then {
 									if (["reconfigureInstance", [_singlePipId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 										_baseInstIds deleteAt _singlePipId;
 										_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+										_touchedInstIds set [_singlePipId, true];
 										_stateChanged = true;
 									};
 								} else {
 									{
-										if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
+										if !(_x in _touchedInstIds) then {
+											if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
+										};
 									} forEach _sharedPipIds;
 									private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
 									if (_newId > 0) then {
+										_touchedInstIds set [_newId, true];
 										_createdIds pushBack _newId;
 										_stateChanged = true;
 									};
 								};
 							};
 						} else {
+							private _targetCount = _pipCount max 1;
 							private _keyTuple = [NO_TEXTURE_SELECTION, _sk, true, false, [_sk], []];
-							if (_singlePipId > 0) then {
-								if (["reconfigureInstance", [_singlePipId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
-									_baseInstIds deleteAt _singlePipId;
-									_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
-									_stateChanged = true;
+							{
+								if !(_x in _touchedInstIds) then {
+									if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
 								};
-							} else {
-								if (_singleTexIds isNotEqualTo []) then {
-									private _targetId = _singleTexIds select 0;
-									if (["reconfigureInstance", [_targetId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
-										_baseInstIds deleteAt _targetId;
+							} forEach _sharedPipIds;
+
+							private _reused = 0;
+							{
+								private _eId = _x;
+								if (_reused < _targetCount) then {
+									if (["reconfigureInstance", [_eId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
+										_baseInstIds deleteAt _eId;
 										_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+										_touchedInstIds set [_eId, true];
+										_reused = _reused + 1;
 										_stateChanged = true;
 									};
 								} else {
-									{
-										if (["detachSeatsFromInstance", [_x, [_sk]]] CALL_SELF) then {_stateChanged = true};
-									} forEach _sharedPipIds;
-									private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
-									if (_newId > 0) then {
-										_createdIds pushBack _newId;
+									if (!(_eId in _touchedInstIds) && {["removeInstance", [_eId]] CALL_SELF}) then {
 										_stateChanged = true;
 									};
+								};
+							} forEach _singlePipIds;
+
+							if (_reused == 0) then {
+								private _untouchedTexIds = _singleTexIds select {!(_x in _touchedInstIds)};
+								if (_untouchedTexIds isNotEqualTo []) then {
+									private _targetId = _untouchedTexIds select 0;
+									if (["reconfigureInstance", [_targetId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
+										_baseInstIds deleteAt _targetId;
+										_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+										_touchedInstIds set [_targetId, true];
+										_reused = 1;
+										_stateChanged = true;
+									};
+								};
+							};
+
+							for "_ci" from (_reused + 1) to _targetCount do {
+								private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
+								if (_newId > 0) then {
+									_touchedInstIds set [_newId, true];
+									_createdIds pushBack _newId;
+									_stateChanged = true;
 								};
 							};
 						};
@@ -1282,6 +1366,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						_baseInstIds set [_newId, true];
 						_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
 					};
+					_touchedInstIds set [_newId, true];
 					_createdIds pushBack _newId;
 					_stateChanged = true;
 				};
@@ -1297,6 +1382,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						_baseInstIds set [_newId, true];
 						_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
 					};
+					_touchedInstIds set [_newId, true];
 					_createdIds pushBack _newId;
 					_stateChanged = true;
 				};
@@ -1363,6 +1449,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 						if (["reconfigureInstance", [_basePipId, _keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF) then {
 							_baseInstIds deleteAt _basePipId;
 							_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
+							_touchedInstIds set [_basePipId, true];
 							_stateChanged = true;
 						};
 						continue;
@@ -1393,6 +1480,20 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 					_keysMap = _monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap];
 				};
 
+				if (_texSel < 0 && {_opMode isEqualTo "ADD"} && {_hasExplicitTexSel}) then {
+					private _createCount = _pipCount max 1;
+					private _keyTuple = [_texSel, _seatKey, _isVehSeat, _isHand, _seatKeys, _controlSeatKeys];
+					for "_ci" from 1 to _createCount do {
+						private _newId = ["createMonitorInstance", [_keyTuple, _commonArgs, _isLocal, _isMultiMonitor]] CALL_SELF;
+						if (_newId > 0) then {
+							_touchedInstIds set [_newId, true];
+							_createdIds pushBack _newId;
+							_stateChanged = true;
+						};
+					};
+					continue;
+				};
+
 				private _duplicate = false;
 				if (_texSel < 0) then {
 					private _checkSeats = if (_seatKeys isNotEqualTo []) then {_seatKeys} else {[_seatKey]};
@@ -1414,6 +1515,7 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 							_baseInstIds set [_newId, true];
 							_monitor setVariable ["CFM_monitorBaseInstIds", _baseInstIds];
 						};
+						_touchedInstIds set [_newId, true];
 						_createdIds pushBack _newId;
 						_stateChanged = true;
 					};
@@ -1470,7 +1572,12 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 			if (_texSel >= 0) then {
 				format ["%1 #%2", _dispSeat, _texSel]
 			} else {
-				_dispSeat
+				([_monitor, _nextInstId] call CFM_fnc_getSeatPipOrdinal) params ["_pipOrd", "_pipTot"];
+				if (_pipOrd > 0 && {_pipTot > 1}) then {
+					format ["%1 [%2]", _dispSeat, _pipOrd]
+				} else {
+					_dispSeat
+				}
 			}
 		} else {
 			format ["#%1", _nextInstId]
@@ -1484,6 +1591,10 @@ PRIVATE GLOBAL SINGLETON_CLASS(MonitorHost)
 		};
 
 		["syncSelectedActionLabels", [_nextInstId]] CALL_SELF;
+
+		if (MON_GVAR(_monitor, _nextInstId, "CFM_isHandMonitor", false)) then {
+			[[_monitor, _nextInstId]] call CFM_fnc_bringPipToTop;
+		};
 
 		(format [CFM_STR_SWITCH_MONITOR_HINT, _label, _pos, _total]) _HINT;
 		_nextInstId

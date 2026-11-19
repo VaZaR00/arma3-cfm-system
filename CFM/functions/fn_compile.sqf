@@ -277,6 +277,69 @@ CFUNC(isSelectedTablet) = {
 	true
 };
 
+CFUNC(getSeatPipOrdinal) = {
+	params [["_monitor", objNull], ["_instId", -1]];
+	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {[0, 0]};
+	private _keysMap = _monitor getVariable ["CFM_monitorInstanceKeysMap", createHashMap];
+	private _entry = _keysMap getOrDefault [_instId, []];
+	if (_entry isEqualTo []) exitWith {[0, 0]};
+	_entry params [["_texSel", NO_TEXTURE_SELECTION], ["_seatKey", ""], ["_isVehSeat", false], "", ["_seatKeys", []]];
+	if (!_isVehSeat || {_texSel >= 0}) exitWith {[0, 0]};
+	if (_seatKeys isEqualTo [] && {!(_seatKey isEqualTo "")}) then {_seatKeys = [_seatKey]};
+	if (_seatKeys isEqualTo []) exitWith {[0, 0]};
+
+	private _sortedTarget = +_seatKeys;
+	_sortedTarget sort true;
+
+	private _samePipIds = [];
+	{
+		private _eId = _x;
+		_y params [["_eTex", NO_TEXTURE_SELECTION], ["_eSeat", ""], ["_eIsVeh", false], "", ["_eSeats", []]];
+		if (_eIsVeh && {_eTex < 0}) then {
+			if (_eSeats isEqualTo [] && {!(_eSeat isEqualTo "")}) then {_eSeats = [_eSeat]};
+			private _sortedE = +_eSeats;
+			_sortedE sort true;
+			if (_sortedE isEqualTo _sortedTarget) then {
+				_samePipIds pushBack _eId;
+			};
+		};
+	} forEach _keysMap;
+
+	private _total = count _samePipIds;
+	if (_total <= 1) exitWith {[0, _total]};
+	_samePipIds sort true;
+	[(_samePipIds find _instId) + 1, _total]
+};
+
+CFUNC(getOtherPipMonitors) = {
+	params [["_monArg", objNull], ["_instId", -1]];
+	if (_monArg isEqualType []) then {
+		_monArg params [["_obj", objNull], ["_id", -1]];
+		_monArg = _obj;
+		if (_instId < 0) then {_instId = _id};
+	};
+	private _plr = PLAYER_;
+	private _veh = objectParent _plr;
+	private _others = [];
+
+	private _handInst = (_plr getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [HAND_MONITOR_KEY, -1];
+	if (_handInst > 0 && {MON_GVAR(_plr, _handInst, "CFM_isHandMonitor", false)} && {!((_monArg isEqualTo _plr) && {_instId == _handInst})}) then {
+		_others pushBack [_plr, _handInst];
+	};
+
+	if (!isNull _veh && {!(_veh isEqualTo _plr)} && {_veh getVariable ["CFM_isVehSeatTablet", false]}) then {
+		private _curSeat = [_veh, _plr] call FUNC(getUnitVehicleSeatKey);
+		private _seatInsts = (_veh getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [_curSeat, []];
+		{
+			if (MON_GVAR(_veh, _x, "CFM_isHandMonitor", false) && {!((_monArg isEqualTo _veh) && {_instId == _x})}) then {
+				_others pushBack [_veh, _x];
+			};
+		} forEach _seatInsts;
+	};
+
+	_others
+};
+
 CFUNC(getOtherTabletMonitor) = {
 	params [["_monArg", objNull], ["_instId", -1]];
 	if (_monArg isEqualType []) then {
@@ -289,6 +352,8 @@ CFUNC(getOtherTabletMonitor) = {
 	private _veh = objectParent _plr;
 	if (_monArg isEqualTo _plr) exitWith {
 		if (!isNull _veh && {!(_veh isEqualTo _plr)} && {_veh getVariable ["CFM_isVehSeatTablet", false]}) then {
+			private _selInst = [_veh] call FUNC(getSelectedMonitorInstance);
+			if (_selInst > 0 && {MON_GVAR(_veh, _selInst, "CFM_isHandMonitor", false)}) exitWith {[_veh, _selInst]};
 			private _curSeat = [_veh, _plr] call FUNC(getUnitVehicleSeatKey);
 			private _seatInsts = (_veh getVariable ["CFM_monitorInstancesMap", createHashMap]) getOrDefault [_curSeat, []];
 			if (_seatInsts isEqualTo []) exitWith {[objNull, -1]};
@@ -369,11 +434,18 @@ CFUNC(getFreePipSlot) = {
 	private _slots = call FUNC(getPipSlotsSettings);
 	private _slotsCount = count _slots;
 	private _usedSlots = [];
-	private _otherMonPair = if (IS_OBJ(_monitor)) then {[[_monitor, _instId]] call FUNC(getOtherTabletMonitor)} else {[objNull, -1]};
-	if ([_otherMonPair] call FUNC(isPipVisible)) then {
-		_otherMonPair params ["_otherObj", "_otherId"];
-		_usedSlots pushBackUnique (MON_GVAR(_otherObj, _otherId, "CFM_pipSlot", PIP_SLOT_RIGHT));
-	};
+	private _otherMons = if (IS_OBJ(_monitor)) then {[[_monitor, _instId]] call FUNC(getOtherPipMonitors)} else {[]};
+	{
+		_x params ["_otherObj", "_otherId"];
+		private _otherActive = ([_x] call FUNC(isPipVisible)) || {
+			!(MON_GVAR(_otherObj, _otherId, "CFM_turnedOffLocal", false)) &&
+			{(MON_GVAR(_otherObj, _otherId, "CFM_waitingForStart", false)) || {(diag_tickTime - (MON_GVAR(_otherObj, _otherId, "CFM_pipSlotReservedAt", -999))) < 2}} &&
+			{!isNil {_otherObj getVariable (MON_VAR_NAME("CFM_pipSlot", _otherId))}}
+		};
+		if (_otherActive) then {
+			_usedSlots pushBackUnique (MON_GVAR(_otherObj, _otherId, "CFM_pipSlot", PIP_SLOT_RIGHT));
+		};
+	} forEach _otherMons;
 
 	private _curSlot = if (_preferredSlot >= 0) then {
 		_preferredSlot
@@ -460,17 +532,20 @@ CFUNC(bringPipToTop) = {
 	(RESOLVE_MON(_monArg)) params ["_monitor", "_instId"];
 	if (!(IS_OBJ(_monitor)) || {_instId < 1}) exitWith {false};
 	if !([[_monitor, _instId]] call FUNC(isPipVisible)) exitWith {false};
-	private _otherMonPair = [[_monitor, _instId]] call FUNC(getOtherTabletMonitor);
 	private _needRecreate = _forceRecreate;
-	if (!_needRecreate && {[_otherMonPair] call FUNC(isPipVisible)}) then {
-		_otherMonPair params ["_otherMon", "_otherInstId"];
+	if (!_needRecreate) then {
 		private _mySlot = MON_GVAR(_monitor, _instId, "CFM_pipSlot", PIP_SLOT_RIGHT);
-		private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
 		private _myLayer = MON_GVAR(_monitor, _instId, "CFM_currentRscLayer", -1);
-		private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
-		if ((_mySlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
-			_needRecreate = true;
-		};
+		{
+			if ([_x] call FUNC(isPipVisible)) then {
+				_x params ["_otherMon", "_otherInstId"];
+				private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
+				private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
+				if ((_mySlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) exitWith {
+					_needRecreate = true;
+				};
+			};
+		} forEach ([[_monitor, _instId]] call FUNC(getOtherPipMonitors));
 	};
 	if (_needRecreate) then {
 		[[_monitor, _instId], true] call FUNC(setHandDisplay);
@@ -519,17 +594,18 @@ CFUNC(switchPipSlot) = {
 	MON_SVAR(_monitor, _instId, "CFM_pipSlot", _targetSlot);
 	if !([[_monitor, _instId]] call FUNC(isPipVisible)) exitWith {true};
 
-	private _otherMonPair = [[_monitor, _instId]] call FUNC(getOtherTabletMonitor);
 	private _needTopLayer = false;
-	if ([_otherMonPair] call FUNC(isPipVisible)) then {
-		_otherMonPair params ["_otherMon", "_otherInstId"];
-		private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
-		private _myLayer = MON_GVAR(_monitor, _instId, "CFM_currentRscLayer", -1);
-		private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
-		if ((_targetSlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) then {
-			_needTopLayer = true;
+	private _myLayer = MON_GVAR(_monitor, _instId, "CFM_currentRscLayer", -1);
+	{
+		if ([_x] call FUNC(isPipVisible)) then {
+			_x params ["_otherMon", "_otherInstId"];
+			private _otherSlot = MON_GVAR(_otherMon, _otherInstId, "CFM_pipSlot", PIP_SLOT_RIGHT);
+			private _otherLayer = MON_GVAR(_otherMon, _otherInstId, "CFM_currentRscLayer", -1);
+			if ((_targetSlot isEqualTo _otherSlot) && {(_myLayer isEqualType 0) && (_otherLayer isEqualType 0) && {_myLayer <= _otherLayer}}) exitWith {
+				_needTopLayer = true;
+			};
 		};
-	};
+	} forEach ([[_monitor, _instId]] call FUNC(getOtherPipMonitors));
 	if (_needTopLayer) exitWith {
 		[[_monitor, _instId], true] call FUNC(setHandDisplay);
 		true

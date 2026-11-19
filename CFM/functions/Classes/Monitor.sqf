@@ -418,8 +418,14 @@ PUBLIC GLOBAL CLASS(Monitor)
 					_instTag = format [" [%1 #%2]", _dispSeat, _curTexSel];
 					_instTagDev = format [" [%1 #%2]", _devSeat, _curTexSel];
 				} else {
-					_instTag = format [" [%1]", _dispSeat];
-					_instTagDev = format [" [%1]", _devSeat];
+					([_monitor, _instanceIndex] call CFM_fnc_getSeatPipOrdinal) params ["_pipOrd", "_pipTot"];
+					if (_pipOrd > 0 && {_pipTot > 1}) then {
+						_instTag = format [" [%1 (%2)]", _dispSeat, _pipOrd];
+						_instTagDev = format [" [%1 (%2)]", _devSeat, _pipOrd];
+					} else {
+						_instTag = format [" [%1]", _dispSeat];
+						_instTagDev = format [" [%1]", _devSeat];
+					};
 				};
 			} else {
 				if (_isMultiMonitor || {_instanceIndex > 1}) then {
@@ -445,8 +451,10 @@ PUBLIC GLOBAL CLASS(Monitor)
 			};
 			if (_feedActive && {IS_OBJ(_currentFeedCam)}) exitWith {true};
 			if (_isHandMonitor) then {
-				_pipSlot = [_monPair, _pipSlot] call CFM_fnc_getFreePipSlot;
+				private _savedSlot = MON_GVAR(_monitor, _instanceIndex, "CFM_pipSlot", _pipSlot);
+				_pipSlot = [_monPair, _savedSlot] call CFM_fnc_getFreePipSlot;
 				MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlot", _pipSlot);
+				MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlotReservedAt", diag_tickTime);
 			};
 			private _startTurret = if (_isVehSeatTablet && {_textureSelection < 0} && {(count _seatKeys) > 1}) then {
 				MON_GVAR(_monitor, _instanceIndex, "CFM_waitingForStartTurret", _currentTurret)
@@ -474,6 +482,7 @@ PUBLIC GLOBAL CLASS(Monitor)
 		if (!_isHandMonitor && {missionNamespace getVariable ["CFM_renderSeatTextureOutOfSeat", true]}) exitWith {true};
 
 		MON_SVAR(_monitor, _instanceIndex, "CFM_waitingForStart", false);
+		MON_SVAR(_monitor, _instanceIndex, "CFM_pipSlotReservedAt", -999);
 		if (MON_GVAR(_monitor, _instanceIndex, "CFM_feedActive", false)) then {
 			[_monPair, false, true, false] call CFM_fnc_stopOperatorFeed;
 		};

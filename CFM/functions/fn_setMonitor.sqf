@@ -14,7 +14,7 @@
 		3. _allowedOperators [Array[object], object] - defines which operators it have access to
 		4. _allowedOperatorsTypes [Array[string], string] - defines which operators it have access to
 		5. _isHandMonitorDisplay [bool] - if its hand monitor for PLAYER_ than screen will pop up for full screen, otherwise its PIP
-		6. _seatKeys [String / Array] - seat keys (empty/DEFAULT = driver/gunner/commander, "ALL" = all seats, +[...]/-[...]/![seat,texSel] modifiers, (substring) pattern match e.g. "(cargo)" or "(turret)", shared PiP [["cargo_0","cargo_1"], -1] or controller-only [["cargo_0","cargo_1"], -1, "cargo_0"], or explicit keys e.g. '["driver", 0]')
+		6. _seatKeys [String / Array] - seat keys (empty/DEFAULT = driver/gunner/commander, "ALL" = all seats, +[...]/-[...]/![seat,val] modifiers, (substring) pattern match e.g. "(cargo)" or "(turret)", multi-monitor count e.g. '["driver", 2]' or '["driver", "2"]', 3D texture selection with '#' e.g. '["driver", "#0"]', or shared PiP [["cargo_0","cargo_1"], -1|count] / controller-only [["cargo_0","cargo_1"], -1|count, "cargo_0"])
 		7. _isVehSeatTablet [bool / -1] - whether object uses vehicle seat tablet logic (-1 = auto detect)
 		8. _canSwitchNvg [bool]
 		9. _canSwitchTi [bool]
