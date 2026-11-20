@@ -9,14 +9,14 @@ Welcome to the official documentation for **CFM (Camera Feed for Monitors)** —
 ### For Players & Mission Makers
 Step-by-step guides covering Eden Editor & Zeus module placement, syncing, all module attributes, in-game scroll menu actions, keybinds, CBA settings, and troubleshooting:
 
-- 🇬🇧 **[User Guide (English)](User-Guide-EN)**
-- 🇺🇦 **[Посібник користувача (Українська)](User-Guide-UA)**
-- 🇷🇺 **[Руководство пользователя (Русский)](User-Guide-RU)**
+- 🇬🇧 **[User Guide (English)](https://github.com/VaZaR00/arma3-cfm-system/wiki/User-Guide-EN)**
+- 🇺🇦 **[Посібник користувача (Українська)](https://github.com/VaZaR00/arma3-cfm-system/wiki/User-Guide-UA)**
+- 🇷🇺 **[Руководство пользователя (Русский)](https://github.com/VaZaR00/arma3-cfm-system/wiki/User-Guide-RU)**
 
 ### For Scripters & Mod Developers
 Deep dive into CFM's architecture, custom OOP/EFL stack, complete SQF Framework API reference, R2T/UI-to-Texture layer pipeline (`Render`, `Effects`, `Interface`), and how to build custom drone HUDs:
 
-- 🛠️ **[Advanced User & Developer Guide (English)](Advanced-Guide)**
+- 🛠️ **[Advanced User & Developer Guide (English)](https://github.com/VaZaR00/arma3-cfm-system/wiki/Advanced-User-Guide-(DEV))**
 
 ---
 
@@ -30,8 +30,7 @@ Deep dive into CFM's architecture, custom OOP/EFL stack, complete SQF Framework 
 
 ## Links
 
-- 📦 **[Steam Workshop Page](STEAM_WORKSHOP_URL_HERE)**
-- 💻 **[GitHub Repository](GITHUB_REPO_URL_HERE)**
-- 🐛 **[Report a Bug / Request a Feature](GITHUB_ISSUES_URL_HERE)**
+- 📦 **[Steam Workshop Page](https://steamcommunity.com/sharedfiles/filedetails/?id=3842978481)**
+- 🐛 **[Report a Bug / Request a Feature](https://github.com/VaZaR00/arma3-cfm-system/issues)**
 - **[OOP Addon](https://github.com/VaZaR00/arma3-oop-system)**
 - **[EFL Addon](https://github.com/VaZaR00/arma3-extended-functions-library)**
