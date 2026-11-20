@@ -96,7 +96,7 @@ if (_start && {hasInterface}) then {
 
 			private _optimizeDistance = GET_OPTIMIZE_DIST;
 			if (_optimizeDistance <= 0) exitWith {true};
-			(_monitor distance PLAYER_) < _optimizeDistance
+			(_monitor distance (if !(isNull curatorCamera) then {curatorCamera} else {PLAYER_})) < _optimizeDistance
 		};
 		if (_cond) exitWith {true};
 		sleep 1;
