@@ -3,6 +3,15 @@
 Welcome to the official documentation for **CFM (Camera Feed for Monitors)** — a multiplayer-ready Arma 3 mod that streams live video feeds from UAVs, vehicles, soldier GoPro helmet cameras, and static CCTV cameras onto 3D monitors, handheld tablets, and onboard vehicle screens.
 
 ---
+## 💎 Support the Project
+### Crypto
+| Coin | Network | Address |
+| :--- | :--- | :--- |
+| **USDT** | `TRC20` | `TGuqfuSCF4oUk3RE57EMef8R2NXEsxbEEw` |
+| **USDT / USDC / ETH / BNB** | `BEP20 (BSC)` | `0x303157681078432a9cebb48facc4583b00a1bf79` |
+
+> ⚠️ *Please make sure to select the matching network before sending.*
+---
 
 ## Documentation & Guides
 
