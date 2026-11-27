@@ -115,6 +115,12 @@ if (!_activated || {is3DEN}) exitWith {};
 		private _zoomParamsStr = _camLogic getVariable ["zoomParams", ""];
 		private _zoomParams = [_camLogic, _zoomParamsStr, false] call _fnc_processArrayString;
 
+		private _hudClassRaw = trim (_camLogic getVariable ["cameraHudClass", ""]);
+		if ((count _hudClassRaw) >= 2 && {(_hudClassRaw select [0, 1]) in ["""", "'"]} && {(_hudClassRaw select [(count _hudClassRaw) - 1, 1]) isEqualTo (_hudClassRaw select [0, 1])}) then {
+			_hudClassRaw = trim (_hudClassRaw select [1, (count _hudClassRaw) - 2]);
+		};
+		private _interfaceClassArg = if (_hudClassRaw isEqualTo "") then {-1} else {_hudClassRaw};
+
 		[
 			_camObj,
 			_canMoveCam,
@@ -122,7 +128,8 @@ if (!_activated || {is3DEN}) exitWith {};
 			_zoomParams,
 			_setNvgAndTi,
 			_name,
-			_smoothZoom
+			_smoothZoom,
+			_interfaceClassArg
 		]
 	};
 

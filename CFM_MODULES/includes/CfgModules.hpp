@@ -128,6 +128,7 @@ class CfgVehicles
             PARAMETER_SELECT(cameraSmoothZoom, 1)
             PARAMETER(turretIndex, "STRING", "")
             PARAMETER(zoomParams, "STRING", "")
+            PARAMETER(cameraHudClass, "STRING", "")
         };
     };
     // Change priority to default module for create diary

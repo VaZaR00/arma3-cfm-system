@@ -116,6 +116,17 @@
 	} forEach (missionNamespace getVariable ["CFM_ActiveMonitors", []]);
 }] call CBA_fnc_addEventHandler;
 
+if (hasInterface && {!(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH_set", false])}) then {
+	[missionNamespace, "DB_mavic_showMessage", {
+		if !(missionNamespace getVariable ["CFM_Mavic_dropShowMessageEH", true]) exitWith {};
+
+		private _targets = ACTIVE_VIEWERS_AND_SELF(false);
+		["CFM_mavicDroppedGren", cameraOn, _targets] call CFM_fnc_remoteEvent;
+	}] call BIS_fnc_addScriptedEventHandler;
+
+	missionNamespace setVariable ["CFM_Mavic_dropShowMessageEH_set", true];
+};
+
 ["CFM_droneRecreateCrew", {
     LOG_CBA_EVENT
 	params ["_drone", "_side", "_netId"];

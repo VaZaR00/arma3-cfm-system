@@ -115,7 +115,8 @@ private _proccesTurret = {
 		["_zoomTable", []], 
 		["_nvgAndTi", []], 
 		["_turrName", _name], 
-		["_smoothZoom", -1]
+		["_smoothZoom", -1],
+		["_interfaceClass", -1]
 	];
 	
 	private _offsetPos = _offset param [0, [0], [[]]];
@@ -123,7 +124,7 @@ private _proccesTurret = {
 	if (_offsetFirstEl isEqualType []) exitWith {
 		// multiple turret offsets (2 example)
 		{
-			[_x, _turretObj, _canMoveCamera, _turretIndex, _zoomTable, _nvgAndTi, _turrName, _smoothZoom] call _proccesTurret;
+			[_x, _turretObj, _canMoveCamera, _turretIndex, _zoomTable, _nvgAndTi, _turrName, _smoothZoom, _interfaceClass] call _proccesTurret;
 		} forEach _offset;
 	};
 	_offset params [["_pos", [0,0,0], [[]], 3], ["_vDirUp", [], [[]], 2]];
@@ -137,7 +138,7 @@ private _proccesTurret = {
 	};
 	_lastPos = +_pos;
 	_lastDirUp = +_vDirUp;
-	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom]];
+	private _turrArgs = [_turretIndex, [_turretObj, _canMoveCamera, _zoomTable, _nvgAndTi, [_pos, _dir, _up], DO_INTERPOLATE_STATIC_CAMS, _turrName, _smoothZoom, _interfaceClass]];
 	_turrParams pushBack _turrArgs;
 };
 

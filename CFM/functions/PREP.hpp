@@ -304,23 +304,6 @@ PREP(detectOperatorHudConfig)
 FOLDER_PATH(UITexture\fpvUI)
 PREP(fpv_effects)
 PREP(fpv_getSignal)
-PREP(fpv_handleBattery)
-PREP(fpv_handleSignal)
-PREP(fpv_handleTime)
-PREP(initFPVInterface)
-PREP(updateFPVInterface)
-
-// -- Category UITexture\mavicUI --
-FOLDER_PATH(UITexture\mavicUI)
-PREP(initMavicInterface)
-PREP(updateMavicInterface)
-
-// -- Category UITexture\zalaUI --
-FOLDER_PATH(UITexture\zalaUI)
-PREP(initZalaInterfaceDriver)
-PREP(initZalaInterfaceGunner)
-PREP(zala_drawHudDriver)
-PREP(zala_drawHudGunner)
 
 // -- Category updates --
 FOLDER_PATH(updates)

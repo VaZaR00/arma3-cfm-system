@@ -254,6 +254,12 @@ if (!isServer && {!is3DEN}) exitWith {
 		private _canMoveCam = [_moduleLogic getVariable ["cameraCanMoveCamera", ""]] call _fnc_parseCanMove;
 		private _pointParams = if (_turrOffsets isEqualTo []) then {-1} else {_turrOffsets};
 
+		private _hudClassRaw = trim (_moduleLogic getVariable ["cameraHudClass", ""]);
+		if ((count _hudClassRaw) >= 2 && {(_hudClassRaw select [0, 1]) in ["""", "'"]} && {(_hudClassRaw select [(count _hudClassRaw) - 1, 1]) isEqualTo (_hudClassRaw select [0, 1])}) then {
+			_hudClassRaw = trim (_hudClassRaw select [1, (count _hudClassRaw) - 2]);
+		};
+		private _interfaceClassArg = if (_hudClassRaw isEqualTo "") then {-1} else {_hudClassRaw};
+
 		[
 			_camObj,
 			_canMoveCam,
@@ -262,7 +268,8 @@ if (!isServer && {!is3DEN}) exitWith {
 			_pointParams,
 			true,
 			_moduleLogic getVariable ["cameraName", ""],
-			OBJ_BOOL(_moduleLogic, "cameraSmoothZoom", 1)
+			OBJ_BOOL(_moduleLogic, "cameraSmoothZoom", 1),
+			_interfaceClassArg
 		]
 	};
 

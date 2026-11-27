@@ -9,11 +9,7 @@
 #include "defines.hpp"
 
 private _displayClasses = [
-	"RscDisplayR2TDisplayCFM",
-	"RscCFM_Mavic_Interface",
-	"RscCFM_ArmaFPV_Dialog",
-	"CFM_Zala421_Interface_Driver",
-	"CFM_Zala421_Interface_Gunner"
+	"RscDisplayR2TDisplayCFM"
 ];
 
 {
