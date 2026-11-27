@@ -291,7 +291,15 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 	METHOD("startRenderingUI") {
 		params[["_reset", false], ["_ctrl", controlNull], ["_uiParamsSet", []]];
 
-		_uiParams params [["_displayClass", ""], ["_interfaceFunc", {}], ["_interfaceInitFunc", {}], ["_effectFunc", {}], ["_signalFunc", {1}]];
+		_uiParams params [
+			["_displayClass", ""],
+			["_interfaceFunc", {}],
+			["_interfaceInitFunc", {}],
+			["_effectFunc", {}],
+			["_signalFunc", {1}],
+			["_isExplicitHud", false],
+			["_customBindings", []]
+		];
 
 		private _monPair = [_monitor, _monitorInstanceId];
 		private _lockWaitStart = diag_tickTime;
@@ -310,11 +318,14 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		_uiDisplaysMap set [_uiDisplayUniqueName, _monPair];
 		uiNamespace setVariable ["CFM_uiDisplayMonitorsMap", _uiDisplaysMap];
 
+		([_displayClass] call CFM_fnc_resolveDisplayConfig) params ["_resolvedCfg", "", "", "", "_isNativeCfm"];
+		private _hostDisplayClass = if (_isNativeCfm) then {_displayClass} else {"RscDisplayR2TDisplayCFM"};
+
 		if !(isNull _ctrl) then {
-			_ctrl ctrlSetText (format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]);
+			_ctrl ctrlSetText (format["#(argb,%1,%1,1)ui(%2,%3)", _size, _hostDisplayClass, _uiDisplayUniqueName]);
 		} else {
 			if (_textureSelection >= 0) then {
-				_monitor setObjectTexture [_textureSelection, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _displayClass, _uiDisplayUniqueName]];
+				_monitor setObjectTexture [_textureSelection, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _hostDisplayClass, _uiDisplayUniqueName]];
 			};
 		};
 
@@ -331,6 +342,38 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		};
 		_mainDisplay setVariable ["CFM_monitor", _monPair];
 		_mainDisplay setVariable ["CFM_screenResolution", _screenRes];
+		_mainDisplay setVariable ["CFM_dynamicHudClass", _displayClass];
+		_mainDisplay setVariable ["CFM_dynamicHudExplicit", _isExplicitHud];
+		_mainDisplay setVariable ["CFM_hudCustomBindings", _customBindings];
+
+		private _initRes = if (_isNativeCfm) then {
+			if !(_interfaceInitFunc isEqualTo {}) then {
+				[_monitor, _mainDisplay, _uiDisplayUniqueName] call _interfaceInitFunc
+			} else {
+				[_monitor, _mainDisplay, _uiDisplayUniqueName] call (missionNamespace getVariable ["CFM_fnc_drone_initInterface", {}])
+			}
+		} else {
+			if !(isNull _resolvedCfg) then {
+				private _dynRes = [_monPair, _mainDisplay, _displayClass, _uiDisplayUniqueName, _isExplicitHud] call CFM_fnc_buildDynamicDisplay;
+				private _dynInitFnc = missionNamespace getVariable ["CFM_fnc_initDynamicHud", {}];
+				private _droneInitFnc = missionNamespace getVariable ["CFM_fnc_drone_initInterface", {}];
+				if (
+					!(_interfaceInitFunc isEqualTo {}) &&
+					{!(_interfaceInitFunc isEqualTo _dynInitFnc)} &&
+					{!(_interfaceInitFunc isEqualTo _droneInitFnc)}
+				) then {
+					[_monitor, _mainDisplay, _uiDisplayUniqueName] call _interfaceInitFunc;
+				};
+				private _droneUpdFnc = missionNamespace getVariable ["CFM_fnc_drone_updateInterface", {}];
+				if ((_interfaceFunc isEqualTo {}) || {_interfaceFunc isEqualTo _droneUpdFnc}) then {
+					_interfaceFunc = missionNamespace getVariable ["CFM_fnc_updateDynamicHud", {}];
+				};
+				_dynRes
+			} else {
+				format["DisplayHandler.startRenderingUI: WARN: display class '%1' not found, falling back to raw R2T", _displayClass] WARN;
+				[_monitor, _mainDisplay, _uiDisplayUniqueName] call (missionNamespace getVariable ["CFM_fnc_drone_initInterface", {}])
+			}
+		};
 
 		_uiIndex = _uiIndex + 1;
 		_currentUiClasname = _displayClass;
@@ -354,9 +397,17 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		MON_SVAR(_monitor, _monitorInstanceId, "CFM_currentOperatorSignalFunction", _signalFunc);
 		MON_SVAR(_monitor, _monitorInstanceId, "CFM_currentOperatorEffectsFunction", _effectFunc);
 
-		([_monitor, _mainDisplay, _uiDisplayUniqueName] call _interfaceInitFunc) params [["_r2tDisplayCtrlNew", controlNull], ["_effectsLayersControlsNew", []]];
+		_initRes params [["_r2tDisplayCtrlNew", controlNull], ["_effectsLayersControlsNew", []]];
 		_r2tDisplayCtrl = _r2tDisplayCtrlNew;
 		_effectsLayersControls = _effectsLayersControlsNew;
+		{
+			if !(isNull _x) then {
+				if ((ctrlText _x) isEqualTo "") then {
+					_x ctrlShow true;
+					_x ctrlCommit 0;
+				};
+			};
+		} forEach _effectsLayersControls;
 		SET_SELFVAR(_r2tDisplayCtrl);
 		SET_SELFVAR(_effectsLayersControls);
 		MON_SVAR(_monitor, _monitorInstanceId, "CFM_r2tDisplayCtrl", _r2tDisplayCtrl);

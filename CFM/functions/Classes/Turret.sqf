@@ -69,6 +69,8 @@ PUBLIC GLOBAL CLASS(Turret)
 	PUBLIC GLOBAL FIELD ["_interfaceFunc", {}];
 	PUBLIC GLOBAL FIELD ["_interfaceClass", ""];
 	PUBLIC GLOBAL FIELD ["_initInterfaceFunc", {}];
+	PRIVATE GLOBAL FIELD ["_isExplicitInterface", false];
+	PRIVATE GLOBAL FIELD ["_customBindings", []];
 	// -----------------------------------------------
 
 	// -----------------------------------------------
@@ -282,9 +284,13 @@ PUBLIC GLOBAL CLASS(Turret)
 		};
 
 		// interface
-		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData) params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}]];
+		_isExplicitInterface = !(_interfaceClass isEqualTo -1) && {IS_STR(_interfaceClass)};
+		([_operator, _turretIndex, _objClass, _isMavic, _isFPV, _isDroneFeed] call CFM_fnc_defineInterfaceData) params [["_interfaceClassDef", ""], ["_interfaceFuncDef", {}], ["_initInterfaceFuncDef", {}], ["_customBindingsDef", []]];
 		if ((_interfaceClass isEqualTo -1) || {!IS_STR(_interfaceClass)}) then {
 			_interfaceClass = _interfaceClassDef;
+			_customBindings = +_customBindingsDef;
+		} else {
+			_customBindings = [];
 		};
 		if ((_interfaceFunc isEqualTo -1) || {!IS_FUNC(_interfaceFunc)}) then {
 			_interfaceFunc = _interfaceFuncDef;
@@ -470,7 +476,7 @@ PUBLIC GLOBAL CLASS(Turret)
 	PRIVATE LOCAL METHOD("syncUiCallbackToMonitors") {
 		params ["_monVarName", "_dhFieldName", "_func"];
 		private _uiParams = if (IS_STR(_interfaceClass)) then {
-			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc, _isExplicitInterface, _customBindings]
 		} else {[]};
 		{
 			_x params [["_monObj", objNull], ["_monInstId", -1]];
@@ -486,7 +492,7 @@ PUBLIC GLOBAL CLASS(Turret)
 	};
 	PRIVATE LOCAL METHOD("restartMonitorsUI") {
 		private _uiParams = if (IS_STR(_interfaceClass)) then {
-			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+			[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc, _isExplicitInterface, _customBindings]
 		} else {[]};
 		{
 			_x params [["_monObj", objNull], ["_monInstId", -1]];
@@ -702,7 +708,11 @@ PUBLIC GLOBAL CLASS(Turret)
 		params [["_classArg", ""]];
 		if !(_classArg isEqualType "") exitWith {false};
 		_interfaceClass = _classArg;
+		_isExplicitInterface = !(_classArg isEqualTo "");
+		_customBindings = [];
 		SET_SELFVAR(_interfaceClass);
+		SET_SELFVAR(_isExplicitInterface);
+		SET_SELFVAR(_customBindings);
 		["restartMonitorsUI"] CALL_SELF;
 		true
 	};
@@ -788,7 +798,7 @@ PUBLIC GLOBAL CLASS(Turret)
 			[_monPair, true, _operator, false] call CFM_fnc_setOperatorInfo;
 
 			private _uiParams = if (IS_STR(_interfaceClass)) then {
-				[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc]
+				[_interfaceClass, _interfaceFunc, _initInterfaceFunc, _effectFunc, _signalFunc, _isExplicitInterface, _customBindings]
 			} else {[]};
 			private _dhId = MON_GVAR(_monObj, _monInstId, "CFM_displayHandlerId", -1);
 			if (_dhId > 0) then {

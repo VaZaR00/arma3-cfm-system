@@ -26,6 +26,20 @@
 ["CFM_canChangeZoomOnDrones",  "CHECKBOX",  [CFM_STR_CAN_CHANGE_ZOOM_ON_UAV, CFM_STR_DESC_CAN_CHANGE_ZOOM_ON_UAV], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_Mavic_dropShowMessageEH",  "CHECKBOX",  [CFM_STR_MAVIC_SHOW_GRENADE_DROP_MESSAGE, CFM_STR_DESC_MAVIC_SHOW_GRENADE_DROP_MESSAGE], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_useR2Tsystem",  "CHECKBOX",  [CFM_STR_USE_R2T_SYSTEM, CFM_STR_DESC_USE_R2T_SYSTEM], CFM_CATEGORY, false, 1] call CBA_fnc_addSetting;
+["CFM_enableDynamicHud",  "CHECKBOX",  [CFM_STR_ENABLE_DYNAMIC_HUD, CFM_STR_DESC_ENABLE_DYNAMIC_HUD], CFM_CATEGORY, true, 0, {
+	if (isNil "CFM_inited" || {!hasInterface}) exitWith {};
+	{
+		_x params [["_mon", objNull], ["_instId", -1]];
+		if (
+			IS_OBJ(_mon) &&
+			{_instId > 0} &&
+			{MON_GVAR(_mon, _instId, "CFM_feedActive", false)} &&
+			{MON_GVAR(_mon, _instId, "CFM_currentFeedIsDisplay", false)}
+		) then {
+			[[_mon, _instId]] spawn CFM_fnc_resetFeed;
+		};
+	} forEach (+(missionNamespace getVariable ["CFM_Monitors", []]));
+}] call CBA_fnc_addSetting;
 ["CFM_adminHaveAccessToAllMonitors",  "CHECKBOX",  [CFM_STR_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS, CFM_STR_DESC_ADMIN_HAVE_ACCESS_TO_ALL_MONITORS], CFM_CATEGORY, true, 1] call CBA_fnc_addSetting;
 ["CFM_detectMonitorByIntersect",  "CHECKBOX",  [CFM_STR_DETECT_MONITOR_BY_INTERSECT, CFM_STR_DESC_DETECT_MONITOR_BY_INTERSECT], CFM_CATEGORY, false, 0] call CBA_fnc_addSetting;
 ["CFM_renderSeatTextureOutOfSeat",  "CHECKBOX",  [CFM_STR_RENDER_SEAT_TEXTURE_OUT_OF_SEAT, CFM_STR_DESC_RENDER_SEAT_TEXTURE_OUT_OF_SEAT], CFM_CATEGORY, true, 0, {

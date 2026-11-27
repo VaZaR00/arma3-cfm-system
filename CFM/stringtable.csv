@@ -44,6 +44,8 @@ STR_CFM_MavicShowGrenadeDropMessage,"Mavic: Show grenade drop message","Mavic: �
 STR_CFM_DESC_MavicShowGrenadeDropMessage,"Show on-screen notification when dropping ordnance from a Mavic drone","Показувати сповіщення на екрані під час скидання гранати з дрона Mavic","Показывать уведомление на экране при сбросе гранаты с дрона Mavic"
 STR_CFM_UseR2tSystem,"Use R2T system","Використовувати систему R2T","Использовать систему R2T"
 STR_CFM_DESC_UseR2tSystem,"Use pure Render-to-Texture feed without custom drone HUDs or signal effects","Використовувати чистий рендер R2T без UI-інтерфейсів дронів та ефектів перешкод","Использовать чистый рендер R2T без UI-интерфейсов дронов и эффектов помех"
+STR_CFM_EnableDynamicHud,"Auto-parse drone/optics HUDs","Авто-парсинг HUD дронів/оптики","Авто-парсинг HUD дронов/оптики"
+STR_CFM_DESC_EnableDynamicHud,"Automatically parse and render drone/turret HUD configs (RscTitles, RscInGameUI) onto monitors","Автоматично парсити та відображати конфіги HUD дронів і турелей (RscTitles, RscInGameUI) на моніторах","Автоматически парсить и отображать конфиги HUD дронов и турелей (RscTitles, RscInGameUI) на мониторах"
 STR_CFM_ExitFullscreenMode,"Exit Fullscreen Mode","Вийти з повноекранного режиму","Выйти из полноэкранного режима"
 STR_CFM_DESC_ExitFullscreenMode,"Close fullscreen camera feed and return to normal view","Закрити повноекранний режим трансляції камери","Закрыть полноэкранный режим трансляции камеры"
 STR_CFM_EnterFullscreenMode,"Enter Fullscreen Mode","Увійти в повноекранний режим","Войти в полноэкранный режим"

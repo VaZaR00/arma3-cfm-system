@@ -20,4 +20,14 @@ private _displayClasses = [
 	[_x] call CFM_fnc_parseDisplayConfig;
 } forEach _displayClasses;
 
+call CFM_fnc_indexAddonHudConfigs;
+
+{
+	[_x] call CFM_fnc_parseDynamicDisplayConfig;
+} forEach [
+	"RscOptics_UAV_gunner",
+	"RscOptics_AV_pilot",
+	"RscOptics_UGV_gunner"
+];
+
 true

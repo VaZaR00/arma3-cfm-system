@@ -286,6 +286,20 @@ PREP(parseDisplayConfig)
 PREP(parseAllDisplaysConfigs)
 PREP(repositionControls)
 
+// -- Category UITexture\dynamicHud --
+FOLDER_PATH(UITexture\dynamicHud)
+PREP(resolveDisplayConfig)
+PREP(parseDynamicControlFormula)
+PREP(classifyHudControl)
+PREP(parseDynamicDisplayConfig)
+PREP(repositionDynamicControls)
+PREP(buildDynamicDisplay)
+PREP(initDynamicHud)
+PREP(updateDynamicHud)
+PREP(indexAddonHudConfigs)
+PREP(registerHudPreset)
+PREP(detectOperatorHudConfig)
+
 // -- Category UITexture\fpvUI --
 FOLDER_PATH(UITexture\fpvUI)
 PREP(fpv_effects)
