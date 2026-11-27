@@ -49,16 +49,22 @@ private _offsetY = if !(_oy isEqualTo 0) then {
 	if (_sy < 0) then {1 - _absY} else {0}
 };
 
-// Virtual safeZone & pixelGrid metrics matching monitor's physical aspect and resolution
+// Virtual 1080p-based safeZone & pixelGrid metrics matching monitor's physical aspect and ScreenResolution scale
 private _aspect = _resW / _resH;
+private _resScale = _resH / DEFAULT_UI_SIZE_H;
+private _vResH = (1080 * _resScale) max 1;
+private _vResW = (_vResH * _aspect) max 1;
 private _vSZH = 1.0;
 private _vSZW = _aspect * 0.75;
 private _vSZX = 0.5 - (_vSZW * 0.5);
 private _vSZY = 0.0;
-private _vPGrid = DEFAULT_UI_GRID_SCALE;
-private _vPW = _vSZW / _resW;
-private _vPH = _vSZH / _resH;
-private _vGetRes = [_resW, _resH, _resH * (4 / 3), _resH, _aspect, 1.0, 0.75, 0.75 * _aspect, false, 1];
+private _vPGrid = 12;
+private _vPW = _vSZW / _vResW;
+private _vPH = _vSZH / _vResH;
+private _vGetRes = [_vResW, _vResH, _vResW, _vResH, _aspect, 0.7, 0.75, 0.75 * _aspect, false, 1];
+(_display getVariable ["CFM_uiTexResolution", [1024, 1024]]) params [["_texW", 1024], ["_texH", 1024]];
+private _texAspect = (_texW max 1) / (_texH max 1);
+private _fontScale = ((_absX * _texAspect * 0.75) / _vSZW) min (_absY / _vSZH);
 
 private _fnc_evalDim = {
 	params [["_tuple", []], "_fallback", "_isPos", "_origin", "_span"];
@@ -75,8 +81,34 @@ private _fnc_evalDim = {
 	_raw / _span
 };
 
+private _fnc_reapplyStructText = {
+	params ["_ctrl", "_textStr", "_attrs"];
+	private _resolved = _textStr;
+	if ((_resolved select [0, 1]) isEqualTo "$") then {
+		private _loc = localize (_resolved select [1]);
+		if !(_loc isEqualTo "") then {_resolved = _loc;};
+	};
+	if ((_resolved find "<t") >= 0 || {(_resolved find "<img") >= 0}) exitWith {
+		_ctrl ctrlSetStructuredText (parseText _resolved);
+	};
+	if !(_attrs isEqualTo []) exitWith {
+		_attrs params [["_aFont", ""], ["_aColor", ""], ["_aAlign", ""], ["_aValign", ""], ["_aShadow", -1]];
+		private _attrParts = [];
+		if !(_aFont isEqualTo "") then {_attrParts pushBack format ["font='%1'", _aFont];};
+		if !(_aColor isEqualTo "") then {_attrParts pushBack format ["color='%1'", _aColor];};
+		if !(_aAlign isEqualTo "") then {_attrParts pushBack format ["align='%1'", _aAlign];};
+		if (_aShadow >= 0) then {_attrParts pushBack format ["shadow='%1'", _aShadow];};
+		if (_attrParts isEqualTo []) then {
+			_ctrl ctrlSetStructuredText (parseText _resolved);
+		} else {
+			_ctrl ctrlSetStructuredText (parseText format ["<t %1>%2</t>", _attrParts joinString " ", _resolved]);
+		};
+	};
+	_ctrl ctrlSetStructuredText (parseText _resolved);
+};
+
 {
-	_x params ["_ctrl", "_node", "_isTopLevel"];
+	_x params ["_ctrl", "_node", "_isTopLevel", ["_structAttrs", []]];
 	if (isNull _ctrl) then {continue};
 
 	(ctrlPosition _ctrl) params [["_curX", 0], ["_curY", 0], ["_curW", 0], ["_curH", 0]];
@@ -95,6 +127,10 @@ private _fnc_evalDim = {
 	private _finalH = _normH * _absY;
 
 	private _ctrlType = _node getOrDefault ["ctrlType", 0];
+	private _ctrlStyle = _node getOrDefault ["ctrlStyle", 0];
+	private _typeNibble = ((floor (_ctrlStyle / 16)) mod 16) * 16;
+	private _isPic = (_ctrlType isEqualTo 0) && {_typeNibble in [48, 144]};
+
 	if (_ctrlType in [100, 101]) then {
 		_ctrl ctrlMapSetPosition [_finalX, _finalY, _finalW, _finalH];
 	} else {
@@ -102,7 +138,7 @@ private _fnc_evalDim = {
 	};
 
 	private _sizeTuple = _node getOrDefault ["size", []];
-	if !(_sizeTuple isEqualTo []) then {
+	if (!_isPic && {!(_sizeTuple isEqualTo [])}) then {
 		_sizeTuple params [["_sValOrCode", 0], ["_isCfmSize", false]];
 		private _rawSize = if (_sValOrCode isEqualType 0) then {
 			_sValOrCode
@@ -110,9 +146,15 @@ private _fnc_evalDim = {
 			private _sc = call _sValOrCode;
 			if (!isNil "_sc" && {_sc isEqualType 0} && {finite _sc}) then {_sc} else {0}
 		};
-		private _normSize = if (_isCfmSize) then {_rawSize} else {_rawSize / _vSZH};
-		if (_normSize > 0) then {
-			_ctrl ctrlSetFontHeight (_normSize * _absY);
+		private _finalSize = if (_isCfmSize) then {_rawSize * (_absX min _absY)} else {_rawSize * _fontScale};
+		if (_finalSize > 0) then {
+			_ctrl ctrlSetFontHeight _finalSize;
+			if (_ctrlType isEqualTo 13) then {
+				private _initText = (_node getOrDefault ["fallbackProps", []]) param [0, ""];
+				if !(_initText isEqualTo "") then {
+					[_ctrl, _initText, _structAttrs] call _fnc_reapplyStructText;
+				};
+			};
 		};
 	};
 

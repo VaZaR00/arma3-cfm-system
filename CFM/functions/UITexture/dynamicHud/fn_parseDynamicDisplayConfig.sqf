@@ -135,14 +135,14 @@ private _fnc_evalPreviewTuple = {
 	if (_valOrCode isEqualType 0) exitWith {_valOrCode};
 	private _resVal = 0;
 	isNil {
-		private _vSZX = 0;
+		private _vSZX = -0.1667;
 		private _vSZY = 0;
-		private _vSZW = 1;
+		private _vSZW = 1.3333;
 		private _vSZH = 1;
-		private _vPGrid = DEFAULT_UI_GRID_SCALE;
-		private _vPW = 0.001;
-		private _vPH = 0.001;
-		private _vGetRes = [1024, 576, 768, 576, 1.7778, 1, 0.75, 1.3333, false, 1];
+		private _vPGrid = 12;
+		private _vPW = 1.3333 / 1920;
+		private _vPH = 1 / 1080;
+		private _vGetRes = [1920, 1080, 1920, 1080, 1.7778, 0.7, 0.75, 1.3333, false, 1];
 		private _res = DEFAULT_SCREEN_RESOLUTION;
 		private _c = call _valOrCode;
 		if (!isNil "_c" && {_c isEqualType 0} && {finite _c}) then {

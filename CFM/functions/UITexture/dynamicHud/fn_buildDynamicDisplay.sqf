@@ -216,7 +216,7 @@ private _fnc_spawnNodes = {
 			_ctrlsByVar set [toLower _x, _ctrl];
 		} forEach _uiVars;
 
-		_createdList pushBack [_ctrl, _node, _isTopLevel];
+		_createdList pushBack [_ctrl, _node, _isTopLevel, _structAttrs];
 		_ctrlsByIdc set [_assignedIdc, _ctrl];
 		if (_origIdc >= 0 && {!(_origIdc in _ctrlsByIdc)}) then {
 			_ctrlsByIdc set [_origIdc, _ctrl];
