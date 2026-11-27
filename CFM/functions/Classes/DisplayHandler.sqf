@@ -312,30 +312,6 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 
 		private _screenRes = [_monPair] call CFM_fnc_getMonitorScreenResolution;
 		private _size = missionNamespace getVariable ["CFM_displaySize", 1024];
-		private _resW = (_screenRes param [0, DEFAULT_UI_SIZE_W]) max 1;
-		private _resH = (_screenRes param [1, DEFAULT_UI_SIZE_H]) max 1;
-		private _resAspect = _resW / _resH;
-		private _texW = _size;
-		private _texH = _size;
-		if (_resAspect >= 1.5) then {
-			if (_size < 2048) then {
-				_texW = _size * 2;
-				_texH = _size;
-			} else {
-				_texW = _size;
-				_texH = (_size / 2) max 256;
-			};
-		} else {
-			if (_resAspect <= 0.67) then {
-				if (_size < 2048) then {
-					_texW = _size;
-					_texH = _size * 2;
-				} else {
-					_texW = (_size / 2) max 256;
-					_texH = _size;
-				};
-			};
-		};
 		_uiDisplayUniqueName = _monitorUid + str _uiIndex;
 
 		private _uiDisplaysMap = uiNamespace getVariable ["CFM_uiDisplayMonitorsMap", createHashMap];
@@ -346,10 +322,10 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		private _hostDisplayClass = if (_isNativeCfm) then {_displayClass} else {"RscDisplayR2TDisplayCFM"};
 
 		if !(isNull _ctrl) then {
-			_ctrl ctrlSetText (format["#(argb,%1,%2,1)ui(%3,%4)", _texW, _texH, _hostDisplayClass, _uiDisplayUniqueName]);
+			_ctrl ctrlSetText (format["#(argb,%1,%1,1)ui(%2,%3)", _size, _hostDisplayClass, _uiDisplayUniqueName]);
 		} else {
 			if (_textureSelection >= 0) then {
-				_monitor setObjectTexture [_textureSelection, format["#(argb,%1,%2,1)ui(%3,%4)", _texW, _texH, _hostDisplayClass, _uiDisplayUniqueName]];
+				_monitor setObjectTexture [_textureSelection, format["#(argb,%1,%1,1)ui(%2,%3)", _size, _hostDisplayClass, _uiDisplayUniqueName]];
 			};
 		};
 
@@ -366,7 +342,6 @@ PRIVATE LOCAL CLASS(DisplayHandler)
 		};
 		_mainDisplay setVariable ["CFM_monitor", _monPair];
 		_mainDisplay setVariable ["CFM_screenResolution", _screenRes];
-		_mainDisplay setVariable ["CFM_uiTexResolution", [_texW, _texH]];
 		_mainDisplay setVariable ["CFM_dynamicHudClass", _displayClass];
 		_mainDisplay setVariable ["CFM_dynamicHudExplicit", _isExplicitHud];
 		_mainDisplay setVariable ["CFM_hudCustomBindings", _customBindings];

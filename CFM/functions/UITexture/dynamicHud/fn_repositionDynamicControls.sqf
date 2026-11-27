@@ -58,13 +58,12 @@ private _vSZH = 1.0;
 private _vSZW = _aspect * 0.75;
 private _vSZX = 0.5 - (_vSZW * 0.5);
 private _vSZY = 0.0;
+private _vPGridNoUI = 16;
 private _vPGrid = 12;
 private _vPW = _vSZW / _vResW;
 private _vPH = _vSZH / _vResH;
 private _vGetRes = [_vResW, _vResH, _vResW, _vResH, _aspect, 0.7, 0.75, 0.75 * _aspect, false, 1];
-(_display getVariable ["CFM_uiTexResolution", [1024, 1024]]) params [["_texW", 1024], ["_texH", 1024]];
-private _texAspect = (_texW max 1) / (_texH max 1);
-private _fontScale = ((_absX * _texAspect * 0.75) / _vSZW) min (_absY / _vSZH);
+private _fontScale = (_absX / _aspect) min (_absY / _vSZH);
 
 private _fnc_evalDim = {
 	params [["_tuple", []], "_fallback", "_isPos", "_origin", "_span"];
@@ -131,13 +130,8 @@ private _fnc_reapplyStructText = {
 	private _typeNibble = ((floor (_ctrlStyle / 16)) mod 16) * 16;
 	private _isPic = (_ctrlType isEqualTo 0) && {_typeNibble in [48, 144]};
 
-	if (_ctrlType in [100, 101]) then {
-		_ctrl ctrlMapSetPosition [_finalX, _finalY, _finalW, _finalH];
-	} else {
-		_ctrl ctrlSetPosition [_finalX, _finalY, _finalW, _finalH];
-	};
-
 	private _sizeTuple = _node getOrDefault ["size", []];
+	private _finalSize = 0;
 	if (!_isPic && {!(_sizeTuple isEqualTo [])}) then {
 		_sizeTuple params [["_sValOrCode", 0], ["_isCfmSize", false]];
 		private _rawSize = if (_sValOrCode isEqualType 0) then {
@@ -146,14 +140,51 @@ private _fnc_reapplyStructText = {
 			private _sc = call _sValOrCode;
 			if (!isNil "_sc" && {_sc isEqualType 0} && {finite _sc}) then {_sc} else {0}
 		};
-		private _finalSize = if (_isCfmSize) then {_rawSize * (_absX min _absY)} else {_rawSize * _fontScale};
-		if (_finalSize > 0) then {
-			_ctrl ctrlSetFontHeight _finalSize;
-			if (_ctrlType isEqualTo 13) then {
-				private _initText = (_node getOrDefault ["fallbackProps", []]) param [0, ""];
-				if !(_initText isEqualTo "") then {
-					[_ctrl, _initText, _structAttrs] call _fnc_reapplyStructText;
+		_finalSize = if (_isCfmSize) then {_rawSize * (_absX min _absY)} else {_rawSize * _fontScale};
+	};
+
+	// Compensate RscStructuredText fixed internal horizontal padding on narrow 1-3 char labels/badges
+	if (_ctrlType isEqualTo 13 && {_finalW > 0} && {_finalW < 0.045}) then {
+		private _fbAttrs = (_node getOrDefault ["fallbackProps", []]) param [5, []];
+		private _align = toLower (_fbAttrs param [2, ""]);
+		private _pad = 0.016 * _absX;
+		switch (_align) do {
+			case "center": {
+				if (_isTopLevel || {_finalX >= (_pad * 0.5)}) then {
+					_finalX = _finalX - (_pad * 0.5);
+					_finalW = _finalW + _pad;
+				} else {
+					if (_finalSize > 0) then {
+						_finalSize = _finalSize min (_finalW * 0.42);
+					};
 				};
+			};
+			case "right": {
+				private _shift = if (_isTopLevel) then {_pad} else {_pad min (_finalX max 0)};
+				_finalX = _finalX - _shift;
+				_finalW = _finalW + _pad;
+			};
+			default {
+				_finalW = _finalW + _pad;
+			};
+		};
+		if (_finalSize > 0 && {_finalH > 0} && {_finalH < (_finalSize * 1.35)}) then {
+			_finalH = _finalSize * 1.35;
+		};
+	};
+
+	if (_ctrlType in [100, 101]) then {
+		_ctrl ctrlMapSetPosition [_finalX, _finalY, _finalW, _finalH];
+	} else {
+		_ctrl ctrlSetPosition [_finalX, _finalY, _finalW, _finalH];
+	};
+
+	if (_finalSize > 0) then {
+		_ctrl ctrlSetFontHeight _finalSize;
+		if (_ctrlType isEqualTo 13) then {
+			private _initText = (_node getOrDefault ["fallbackProps", []]) param [0, ""];
+			if !(_initText isEqualTo "") then {
+				[_ctrl, _initText, _structAttrs] call _fnc_reapplyStructText;
 			};
 		};
 	};

@@ -46,8 +46,8 @@ private _rewritten = _expr;
 	["\bsafeZoneY\b/gio", "_vSZY"],
 	["\bsafeZoneW\b/gio", "_vSZW"],
 	["\bsafeZoneH\b/gio", "_vSZH"],
-	["\bpixelGridNoUIScale\b/gio", "_vPGrid"],
-	["\bpixelGridBase\b/gio", "_vPGrid"],
+	["\bpixelGridNoUIScale\b/gio", "_vPGridNoUI"],
+	["\bpixelGridBase\b/gio", "_vPGridNoUI"],
 	["\bpixelGrid\b/gio", "_vPGrid"],
 	["\bpixelW\b/gio", "_vPW"],
 	["\bpixelH\b/gio", "_vPH"],
@@ -61,6 +61,7 @@ isNil {
 	private _vSZY = 0;
 	private _vSZW = 1.3333;
 	private _vSZH = 1;
+	private _vPGridNoUI = 16;
 	private _vPGrid = 12;
 	private _vPW = 1.3333 / 1920;
 	private _vPH = 1 / 1080;

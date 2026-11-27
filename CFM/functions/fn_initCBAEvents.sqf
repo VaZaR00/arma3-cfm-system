@@ -94,6 +94,9 @@
 
 		private _uiDisplayUniqueName = MON_GVAR(_monitor, _instId, "CFM_uiDisplayUniqueName", "");
 		private _group = uiNamespace getVariable ["DB_mavic_DetachGrenade" + _uiDisplayUniqueName, controlNull];
+		if (isNull _group) then {
+			_group = uiNamespace getVariable ["DB_DetachGrenade_group" + _uiDisplayUniqueName, controlNull];
+		};
 
 		if (isNull _group) exitWith {};
 		if !(ctrlShown _group) exitWith {};

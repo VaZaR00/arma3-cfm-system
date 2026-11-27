@@ -392,7 +392,7 @@ private _signalClamped = ((_signal max 0) min 1);
 		};
 		case "flight_status": {
 			private _prefix = if (!isNil "_wMeta" && {_wMeta isEqualType ""}) then {_wMeta} else {""};
-			private _st = ["IN FLIGHT", "GROUNDED"] select (isTouchingGround _operator);
+			private _st = ["In Flight", "Grounded"] select (isTouchingGround _operator);
 			[_ctrl, _ctrlType, format ["%1%2", _prefix, _st], _structAttrs] call _fnc_setCtrlText;
 		};
 		case "pic_battery": {

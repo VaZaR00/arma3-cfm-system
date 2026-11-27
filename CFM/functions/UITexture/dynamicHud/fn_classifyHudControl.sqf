@@ -140,12 +140,13 @@ if (("vspeed" in _key) || {"vertspeed" in _key} || {"climb" in _key}) exitWith {
 	["vspeed", [_labelPrefix, " m/s"]]
 };
 if (("hspeed" in _key) || {"dronespeed" in _key} || {"groundspeed" in _key} || {"speed" in _key}) exitWith {
-	private _unit = if ("m/s" in _lowInit) then {
+	private _isMs = ("m/s" in _lowInit) || {"hspeed" in _key};
+	private _unit = if (_isMs) then {
 		" m/s"
 	} else {
 		if (("km" in _lowInit) || {"км" in _lowInit}) then {" km/h"} else {""}
 	};
-	["speed", [_labelPrefix, _unit, "m/s" in _lowInit]]
+	["speed", [_labelPrefix, _unit, _isMs]]
 };
 if (("bat" in _key) || {"fuel" in _key} || {"volt" in _key} || {"accum" in _key}) exitWith {
 	private _isVolts = (" v" in _lowInit) || {"volt" in _key};
@@ -177,14 +178,14 @@ if (("coord" in _key) || {"grid" in _key} || {"mgrs" in _key}) exitWith {
 	["own_grid", _labelPrefix]
 };
 if (("height" in _key) || {"alt" in _key} || {"agl" in _key} || {"asl" in _key}) exitWith {
-	private _unit = if (("m" in _lowInit) || {"м" in _lowInit}) then {" m"} else {""};
+	private _unit = if (_labelPrefix isEqualTo "") then {" m"} else {if (("m" in _lowInit) || {"м" in _lowInit}) then {" m"} else {""}};
 	["altitude", [_labelPrefix, _unit, "asl" in _key]]
 };
 if (("dist" in _key) || {"range" in _key}) exitWith {
 	if (("target" in _key) || {"laser" in _key} || {"slant" in _key}) exitWith {
 		["slant_range", _labelPrefix]
 	};
-	private _unit = if (("m" in _lowInit) || {"м" in _lowInit}) then {" m"} else {""};
+	private _unit = if (_labelPrefix isEqualTo "") then {" m"} else {if (("m" in _lowInit) || {"м" in _lowInit}) then {" m"} else {""}};
 	["op_distance", [_labelPrefix, _unit]]
 };
 if (("zoom" in _key) || {"fov" in _key} || {"mag" in _key}) exitWith {
