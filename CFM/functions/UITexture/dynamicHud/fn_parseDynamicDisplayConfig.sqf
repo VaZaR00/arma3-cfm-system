@@ -129,8 +129,8 @@ private _fnc_collectChildren = {
 };
 
 private _fnc_evalPreviewTuple = {
-	params ["_tuple"];
-	if (isNil "_tuple") exitWith {0};
+	params [["_tuple", []]];
+	if (_tuple isEqualTo []) exitWith {0};
 	_tuple params [["_valOrCode", 0], ["_isCfm", false]];
 	if (_valOrCode isEqualType 0) exitWith {_valOrCode};
 	private _resVal = 0;
@@ -222,10 +222,14 @@ private _fnc_parseNodeList = {
 
 		private _sizeTuple = if (_ctrlType isEqualTo 13) then {
 			private _s = [_ctrlCfg >> "size"] call CFM_fnc_parseDynamicControlFormula;
-			if (isNil "_s") then {[_ctrlCfg >> "sizeEx"] call CFM_fnc_parseDynamicControlFormula} else {_s}
+			if (_s isEqualTo []) then {[_ctrlCfg >> "sizeEx"] call CFM_fnc_parseDynamicControlFormula} else {_s}
 		} else {
 			private _sEx = [_ctrlCfg >> "sizeEx"] call CFM_fnc_parseDynamicControlFormula;
-			if (isNil "_sEx" && {isText (_ctrlCfg >> "size")}) then {[_ctrlCfg >> "size"] call CFM_fnc_parseDynamicControlFormula} else {_sEx}
+			if (_sEx isEqualTo [] && {isText (_ctrlCfg >> "size") || {isNumber (_ctrlCfg >> "size")}}) then {
+				[_ctrlCfg >> "size"] call CFM_fnc_parseDynamicControlFormula
+			} else {
+				_sEx
+			}
 		};
 
 		private _assignedIdc = if (_origIdc >= 0 && {!(_origIdc in _usedIdcs)}) then {
@@ -292,7 +296,7 @@ private _fnc_parseNodeList = {
 		};
 
 		private _widget = if (_ctrlType isEqualTo 15) then {
-			["", nil]
+			["", ""]
 		} else {
 			[_ctrlName, _parentName, _origIdc, _ctrlType, _ctrlStyle, _initText, _uiVars, _parentUiVars, _sourceType] call CFM_fnc_classifyHudControl
 		};
@@ -314,11 +318,11 @@ private _fnc_parseNodeList = {
 		_node set ["isGroup", _ctrlType isEqualTo 15];
 		_node set ["ctrlType", _ctrlType];
 		_node set ["ctrlStyle", _ctrlStyle];
-		if (!isNil "_xTuple") then {_node set ["x", _xTuple];};
-		if (!isNil "_yTuple") then {_node set ["y", _yTuple];};
-		if (!isNil "_wTuple") then {_node set ["w", _wTuple];};
-		if (!isNil "_hTuple") then {_node set ["h", _hTuple];};
-		if (!isNil "_sizeTuple") then {_node set ["size", _sizeTuple];};
+		if !(_xTuple isEqualTo []) then {_node set ["x", _xTuple];};
+		if !(_yTuple isEqualTo []) then {_node set ["y", _yTuple];};
+		if !(_wTuple isEqualTo []) then {_node set ["w", _wTuple];};
+		if !(_hTuple isEqualTo []) then {_node set ["h", _hTuple];};
+		if !(_sizeTuple isEqualTo []) then {_node set ["size", _sizeTuple];};
 		_node set ["fade", _fade];
 		_node set ["show", _show];
 		_node set ["uiVars", _uiVars];

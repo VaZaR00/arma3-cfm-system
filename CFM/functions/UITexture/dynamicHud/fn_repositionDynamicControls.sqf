@@ -61,8 +61,8 @@ private _vPH = _vSZH / _resH;
 private _vGetRes = [_resW, _resH, _resH * (4 / 3), _resH, _aspect, 1.0, 0.75, 0.75 * _aspect, false, 1];
 
 private _fnc_evalDim = {
-	params ["_tuple", "_fallback", "_isPos", "_origin", "_span"];
-	if (isNil "_tuple") exitWith {_fallback};
+	params [["_tuple", []], "_fallback", "_isPos", "_origin", "_span"];
+	if (_tuple isEqualTo []) exitWith {_fallback};
 	_tuple params [["_valOrCode", 0], ["_isCfmMarker", false]];
 	private _raw = if (_valOrCode isEqualType 0) then {
 		_valOrCode
@@ -84,10 +84,10 @@ private _fnc_evalDim = {
 	private _xOrigin = if (_isTopLevel) then {_vSZX} else {0};
 	private _yOrigin = if (_isTopLevel) then {_vSZY} else {0};
 
-	private _normX = [_node get "x", _curX, _isTopLevel, _xOrigin, _vSZW] call _fnc_evalDim;
-	private _normY = [_node get "y", _curY, _isTopLevel, _yOrigin, _vSZH] call _fnc_evalDim;
-	private _normW = [_node get "w", _curW, false, 0, _vSZW] call _fnc_evalDim;
-	private _normH = [_node get "h", _curH, false, 0, _vSZH] call _fnc_evalDim;
+	private _normX = [_node getOrDefault ["x", []], _curX, _isTopLevel, _xOrigin, _vSZW] call _fnc_evalDim;
+	private _normY = [_node getOrDefault ["y", []], _curY, _isTopLevel, _yOrigin, _vSZH] call _fnc_evalDim;
+	private _normW = [_node getOrDefault ["w", []], _curW, false, 0, _vSZW] call _fnc_evalDim;
+	private _normH = [_node getOrDefault ["h", []], _curH, false, 0, _vSZH] call _fnc_evalDim;
 
 	private _finalX = if (_isTopLevel) then {_offsetX + (_normX * _absX)} else {_normX * _absX};
 	private _finalY = if (_isTopLevel) then {_offsetY + (_normY * _absY)} else {_normY * _absY};
@@ -101,8 +101,8 @@ private _fnc_evalDim = {
 		_ctrl ctrlSetPosition [_finalX, _finalY, _finalW, _finalH];
 	};
 
-	private _sizeTuple = _node get "size";
-	if (!isNil "_sizeTuple") then {
+	private _sizeTuple = _node getOrDefault ["size", []];
+	if !(_sizeTuple isEqualTo []) then {
 		_sizeTuple params [["_sValOrCode", 0], ["_isCfmSize", false]];
 		private _rawSize = if (_sValOrCode isEqualType 0) then {
 			_sValOrCode

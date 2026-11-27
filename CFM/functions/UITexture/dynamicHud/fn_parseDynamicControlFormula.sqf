@@ -9,16 +9,16 @@
     Parameters:
         0: _propCfg [Config] - Config entry of the property (x, y, w, h, size, sizeEx).
     Returns:
-        [Array | Nil] - [scalarNumber | compiledCode, isCfmMarker], or nil if property is absent.
+        [Array] - [scalarNumber | compiledCode, isCfmMarker], or [] if property is absent.
 */
 
 #include "defines.hpp"
 
 params [["_propCfg", configNull, [configNull]]];
 
-if (isNull _propCfg) exitWith {nil};
+if (isNull _propCfg) exitWith {[]};
 if (isNumber _propCfg) exitWith {[getNumber _propCfg, false]};
-if !(isText _propCfg) exitWith {nil};
+if !(isText _propCfg) exitWith {[]};
 
 private _expr = trim (getText _propCfg);
 if (_expr isEqualTo "") exitWith {[0, false]};

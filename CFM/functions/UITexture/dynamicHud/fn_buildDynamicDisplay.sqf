@@ -108,7 +108,7 @@ private _fnc_spawnNodes = {
 		private _uiVars = _node getOrDefault ["uiVars", []];
 		private _isSafeOnLoad = _node getOrDefault ["isSafeOnLoad", false];
 		private _fallbackProps = _node getOrDefault ["fallbackProps", ["", "", -1, [], [], []]];
-		private _widget = _node getOrDefault ["widget", ["", nil]];
+		private _widget = _node getOrDefault ["widget", ["", ""]];
 
 		private _typeNibble = ((floor (_ctrlStyle / 16)) mod 16) * 16;
 		private _keepAspect = ((floor (_ctrlStyle / 2048)) mod 2) isEqualTo 1;
@@ -228,7 +228,7 @@ private _fnc_spawnNodes = {
 			};
 		};
 
-		_widget params [["_wKind", ""], ["_wMeta", nil]];
+		_widget params [["_wKind", ""], ["_wMeta", ""]];
 		if !(_wKind isEqualTo "") then {
 			_activeBindings pushBack [_ctrl, _wKind, _wMeta, _ctrlType, _structAttrs];
 		};
@@ -250,7 +250,7 @@ private _customBindings = _display getVariable ["CFM_hudCustomBindings", []];
 if (!(_customBindings isEqualTo []) && {_customBindings isEqualType []}) then {
 	{
 		if !(_x isEqualType []) then {continue};
-		_x params [["_targetKey", ""], ["_customKind", ""], ["_customMeta", nil]];
+		_x params [["_targetKey", ""], ["_customKind", ""], ["_customMeta", ""]];
 		private _targetCtrl = controlNull;
 		if (_targetKey isEqualType 0) then {
 			_targetCtrl = _ctrlsByIdc getOrDefault [_targetKey, controlNull];

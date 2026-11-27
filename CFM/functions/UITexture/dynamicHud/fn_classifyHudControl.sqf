@@ -4,7 +4,7 @@
     Description:
         Classifies a HUD display control into a live telemetry widget binding [widgetKind, widgetMeta]
         based on RscInGameUI CA_* standards, control IDC, config/onLoad variable names,
-        and stepped .paa icon files. Returns ["", nil] for purely static decorations.
+        and stepped .paa icon files. Returns ["", ""] for purely static decorations.
     Parameters:
         0: _ctrlName [String] - Control config class name.
         1: _parentName [String] - Parent controlsGroup class name (or "").
@@ -33,43 +33,43 @@ params [
 	["_sourceType", "Root", [""]]
 ];
 
-if (_ctrlType isEqualTo 15) exitWith {["", nil]};
+if (_ctrlType isEqualTo 15) exitWith {["", ""]};
 
 private _typeNibble = ((floor (_ctrlStyle / 16)) mod 16) * 16;
 private _isPic = (_ctrlType isEqualTo 0) && {_typeNibble in [48, 144]};
 private _isGeomOnly = (_ctrlType isEqualTo 0) && {_typeNibble in [64, 128, 176]};
-if (_isGeomOnly) exitWith {["", nil]};
+if (_isGeomOnly) exitWith {["", ""]};
 
 private _lowCtrlName = toLower _ctrlName;
 
 // Branch A: Vanilla / Modded RscInGameUI standard CA_* optics & HUD controls
 private _iguiMatched = if (_sourceType isEqualTo "RscInGameUI") then {
 	switch (true) do {
-		case ((_lowCtrlName isEqualTo "ca_heading") || {_origIdc in [156, 148]}): {["igui_heading", nil]};
-		case ((_lowCtrlName in ["ca_opticszoom", "opticszoom"]) || {_origIdc in [180, 192]}): {["igui_zoom", nil]};
-		case ((_lowCtrlName isEqualTo "ca_visionmode") || {_origIdc in [152, 179]}): {["igui_vision", nil]};
-		case ((_lowCtrlName isEqualTo "ca_flirmode") || {_origIdc isEqualTo 153}): {["igui_flir", nil]};
+		case ((_lowCtrlName isEqualTo "ca_heading") || {_origIdc in [156, 148]}): {["igui_heading", ""]};
+		case ((_lowCtrlName in ["ca_opticszoom", "opticszoom"]) || {_origIdc in [180, 192]}): {["igui_zoom", ""]};
+		case ((_lowCtrlName isEqualTo "ca_visionmode") || {_origIdc in [152, 179]}): {["igui_vision", ""]};
+		case ((_lowCtrlName isEqualTo "ca_flirmode") || {_origIdc isEqualTo 153}): {["igui_flir", ""]};
 		case ((_lowCtrlName isEqualTo "ca_laser") || {_origIdc isEqualTo 158}): {["laser", _isPic]};
-		case ((_lowCtrlName in ["ca_distance", "ca_range"]) || {_origIdc in [151, 183, 198]}): {["slant_range", nil]};
+		case ((_lowCtrlName in ["ca_distance", "ca_range"]) || {_origIdc in [151, 183, 198]}): {["slant_range", ""]};
 		case ((_lowCtrlName in ["ca_alt", "ca_valuealt"]) || {_origIdc isEqualTo 184}): {["altitude", ["", "", false]]};
 		case ((_lowCtrlName isEqualTo "ca_speed") || {_origIdc in [188, 120]}): {["speed", ["", "", false]]};
 		case ((_lowCtrlName in ["ca_opticspitch", "ca_elev", "ca_turretelevation"]) || {_origIdc in [175, 174, 382]}): {["pitch", ["", "°"]]};
-		case ((_lowCtrlName in ["ca_ownposition", "ca_grid"]) || {_origIdc in [189, 171]}): {["own_grid", nil]};
-		case ((_lowCtrlName isEqualTo "ca_targetposition") || {_origIdc isEqualTo 190}): {["tgt_grid", nil]};
-		case ((_lowCtrlName in ["ca_time", "ca_valuetime"]) || {_origIdc isEqualTo 193}): {["clock_time", nil]};
+		case ((_lowCtrlName in ["ca_ownposition", "ca_grid"]) || {_origIdc in [189, 171]}): {["own_grid", ""]};
+		case ((_lowCtrlName isEqualTo "ca_targetposition") || {_origIdc isEqualTo 190}): {["tgt_grid", ""]};
+		case ((_lowCtrlName in ["ca_time", "ca_valuetime"]) || {_origIdc isEqualTo 193}): {["clock_time", ""]};
 		case ((_lowCtrlName in ["ca_valuefuel", "ca_fuel"]) || {_origIdc isEqualTo 122}): {
-			if (_ctrlType isEqualTo 8) then {["prog_battery", nil]} else {["battery_text", ["", "%", false]]}
+			if (_ctrlType isEqualTo 8) then {["prog_battery", ""]} else {["battery_text", ["", "%", false]]}
 		};
-		default {["", nil]};
+		default {["", ""]};
 	}
 } else {
-	["", nil]
+	["", ""]
 };
 if !((_iguiMatched select 0) isEqualTo "") exitWith {_iguiMatched};
 
 // Branch B: Modded RscTitles / Root HUDs
 // Static guard: controls without IDC and without uiNamespace bindings in self or parent are decorative
-if ((_origIdc < 0) && {_uiVars isEqualTo []} && {_parentUiVars isEqualTo []}) exitWith {["", nil]};
+if ((_origIdc < 0) && {_uiVars isEqualTo []} && {_parentUiVars isEqualTo []}) exitWith {["", ""]};
 
 private _key = toLower ((_uiVars joinString "_") + "_" + (_parentUiVars joinString "_") + "_" + _ctrlName + "_" + _parentName);
 
@@ -78,7 +78,7 @@ if (_isPic) exitWith {
 	if (("laser" in _key) || {"lsr" in _key}) exitWith {["laser", true]};
 
 	private _m = _initText regexFind ["^(.*?)([0-9]+)(\.paa)$/i"];
-	if (_m isEqualTo [] || {(count (_m select 0)) < 4}) exitWith {["", nil]};
+	if (_m isEqualTo [] || {(count (_m select 0)) < 4}) exitWith {["", ""]};
 
 	private _grp = _m select 0;
 	private _prefix = (_grp select 1) select 0;
@@ -99,24 +99,24 @@ if (_isPic) exitWith {
 		};
 	} forEach [0, 1, 2, 3, 4, 5, 10, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100];
 
-	if ((count _foundPaths) < 2) exitWith {["", nil]};
+	if ((count _foundPaths) < 2) exitWith {["", ""]};
 
 	if (("bat" in _key) || {"fuel" in _key} || {"accum" in _key}) exitWith {["pic_battery", _foundPaths]};
 	if (("sat" in _key) || {"gps" in _key}) exitWith {["pic_sat", _foundPaths]};
 	if (("sig" in _key) || {"comm" in _key} || {"rssi" in _key} || {"link" in _key} || {"ant" in _key}) exitWith {["pic_signal", _foundPaths]};
 
-	["", nil]
+	["", ""]
 };
 
 // Progress bar controls
 if (_ctrlType isEqualTo 8) exitWith {
-	if (("sig" in _key) || {"rssi" in _key} || {"comm" in _key}) exitWith {["prog_signal", nil]};
-	if (("bat" in _key) || {"fuel" in _key} || {"pwr" in _key}) exitWith {["prog_battery", nil]};
-	["", nil]
+	if (("sig" in _key) || {"rssi" in _key} || {"comm" in _key}) exitWith {["prog_signal", ""]};
+	if (("bat" in _key) || {"fuel" in _key} || {"pwr" in _key}) exitWith {["prog_battery", ""]};
+	["", ""]
 };
 
 // Text & StructuredText controls
-if !(_ctrlType in [0, 13]) exitWith {["", nil]};
+if !(_ctrlType in [0, 13]) exitWith {["", ""]};
 
 private _locInit = _initText;
 if ((_initText select [0, 1]) isEqualTo "$") then {
@@ -162,10 +162,10 @@ if (("ontime" in _key) || {"flighttime" in _key} || {"flytime" in _key}) exitWit
 	["on_time", ("'" in _lowInit)]
 };
 if ("date" in _key) exitWith {
-	["date_text", nil]
+	["date_text", ""]
 };
 if (("time" in _key) || {"clock" in _key}) exitWith {
-	["clock_time", nil]
+	["clock_time", ""]
 };
 if (("squarex" in _key) || {"gridx" in _key}) exitWith {
 	["square_x", _labelPrefix]
@@ -203,7 +203,7 @@ if (("laser" in _key) || {"lsr" in _key}) exitWith {
 	["laser", false]
 };
 if (("vision" in _key) || {"flir" in _key} || {"camtype" in _key}) exitWith {
-	["igui_vision", nil]
+	["igui_vision", ""]
 };
 if ("temp" in _key) exitWith {
 	["temperature", _labelPrefix]
@@ -212,4 +212,4 @@ if (("flightstatus" in _key) || {"status" in _key}) exitWith {
 	["flight_status", _labelPrefix]
 };
 
-["", nil]
+["", ""]
